@@ -1,9 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
+// For custom domain on GitHub Pages (app.iava.ai), use base '/'
 export default defineConfig({
   plugins: [react()],
-  // Use a different base when deploying to GitHub Pages
-  base: process.env.GITHUB_PAGES === 'true' ? '/iava.ai/' : '/',
+  base: '/',
 })
