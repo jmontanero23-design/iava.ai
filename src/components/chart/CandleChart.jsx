@@ -1,0 +1,95 @@
+import React, { useEffect, useRef } from 'react'
+import { createChart } from 'lightweight-charts'
+
+export default function CandleChart({ bars = [], overlays = {} }) {
+  const containerRef = useRef(null)
+  const chartRef = useRef(null)
+  const seriesRef = useRef(null)
+  const overlaySeriesRef = useRef({})
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const chart = createChart(container, {
+      layout: { background: { type: 'solid', color: '#0b1020' }, textColor: '#cbd5e1' },
+      grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } },
+      crosshair: { mode: 0 },
+      width: container.clientWidth,
+      height: container.clientHeight,
+      rightPriceScale: { borderColor: '#334155' },
+      timeScale: { borderColor: '#334155' },
+    })
+    const candleSeries = chart.addCandlestickSeries({
+      upColor: '#10b981', downColor: '#ef4444', borderVisible: false, wickUpColor: '#10b981', wickDownColor: '#ef4444',
+    })
+    chartRef.current = chart
+    seriesRef.current = candleSeries
+
+    const handleResize = () => {
+      chart.applyOptions({ width: container.clientWidth, height: container.clientHeight })
+    }
+    window.addEventListener('resize', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      chart.remove()
+      chartRef.current = null
+      seriesRef.current = null
+      overlaySeriesRef.current = {}
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!seriesRef.current) return
+    // Convert bars to chart format
+    const data = bars.map(b => ({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close }))
+    seriesRef.current.setData(data)
+    if (chartRef.current) chartRef.current.timeScale().fitContent()
+  }, [bars])
+
+  useEffect(() => {
+    const chart = chartRef.current
+    if (!chart) return
+    // Clear existing overlays
+    Object.values(overlaySeriesRef.current).forEach(s => chart.removeSeries(s))
+    overlaySeriesRef.current = {}
+
+    if (overlays.emaCloud) {
+      const upper = chart.addLineSeries({ color: '#f59e0b', lineWidth: 1 })
+      const lower = chart.addLineSeries({ color: '#f59e0b', lineWidth: 1 })
+      const { fast, slow } = overlays.emaCloud
+      const dataUpper = bars.map((b, i) => fast[i] == null ? null : { time: b.time, value: fast[i] }).filter(Boolean)
+      const dataLower = bars.map((b, i) => slow[i] == null ? null : { time: b.time, value: slow[i] }).filter(Boolean)
+      upper.setData(dataUpper)
+      lower.setData(dataLower)
+      overlaySeriesRef.current.emaCloudUpper = upper
+      overlaySeriesRef.current.emaCloudLower = lower
+    }
+
+    if (overlays.ichimoku) {
+      const t = chart.addLineSeries({ color: '#93c5fd', lineWidth: 1 })
+      const k = chart.addLineSeries({ color: '#60a5fa', lineWidth: 1 })
+      const a = chart.addLineSeries({ color: '#34d399', lineWidth: 1 })
+      const b = chart.addLineSeries({ color: '#ef4444', lineWidth: 1 })
+      const c = chart.addLineSeries({ color: '#a78bfa', lineWidth: 1 })
+      const tenk = bars.map((bar, i) => overlays.ichimoku.tenkan[i] == null ? null : { time: bar.time, value: overlays.ichimoku.tenkan[i] }).filter(Boolean)
+      const kij = bars.map((bar, i) => overlays.ichimoku.kijun[i] == null ? null : { time: bar.time, value: overlays.ichimoku.kijun[i] }).filter(Boolean)
+      // spanA/spanB arrays are shifted forward; align with extended timeline where present
+      const aData = overlays.ichimoku.spanA.map((v, i) => v == null ? null : { time: bars[i]?.time || (bars.at(-1)?.time + (i - (bars.length - 1))), value: v }).filter(Boolean)
+      const bData = overlays.ichimoku.spanB.map((v, i) => v == null ? null : { time: bars[i]?.time || (bars.at(-1)?.time + (i - (bars.length - 1))), value: v }).filter(Boolean)
+      const chik = bars.map((bar, i) => overlays.ichimoku.chikou[i] == null ? null : { time: bar.time, value: overlays.ichimoku.chikou[i] }).filter(Boolean)
+      t.setData(tenk)
+      k.setData(kij)
+      a.setData(aData)
+      b.setData(bData)
+      c.setData(chik)
+      overlaySeriesRef.current.ichimoku = { t, k, a, b, c }
+    }
+  }, [overlays, bars])
+
+  return (
+    <div className="card w-full h-[520px] overflow-hidden">
+      <div ref={containerRef} className="w-full h-full" />
+    </div>
+  )
+}
+
