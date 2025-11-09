@@ -10,6 +10,8 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
   const tooltipRef = useRef(null)
   const bandsRef = useRef(null)
   const priceLinesRef = useRef({ saty: {} })
+  const cloudCanvasRef = useRef(null)
+  const cloudUnsubRef = useRef(null)
 
   useEffect(() => {
     const container = containerRef.current
@@ -49,6 +51,18 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       bandsRef.current = bands
       container.appendChild(bands)
     }
+    // Ichimoku cloud canvas
+    if (!cloudCanvasRef.current) {
+      const c = document.createElement('canvas')
+      c.style.position = 'absolute'
+      c.style.left = '0'
+      c.style.top = '0'
+      c.style.right = '0'
+      c.style.bottom = '0'
+      c.style.pointerEvents = 'none'
+      cloudCanvasRef.current = c
+      container.appendChild(c)
+    }
 
     const handleResize = () => {
       chart.applyOptions({ width: container.clientWidth, height: container.clientHeight })
@@ -65,6 +79,13 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       const el = bandsRef.current
       if (el && el.parentNode) el.parentNode.removeChild(el)
       bandsRef.current = null
+      const cc = cloudCanvasRef.current
+      if (cc && cc.parentNode) cc.parentNode.removeChild(cc)
+      cloudCanvasRef.current = null
+      if (cloudUnsubRef.current && chart.timeScale) {
+        try { chart.timeScale().unsubscribeVisibleTimeRangeChange(cloudUnsubRef.current) } catch(_) {}
+      }
+      cloudUnsubRef.current = null
     }
   }, [])
 
@@ -315,6 +336,60 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
     } else if (bandsEl) {
       bandsEl.innerHTML = ''
     }
+
+    // Ichimoku cloud shading
+    const drawCloud = () => {
+      const c = cloudCanvasRef.current
+      const sref = seriesRef.current
+      const ts = chartRef.current?.timeScale?.()
+      const ichi = overlays.ichimoku
+      const el = containerRef.current
+      if (!c || !sref || !ts || !ichi || !el) return
+      c.width = el.clientWidth
+      c.height = el.clientHeight
+      const ctx = c.getContext('2d')
+      ctx.clearRect(0,0,c.width,c.height)
+      const A = ichi.spanA || []
+      const B = ichi.spanB || []
+      let seg = []
+      const commit = () => {
+        if (seg.length < 2) { seg = []; return }
+        const last = seg[seg.length - 1]
+        const up = A[last] >= B[last]
+        ctx.beginPath()
+        let started = false
+        for (let idx of seg) {
+          const x = ts.timeToCoordinate(bars[idx]?.time)
+          const y = sref.priceToCoordinate(A[idx])
+          if (x == null || y == null) continue
+          if (!started) { ctx.moveTo(x,y); started = true } else { ctx.lineTo(x,y) }
+        }
+        for (let k = seg.length - 1; k >= 0; k--) {
+          const idx = seg[k]
+          const x = ts.timeToCoordinate(bars[idx]?.time)
+          const y = sref.priceToCoordinate(B[idx])
+          if (x == null || y == null) continue
+          ctx.lineTo(x,y)
+        }
+        ctx.closePath()
+        ctx.fillStyle = up ? 'rgba(16,185,129,0.10)' : 'rgba(239,68,68,0.10)'
+        ctx.fill()
+        seg = []
+      }
+      for (let i = 0; i < bars.length && i < A.length && i < B.length; i++) {
+        if (A[i] != null && B[i] != null) seg.push(i)
+        else commit()
+      }
+      commit()
+    }
+    drawCloud()
+    if (cloudUnsubRef.current && chart.timeScale) {
+      try { chart.timeScale().unsubscribeVisibleTimeRangeChange(cloudUnsubRef.current) } catch(_) {}
+      cloudUnsubRef.current = null
+    }
+    const handler = () => drawCloud()
+    chart.timeScale().subscribeVisibleTimeRangeChange(handler)
+    cloudUnsubRef.current = handler
   }, [overlays, bars])
 
   return (

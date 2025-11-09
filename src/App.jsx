@@ -16,6 +16,7 @@ import BacktestPanel from './components/BacktestPanel.jsx'
 import OrdersPanel from './components/OrdersPanel.jsx'
 import SatyTargets from './components/SatyTargets.jsx'
 import InfoPopover from './components/InfoPopover.jsx'
+import SymbolSearch from './components/SymbolSearch.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -163,7 +164,7 @@ export default function App() {
       <Hero />
       <div className="card p-4 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <input value={symbol} onChange={e => setSymbol(e.target.value.toUpperCase())} onKeyDown={e => { if (e.key === 'Enter') loadBars() }} placeholder="Symbol" className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm" style={{width: 90}} />
+          <SymbolSearch value={symbol} onChange={setSymbol} onSubmit={(sym) => loadBars(sym, timeframe)} />
           <select value={timeframe} onChange={e => { const tf = e.target.value; setTimeframe(tf); if (autoLoadChange) loadBars(symbol, tf) }} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm">
             <option value="1Min">1Min</option>
             <option value="5Min">5Min</option>
