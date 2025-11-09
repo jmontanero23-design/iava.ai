@@ -325,6 +325,20 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       priceLinesRef.current.saty = lines
     }
 
+    // Squeeze Bands (BB and KC)
+    if (!ref.squeeze) ref.squeeze = {}
+    if (overlays.squeezeBands) {
+      const { upperBB, lowerBB, upperKC, lowerKC } = overlays.squeezeBands
+      const mk = (key, opts) => { if (!ref.squeeze[key]) ref.squeeze[key] = chart.addLineSeries(opts); return ref.squeeze[key] }
+      const map = (arr) => bars.map((b, i) => (arr[i] == null ? null : { time: b.time, value: arr[i] })).filter(Boolean)
+      mk('bbU', { color: 'rgba(148,163,184,0.7)', lineWidth: 1, priceLineVisible: false }).setData(map(upperBB))
+      mk('bbL', { color: 'rgba(148,163,184,0.7)', lineWidth: 1, priceLineVisible: false }).setData(map(lowerBB))
+      mk('kcU', { color: 'rgba(99,102,241,0.7)', lineWidth: 1, lineStyle: 1, priceLineVisible: false }).setData(map(upperKC))
+      mk('kcL', { color: 'rgba(99,102,241,0.7)', lineWidth: 1, lineStyle: 1, priceLineVisible: false }).setData(map(lowerKC))
+    } else if (ref.squeeze) {
+      ['bbU','bbL','kcU','kcL'].forEach(k => { if (ref.squeeze[k]) ref.squeeze[k].setData([]) })
+    }
+
     // SATY shaded bands (horizontal regions across full width)
     const bandsEl = bandsRef.current
     const s = overlays.saty

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Hero from './components/Hero.jsx'
 import CandleChart from './components/chart/CandleChart.jsx'
-import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend, computeStates, pivotRibbon } from './utils/indicators.js'
+import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend, computeStates, pivotRibbon, ttmBands } from './utils/indicators.js'
 import SqueezePanel from './components/chart/SqueezePanel.jsx'
 import SignalsPanel from './components/SignalsPanel.jsx'
 import SatyPanel from './components/SatyPanel.jsx'
@@ -79,8 +79,10 @@ export default function App() {
     if (showIchi) base.ichimoku = ichimoku(bars)
     if (showRibbon) base.ribbon = pivotRibbon(close)
     if (showSaty) base.saty = satyAtrLevels(bars, 14)
+    // Provide squeeze bands to chart for visual confirmation (shares toggle with panel)
+    if (showSqueeze) base.squeezeBands = ttmBands(bars, 20, 2, 1.5)
     return base
-  }, [bars, showEma821, showEma512, showEma89, showEma3450, showIchi, showSaty])
+  }, [bars, showEma821, showEma512, showEma89, showEma3450, showIchi, showSaty, showSqueeze])
 
   const [account, setAccount] = useState(null)
   const signalState = useMemo(() => computeStates(bars), [bars])

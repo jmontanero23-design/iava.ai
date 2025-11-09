@@ -192,6 +192,55 @@ export function ttmSqueeze(close, high, low, period = 20, multBB = 2, multKC = 1
   return out
 }
 
+// Full Squeeze bands for visualization
+export function ttmBands(bars, period = 20, multBB = 2, multKC = 1.5) {
+  const n = bars.length
+  const close = bars.map(b => b.close)
+  const high = bars.map(b => b.high)
+  const low = bars.map(b => b.low)
+  const ma = sma(close, period)
+  const em = ema(close, period)
+  const tr = new Array(n).fill(0)
+  let prevClose = close[0] ?? 0
+  for (let i = 0; i < n; i++) {
+    const h = high[i], l = low[i], c = close[i]
+    tr[i] = Math.max((h - l), Math.abs(h - prevClose), Math.abs(l - prevClose))
+    prevClose = c
+  }
+  const atrArr = new Array(n).fill(null)
+  let sumTr = 0
+  for (let i = 0; i < n; i++) {
+    sumTr += tr[i]
+    if (i >= period) sumTr -= tr[i - period]
+    if (i >= period - 1) atrArr[i] = sumTr / period
+  }
+  // rolling stddev
+  const std = (arr, start, end) => {
+    const m = end - start + 1
+    if (m <= 1) return 0
+    let mean = 0
+    for (let i = start; i <= end; i++) mean += arr[i]
+    mean /= m
+    let v = 0
+    for (let i = start; i <= end; i++) { const d = arr[i] - mean; v += d * d }
+    return Math.sqrt(v / m)
+  }
+  const upperBB = new Array(n).fill(null)
+  const lowerBB = new Array(n).fill(null)
+  const upperKC = new Array(n).fill(null)
+  const lowerKC = new Array(n).fill(null)
+  for (let i = 0; i < n; i++) {
+    const s = i - period + 1
+    if (s < 0) continue
+    const dev = std(close, s, i)
+    upperBB[i] = ma[i] + multBB * dev
+    lowerBB[i] = ma[i] - multBB * dev
+    upperKC[i] = em[i] + multKC * (atrArr[i] ?? 0)
+    lowerKC[i] = em[i] - multKC * (atrArr[i] ?? 0)
+  }
+  return { upperBB, lowerBB, upperKC, lowerKC }
+}
+
 // Linear regression slope momentum (approx for TTM histogram)
 export function linregMomentum(values, period = 20) {
   const n = values.length
