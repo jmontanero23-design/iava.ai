@@ -21,6 +21,11 @@ Welcome to the iAVA.ai project, a world-class AI-driven platform focused on fina
 - Build for prod: `npm run build`
 - Preview local build: `npm run preview` (serves `dist/`)
 
+## Recent Enhancements
+- Streaming toggle with SSE endpoint for near real-time bars.
+- Market stats hero with ATR/range metrics and status pill.
+- Deep-linkable state (symbol/timeframe/threshold) and Copy Link utility.
+
 ## Next Steps
 - Define real API endpoints and connect them in `src/services/`.
 - Add actual UI components under `src/components/` for indicators and workflows.
