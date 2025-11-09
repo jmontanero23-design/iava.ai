@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Hero from './components/Hero.jsx'
 import CandleChart from './components/chart/CandleChart.jsx'
 import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend } from './utils/indicators.js'
 import SqueezePanel from './components/chart/SqueezePanel.jsx'
+import { fetchBars as fetchBarsApi } from './services/alpaca.js'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -22,7 +23,11 @@ function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*360
 }
 
 export default function App() {
-  const [bars] = useState(() => generateSampleOHLC())
+  const [symbol, setSymbol] = useState('AAPL')
+  const [timeframe, setTimeframe] = useState('1Min')
+  const [bars, setBars] = useState(() => generateSampleOHLC())
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [showEma, setShowEma] = useState(true)
   const [showIchi, setShowIchi] = useState(true)
   const [showSaty, setShowSaty] = useState(true)
@@ -37,10 +42,43 @@ export default function App() {
     return base
   }, [bars, showEma, showIchi])
 
+  async function loadBars(s = symbol, tf = timeframe) {
+    try {
+      setLoading(true)
+      setError('')
+      const res = await fetchBarsApi(s, tf, 500)
+      if (Array.isArray(res) && res.length) setBars(res)
+      else throw new Error('No data returned')
+    } catch (e) {
+      setError(e?.message || 'Failed to load data; showing sample')
+      setBars(generateSampleOHLC())
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadBars()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     <div className="min-h-screen p-6 space-y-6">
       <Hero />
       <div className="card p-4 flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <input value={symbol} onChange={e => setSymbol(e.target.value.toUpperCase())} placeholder="Symbol" className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm" style={{width: 90}} />
+          <select value={timeframe} onChange={e => setTimeframe(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm">
+            <option value="1Min">1Min</option>
+            <option value="5Min">5Min</option>
+            <option value="15Min">15Min</option>
+            <option value="1Hour">1Hour</option>
+            <option value="1Day">1Day</option>
+          </select>
+          <button onClick={() => loadBars()} className="bg-indigo-600 hover:bg-indigo-500 rounded px-3 py-1 text-sm">Load</button>
+          {loading && <span className="text-xs text-slate-400 ml-2">Loading…</span>}
+          {error && !loading && <span className="text-xs text-rose-400 ml-2">{error}</span>}
+        </div>
         <span className="text-sm text-slate-400">Overlays</span>
         <label className="inline-flex items-center gap-2">
           <input type="checkbox" className="accent-indigo-500" checked={showEma} onChange={e => setShowEma(e.target.checked)} />
