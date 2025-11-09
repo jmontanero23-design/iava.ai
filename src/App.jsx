@@ -7,6 +7,7 @@ import SignalsPanel from './components/SignalsPanel.jsx'
 import { fetchBars as fetchBarsApi } from './services/alpaca.js'
 import HealthBadge from './components/HealthBadge.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
+import Presets from './components/Presets.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -73,9 +74,34 @@ export default function App() {
   }
 
   useEffect(() => {
+    // Load persisted settings
+    try {
+      const saved = JSON.parse(localStorage.getItem('iava.settings') || '{}')
+      if (saved.symbol) setSymbol(saved.symbol)
+      if (saved.timeframe) setTimeframe(saved.timeframe)
+      if (typeof saved.autoRefresh === 'boolean') setAutoRefresh(saved.autoRefresh)
+      if (typeof saved.refreshSec === 'number') setRefreshSec(saved.refreshSec)
+      if (typeof saved.showIchi === 'boolean') setShowIchi(saved.showIchi)
+      if (typeof saved.showRibbon === 'boolean') setShowRibbon(saved.showRibbon)
+      if (typeof saved.showSaty === 'boolean') setShowSaty(saved.showSaty)
+      if (typeof saved.showSqueeze === 'boolean') setShowSqueeze(saved.showSqueeze)
+      if (typeof saved.showEma821 === 'boolean') setShowEma821(saved.showEma821)
+      if (typeof saved.showEma512 === 'boolean') setShowEma512(saved.showEma512)
+      if (typeof saved.showEma89 === 'boolean') setShowEma89(saved.showEma89)
+      if (typeof saved.showEma3450 === 'boolean') setShowEma3450(saved.showEma3450)
+    } catch {}
     loadBars()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    const prefs = {
+      symbol, timeframe, autoRefresh, refreshSec,
+      showIchi, showRibbon, showSaty, showSqueeze,
+      showEma821, showEma512, showEma89, showEma3450,
+    }
+    try { localStorage.setItem('iava.settings', JSON.stringify(prefs)) } catch {}
+  }, [symbol, timeframe, autoRefresh, refreshSec, showIchi, showRibbon, showSaty, showSqueeze, showEma821, showEma512, showEma89, showEma3450])
 
   useEffect(() => {
     if (!autoRefresh) return
@@ -99,6 +125,9 @@ export default function App() {
           <button onClick={() => loadBars()} className="bg-indigo-600 hover:bg-indigo-500 rounded px-3 py-1 text-sm">Load</button>
           {loading && <span className="text-xs text-slate-400 ml-2">Loading…</span>}
           {error && !loading && <span className="text-xs text-rose-400 ml-2">{error}</span>}
+        </div>
+        <div className="w-full mt-2">
+          <Presets symbol={symbol} setSymbol={setSymbol} timeframe={timeframe} setTimeframe={setTimeframe} onLoad={(s, tf) => loadBars(s, tf)} />
         </div>
         <span className="text-sm text-slate-400">Overlays</span>
         <label className="inline-flex items-center gap-2">
