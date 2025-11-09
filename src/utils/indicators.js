@@ -143,37 +143,49 @@ export function ichimoku(bars, pTenkan = 9, pKijun = 26, pSenkouB = 52) {
 
 // TTM Squeeze approximation using Bollinger Bands vs Keltner Channels
 export function ttmSqueeze(close, high, low, period = 20, multBB = 2, multKC = 1.5) {
-  const out = new Array(close.length).fill(null)
-  const ma = sma(close, period)
-  // rolling stddev
+  const n = close.length
+  const out = new Array(n).fill(null)
+  const ma = sma(close, period) // Bollinger midline (SMA)
+  const em = ema(close, period) // Keltner midline (EMA)
+  // rolling stddev of close
   const std = (arr, start, end) => {
-    const n = end - start + 1
-    if (n <= 1) return 0
+    const m = end - start + 1
+    if (m <= 1) return 0
     let mean = 0
     for (let i = start; i <= end; i++) mean += arr[i]
-    mean /= n
+    mean /= m
     let v = 0
-    for (let i = start; i <= end; i++) {
-      const d = arr[i] - mean
-      v += d * d
-    }
-    return Math.sqrt(v / n)
+    for (let i = start; i <= end; i++) { const d = arr[i] - mean; v += d * d }
+    return Math.sqrt(v / m)
   }
-  for (let i = 0; i < close.length; i++) {
+  // ATR (true range) over window
+  const tr = new Array(n).fill(0)
+  let prevClose = close[0] ?? 0
+  for (let i = 0; i < n; i++) {
+    const h = high[i], l = low[i], c = close[i]
+    const r = Math.max(
+      (h - l),
+      Math.abs(h - prevClose),
+      Math.abs(l - prevClose)
+    )
+    tr[i] = r
+    prevClose = c
+  }
+  const atr = new Array(n).fill(null)
+  let sumTr = 0
+  for (let i = 0; i < n; i++) {
+    sumTr += tr[i]
+    if (i >= period) sumTr -= tr[i - period]
+    if (i >= period - 1) atr[i] = sumTr / period
+  }
+  for (let i = 0; i < n; i++) {
     const s = i - period + 1
     if (s < 0) continue
     const dev = std(close, s, i)
     const upperBB = ma[i] + multBB * dev
     const lowerBB = ma[i] - multBB * dev
-    // ATR-like range for Keltner
-    let trSum = 0
-    for (let j = s; j <= i; j++) {
-      const r = high[j] - low[j]
-      trSum += r
-    }
-    const atr = trSum / period
-    const upperKC = ma[i] + multKC * atr
-    const lowerKC = ma[i] - multKC * atr
+    const upperKC = em[i] + multKC * (atr[i] ?? 0)
+    const lowerKC = em[i] - multKC * (atr[i] ?? 0)
     const squeezeOn = upperBB <= upperKC && lowerBB >= lowerKC
     out[i] = squeezeOn ? 1 : 0
   }
