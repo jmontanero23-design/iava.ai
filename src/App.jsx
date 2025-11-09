@@ -63,6 +63,7 @@ export default function App() {
   const [enforceDaily, setEnforceDaily] = useState(false)
   const [mtfPreset, setMtfPreset] = useState('manual')
   const [signalHistory, setSignalHistory] = useState([])
+  const [focusTime, setFocusTime] = useState(null)
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
@@ -367,8 +368,8 @@ export default function App() {
       </div>
       <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={autoRefresh} />
       <LegendChips overlays={overlays} />
-      <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} loading={loading} />
-      <SignalFeed items={signalHistory} />
+      <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} loading={loading} focusTime={focusTime} />
+      <SignalFeed items={signalHistory} onSelect={(item) => setFocusTime(item.time)} />
       <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {showSqueeze && <SqueezePanel bars={bars} />}

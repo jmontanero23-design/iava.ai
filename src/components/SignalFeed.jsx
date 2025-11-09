@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function SignalFeed({ items = [] }) {
+export default function SignalFeed({ items = [], onSelect }) {
   if (!items.length) return null
   return (
     <div className="card p-4">
@@ -10,7 +10,7 @@ export default function SignalFeed({ items = [] }) {
       </div>
       <div className="space-y-3">
         {items.map((item) => (
-          <div key={item.time} className="flex items-start gap-3">
+          <div key={item.time} className="flex items-start gap-3 cursor-pointer hover:bg-slate-900/40 rounded p-1" onClick={() => onSelect?.(item)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') onSelect?.(item) }}>
             <div className="w-2 h-2 rounded-full mt-2" style={{ backgroundColor: item.score >= 70 ? '#22d3ee' : item.score >= 40 ? '#f97316' : '#64748b' }} />
             <div className="flex-1">
               <div className="text-xs uppercase tracking-wide text-slate-500">{item.timeLabel}</div>
@@ -29,4 +29,3 @@ export default function SignalFeed({ items = [] }) {
     </div>
   )
 }
-

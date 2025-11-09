@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { createChart } from 'lightweight-charts'
 
-export default function CandleChart({ bars = [], overlays = {}, markers = [], loading = false }) {
+export default function CandleChart({ bars = [], overlays = {}, markers = [], loading = false, focusTime = null }) {
   const containerRef = useRef(null)
   const chartRef = useRef(null)
   const seriesRef = useRef(null)
@@ -13,6 +13,7 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
   const cloudCanvasRef = useRef(null)
   const cloudUnsubRef = useRef(null)
   const dockRef = useRef(null)
+  const lastFocusRef = useRef(null)
 
   useEffect(() => {
     const container = containerRef.current
@@ -424,14 +425,57 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
           const lines = []
           lines.push(`O ${fmt(last.open)}  H ${fmt(last.high)}  L ${fmt(last.low)}  C ${fmt(last.close)}`)
           if (saty?.atr && saty?.levels) {
-            lines.push(`ATR ${fmt(saty.atr)}  Pivot ${fmt(saty.pivot)}`)
-            lines.push(`±0.236 ${fmt(saty.levels.t0236.dn)} / ${fmt(saty.levels.t0236.up)}  ±1.0 ${fmt(saty.levels.t1000.dn)} / ${fmt(saty.levels.t1000.up)}`)
+            const pivot = saty.pivot
+            const up0236 = saty.levels.t0236.up
+            const dn0236 = saty.levels.t0236.dn
+            const up1000 = saty.levels.t1000.up
+            const dn1000 = saty.levels.t1000.dn
+            const dist = (t) => (t == null ? null : (t - last.close))
+            const abs = (x) => (x == null ? null : Math.abs(x))
+            const toAtr = (x) => (x == null || !saty.atr ? null : x / saty.atr)
+            const nearestUp = [up0236, up1000].filter(v => v != null && v > last.close).sort((a,b) => a - b)[0]
+            const nearestDn = [dn0236, dn1000].filter(v => v != null && v < last.close).sort((a,b) => abs(a-last.close) - abs(b-last.close))[0]
+            lines.push(`ATR ${fmt(saty.atr)}  Pivot ${fmt(pivot)}`)
+            lines.push(`±0.236 ${fmt(dn0236)} / ${fmt(up0236)}  ±1.0 ${fmt(dn1000)} / ${fmt(up1000)}`)
+            if (nearestUp != null) {
+              const dpx = dist(nearestUp)
+              const datr = toAtr(abs(dpx))
+              lines.push(`Next ↑ ${fmt(nearestUp)}  Δ ${fmt(dpx)} (${datr==null?'—':datr.toFixed(2)} ATR)`)
+            }
+            if (nearestDn != null) {
+              const dpx = dist(nearestDn)
+              const datr = toAtr(abs(dpx))
+              lines.push(`Next ↓ ${fmt(nearestDn)}  Δ ${fmt(dpx)} (${datr==null?'—':datr.toFixed(2)} ATR)`)
+            }
           }
           d.innerHTML = `<div style="line-height:1.2">${lines.map(l => `<div>${l}</div>`).join('')}</div>`
         }
       }
     } catch (_) {}
   }, [overlays, bars])
+
+  // Optional focus to a specific time (center visible range around that bar)
+  useEffect(() => {
+    if (!focusTime || !chartRef.current || !bars?.length) return
+    if (lastFocusRef.current === focusTime) return
+    lastFocusRef.current = focusTime
+    // find nearest index by time
+    let idx = bars.findIndex(b => b.time === focusTime)
+    if (idx === -1) {
+      // nearest by abs diff
+      let best = 0, bestDiff = Math.abs(bars[0].time - focusTime)
+      for (let i = 1; i < bars.length; i++) {
+        const d = Math.abs(bars[i].time - focusTime)
+        if (d < bestDiff) { best = i; bestDiff = d }
+      }
+      idx = best
+    }
+    const left = Math.max(0, idx - 60)
+    const right = Math.min(bars.length - 1, idx + 60)
+    try {
+      chartRef.current.timeScale().setVisibleRange({ from: bars[left].time, to: bars[right].time })
+    } catch (_) {}
+  }, [focusTime, bars])
 
   return (
     <div className="card w-full h-[560px] overflow-hidden relative">
