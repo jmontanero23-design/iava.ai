@@ -21,10 +21,11 @@ export default async function handler(req, res) {
 
     const { computeStates } = await import('../src/utils/indicators.js')
 
-    // Events CSV
+    // Events accumulation
     const header = 'symbol,time,close,score,forwardReturn\n'
     let rows = ''
-    // Summary CSV (per threshold, overall/bull/bear)
+    const eventsJson = []
+    // Summary (per threshold, overall/bull/bear)
     const ths = [30,40,50,60,70,80,90]
     const sumRows = [] // {symbol, regime, th, events, winRate, avgFwd, medianFwd}
     for (const symbol of symbols) {
@@ -64,7 +65,9 @@ export default async function handler(req, res) {
           const entry = bars[i].close
           const exit = bars[i + horizon].close
           const fwd = (exit - entry) / entry
-          rows += `${symbol},${new Date(bars[i].time*1000).toISOString()},${entry},${st.score.toFixed(2)},${(fwd*100).toFixed(2)}%\n`
+          const iso = new Date(bars[i].time*1000).toISOString()
+          rows += `${symbol},${iso},${entry},${st.score.toFixed(2)},${(fwd*100).toFixed(2)}%\n`
+          eventsJson.push({ symbol, time: iso, close: entry, score: Number(st.score.toFixed(2)), forwardReturnPct: Number((fwd*100).toFixed(2)) })
         }
         // Summary accumulation
         if (i + horizon < bars.length) {
@@ -105,12 +108,19 @@ export default async function handler(req, res) {
         }
       }
     }
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
     if (format === 'summary') {
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8')
       const sumHeader = 'symbol,regime,threshold,events,winRate,avgFwd,medianFwd\n'
       const sumCsv = sumRows.map(r => `${r.symbol},${r.regime},${r.th},${r.events},${r.winRate}%,${r.avgFwd}%,${r.medianFwd}%`).join('\n')
       res.status(200).send(sumHeader + sumCsv)
+    } else if (format === 'json') {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8')
+      res.status(200).send(JSON.stringify({ events: eventsJson }))
+    } else if (format === 'summary-json') {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8')
+      res.status(200).send(JSON.stringify({ summary: sumRows }))
     } else {
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8')
       res.status(200).send(header + rows)
     }
   } catch (e) {
