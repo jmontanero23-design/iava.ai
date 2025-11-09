@@ -118,12 +118,14 @@ export default async function handler(req, res) {
     const avgWin = winsArr.length ? (winsArr.reduce((a,b)=>a+b,0) / winsArr.length) : 0
     const avgLoss = lossArr.length ? (lossArr.reduce((a,b)=>a+b,0) / lossArr.length) : 0
     const profitFactor = (avgWin > 0 && avgLoss < 0) ? Math.abs((avgWin) / (avgLoss)) : (winsArr.length && lossArr.length ? 0 : null)
+    const medFwd = median(events.map(e => e.fwd))
     const out = {
       symbol, timeframe, bars: bars.length,
       scoreAvg: Number(avg.toFixed(2)),
       scorePcts: { p40: Number(pct(scores,40).toFixed(2)), p60: Number(pct(scores,60).toFixed(2)), p70: Number(pct(scores,70).toFixed(2)) },
       recentScores: scores.slice(-120),
       threshold, horizon, dailyFilter, events: events.length, winRate: events.length ? Number(((wins/events.length)*100).toFixed(2)) : 0, avgFwd: Number((avgFwd*100).toFixed(2)),
+      medianFwd: Number((medFwd*100).toFixed(2)),
       avgWin: Number((avgWin*100).toFixed(2)), avgLoss: Number((avgLoss*100).toFixed(2)), profitFactor: profitFactor==null?null:Number(profitFactor.toFixed(2)),
     }
     if (wantCurve) {
@@ -183,6 +185,14 @@ function mapTf(tf) {
   if (t === '1h' || t === '1hour') return '1Hour'
   if (t === '1d' || t === '1day' || t === 'day') return '1Day'
   return '1Min'
+}
+
+function median(arr) {
+  if (!arr?.length) return 0
+  const copy = [...arr].sort((a,b) => a - b)
+  const mid = Math.floor(copy.length / 2)
+  if (copy.length % 2) return copy[mid]
+  return (copy[mid - 1] + copy[mid]) / 2
 }
 
 async function fetchBars({ key, secret, dataBase, symbol, timeframe, limit }) {

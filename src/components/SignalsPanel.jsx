@@ -18,7 +18,7 @@ export default function SignalsPanel({ state }) {
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Signal Snapshot <InfoPopover title="Signals">Snapshot of normalized states and the current Unicorn Score. Score is a weighted sum of independent components.</InfoPopover></h3>
+        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Signal Snapshot <InfoPopover title="Signals">Signal Snapshot shows each indicator state (trend, regime, volatility, structure) and the weighted Unicorn Score. Look for broad agreement + high score.</InfoPopover></h3>
         <div className={`text-sm font-semibold ${scoreColor}`}>Unicorn Score: {Math.round(state.score)}</div>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-sm">

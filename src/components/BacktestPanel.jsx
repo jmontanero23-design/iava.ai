@@ -55,6 +55,7 @@ export default function BacktestPanel({ symbol, timeframe }) {
             <div><span className="text-slate-400">Events</span> {res.events} @≥{res.threshold} / {res.horizon} bars</div>
             <div><span className="text-slate-400">Win‑rate</span> {res.winRate}%</div>
             <div><span className="text-slate-400">Avg fwd</span> {res.avgFwd}%</div>
+            <div><span className="text-slate-400">Median fwd</span> {res.medianFwd}%</div>
             <div><span className="text-slate-400">Avg win</span> {res.avgWin}%</div>
             <div><span className="text-slate-400">Avg loss</span> {res.avgLoss}%</div>
             <div><span className="text-slate-400">Profit Factor</span> {res.profitFactor ?? '—'}</div>
