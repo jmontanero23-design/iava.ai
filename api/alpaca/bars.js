@@ -9,7 +9,13 @@ function mapTimeframe(tf) {
 }
 
 const mem = { data: new Map() }
-const TTL = 15 * 1000 // 15s cache
+const TTL_MAP = {
+  '1Min': 15 * 1000,
+  '5Min': 60 * 1000,
+  '15Min': 3 * 60 * 1000,
+  '1Hour': 5 * 60 * 1000,
+  '1Day': 60 * 60 * 1000,
+}
 
 export default async function handler(req, res) {
   try {
@@ -45,7 +51,8 @@ export default async function handler(req, res) {
     const cacheKey = `${endpoint}|${key}|${secret}`
     const now = Date.now()
     const hit = mem.data.get(cacheKey)
-    if (hit && (now - hit.at) < TTL) {
+    const ttl = TTL_MAP[timeframe] || 15000
+    if (hit && (now - hit.at) < ttl) {
       return res.status(200).json({ symbol, timeframe, feed, bars: hit.value })
     }
 
