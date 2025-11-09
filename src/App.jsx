@@ -4,6 +4,7 @@ import CandleChart from './components/chart/CandleChart.jsx'
 import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend, computeStates, pivotRibbon } from './utils/indicators.js'
 import SqueezePanel from './components/chart/SqueezePanel.jsx'
 import SignalsPanel from './components/SignalsPanel.jsx'
+import SatyPanel from './components/SatyPanel.jsx'
 import { fetchBars as fetchBarsApi } from './services/alpaca.js'
 import HealthBadge from './components/HealthBadge.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
@@ -188,10 +189,13 @@ export default function App() {
         </div>
         <div className="ml-auto"><HealthBadge /></div>
       </div>
-      <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} />
+      <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} loading={loading} />
       <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} />
-      {showSqueeze && <SqueezePanel bars={bars} />}
-      <SignalsPanel state={signalState} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {showSqueeze && <SqueezePanel bars={bars} />}
+        <SignalsPanel state={signalState} />
+      </div>
+      <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
       <section className="card p-4">
         <h2 className="text-lg font-semibold mb-2">Project Structure</h2>
         <ul className="list-disc pl-6 text-slate-300">

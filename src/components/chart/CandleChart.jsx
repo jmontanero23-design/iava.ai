@@ -1,13 +1,14 @@
 import React, { useEffect, useRef } from 'react'
 import { createChart } from 'lightweight-charts'
 
-export default function CandleChart({ bars = [], overlays = {}, markers = [] }) {
+export default function CandleChart({ bars = [], overlays = {}, markers = [], loading = false }) {
   const containerRef = useRef(null)
   const chartRef = useRef(null)
   const seriesRef = useRef(null)
   const overlaySeriesRef = useRef({})
   const volumeSeriesRef = useRef(null)
   const tooltipRef = useRef(null)
+  const priceLinesRef = useRef({ saty: {} })
 
   useEffect(() => {
     const container = containerRef.current
@@ -46,6 +47,7 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [] }) 
       seriesRef.current = null
       volumeSeriesRef.current = null
       overlaySeriesRef.current = {}
+      priceLinesRef.current = { saty: {} }
     }
   }, [])
 
@@ -226,11 +228,50 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [] }) 
       ref.ribbon.e21g.setData([])
       ref.ribbon.e21r.setData([])
     }
+
+    // SATY price lines on candle series for labeled targets
+    if (seriesRef.current) {
+      const lines = priceLinesRef.current.saty || {}
+      const ensure = (key, price, color, title) => {
+        if (price == null) return
+        if (!lines[key]) {
+          lines[key] = seriesRef.current.createPriceLine({ price, color, lineWidth: 1, title, axisLabelVisible: true })
+        } else {
+          try { lines[key].applyOptions({ price, color, title }) } catch (_) {}
+        }
+      }
+      const removeKeys = (keys) => {
+        for (const k of keys) {
+          if (lines[k]) {
+            try { seriesRef.current.removePriceLine(lines[k]) } catch (_) {}
+            delete lines[k]
+          }
+        }
+      }
+      if (overlays.saty && overlays.saty.levels) {
+        const { pivot, levels } = overlays.saty
+        ensure('pivot', pivot, '#e5e7eb', 'Pivot')
+        ensure('t0236u', levels.t0236.up, '#94a3b8', '+0.236 ATR')
+        ensure('t0236d', levels.t0236.dn, '#94a3b8', '-0.236 ATR')
+        ensure('t1000u', levels.t1000.up, '#14b8a6', '+1.0 ATR')
+        ensure('t1000d', levels.t1000.dn, '#14b8a6', '-1.0 ATR')
+        ensure('t1618u', levels.t1618.up, '#a78bfa', '+1.618 ATR')
+        ensure('t1618d', levels.t1618.dn, '#a78bfa', '-1.618 ATR')
+      } else {
+        removeKeys(Object.keys(lines))
+      }
+      priceLinesRef.current.saty = lines
+    }
   }, [overlays, bars])
 
   return (
     <div className="card w-full h-[560px] overflow-hidden relative">
       <div ref={containerRef} className="w-full h-full" />
+      {loading ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+          <div className="animate-spin h-6 w-6 border-2 border-slate-600 border-t-transparent rounded-full" />
+        </div>
+      ) : null}
     </div>
   )
 }
