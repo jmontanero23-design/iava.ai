@@ -21,8 +21,14 @@ export default async function handler(req, res) {
     const timeframe = mapTimeframe(url.searchParams.get('timeframe') || '1Min')
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '500', 10), 10000)
     const adjustment = url.searchParams.get('adjustment') || 'raw'
-    const start = url.searchParams.get('start')
+    let start = url.searchParams.get('start')
     const end = url.searchParams.get('end')
+    if (!start) {
+      const now = new Date()
+      const backDays = timeframe === '1Day' ? 365 : 7
+      const startDate = new Date(now.getTime() - backDays * 24 * 60 * 60 * 1000)
+      start = startDate.toISOString()
+    }
 
     const feed = process.env.ALPACA_STOCKS_FEED || 'iex'
     const qs = new URLSearchParams({ timeframe, limit: String(limit), adjustment, feed })
