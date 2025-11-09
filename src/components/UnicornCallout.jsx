@@ -34,6 +34,9 @@ export default function UnicornCallout({ state, threshold = 70 }) {
         <ul className="list-disc pl-5">
           {facts.map((f, i) => <li key={i}>{f}</li>)}
         </ul>
+        {state.components && (
+          <div className="mt-2 text-xs text-slate-300">Why: {Object.entries(state.components).filter(([,v])=>v>0).map(([k,v]) => `${k}+${v}`).join(', ')}</div>
+        )}
       </div>
       {open && <div className="mt-3">
         <TradePanel bars={state._bars || []} saty={state.saty} account={state._account || {}} defaultSide={state.satyDir === 'short' ? 'sell' : 'buy'} onClose={() => setOpen(false)} />

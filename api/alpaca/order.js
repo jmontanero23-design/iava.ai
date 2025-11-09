@@ -63,6 +63,7 @@ export default async function handler(req, res) {
       const ja = await rc.json()
       if (!rc.ok) return res.status(rc.status).json(ja)
       const equity = parseFloat(ja.equity || '0')
+      const lastEquity = parseFloat(ja.last_equity || '0')
       if (equity > 0 && estEntry != null) {
         const stop = Number(stopLoss.stop_price)
         const q = Number(qty)
@@ -70,6 +71,20 @@ export default async function handler(req, res) {
         const riskUsd = perShare * q
         const pct = (riskUsd / equity) * 100
         if (pct > maxRiskPct) return res.status(400).json({ error: `Risk ${pct.toFixed(2)}% exceeds limit ${maxRiskPct}% (guardrail)` })
+      }
+    }
+
+    // Daily loss cap guardrail
+    const maxDailyLossPct = parseFloat(process.env.ORDER_RULE_MAX_DAILY_LOSS_PCT || '0')
+    if (maxDailyLossPct > 0) {
+      const ra = await fetch(`${base}/v2/account`, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
+      const ja2 = await ra.json()
+      if (!ra.ok) return res.status(ra.status).json(ja2)
+      const eq = parseFloat(ja2.equity || '0')
+      const lastEq = parseFloat(ja2.last_equity || '0')
+      if (eq > 0 && lastEq > 0) {
+        const changePct = ((eq - lastEq) / lastEq) * 100
+        if (changePct < -maxDailyLossPct) return res.status(400).json({ error: `Daily loss ${changePct.toFixed(2)}% exceeds limit ${maxDailyLossPct}% (guardrail)` })
       }
     }
     const r = await fetch(`${base}/v2/orders`, {

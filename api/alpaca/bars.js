@@ -65,7 +65,7 @@ export default async function handler(req, res) {
       close: b.c ?? b.Close,
       volume: b.v ?? b.Volume,
     }))
-    res.status(200).json({ symbol, timeframe, bars })
+    res.status(200).json({ symbol, timeframe, feed, bars })
   } catch (e) {
     res.status(500).json({ error: e?.message || 'Unexpected error' })
   }

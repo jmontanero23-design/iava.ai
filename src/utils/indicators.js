@@ -275,11 +275,13 @@ export function computeStates(bars) {
   const satyDir = satyTriggerDirection(bars, saty)
   // Unicorn Score v1 heuristic
   let score = 0
-  if (pivotNow === 'bullish') score += 20
-  if (rip.bias === 'bullish') score += 20
-  if (satyDir === 'long' && pivotNow === 'bullish') score += 20
-  if (sq.fired && sq.dir === 'up') score += 25
-  if (ichiRegime === 'bullish') score += 15
+  const components = {}
+  const add = (k, v) => { components[k] = v; score += v }
+  add('pivotRibbon', pivotNow === 'bullish' ? 20 : 0)
+  add('ripster3450', rip.bias === 'bullish' ? 20 : 0)
+  add('satyTrigger', (satyDir === 'long' && pivotNow === 'bullish') ? 20 : 0)
+  add('squeeze', (sq.fired && sq.dir === 'up') ? 25 : 0)
+  add('ichimoku', ichiRegime === 'bullish' ? 15 : 0)
 
   const markers = []
   // Mark 8/21 crosses
@@ -306,6 +308,7 @@ export function computeStates(bars) {
     pivotNow,
     satyDir,
     score,
+    components,
     markers,
   }
 }
