@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function StatusBar({ symbol, timeframe, bars, usingSample, updatedAt }) {
+export default function StatusBar({ symbol, timeframe, bars, usingSample, updatedAt, stale }) {
   const count = Array.isArray(bars) ? bars.length : 0
   const updated = updatedAt ? new Date(updatedAt).toLocaleTimeString() : ''
   return (
@@ -9,7 +9,7 @@ export default function StatusBar({ symbol, timeframe, bars, usingSample, update
       <span>Bars: {count}</span>
       {updated && <span>Updated: {updated}</span>}
       <span>Source: {usingSample ? 'Sample' : 'Live'}</span>
+      {stale ? <span className="text-amber-400">Stale</span> : <span className="text-emerald-400">Fresh</span>}
     </div>
   )
 }
-

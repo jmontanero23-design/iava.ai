@@ -10,6 +10,8 @@ import HealthBadge from './components/HealthBadge.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
 import Presets from './components/Presets.jsx'
 import StatusBar from './components/StatusBar.jsx'
+import LegendChips from './components/LegendChips.jsx'
+import UnicornCallout from './components/UnicornCallout.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -61,6 +63,17 @@ export default function App() {
   }, [bars, showEma821, showEma512, showEma89, showEma3450, showIchi, showSaty])
 
   const signalState = useMemo(() => computeStates(bars), [bars])
+
+  const stale = useMemo(() => {
+    if (!bars?.length) return true
+    const last = bars[bars.length - 1]?.time
+    if (!last) return true
+    const now = Math.floor(Date.now()/1000)
+    const dt = now - last
+    const tf = timeframe.toLowerCase()
+    const maxAge = tf.includes('1min') ? 180 : tf.includes('5min') ? 600 : tf.includes('15min') ? 1800 : tf.includes('1hour') ? 7200 : 172800
+    return dt > maxAge
+  }, [bars, timeframe])
 
   async function loadBars(s = symbol, tf = timeframe) {
     try {
@@ -189,12 +202,14 @@ export default function App() {
         </div>
         <div className="ml-auto"><HealthBadge /></div>
       </div>
+      <LegendChips overlays={overlays} />
       <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} loading={loading} />
-      <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} />
+      <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {showSqueeze && <SqueezePanel bars={bars} />}
         <SignalsPanel state={signalState} />
       </div>
+      <UnicornCallout state={signalState} />
       <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
       <section className="card p-4">
         <h2 className="text-lg font-semibold mb-2">Project Structure</h2>
