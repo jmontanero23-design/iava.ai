@@ -59,6 +59,7 @@ export default function App() {
   const [threshold, setThreshold] = useState(70)
   const [dailyBars, setDailyBars] = useState([])
   const [enforceDaily, setEnforceDaily] = useState(false)
+  const [mtfPreset, setMtfPreset] = useState('manual')
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
@@ -153,7 +154,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    const prefs = {
+  const prefs = {
       symbol, timeframe, autoRefresh, refreshSec,
       showIchi, showRibbon, showSaty, showSqueeze,
       showEma821, showEma512, showEma89, showEma3450,
@@ -166,6 +167,41 @@ export default function App() {
   useEffect(() => {
     writeParams({ symbol, timeframe, threshold, enforceDaily, showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty })
   }, [symbol, timeframe, threshold, enforceDaily, showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty])
+
+  const presets = {
+    manual: null,
+    trendDaily: {
+      showEma821: true,
+      showEma512: false,
+      showEma89: false,
+      showEma3450: true,
+      showRibbon: true,
+      showIchi: true,
+      enforceDaily: true,
+    },
+    pullbackDaily: {
+      showEma821: false,
+      showEma512: true,
+      showEma89: true,
+      showEma3450: true,
+      showRibbon: true,
+      showIchi: true,
+      enforceDaily: true,
+    },
+  }
+
+  function applyPreset(id) {
+    setMtfPreset(id)
+    const preset = presets[id]
+    if (!preset) return
+    if (typeof preset.showEma821 === 'boolean') setShowEma821(preset.showEma821)
+    if (typeof preset.showEma512 === 'boolean') setShowEma512(preset.showEma512)
+    if (typeof preset.showEma89 === 'boolean') setShowEma89(preset.showEma89)
+    if (typeof preset.showEma3450 === 'boolean') setShowEma3450(preset.showEma3450)
+    if (typeof preset.showRibbon === 'boolean') setShowRibbon(preset.showRibbon)
+    if (typeof preset.showIchi === 'boolean') setShowIchi(preset.showIchi)
+    if (typeof preset.enforceDaily === 'boolean') setEnforceDaily(preset.enforceDaily)
+  }
 
   useEffect(() => {
     if (!autoRefresh) return
@@ -199,6 +235,14 @@ export default function App() {
           <Presets symbol={symbol} setSymbol={setSymbol} timeframe={timeframe} setTimeframe={setTimeframe} onLoad={(s, tf) => loadBars(s, tf)} />
         </div>
         <span className="text-sm text-slate-400 inline-flex items-center gap-2">Overlays <InfoPopover title="Overlays">Toggle EMA Clouds (pullback/trend), Ichimoku (regime), Pivot Ribbon (8/21/34) and SATY ATR levels (targets).</InfoPopover></span>
+        <label className="inline-flex items-center gap-2 text-sm">
+          Preset
+          <select value={mtfPreset} onChange={e => applyPreset(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+            <option value="manual">Manual</option>
+            <option value="trendDaily">Trend + Daily Confluence</option>
+            <option value="pullbackDaily">Pullback + Daily Confluence</option>
+          </select>
+        </label>
         <label className="inline-flex items-center gap-2">
           <input type="checkbox" className="accent-indigo-500" checked={showEma821} onChange={e => setShowEma821(e.target.checked)} />
           <span>EMA 8/21</span>

@@ -1,6 +1,8 @@
 import crypto from 'node:crypto'
+import { getCacheMap, getCache, setCache } from '../lib/cache.js'
 
-const mem = { data: new Map(), daily: new Map() }
+const dataCache = getCacheMap('backtest')
+const dailyCache = getCacheMap('dailyBars')
 const TTL = 60 * 1000 // 60s cache
 const DAILY_TTL = 60 * 60 * 1000 // 1h cache for daily bars
 
@@ -22,10 +24,16 @@ export default async function handler(req, res) {
     const dailyFilter = (urlObj.searchParams.get('dailyFilter') || 'none').toLowerCase() // none|bull|bear
 
     const cacheKey = `${symbol}|${timeframe}|${limit}|${threshold}|${horizon}`
-    const now = Date.now()
-    const hit = mem.data.get(cacheKey)
-    if (hit && (now - hit.at) < TTL) {
-      return res.status(200).json(hit.value)
+    const cached = getCache(dataCache, cacheKey, TTL)
+    const inm = req.headers['if-none-match']
+    if (cached) {
+      res.setHeader('ETag', cached.etag)
+      if (inm && inm === cached.etag) {
+        res.status(304).end()
+        return
+      }
+      res.status(200).send(cached.body)
+      return
     }
     const bars = await fetchBars({ key, secret, dataBase, symbol, timeframe, limit })
     if (!bars.length) return res.status(200).json({ symbol, timeframe, bars: 0, scores: [], scoreAvg: 0, scorePcts: { p40: 0, p60: 0, p70: 0 } })
@@ -43,13 +51,10 @@ export default async function handler(req, res) {
     let dailyStates = null
     if (dailyFilter !== 'none') {
       const dkey = `${symbol}|1Day|400`
-      const now2 = Date.now()
-      const dhit = mem.daily.get(dkey)
-      if (dhit && (now2 - dhit.at) < DAILY_TTL) {
-        dailyBars = dhit.value
-      } else {
+      dailyBars = getCache(dailyCache, dkey, DAILY_TTL)
+      if (!dailyBars) {
         dailyBars = await fetchBars({ key, secret, dataBase, symbol, timeframe: '1Day', limit: 400 })
-        mem.daily.set(dkey, { at: now2, value: dailyBars })
+        setCache(dailyCache, dkey, dailyBars)
       }
       dailyStates = []
       for (let di = 0; di < dailyBars.length; di++) {
@@ -169,7 +174,7 @@ export default async function handler(req, res) {
         res.status(304).end()
         return
       }
-      mem.data.set(cacheKey, { at: now, value: out, etag })
+      setCache(dataCache, cacheKey, { body, etag })
       res.status(200).send(body)
     }
   } catch (e) {

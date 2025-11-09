@@ -1,3 +1,7 @@
+import { getCacheMap, getCache, setCache } from '../lib/cache.js'
+
+const dailyCache = getCacheMap('dailyBars')
+
 export default async function handler(req, res) {
   try {
     const key = process.env.ALPACA_KEY_ID
@@ -17,20 +21,23 @@ export default async function handler(req, res) {
 
     const { computeStates } = await import('../src/utils/indicators.js')
 
-    const { computeStates } = await import('../src/utils/indicators.js')
-
     // Events CSV
     const header = 'symbol,time,close,score,forwardReturn\n'
     let rows = ''
     // Summary CSV (per threshold, overall/bull/bear)
     const ths = [30,40,50,60,70,80,90]
-    const sumRows = [] // {symbol, regime, th, events, winRate, avgFwd}
+    const sumRows = [] // {symbol, regime, th, events, winRate, avgFwd, medianFwd}
     for (const symbol of symbols) {
       const bars = await fetchBars({ key, secret, dataBase, symbol, timeframe, limit })
       if (!bars.length) continue
       let dailyBars = null, dailyStates = null
       if (dailyFilter !== 'none') {
-        dailyBars = await fetchBars({ key, secret, dataBase, symbol, timeframe: '1Day', limit: 400 })
+        const dkey = `${symbol}|1Day|400`
+        dailyBars = getCache(dailyCache, dkey, 60 * 60 * 1000)
+        if (!dailyBars) {
+          dailyBars = await fetchBars({ key, secret, dataBase, symbol, timeframe: '1Day', limit: 400 })
+          setCache(dailyCache, dkey, dailyBars)
+        }
         dailyStates = []
         for (let di = 0; di < dailyBars.length; di++) dailyStates[di] = computeStates(dailyBars.slice(0, di + 1))
       }
@@ -87,7 +94,8 @@ export default async function handler(req, res) {
             const ev = arr.length
             const wr = ev ? (arr.filter(x=>x>0).length/ev)*100 : 0
             const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
-            sumRows.push({ symbol, regime, th: c.th, events: ev, winRate: wr.toFixed(2), avgFwd: av.toFixed(2) })
+            const med = ev ? median(arr)*100 : 0
+            sumRows.push({ symbol, regime, th: c.th, events: ev, winRate: wr.toFixed(2), avgFwd: av.toFixed(2), medianFwd: med.toFixed(2) })
           }
         }
         pushCurve('all', curveAll)
@@ -99,8 +107,8 @@ export default async function handler(req, res) {
     }
     res.setHeader('Content-Type', 'text/csv; charset=utf-8')
     if (format === 'summary') {
-      const sumHeader = 'symbol,regime,threshold,events,winRate,avgFwd\n'
-      const sumCsv = sumRows.map(r => `${r.symbol},${r.regime},${r.th},${r.events},${r.winRate}%,${r.avgFwd}%`).join('\n')
+      const sumHeader = 'symbol,regime,threshold,events,winRate,avgFwd,medianFwd\n'
+      const sumCsv = sumRows.map(r => `${r.symbol},${r.regime},${r.th},${r.events},${r.winRate}%,${r.avgFwd}%,${r.medianFwd}%`).join('\n')
       res.status(200).send(sumHeader + sumCsv)
     } else {
       res.status(200).send(header + rows)
@@ -137,4 +145,12 @@ async function fetchBars({ key, secret, dataBase, symbol, timeframe, limit }) {
     time: Math.floor(new Date(b.t || b.Timestamp || b.time).getTime() / 1000),
     open: b.o ?? b.Open, high: b.h ?? b.High, low: b.l ?? b.Low, close: b.c ?? b.Close, volume: b.v ?? b.Volume,
   }))
+}
+
+function median(arr) {
+  if (!arr?.length) return 0
+  const copy = [...arr].sort((a,b) => a - b)
+  const mid = Math.floor(copy.length / 2)
+  if (copy.length % 2) return copy[mid]
+  return (copy[mid - 1] + copy[mid]) / 2
 }
