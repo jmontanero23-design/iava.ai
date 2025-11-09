@@ -5,7 +5,7 @@ export default function CandleChart({ bars = [], overlays = {} }) {
   const containerRef = useRef(null)
   const chartRef = useRef(null)
   const seriesRef = useRef(null)
-  const overlaySeriesRef = useRef({})
+  const overlaySeriesRef = useRef(new Set())
 
   useEffect(() => {
     const container = containerRef.current
@@ -34,7 +34,7 @@ export default function CandleChart({ bars = [], overlays = {} }) {
       chart.remove()
       chartRef.current = null
       seriesRef.current = null
-      overlaySeriesRef.current = {}
+      overlaySeriesRef.current = new Set()
     }
   }, [])
 
@@ -50,25 +50,15 @@ export default function CandleChart({ bars = [], overlays = {} }) {
     const chart = chartRef.current
     if (!chart) return
     try {
-      // Clear existing overlays safely (handle nested groups)
-      const removeValue = (val) => {
-        if (!val) return
-        if (Array.isArray(val)) {
-          val.forEach(removeValue)
-        return
-      }
-      if (typeof val === 'object') {
-        // Heuristic: series objects have setData/applyOptions methods
-        if (typeof val.setData === 'function' || typeof val.applyOptions === 'function') {
-          try { chart.removeSeries(val) } catch (e) { /* noop */ }
-          return
+      // Remove any previously created overlay series
+      if (overlaySeriesRef.current && overlaySeriesRef.current.size) {
+        for (const s of overlaySeriesRef.current) {
+          if (s && typeof s.setData === 'function') {
+            try { chart.removeSeries(s) } catch (_) {}
+          }
         }
-        for (const k of Object.keys(val)) removeValue(val[k])
-        return
+        overlaySeriesRef.current.clear()
       }
-    }
-      Object.values(overlaySeriesRef.current).forEach(removeValue)
-      overlaySeriesRef.current = {}
 
     if (overlays.emaCloud) {
       const upper = chart.addLineSeries({ color: '#f59e0b', lineWidth: 1 })
@@ -78,8 +68,8 @@ export default function CandleChart({ bars = [], overlays = {} }) {
       const dataLower = bars.map((b, i) => slow[i] == null ? null : { time: b.time, value: slow[i] }).filter(Boolean)
       upper.setData(dataUpper)
       lower.setData(dataLower)
-      overlaySeriesRef.current.emaCloudUpper = upper
-      overlaySeriesRef.current.emaCloudLower = lower
+      overlaySeriesRef.current.add(upper)
+      overlaySeriesRef.current.add(lower)
     }
 
     if (overlays.ichimoku) {
@@ -113,7 +103,11 @@ export default function CandleChart({ bars = [], overlays = {} }) {
       a.setData(aData)
       b.setData(bData)
       c.setData(chik)
-      overlaySeriesRef.current.ichimoku = { t, k, a, b, c }
+      overlaySeriesRef.current.add(t)
+      overlaySeriesRef.current.add(k)
+      overlaySeriesRef.current.add(a)
+      overlaySeriesRef.current.add(b)
+      overlaySeriesRef.current.add(c)
     }
 
     if (overlays.saty) {
@@ -130,17 +124,17 @@ export default function CandleChart({ bars = [], overlays = {} }) {
         s.setData(data)
         return s
       }
-      overlaySeriesRef.current.satyPivot = makeHLine(pivot, '#e5e7eb', 2)
-      overlaySeriesRef.current.saty0236U = makeHLine(levels.t0236.up, '#94a3b8')
-      overlaySeriesRef.current.saty0236D = makeHLine(levels.t0236.dn, '#94a3b8')
-      overlaySeriesRef.current.saty0618U = makeHLine(levels.t0618.up, '#38bdf8')
-      overlaySeriesRef.current.saty0618D = makeHLine(levels.t0618.dn, '#38bdf8')
-      overlaySeriesRef.current.saty1000U = makeHLine(levels.t1000.up, '#14b8a6')
-      overlaySeriesRef.current.saty1000D = makeHLine(levels.t1000.dn, '#14b8a6')
-      overlaySeriesRef.current.saty1236U = makeHLine(levels.t1236.up, '#f59e0b')
-      overlaySeriesRef.current.saty1236D = makeHLine(levels.t1236.dn, '#f59e0b')
-      overlaySeriesRef.current.saty1618U = makeHLine(levels.t1618.up, '#a78bfa')
-      overlaySeriesRef.current.saty1618D = makeHLine(levels.t1618.dn, '#a78bfa')
+      overlaySeriesRef.current.add(makeHLine(pivot, '#e5e7eb', 2))
+      overlaySeriesRef.current.add(makeHLine(levels.t0236.up, '#94a3b8'))
+      overlaySeriesRef.current.add(makeHLine(levels.t0236.dn, '#94a3b8'))
+      overlaySeriesRef.current.add(makeHLine(levels.t0618.up, '#38bdf8'))
+      overlaySeriesRef.current.add(makeHLine(levels.t0618.dn, '#38bdf8'))
+      overlaySeriesRef.current.add(makeHLine(levels.t1000.up, '#14b8a6'))
+      overlaySeriesRef.current.add(makeHLine(levels.t1000.dn, '#14b8a6'))
+      overlaySeriesRef.current.add(makeHLine(levels.t1236.up, '#f59e0b'))
+      overlaySeriesRef.current.add(makeHLine(levels.t1236.dn, '#f59e0b'))
+      overlaySeriesRef.current.add(makeHLine(levels.t1618.up, '#a78bfa'))
+      overlaySeriesRef.current.add(makeHLine(levels.t1618.dn, '#a78bfa'))
     }
     } catch (e) {
       // eslint-disable-next-line no-console
