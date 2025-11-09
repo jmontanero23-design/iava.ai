@@ -74,8 +74,22 @@ export default function CandleChart({ bars = [], overlays = {} }) {
       const tenk = bars.map((bar, i) => overlays.ichimoku.tenkan[i] == null ? null : { time: bar.time, value: overlays.ichimoku.tenkan[i] }).filter(Boolean)
       const kij = bars.map((bar, i) => overlays.ichimoku.kijun[i] == null ? null : { time: bar.time, value: overlays.ichimoku.kijun[i] }).filter(Boolean)
       // spanA/spanB arrays are shifted forward; align with extended timeline where present
-      const aData = overlays.ichimoku.spanA.map((v, i) => v == null ? null : { time: bars[i]?.time || (bars.at(-1)?.time + (i - (bars.length - 1))), value: v }).filter(Boolean)
-      const bData = overlays.ichimoku.spanB.map((v, i) => v == null ? null : { time: bars[i]?.time || (bars.at(-1)?.time + (i - (bars.length - 1))), value: v }).filter(Boolean)
+      const lastIdx = Math.max(0, bars.length - 1)
+      const lastTime = bars.length ? bars[lastIdx].time : undefined
+      const prevTime = bars.length > 1 ? bars[lastIdx - 1].time : undefined
+      const step = lastTime != null && prevTime != null ? (lastTime - prevTime) : 60
+      const aData = overlays.ichimoku.spanA.map((v, i) => {
+        if (v == null) return null
+        const tCandidate = bars[i] ? bars[i].time : (lastTime != null ? lastTime + (i - lastIdx) * step : undefined)
+        if (tCandidate == null) return null
+        return { time: tCandidate, value: v }
+      }).filter(Boolean)
+      const bData = overlays.ichimoku.spanB.map((v, i) => {
+        if (v == null) return null
+        const tCandidate = bars[i] ? bars[i].time : (lastTime != null ? lastTime + (i - lastIdx) * step : undefined)
+        if (tCandidate == null) return null
+        return { time: tCandidate, value: v }
+      }).filter(Boolean)
       const chik = bars.map((bar, i) => overlays.ichimoku.chikou[i] == null ? null : { time: bar.time, value: overlays.ichimoku.chikou[i] }).filter(Boolean)
       t.setData(tenk)
       k.setData(kij)
@@ -87,8 +101,8 @@ export default function CandleChart({ bars = [], overlays = {} }) {
 
     if (overlays.saty) {
       const { pivot, levels } = overlays.saty
-      const t0 = bars[0]?.time
-      const t1 = bars.at(-1)?.time
+      const t0 = bars.length ? bars[0].time : undefined
+      const t1 = bars.length ? bars[bars.length - 1].time : undefined
       const makeHLine = (value, color, lineWidth = 1, style = 0) => {
         const s = chart.addLineSeries({ color, lineWidth, lineStyle: style })
         const data = []
