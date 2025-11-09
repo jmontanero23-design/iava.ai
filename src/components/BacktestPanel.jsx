@@ -12,6 +12,12 @@ export default function BacktestPanel({ symbol, timeframe }) {
   const [batchSymbols, setBatchSymbols] = useState('AAPL,MSFT,NVDA,SPY')
   const [includeSummaryRegimes, setIncludeSummaryRegimes] = useState(true)
 
+  const presets = [
+    { label: 'Intraday (70 / 10)', th: 70, hz: 10, regime: 'bull' },
+    { label: 'Swing (65 / 20)', th: 65, hz: 20, regime: 'none' },
+    { label: 'Mean Revert (55 / 5)', th: 55, hz: 5, regime: 'bear' },
+  ]
+
   async function run() {
     try {
       setLoading(true); setErr('')
@@ -44,6 +50,14 @@ export default function BacktestPanel({ symbol, timeframe }) {
           <button onClick={run} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Running…' : 'Run'}</button>
         </div>
       </div>
+      <div className="flex flex-wrap gap-2 text-xs mt-2">
+        <span className="text-slate-400">Presets:</span>
+        {presets.map(p => (
+          <button key={p.label} onClick={() => { setThreshold(p.th); setHorizon(p.hz); setDailyFilter(p.regime) }} className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded px-2 py-1">
+            {p.label}
+          </button>
+        ))}
+      </div>
       {err && <div className="text-xs text-rose-400 mt-2">{err}</div>}
       {res && (
         <div className="mt-2 text-sm text-slate-200">
@@ -63,7 +77,7 @@ export default function BacktestPanel({ symbol, timeframe }) {
           </div>
           <div className="mt-2 text-xs"><a className="underline hover:text-slate-300" href={`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&format=csv`} target="_blank" rel="noreferrer">Download CSV</a></div>
           <div className="mt-2 text-xs flex items-center gap-2 flex-wrap">
-            <span className="text-slate-400">Batch CSV (symbols):</span>
+            <span className="text-slate-400 inline-flex items-center gap-1">Batch CSV <InfoPopover title="Batch Backtest">Download historical events or summary stats for multiple symbols at once. Use regimes to compare bull vs bear performance.</InfoPopover></span>
             <input value={batchSymbols} onChange={e=>setBatchSymbols(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-64" />
             <a className="underline hover:text-slate-300" href={`/api/backtest_batch?symbols=${encodeURIComponent(batchSymbols)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&dailyFilter=${dailyFilter}&format=csv`} target="_blank" rel="noreferrer">Events CSV</a>
             <label className="inline-flex items-center gap-1"><input type="checkbox" checked={includeSummaryRegimes} onChange={e=>setIncludeSummaryRegimes(e.target.checked)} />Regimes</label>
