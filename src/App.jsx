@@ -379,7 +379,7 @@ export default function App() {
       <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
       <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
       <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />
-      <OrdersPanel />
+      <OrdersPanel symbol={symbol} lastPrice={bars[bars.length-1]?.close} />
       <section className="card p-4">
         <h2 className="text-lg font-semibold mb-2">Project Structure</h2>
         <ul className="list-disc pl-6 text-slate-300">
