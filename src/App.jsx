@@ -17,6 +17,7 @@ import OrdersPanel from './components/OrdersPanel.jsx'
 import SatyTargets from './components/SatyTargets.jsx'
 import InfoPopover from './components/InfoPopover.jsx'
 import SymbolSearch from './components/SymbolSearch.jsx'
+import { readParams, writeParams } from './utils/urlState.js'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -117,6 +118,7 @@ export default function App() {
     // Load persisted settings
     try {
       const saved = JSON.parse(localStorage.getItem('iava.settings') || '{}')
+      const qp = readParams()
       if (saved.symbol) setSymbol(saved.symbol)
       if (saved.timeframe) setTimeframe(saved.timeframe)
       if (typeof saved.autoRefresh === 'boolean') setAutoRefresh(saved.autoRefresh)
@@ -130,6 +132,18 @@ export default function App() {
       if (typeof saved.showEma89 === 'boolean') setShowEma89(saved.showEma89)
       if (typeof saved.showEma3450 === 'boolean') setShowEma3450(saved.showEma3450)
       if (typeof saved.autoLoadChange === 'boolean') setAutoLoadChange(saved.autoLoadChange)
+      // Override with URL params if present
+      if (qp.symbol) setSymbol(qp.symbol)
+      if (qp.timeframe) setTimeframe(qp.timeframe)
+      if (typeof qp.threshold === 'number') setThreshold(qp.threshold)
+      if (typeof qp.enforceDaily === 'boolean') setEnforceDaily(qp.enforceDaily)
+      if (typeof qp.ema821 === 'boolean') setShowEma821(qp.ema821)
+      if (typeof qp.ema512 === 'boolean') setShowEma512(qp.ema512)
+      if (typeof qp.ema89 === 'boolean') setShowEma89(qp.ema89)
+      if (typeof qp.ema3450 === 'boolean') setShowEma3450(qp.ema3450)
+      if (typeof qp.ichi === 'boolean') setShowIchi(qp.ichi)
+      if (typeof qp.ribbon === 'boolean') setShowRibbon(qp.ribbon)
+      if (typeof qp.saty === 'boolean') setShowSaty(qp.saty)
     } catch {}
     loadBars()
     loadDaily()
@@ -147,6 +161,11 @@ export default function App() {
     }
     try { localStorage.setItem('iava.settings', JSON.stringify(prefs)) } catch {}
   }, [symbol, timeframe, autoRefresh, refreshSec, showIchi, showRibbon, showSaty, showSqueeze, showEma821, showEma512, showEma89, showEma3450, autoLoadChange])
+
+  // Sync key UI state to URL for deep links
+  useEffect(() => {
+    writeParams({ symbol, timeframe, threshold, enforceDaily, showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty })
+  }, [symbol, timeframe, threshold, enforceDaily, showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty])
 
   useEffect(() => {
     if (!autoRefresh) return

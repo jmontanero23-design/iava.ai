@@ -1,5 +1,8 @@
 import crypto from 'node:crypto'
 
+const mem = { data: new Map() }
+const TTL = 60 * 1000 // 60s cache
+
 export default async function handler(req, res) {
   try {
     const key = process.env.ALPACA_KEY_ID
@@ -15,6 +18,12 @@ export default async function handler(req, res) {
     const horizon = Math.max(1, Math.min(100, parseInt(urlObj.searchParams.get('horizon') || '10', 10)))
     const format = (urlObj.searchParams.get('format') || 'json').toLowerCase()
 
+    const cacheKey = `${symbol}|${timeframe}|${limit}|${threshold}|${horizon}`
+    const now = Date.now()
+    const hit = mem.data.get(cacheKey)
+    if (hit && (now - hit.at) < TTL) {
+      return res.status(200).json(hit.value)
+    }
     const bars = await fetchBars({ key, secret, dataBase, symbol, timeframe, limit })
     if (!bars.length) return res.status(200).json({ symbol, timeframe, bars: 0, scores: [], scoreAvg: 0, scorePcts: { p40: 0, p60: 0, p70: 0 } })
 
@@ -57,6 +66,7 @@ export default async function handler(req, res) {
       res.setHeader('Content-Type', 'text/csv; charset=utf-8')
       res.status(200).send(header + rows)
     } else {
+      mem.data.set(cacheKey, { at: now, value: out })
       res.status(200).json(out)
     }
   } catch (e) {
