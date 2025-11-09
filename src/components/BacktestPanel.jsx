@@ -8,11 +8,12 @@ export default function BacktestPanel({ symbol, timeframe }) {
   const [threshold, setThreshold] = useState(70)
   const [horizon, setHorizon] = useState(10)
   const [showCurve, setShowCurve] = useState(true)
+  const [dailyFilter, setDailyFilter] = useState('none')
 
   async function run() {
     try {
       setLoading(true); setErr('')
-      const r = await fetch(`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&curve=${showCurve ? 1 : 0}`)
+      const r = await fetch(`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&curve=${showCurve ? 1 : 0}&dailyFilter=${encodeURIComponent(dailyFilter)}`)
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
       setRes(j)
@@ -31,6 +32,13 @@ export default function BacktestPanel({ symbol, timeframe }) {
           <label className="inline-flex items-center gap-2">Threshold <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" /></label>
           <label className="inline-flex items-center gap-2">Horizon <input type="number" min={1} max={100} value={horizon} onChange={e => setHorizon(parseInt(e.target.value,10)||1)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" /></label>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={showCurve} onChange={e=>setShowCurve(e.target.checked)} /> Curve</label>
+          <label className="inline-flex items-center gap-2">Regime
+            <select value={dailyFilter} onChange={e => setDailyFilter(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+              <option value="none">None</option>
+              <option value="bull">Daily Bullish</option>
+              <option value="bear">Daily Bearish</option>
+            </select>
+          </label>
           <button onClick={run} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Running…' : 'Run'}</button>
         </div>
       </div>
