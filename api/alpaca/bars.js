@@ -24,7 +24,8 @@ export default async function handler(req, res) {
     const start = url.searchParams.get('start')
     const end = url.searchParams.get('end')
 
-    const qs = new URLSearchParams({ timeframe, limit: String(limit), adjustment })
+    const feed = process.env.ALPACA_STOCKS_FEED || 'iex'
+    const qs = new URLSearchParams({ timeframe, limit: String(limit), adjustment, feed })
     if (start) qs.set('start', start)
     if (end) qs.set('end', end)
 
@@ -57,4 +58,3 @@ export default async function handler(req, res) {
     res.status(500).json({ error: e?.message || 'Unexpected error' })
   }
 }
-
