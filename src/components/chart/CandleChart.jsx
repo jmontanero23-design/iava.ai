@@ -51,22 +51,32 @@ export default function CandleChart({ bars = [], overlays = {} }) {
     if (!chart) return
     // Ensure containers for series
     const ref = overlaySeriesRef.current
-    ref.ema = ref.ema || {}
+    ref.ema = ref.ema || { clouds: {} }
     ref.ichi = ref.ichi || {}
     ref.saty = ref.saty || {}
 
-    // EMA Cloud
-    if (!ref.ema.upper) ref.ema.upper = chart.addLineSeries({ color: '#f59e0b', lineWidth: 1 })
-    if (!ref.ema.lower) ref.ema.lower = chart.addLineSeries({ color: '#f59e0b', lineWidth: 1 })
-    if (overlays.emaCloud) {
-      const { fast, slow } = overlays.emaCloud
-      const dataUpper = bars.map((b, i) => fast[i] == null ? null : { time: b.time, value: fast[i] }).filter(Boolean)
-      const dataLower = bars.map((b, i) => slow[i] == null ? null : { time: b.time, value: slow[i] }).filter(Boolean)
-      ref.ema.upper.setData(dataUpper)
-      ref.ema.lower.setData(dataLower)
-    } else {
-      ref.ema.upper.setData([])
-      ref.ema.lower.setData([])
+    // EMA Clouds (multiple pairs)
+    const clouds = ref.ema.clouds
+    // Hide all existing clouds by default
+    Object.keys(clouds).forEach(k => {
+      const pair = clouds[k]
+      pair.upper.setData([])
+      pair.lower.setData([])
+    })
+    if (Array.isArray(overlays.emaClouds)) {
+      overlays.emaClouds.forEach(cloud => {
+        const key = cloud.key || 'x'
+        if (!clouds[key]) {
+          clouds[key] = {
+            upper: chart.addLineSeries({ color: cloud.color || '#f59e0b', lineWidth: 1 }),
+            lower: chart.addLineSeries({ color: cloud.color || '#f59e0b', lineWidth: 1 })
+          }
+        }
+        const up = bars.map((b, i) => cloud.fast[i] == null ? null : { time: b.time, value: cloud.fast[i] }).filter(Boolean)
+        const dn = bars.map((b, i) => cloud.slow[i] == null ? null : { time: b.time, value: cloud.slow[i] }).filter(Boolean)
+        clouds[key].upper.setData(up)
+        clouds[key].lower.setData(dn)
+      })
     }
 
     // Ichimoku

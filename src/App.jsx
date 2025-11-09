@@ -4,6 +4,8 @@ import CandleChart from './components/chart/CandleChart.jsx'
 import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend } from './utils/indicators.js'
 import SqueezePanel from './components/chart/SqueezePanel.jsx'
 import { fetchBars as fetchBarsApi } from './services/alpaca.js'
+import HealthBadge from './components/HealthBadge.jsx'
+import BuildInfoFooter from './components/BuildInfoFooter.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -28,19 +30,25 @@ export default function App() {
   const [bars, setBars] = useState(() => generateSampleOHLC())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [showEma, setShowEma] = useState(true)
+  const [showEma821, setShowEma821] = useState(true)
+  const [showEma512, setShowEma512] = useState(false)
+  const [showEma89, setShowEma89] = useState(false)
+  const [showEma3450, setShowEma3450] = useState(true)
   const [showIchi, setShowIchi] = useState(true)
   const [showSaty, setShowSaty] = useState(true)
   const [showSqueeze, setShowSqueeze] = useState(true)
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
-    const base = {}
-    if (showEma) base.emaCloud = emaCloud(close, 8, 21)
+    const base = { emaClouds: [] }
+    if (showEma821) base.emaClouds.push({ key: '8-21', color: '#f59e0b', ...emaCloud(close, 8, 21) })
+    if (showEma512) base.emaClouds.push({ key: '5-12', color: '#22d3ee', ...emaCloud(close, 5, 12) })
+    if (showEma89) base.emaClouds.push({ key: '8-9', color: '#a78bfa', ...emaCloud(close, 8, 9) })
+    if (showEma3450) base.emaClouds.push({ key: '34-50', color: '#10b981', ...emaCloud(close, 34, 50) })
     if (showIchi) base.ichimoku = ichimoku(bars)
     if (showSaty) base.saty = satyAtrLevels(bars, 14)
     return base
-  }, [bars, showEma, showIchi])
+  }, [bars, showEma821, showEma512, showEma89, showEma3450, showIchi, showSaty])
 
   async function loadBars(s = symbol, tf = timeframe) {
     try {
@@ -81,8 +89,20 @@ export default function App() {
         </div>
         <span className="text-sm text-slate-400">Overlays</span>
         <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-indigo-500" checked={showEma} onChange={e => setShowEma(e.target.checked)} />
-          <span>EMA Cloud (8/21)</span>
+          <input type="checkbox" className="accent-indigo-500" checked={showEma821} onChange={e => setShowEma821(e.target.checked)} />
+          <span>EMA 8/21</span>
+        </label>
+        <label className="inline-flex items-center gap-2">
+          <input type="checkbox" className="accent-cyan-500" checked={showEma512} onChange={e => setShowEma512(e.target.checked)} />
+          <span>EMA 5/12</span>
+        </label>
+        <label className="inline-flex items-center gap-2">
+          <input type="checkbox" className="accent-violet-500" checked={showEma89} onChange={e => setShowEma89(e.target.checked)} />
+          <span>EMA 8/9</span>
+        </label>
+        <label className="inline-flex items-center gap-2">
+          <input type="checkbox" className="accent-emerald-500" checked={showEma3450} onChange={e => setShowEma3450(e.target.checked)} />
+          <span>EMA 34/50</span>
         </label>
         <label className="inline-flex items-center gap-2">
           <input type="checkbox" className="accent-indigo-500" checked={showIchi} onChange={e => setShowIchi(e.target.checked)} />
@@ -103,6 +123,7 @@ export default function App() {
             </>
           ) : null}
         </div>
+        <div className="ml-auto"><HealthBadge /></div>
       </div>
       <CandleChart bars={bars} overlays={overlays} />
       {showSqueeze && <SqueezePanel bars={bars} />}
@@ -114,6 +135,7 @@ export default function App() {
           <li><code>src/utils</code> – Utilities and shared helpers</li>
         </ul>
       </section>
+      <BuildInfoFooter />
     </div>
   )
 }
