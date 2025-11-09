@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     let body
     try { body = JSON.parse(raw) } catch { return res.status(400).json({ error: 'Invalid JSON' }) }
 
-    const { symbol, side, qty, type = 'market', timeInForce = 'day', takeProfit, stopLoss, orderClass } = body || {}
+    const { symbol, side, qty, type = 'market', timeInForce = 'day', takeProfit, stopLoss, orderClass, entry } = body || {}
     if (!symbol || !side || !qty) return res.status(400).json({ error: 'Missing symbol/side/qty' })
     const payload = {
       symbol,
@@ -31,6 +31,47 @@ export default async function handler(req, res) {
       }
     }
     const base = env === 'live' ? 'https://api.alpaca.markets' : 'https://paper-api.alpaca.markets'
+
+    // Guardrails: market open, max positions, max risk %
+    const requireOpen = (process.env.ORDER_RULE_MARKET_OPEN_REQUIRED || 'true').toLowerCase() === 'true'
+    const maxPositions = parseInt(process.env.ORDER_RULE_MAX_POSITIONS || '0', 10) // 0 means no limit
+    const maxRiskPct = parseFloat(process.env.ORDER_RULE_MAX_RISK_PCT || '0') // 0 means no limit
+
+    if (requireOpen) {
+      const rc = await fetch(`${base}/v2/clock`, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
+      const jc = await rc.json()
+      if (!rc.ok) return res.status(rc.status).json(jc)
+      if (!jc.is_open) return res.status(400).json({ error: 'Market closed (guardrail)' })
+    }
+
+    if (maxPositions > 0) {
+      const rp = await fetch(`${base}/v2/positions`, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
+      const jp = await rp.json()
+      if (!rp.ok) return res.status(rp.status).json(jp)
+      if (Array.isArray(jp) && jp.length >= maxPositions) return res.status(400).json({ error: `Max positions reached (${jp.length}/${maxPositions})` })
+    }
+
+    if (maxRiskPct > 0 && stopLoss && typeof stopLoss.stop_price === 'number') {
+      // Estimate entry as provided or latest close via data API (fallback)
+      let estEntry = typeof entry === 'number' ? entry : null
+      if (estEntry == null) {
+        const rd = await fetch(`https://data.alpaca.markets/v2/stocks/${encodeURIComponent(symbol)}/trades/latest`, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
+        const jd = await rd.json()
+        estEntry = jd?.trade?.p || null
+      }
+      const rc = await fetch(`${base}/v2/account`, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
+      const ja = await rc.json()
+      if (!rc.ok) return res.status(rc.status).json(ja)
+      const equity = parseFloat(ja.equity || '0')
+      if (equity > 0 && estEntry != null) {
+        const stop = Number(stopLoss.stop_price)
+        const q = Number(qty)
+        const perShare = side === 'buy' ? Math.max(0, estEntry - stop) : Math.max(0, stop - estEntry)
+        const riskUsd = perShare * q
+        const pct = (riskUsd / equity) * 100
+        if (pct > maxRiskPct) return res.status(400).json({ error: `Risk ${pct.toFixed(2)}% exceeds limit ${maxRiskPct}% (guardrail)` })
+      }
+    }
     const r = await fetch(`${base}/v2/orders`, {
       method: 'POST',
       headers: {
@@ -46,4 +87,3 @@ export default async function handler(req, res) {
     res.status(500).json({ error: e?.message || 'Unexpected error' })
   }
 }
-

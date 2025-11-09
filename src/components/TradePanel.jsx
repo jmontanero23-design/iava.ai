@@ -59,6 +59,7 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
         orderClass: 'bracket',
         takeProfit: { limit_price: Number(tp) },
         stopLoss: { stop_price: Number(stop) },
+        entry: Number(last?.close),
       })
       setResult({ ok: true, order })
     } catch (e) {
@@ -103,4 +104,3 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
     </div>
   )
 }
-
