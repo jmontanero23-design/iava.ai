@@ -49,8 +49,24 @@ export default function CandleChart({ bars = [], overlays = {} }) {
   useEffect(() => {
     const chart = chartRef.current
     if (!chart) return
-    // Clear existing overlays
-    Object.values(overlaySeriesRef.current).forEach(s => chart.removeSeries(s))
+    // Clear existing overlays safely (handle nested groups)
+    const removeValue = (val) => {
+      if (!val) return
+      if (Array.isArray(val)) {
+        val.forEach(removeValue)
+        return
+      }
+      if (typeof val === 'object') {
+        // Heuristic: series objects have setData/applyOptions methods
+        if (typeof val.setData === 'function' || typeof val.applyOptions === 'function') {
+          try { chart.removeSeries(val) } catch (e) { /* noop */ }
+          return
+        }
+        for (const k of Object.keys(val)) removeValue(val[k])
+        return
+      }
+    }
+    Object.values(overlaySeriesRef.current).forEach(removeValue)
     overlaySeriesRef.current = {}
 
     if (overlays.emaCloud) {
