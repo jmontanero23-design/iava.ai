@@ -12,6 +12,7 @@ import Presets from './components/Presets.jsx'
 import StatusBar from './components/StatusBar.jsx'
 import LegendChips from './components/LegendChips.jsx'
 import UnicornCallout from './components/UnicornCallout.jsx'
+import BacktestPanel from './components/BacktestPanel.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -212,6 +213,7 @@ export default function App() {
         {showSqueeze && <SqueezePanel bars={bars} />}
         <SignalsPanel state={signalState} />
       </div>
+      <BacktestPanel symbol={symbol} timeframe={timeframe} />
       <UnicornCallout state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account }} />
       <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
       <section className="card p-4">
