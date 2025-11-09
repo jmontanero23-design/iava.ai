@@ -58,6 +58,7 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [] }) 
     ref.ema = ref.ema || { clouds: {} }
     ref.ichi = ref.ichi || {}
     ref.saty = ref.saty || {}
+    ref.ribbon = ref.ribbon || {}
 
     // EMA Clouds (multiple pairs)
     const clouds = ref.ema.clouds
@@ -149,6 +150,34 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [] }) 
       ;['t0236u','t0236d','t0618u','t0618d','t1000u','t1000d','t1236u','t1236d','t1618u','t1618d'].forEach(k => {
         if (ref.saty[k]) ref.saty[k].setData([])
       })
+    }
+
+    // Pivot Ribbon (8/21/34)
+    if (!ref.ribbon.e8) ref.ribbon.e8 = chart.addLineSeries({ color: '#94a3b8', lineWidth: 1 })
+    if (!ref.ribbon.e34) ref.ribbon.e34 = chart.addLineSeries({ color: '#94a3b8', lineWidth: 1 })
+    if (!ref.ribbon.e21g) ref.ribbon.e21g = chart.addLineSeries({ color: '#10b981', lineWidth: 2 })
+    if (!ref.ribbon.e21r) ref.ribbon.e21r = chart.addLineSeries({ color: '#ef4444', lineWidth: 2 })
+    if (overlays.ribbon) {
+      const { e8, e21, e34, state } = overlays.ribbon
+      const e8data = bars.map((b, i) => e8[i] == null ? null : { time: b.time, value: e8[i] }).filter(Boolean)
+      const e34data = bars.map((b, i) => e34[i] == null ? null : { time: b.time, value: e34[i] }).filter(Boolean)
+      const g = []
+      const r = []
+      for (let i = 0; i < bars.length; i++) {
+        if (e21[i] == null) continue
+        const point = { time: bars[i].time, value: e21[i] }
+        if (state[i] === 'bullish') g.push(point)
+        else if (state[i] === 'bearish') r.push(point)
+      }
+      ref.ribbon.e8.setData(e8data)
+      ref.ribbon.e34.setData(e34data)
+      ref.ribbon.e21g.setData(g)
+      ref.ribbon.e21r.setData(r)
+    } else {
+      ref.ribbon.e8.setData([])
+      ref.ribbon.e34.setData([])
+      ref.ribbon.e21g.setData([])
+      ref.ribbon.e21r.setData([])
     }
   }, [overlays, bars])
 
