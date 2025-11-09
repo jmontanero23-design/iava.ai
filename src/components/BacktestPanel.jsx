@@ -44,6 +44,9 @@ export default function BacktestPanel({ symbol, timeframe }) {
             <div><span className="text-slate-400">Events</span> {res.events} @≥{res.threshold} / {res.horizon} bars</div>
             <div><span className="text-slate-400">Win‑rate</span> {res.winRate}%</div>
             <div><span className="text-slate-400">Avg fwd</span> {res.avgFwd}%</div>
+            <div><span className="text-slate-400">Avg win</span> {res.avgWin}%</div>
+            <div><span className="text-slate-400">Avg loss</span> {res.avgLoss}%</div>
+            <div><span className="text-slate-400">Profit Factor</span> {res.profitFactor ?? '—'}</div>
           </div>
           <div className="mt-2 text-xs"><a className="underline hover:text-slate-300" href={`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&format=csv`} target="_blank" rel="noreferrer">Download CSV</a></div>
           {Array.isArray(res.recentScores) && res.recentScores.length ? (

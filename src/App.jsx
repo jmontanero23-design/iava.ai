@@ -55,6 +55,8 @@ export default function App() {
   const [autoLoadChange, setAutoLoadChange] = useState(true)
   const loadReq = useRef(0)
   const [threshold, setThreshold] = useState(70)
+  const [dailyBars, setDailyBars] = useState([])
+  const [enforceDaily, setEnforceDaily] = useState(false)
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
@@ -71,6 +73,7 @@ export default function App() {
 
   const [account, setAccount] = useState(null)
   const signalState = useMemo(() => computeStates(bars), [bars])
+  const dailyState = useMemo(() => (dailyBars?.length ? computeStates(dailyBars) : null), [dailyBars])
 
   const stale = useMemo(() => {
     if (!bars?.length) return true
@@ -102,6 +105,13 @@ export default function App() {
     }
   }
 
+  async function loadDaily(s = symbol) {
+    try {
+      const res = await fetchBarsApi(s, '1Day', 400)
+      if (Array.isArray(res) && res.length) setDailyBars(res)
+    } catch {}
+  }
+
   useEffect(() => {
     // Load persisted settings
     try {
@@ -121,6 +131,7 @@ export default function App() {
       if (typeof saved.autoLoadChange === 'boolean') setAutoLoadChange(saved.autoLoadChange)
     } catch {}
     loadBars()
+    loadDaily()
     // Fetch account once for trade sizing
     fetch('/api/alpaca/account').then(r => r.json()).then(setAccount).catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -141,6 +152,11 @@ export default function App() {
     const id = setInterval(() => loadBars(symbol, timeframe), Math.max(5, refreshSec) * 1000)
     return () => clearInterval(id)
   }, [autoRefresh, refreshSec, symbol, timeframe])
+
+  useEffect(() => {
+    loadDaily(symbol)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [symbol])
 
   return (
     <div className="min-h-screen p-6 space-y-6">
@@ -218,6 +234,10 @@ export default function App() {
             Auto-Load on Change
           </label>
           <label className="inline-flex items-center gap-2 text-sm ml-2">
+            <input type="checkbox" className="accent-indigo-500" checked={enforceDaily} onChange={e => setEnforceDaily(e.target.checked)} />
+            Enforce Daily Confluence
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm ml-2">
             <span>Threshold</span>
             <input type="range" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10))} />
             <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
@@ -233,7 +253,7 @@ export default function App() {
         <SignalsPanel state={signalState} />
       </div>
       <BacktestPanel symbol={symbol} timeframe={timeframe} />
-      <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account }} />
+      <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
       <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
       <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />
       <OrdersPanel />

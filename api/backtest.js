@@ -36,14 +36,20 @@ export default async function handler(req, res) {
     }
     const avg = scores.length ? scores.reduce((a,b)=>a+b,0) / scores.length : 0
     const pct = (arr, t) => (arr.filter(x => x >= t).length / (arr.length || 1)) * 100
-    const wins = events.filter(e => e.fwd > 0).length
+    const winsArr = events.filter(e => e.fwd > 0).map(e=>e.fwd)
+    const lossArr = events.filter(e => e.fwd <= 0).map(e=>e.fwd)
+    const wins = winsArr.length
     const avgFwd = events.length ? (events.reduce((a,b)=>a+b.fwd,0) / events.length) : 0
+    const avgWin = winsArr.length ? (winsArr.reduce((a,b)=>a+b,0) / winsArr.length) : 0
+    const avgLoss = lossArr.length ? (lossArr.reduce((a,b)=>a+b,0) / lossArr.length) : 0
+    const profitFactor = (avgWin > 0 && avgLoss < 0) ? Math.abs((avgWin) / (avgLoss)) : (winsArr.length && lossArr.length ? 0 : null)
     const out = {
       symbol, timeframe, bars: bars.length,
       scoreAvg: Number(avg.toFixed(2)),
       scorePcts: { p40: Number(pct(scores,40).toFixed(2)), p60: Number(pct(scores,60).toFixed(2)), p70: Number(pct(scores,70).toFixed(2)) },
       recentScores: scores.slice(-120),
       threshold, horizon, events: events.length, winRate: events.length ? Number(((wins/events.length)*100).toFixed(2)) : 0, avgFwd: Number((avgFwd*100).toFixed(2)),
+      avgWin: Number((avgWin*100).toFixed(2)), avgLoss: Number((avgLoss*100).toFixed(2)), profitFactor: profitFactor==null?null:Number(profitFactor.toFixed(2)),
     }
     if (format === 'csv') {
       const header = 'time,close,score,forwardReturn\n'

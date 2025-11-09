@@ -20,6 +20,19 @@ export default function UnicornCallout({ state, threshold = 70 }) {
       alert(`n8n error: ${e.message}`)
     }
   }
+  const dailyOk = state._daily ? (state._daily.pivotNow === 'bullish' && state._daily.ichiRegime === 'bullish') : true
+  if (state._enforceDaily && !dailyOk) {
+    // Show muted info when confluence not met
+    return (
+      <div className="card p-4 border-slate-700/60" style={{ background: 'linear-gradient(180deg, rgba(100,116,139,0.08), rgba(100,116,139,0.02))' }}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-300">Unicorn Signal (blocked by Daily Confluence)</h3>
+          <div className="text-sm font-bold text-slate-400">Score: {Math.round(state.score)}</div>
+        </div>
+        <div className="mt-2 text-xs text-slate-400">Daily confluence requires bullish Daily Pivot and Ichimoku regime for longs. Adjust threshold or disable confluence to proceed.</div>
+      </div>
+    )
+  }
   return (
     <div className="card p-4 border-emerald-700/60" style={{ background: 'linear-gradient(180deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02))' }}>
       <div className="flex items-center justify-between">

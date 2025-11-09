@@ -9,6 +9,10 @@ export default function SignalsPanel({ state }) {
     { label: 'SATY Trigger', value: state.satyDir || 'none' },
     { label: 'Squeeze', value: state.sq?.on ? 'on' : (state.sq?.fired ? `fired ${state.sq?.dir}` : 'off') },
     { label: 'Ichimoku', value: state.ichiRegime },
+    ...(state._daily ? [
+      { label: 'Daily Pivot', value: state._daily.pivotNow },
+      { label: 'Daily Ichimoku', value: state._daily.ichiRegime },
+    ] : []),
   ]
   const scoreColor = state.score >= 70 ? 'text-emerald-400' : state.score >= 40 ? 'text-amber-400' : 'text-slate-300'
   return (
