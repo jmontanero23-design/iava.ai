@@ -20,6 +20,8 @@ import InfoPopover from './components/InfoPopover.jsx'
 import SymbolSearch from './components/SymbolSearch.jsx'
 import { readParams, writeParams } from './utils/urlState.js'
 import SignalFeed from './components/SignalFeed.jsx'
+import OverlayChips from './components/OverlayChips.jsx'
+import useStreamingBars from './hooks/useStreamingBars.js'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -64,6 +66,7 @@ export default function App() {
   const [mtfPreset, setMtfPreset] = useState('manual')
   const [signalHistory, setSignalHistory] = useState([])
   const [focusTime, setFocusTime] = useState(null)
+  const [streaming, setStreaming] = useState(false)
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
@@ -234,7 +237,7 @@ export default function App() {
     if (typeof preset.enforceDaily === 'boolean') setEnforceDaily(preset.enforceDaily)
   }
 
-  // Build signal timeline: append on new last bar
+  // Build signal timeline: append on new last bar, include top contributors
   useEffect(() => {
     if (!bars?.length) return
     const last = bars[bars.length - 1]
@@ -248,6 +251,12 @@ export default function App() {
       if (signalState?.satyDir) tags.push(`SATY ${signalState.satyDir}`)
       if (signalState?.sq?.fired) tags.push(`Squeeze ${signalState.sq.dir}`)
       if (dailyState?.pivotNow) tags.push(`Daily ${dailyState.pivotNow}`)
+      // top 2 contributors
+      try {
+        const entries = Object.entries(signalState?.components || {})
+          .sort((a,b) => b[1]-a[1]).slice(0,2)
+        for (const [k,v] of entries) tags.push(`${k}+${v}`)
+      } catch {}
       const item = { time: lastTime, timeLabel, score: Math.round(signalState?.score || 0), tags }
       const next = [item, ...prev].slice(0, 8)
       return next
@@ -264,6 +273,24 @@ export default function App() {
     loadDaily(symbol)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol])
+
+  // Streaming (beta): SSE for intraday
+  useStreamingBars({
+    symbol,
+    timeframe,
+    enabled: streaming && timeframe !== '1Day',
+    onBar: (bar) => {
+      if (!bar) return
+      setBars(prev => {
+        if (!Array.isArray(prev) || prev.length === 0) return [bar]
+        const last = prev[prev.length - 1]
+        if (bar.time > last.time) return [...prev, bar]
+        if (bar.time === last.time) return [...prev.slice(0, -1), bar]
+        return prev
+      })
+      setUpdatedAt(Date.now())
+    },
+  })
 
   return (
     <div className="min-h-screen bg-transparent text-slate-100">
@@ -349,6 +376,10 @@ export default function App() {
             <option value={30}>30s</option>
             <option value={60}>60s</option>
           </select>
+          <label className="inline-flex items-center gap-2 text-sm ml-2" title={timeframe==='1Day' ? 'Streaming disabled on Daily' : ''}>
+            <input type="checkbox" className="accent-cyan-500" checked={streaming} disabled={timeframe==='1Day'} onChange={e => { setStreaming(e.target.checked); if (e.target.checked) setAutoRefresh(false) }} />
+            Streaming (beta) <InfoPopover title="Streaming (beta)">Live bars via SSE. Use for intraday. Falls back to polling when off.</InfoPopover>
+          </label>
           <label className="inline-flex items-center gap-2 text-sm ml-2">
             <input type="checkbox" className="accent-indigo-500" checked={autoLoadChange} onChange={e => setAutoLoadChange(e.target.checked)} />
             Auto-Load on Change
@@ -366,9 +397,18 @@ export default function App() {
         <div className="ml-auto"><HealthBadge /></div>
         <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); alert('Link copied'); } catch(_) {} }} className="ml-2 bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Link</button>
       </div>
-      <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={autoRefresh} />
+      <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streaming || autoRefresh} />
       <LegendChips overlays={overlays} />
       <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} loading={loading} focusTime={focusTime} />
+      <OverlayChips
+        showEma821={showEma821} setShowEma821={setShowEma821}
+        showEma512={showEma512} setShowEma512={setShowEma512}
+        showEma89={showEma89} setShowEma89={setShowEma89}
+        showEma3450={showEma3450} setShowEma3450={setShowEma3450}
+        showIchi={showIchi} setShowIchi={setShowIchi}
+        showRibbon={showRibbon} setShowRibbon={setShowRibbon}
+        showSaty={showSaty} setShowSaty={setShowSaty}
+      />
       <SignalFeed items={signalHistory} onSelect={(item) => setFocusTime(item.time)} />
       <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
