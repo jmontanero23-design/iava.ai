@@ -19,7 +19,6 @@ import SatyTargets from './components/SatyTargets.jsx'
 import InfoPopover from './components/InfoPopover.jsx'
 import SymbolSearch from './components/SymbolSearch.jsx'
 import { readParams, writeParams } from './utils/urlState.js'
-import useStreamingBars from './hooks/useStreamingBars.js'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -62,7 +61,6 @@ export default function App() {
   const [dailyBars, setDailyBars] = useState([])
   const [enforceDaily, setEnforceDaily] = useState(false)
   const [mtfPreset, setMtfPreset] = useState('manual')
-  const [streamingEnabled, setStreamingEnabled] = useState(false)
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
@@ -206,24 +204,6 @@ export default function App() {
     if (typeof preset.enforceDaily === 'boolean') setEnforceDaily(preset.enforceDaily)
   }
 
-  useStreamingBars({
-    symbol,
-    timeframe,
-    enabled: streamingEnabled,
-    onBar: (bar) => {
-      setBars(prev => {
-        const idx = prev.findIndex(b => b.time === bar.time)
-        if (idx >= 0) {
-          const next = [...prev]
-          next[idx] = { ...bar, symbol }
-          return next
-        }
-        const next = [...prev, { ...bar, symbol }]
-        return next.slice(-500)
-      })
-    },
-  })
-
   useEffect(() => {
     if (!autoRefresh) return
     const id = setInterval(() => loadBars(symbol, timeframe), Math.max(5, refreshSec) * 1000)
@@ -320,10 +300,6 @@ export default function App() {
             Auto-Load on Change
           </label>
           <label className="inline-flex items-center gap-2 text-sm ml-2">
-            <input type="checkbox" className="accent-indigo-500" checked={streamingEnabled} onChange={e => setStreamingEnabled(e.target.checked)} />
-            Streaming Mode
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm ml-2">
             <input type="checkbox" className="accent-indigo-500" checked={enforceDaily} onChange={e => setEnforceDaily(e.target.checked)} />
             Enforce Daily Confluence
           </label>
@@ -336,7 +312,7 @@ export default function App() {
         <div className="ml-auto"><HealthBadge /></div>
         <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); alert('Link copied'); } catch(_) {} }} className="ml-2 bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Link</button>
       </div>
-      <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streamingEnabled} />
+      <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={autoRefresh} />
       <LegendChips overlays={overlays} />
       <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} loading={loading} />
       <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} />
@@ -362,6 +338,3 @@ export default function App() {
     </div>
   )
 }
-  useEffect(() => {
-    if (streamingEnabled && autoRefresh) setAutoRefresh(false)
-  }, [streamingEnabled])
