@@ -12,11 +12,19 @@ export default async function handler(req, res) {
     const threshold = Math.max(0, Math.min(100, parseFloat(url.searchParams.get('threshold') || '70')))
     const horizon = Math.max(1, Math.min(100, parseInt(url.searchParams.get('horizon') || '10', 10)))
     const dailyFilter = (url.searchParams.get('dailyFilter') || 'none').toLowerCase()
+    const format = (url.searchParams.get('format') || 'csv').toLowerCase()
+    const includeRegimes = (url.searchParams.get('includeRegimes') || '1') !== '0'
 
     const { computeStates } = await import('../src/utils/indicators.js')
 
+    const { computeStates } = await import('../src/utils/indicators.js')
+
+    // Events CSV
     const header = 'symbol,time,close,score,forwardReturn\n'
     let rows = ''
+    // Summary CSV (per threshold, overall/bull/bear)
+    const ths = [30,40,50,60,70,80,90]
+    const sumRows = [] // {symbol, regime, th, events, winRate, avgFwd}
     for (const symbol of symbols) {
       const bars = await fetchBars({ key, secret, dataBase, symbol, timeframe, limit })
       if (!bars.length) continue
@@ -27,6 +35,10 @@ export default async function handler(req, res) {
         for (let di = 0; di < dailyBars.length; di++) dailyStates[di] = computeStates(dailyBars.slice(0, di + 1))
       }
       const start = Math.min(80, Math.floor(bars.length / 5))
+      // For summary curves
+      const curveAll = ths.map(th => ({ th, rets: [] }))
+      const curveBull = ths.map(th => ({ th, rets: [] }))
+      const curveBear = ths.map(th => ({ th, rets: [] }))
       for (let i = start; i < bars.length; i++) {
         const slice = bars.slice(0, i + 1)
         const st = computeStates(slice)
@@ -47,10 +59,52 @@ export default async function handler(req, res) {
           const fwd = (exit - entry) / entry
           rows += `${symbol},${new Date(bars[i].time*1000).toISOString()},${entry},${st.score.toFixed(2)},${(fwd*100).toFixed(2)}%\n`
         }
+        // Summary accumulation
+        if (i + horizon < bars.length) {
+          const entry = bars[i].close
+          const exit = bars[i + horizon].close
+          const fwd = (exit - entry) / entry
+          for (const bin of curveAll) if (st.score >= bin.th) bin.rets.push(fwd)
+          if (dailyStates) {
+            const it2 = bars[i].time
+            let di2 = -1
+            for (let j = 0; j < dailyBars.length; j++) { if (dailyBars[j].time <= it2) di2 = j; else break }
+            if (di2 >= 0) {
+              const ds2 = dailyStates[di2]
+              const isBull = (ds2.pivotNow === 'bullish' && ds2.ichiRegime === 'bullish')
+              const isBear = (ds2.pivotNow === 'bearish' && ds2.ichiRegime === 'bearish')
+              if (isBull) for (const bin of curveBull) if (st.score >= bin.th) bin.rets.push(fwd)
+              if (isBear) for (const bin of curveBear) if (st.score >= bin.th) bin.rets.push(fwd)
+            }
+          }
+        }
+      }
+      // Push summary rows per symbol
+      if (format === 'summary') {
+        const pushCurve = (regime, curve) => {
+          for (const c of curve) {
+            const arr = c.rets
+            const ev = arr.length
+            const wr = ev ? (arr.filter(x=>x>0).length/ev)*100 : 0
+            const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
+            sumRows.push({ symbol, regime, th: c.th, events: ev, winRate: wr.toFixed(2), avgFwd: av.toFixed(2) })
+          }
+        }
+        pushCurve('all', curveAll)
+        if (includeRegimes) {
+          pushCurve('bull', curveBull)
+          pushCurve('bear', curveBear)
+        }
       }
     }
     res.setHeader('Content-Type', 'text/csv; charset=utf-8')
-    res.status(200).send(header + rows)
+    if (format === 'summary') {
+      const sumHeader = 'symbol,regime,threshold,events,winRate,avgFwd\n'
+      const sumCsv = sumRows.map(r => `${r.symbol},${r.regime},${r.th},${r.events},${r.winRate}%,${r.avgFwd}%`).join('\n')
+      res.status(200).send(sumHeader + sumCsv)
+    } else {
+      res.status(200).send(header + rows)
+    }
   } catch (e) {
     res.status(500).json({ error: e?.message || 'Unexpected error' })
   }
@@ -84,4 +138,3 @@ async function fetchBars({ key, secret, dataBase, symbol, timeframe, limit }) {
     open: b.o ?? b.Open, high: b.h ?? b.High, low: b.l ?? b.Low, close: b.c ?? b.Close, volume: b.v ?? b.Volume,
   }))
 }
-
