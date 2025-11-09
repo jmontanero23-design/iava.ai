@@ -13,6 +13,7 @@ export default function SqueezePanel({ bars = [] }) {
   }, [bars])
 
   // Render a compact histogram with squeeze dots
+  const ready = Array.isArray(bars) && bars.length >= 20 && Array.isArray(mom)
   return (
     <div className="card p-3">
       <div className="flex items-center justify-between mb-2">
@@ -47,6 +48,9 @@ export default function SqueezePanel({ bars = [] }) {
             return <div key={i} className={`w-[3px] h-[3px] rounded-full ${cls}`} />
           })}
         </div>
+        {!ready && (
+          <div className="mt-2 text-xs text-slate-500">No data yet. Load another timeframe or wait for enough bars.</div>
+        )}
       </div>
     </div>
   )

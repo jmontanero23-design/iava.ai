@@ -299,16 +299,27 @@ export function computeStates(bars) {
   add('pivotRibbon', pivotNow === 'bullish' ? 20 : 0)
   add('ripster3450', rip.bias === 'bullish' ? 20 : 0)
   add('satyTrigger', (satyDir === 'long' && pivotNow === 'bullish') ? 20 : 0)
-  // Squeeze scoring: building potential if ON; decayed boost if recently fired upward
+  // Squeeze scoring (symmetric):
+  // - ON (compression building): +10
+  // - Fired in the direction of prevailing regime (up for bull, down for bear): +25 (decays over 5 bars)
   let squeezeScore = 0
   if (sq.on) {
     squeezeScore = 10
-  } else if (sq.fired && sq.dir === 'up') {
-    squeezeScore = 25
-  } else if (sq.firedBarsAgo != null && sq.firedBarsAgo <= 5 && sq.lastDir === 'up') {
-    // Decay 25 -> 5 over 5 bars
-    const decay = Math.max(5, 25 - (sq.firedBarsAgo * 5))
-    squeezeScore = decay
+  } else {
+    const recent = sq.fired || (sq.firedBarsAgo != null && sq.firedBarsAgo <= 5)
+    if (recent) {
+      // Prevailing regime from ribbon/ichi
+      const bullish = pivotNow === 'bullish' || ichiRegime === 'bullish'
+      const bearish = pivotNow === 'bearish' || ichiRegime === 'bearish'
+      const dirNow = sq.fired ? sq.dir : sq.lastDir
+      const aligned = (dirNow === 'up' && bullish) || (dirNow === 'down' && bearish)
+      if (aligned) {
+        const age = sq.fired ? 0 : (sq.firedBarsAgo || 0)
+        const base = 25
+        const decayed = Math.max(5, base - age * 5)
+        squeezeScore = decayed
+      }
+    }
   }
   add('squeeze', squeezeScore)
   add('ichimoku', ichiRegime === 'bullish' ? 15 : 0)
