@@ -5,7 +5,7 @@ export default function CandleChart({ bars = [], overlays = {} }) {
   const containerRef = useRef(null)
   const chartRef = useRef(null)
   const seriesRef = useRef(null)
-  const overlaySeriesRef = useRef(new Set())
+  const overlaySeriesRef = useRef({})
 
   useEffect(() => {
     const container = containerRef.current
@@ -34,7 +34,7 @@ export default function CandleChart({ bars = [], overlays = {} }) {
       chart.remove()
       chartRef.current = null
       seriesRef.current = null
-      overlaySeriesRef.current = new Set()
+      overlaySeriesRef.current = {}
     }
   }, [])
 
@@ -49,38 +49,35 @@ export default function CandleChart({ bars = [], overlays = {} }) {
   useEffect(() => {
     const chart = chartRef.current
     if (!chart) return
-    try {
-      // Remove any previously created overlay series
-      if (overlaySeriesRef.current && overlaySeriesRef.current.size) {
-        for (const s of overlaySeriesRef.current) {
-          if (s && typeof s.setData === 'function') {
-            try { chart.removeSeries(s) } catch (_) {}
-          }
-        }
-        overlaySeriesRef.current.clear()
-      }
+    // Ensure containers for series
+    const ref = overlaySeriesRef.current
+    ref.ema = ref.ema || {}
+    ref.ichi = ref.ichi || {}
+    ref.saty = ref.saty || {}
 
+    // EMA Cloud
+    if (!ref.ema.upper) ref.ema.upper = chart.addLineSeries({ color: '#f59e0b', lineWidth: 1 })
+    if (!ref.ema.lower) ref.ema.lower = chart.addLineSeries({ color: '#f59e0b', lineWidth: 1 })
     if (overlays.emaCloud) {
-      const upper = chart.addLineSeries({ color: '#f59e0b', lineWidth: 1 })
-      const lower = chart.addLineSeries({ color: '#f59e0b', lineWidth: 1 })
       const { fast, slow } = overlays.emaCloud
       const dataUpper = bars.map((b, i) => fast[i] == null ? null : { time: b.time, value: fast[i] }).filter(Boolean)
       const dataLower = bars.map((b, i) => slow[i] == null ? null : { time: b.time, value: slow[i] }).filter(Boolean)
-      upper.setData(dataUpper)
-      lower.setData(dataLower)
-      overlaySeriesRef.current.add(upper)
-      overlaySeriesRef.current.add(lower)
+      ref.ema.upper.setData(dataUpper)
+      ref.ema.lower.setData(dataLower)
+    } else {
+      ref.ema.upper.setData([])
+      ref.ema.lower.setData([])
     }
 
+    // Ichimoku
+    if (!ref.ichi.t) ref.ichi.t = chart.addLineSeries({ color: '#93c5fd', lineWidth: 1 })
+    if (!ref.ichi.k) ref.ichi.k = chart.addLineSeries({ color: '#60a5fa', lineWidth: 1 })
+    if (!ref.ichi.a) ref.ichi.a = chart.addLineSeries({ color: '#34d399', lineWidth: 1 })
+    if (!ref.ichi.b) ref.ichi.b = chart.addLineSeries({ color: '#ef4444', lineWidth: 1 })
+    if (!ref.ichi.c) ref.ichi.c = chart.addLineSeries({ color: '#a78bfa', lineWidth: 1 })
     if (overlays.ichimoku) {
-      const t = chart.addLineSeries({ color: '#93c5fd', lineWidth: 1 })
-      const k = chart.addLineSeries({ color: '#60a5fa', lineWidth: 1 })
-      const a = chart.addLineSeries({ color: '#34d399', lineWidth: 1 })
-      const b = chart.addLineSeries({ color: '#ef4444', lineWidth: 1 })
-      const c = chart.addLineSeries({ color: '#a78bfa', lineWidth: 1 })
       const tenk = bars.map((bar, i) => overlays.ichimoku.tenkan[i] == null ? null : { time: bar.time, value: overlays.ichimoku.tenkan[i] }).filter(Boolean)
       const kij = bars.map((bar, i) => overlays.ichimoku.kijun[i] == null ? null : { time: bar.time, value: overlays.ichimoku.kijun[i] }).filter(Boolean)
-      // spanA/spanB arrays are shifted forward; align with extended timeline where present
       const lastIdx = Math.max(0, bars.length - 1)
       const lastTime = bars.length ? bars[lastIdx].time : undefined
       const prevTime = bars.length > 1 ? bars[lastIdx - 1].time : undefined
@@ -98,47 +95,46 @@ export default function CandleChart({ bars = [], overlays = {} }) {
         return { time: tCandidate, value: v }
       }).filter(Boolean)
       const chik = bars.map((bar, i) => overlays.ichimoku.chikou[i] == null ? null : { time: bar.time, value: overlays.ichimoku.chikou[i] }).filter(Boolean)
-      t.setData(tenk)
-      k.setData(kij)
-      a.setData(aData)
-      b.setData(bData)
-      c.setData(chik)
-      overlaySeriesRef.current.add(t)
-      overlaySeriesRef.current.add(k)
-      overlaySeriesRef.current.add(a)
-      overlaySeriesRef.current.add(b)
-      overlaySeriesRef.current.add(c)
+      ref.ichi.t.setData(tenk)
+      ref.ichi.k.setData(kij)
+      ref.ichi.a.setData(aData)
+      ref.ichi.b.setData(bData)
+      ref.ichi.c.setData(chik)
+    } else {
+      ref.ichi.t.setData([])
+      ref.ichi.k.setData([])
+      ref.ichi.a.setData([])
+      ref.ichi.b.setData([])
+      ref.ichi.c.setData([])
     }
 
-    if (overlays.saty) {
-      const { pivot, levels } = overlays.saty
-      const t0 = bars.length ? bars[0].time : undefined
-      const t1 = bars.length ? bars[bars.length - 1].time : undefined
-      const makeHLine = (value, color, lineWidth = 1, style = 0) => {
-        const s = chart.addLineSeries({ color, lineWidth, lineStyle: style })
-        const data = []
-        if (t0 != null && t1 != null && value != null) {
-          data.push({ time: t0, value })
-          data.push({ time: t1, value })
-        }
-        s.setData(data)
-        return s
-      }
-      overlaySeriesRef.current.add(makeHLine(pivot, '#e5e7eb', 2))
-      overlaySeriesRef.current.add(makeHLine(levels.t0236.up, '#94a3b8'))
-      overlaySeriesRef.current.add(makeHLine(levels.t0236.dn, '#94a3b8'))
-      overlaySeriesRef.current.add(makeHLine(levels.t0618.up, '#38bdf8'))
-      overlaySeriesRef.current.add(makeHLine(levels.t0618.dn, '#38bdf8'))
-      overlaySeriesRef.current.add(makeHLine(levels.t1000.up, '#14b8a6'))
-      overlaySeriesRef.current.add(makeHLine(levels.t1000.dn, '#14b8a6'))
-      overlaySeriesRef.current.add(makeHLine(levels.t1236.up, '#f59e0b'))
-      overlaySeriesRef.current.add(makeHLine(levels.t1236.dn, '#f59e0b'))
-      overlaySeriesRef.current.add(makeHLine(levels.t1618.up, '#a78bfa'))
-      overlaySeriesRef.current.add(makeHLine(levels.t1618.dn, '#a78bfa'))
+    // SATY ATR
+    if (!ref.saty.pivot) ref.saty.pivot = chart.addLineSeries({ color: '#e5e7eb', lineWidth: 2 })
+    const mk = (key, color) => {
+      if (!ref.saty[key]) ref.saty[key] = chart.addLineSeries({ color, lineWidth: 1 })
+      return ref.saty[key]
     }
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('Overlay render error:', e)
+    const t0 = bars.length ? bars[0].time : undefined
+    const t1 = bars.length ? bars[bars.length - 1].time : undefined
+    const hline = (value) => (t0 != null && t1 != null && value != null) ? [{ time: t0, value }, { time: t1, value }] : []
+    if (overlays.saty && overlays.saty.levels) {
+      const { pivot, levels } = overlays.saty
+      ref.saty.pivot.setData(hline(pivot))
+      mk('t0236u', '#94a3b8').setData(hline(levels.t0236.up))
+      mk('t0236d', '#94a3b8').setData(hline(levels.t0236.dn))
+      mk('t0618u', '#38bdf8').setData(hline(levels.t0618.up))
+      mk('t0618d', '#38bdf8').setData(hline(levels.t0618.dn))
+      mk('t1000u', '#14b8a6').setData(hline(levels.t1000.up))
+      mk('t1000d', '#14b8a6').setData(hline(levels.t1000.dn))
+      mk('t1236u', '#f59e0b').setData(hline(levels.t1236.up))
+      mk('t1236d', '#f59e0b').setData(hline(levels.t1236.dn))
+      mk('t1618u', '#a78bfa').setData(hline(levels.t1618.up))
+      mk('t1618d', '#a78bfa').setData(hline(levels.t1618.dn))
+    } else {
+      ref.saty.pivot.setData([])
+      ;['t0236u','t0236d','t0618u','t0618d','t1000u','t1000d','t1236u','t1236d','t1618u','t1618d'].forEach(k => {
+        if (ref.saty[k]) ref.saty[k].setData([])
+      })
     }
   }, [overlays, bars])
 
