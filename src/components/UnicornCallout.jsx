@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useState } from 'react'
+import TradePanel from './TradePanel.jsx'
 
 export default function UnicornCallout({ state, threshold = 70 }) {
   if (!state || state.score == null || state.score < threshold) return null
@@ -8,18 +9,24 @@ export default function UnicornCallout({ state, threshold = 70 }) {
   if (state.satyDir) facts.push(`SATY: ${state.satyDir}`)
   if (state.sq?.fired) facts.push(`Squeeze: fired ${state.sq.dir}`)
   if (state.ichiRegime) facts.push(`Ichimoku: ${state.ichiRegime}`)
+  const [open, setOpen] = useState(false)
   return (
     <div className="card p-4 border-emerald-700/60" style={{ background: 'linear-gradient(180deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02))' }}>
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-emerald-300">Unicorn Signal</h3>
-        <div className="text-sm font-bold text-emerald-400">Score: {Math.round(state.score)}</div>
+        <div className="flex items-center gap-3">
+          <div className="text-sm font-bold text-emerald-400">Score: {Math.round(state.score)}</div>
+          <button onClick={() => setOpen(v => !v)} className="bg-emerald-700/30 hover:bg-emerald-700/40 text-emerald-200 text-xs rounded px-2 py-1">{open ? 'Hide Trade' : 'Trade (Paper)'}</button>
+        </div>
       </div>
       <div className="mt-2 text-sm text-slate-200">
         <ul className="list-disc pl-5">
           {facts.map((f, i) => <li key={i}>{f}</li>)}
         </ul>
       </div>
+      {open && <div className="mt-3">
+        <TradePanel bars={state._bars || []} saty={state.saty} account={state._account || {}} defaultSide={state.satyDir === 'short' ? 'sell' : 'buy'} onClose={() => setOpen(false)} />
+      </div>}
     </div>
   )
 }
-

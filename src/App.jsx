@@ -62,6 +62,7 @@ export default function App() {
     return base
   }, [bars, showEma821, showEma512, showEma89, showEma3450, showIchi, showSaty])
 
+  const [account, setAccount] = useState(null)
   const signalState = useMemo(() => computeStates(bars), [bars])
 
   const stale = useMemo(() => {
@@ -110,6 +111,8 @@ export default function App() {
       if (typeof saved.showEma3450 === 'boolean') setShowEma3450(saved.showEma3450)
     } catch {}
     loadBars()
+    // Fetch account once for trade sizing
+    fetch('/api/alpaca/account').then(r => r.json()).then(setAccount).catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -209,7 +212,7 @@ export default function App() {
         {showSqueeze && <SqueezePanel bars={bars} />}
         <SignalsPanel state={signalState} />
       </div>
-      <UnicornCallout state={signalState} />
+      <UnicornCallout state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account }} />
       <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
       <section className="card p-4">
         <h2 className="text-lg font-semibold mb-2">Project Structure</h2>
