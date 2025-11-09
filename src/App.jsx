@@ -8,6 +8,7 @@ import { fetchBars as fetchBarsApi } from './services/alpaca.js'
 import HealthBadge from './components/HealthBadge.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
 import Presets from './components/Presets.jsx'
+import StatusBar from './components/StatusBar.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -32,6 +33,8 @@ export default function App() {
   const [bars, setBars] = useState(() => generateSampleOHLC())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [usingSample, setUsingSample] = useState(true)
+  const [updatedAt, setUpdatedAt] = useState(0)
   const [showEma821, setShowEma821] = useState(true)
   const [showEma512, setShowEma512] = useState(false)
   const [showEma89, setShowEma89] = useState(false)
@@ -63,13 +66,15 @@ export default function App() {
       setLoading(true)
       setError('')
       const res = await fetchBarsApi(s, tf, 500)
-      if (Array.isArray(res) && res.length) setBars(res)
+      if (Array.isArray(res) && res.length) { setBars(res); setUsingSample(false) }
       else throw new Error('No data returned')
     } catch (e) {
       setError(e?.message || 'Failed to load data; showing sample')
       setBars(generateSampleOHLC())
+      setUsingSample(true)
     } finally {
       setLoading(false)
+      setUpdatedAt(Date.now())
     }
   }
 
@@ -184,6 +189,7 @@ export default function App() {
         <div className="ml-auto"><HealthBadge /></div>
       </div>
       <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} />
+      <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} />
       {showSqueeze && <SqueezePanel bars={bars} />}
       <SignalsPanel state={signalState} />
       <section className="card p-4">

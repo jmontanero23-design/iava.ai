@@ -6,6 +6,8 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [] }) 
   const chartRef = useRef(null)
   const seriesRef = useRef(null)
   const overlaySeriesRef = useRef({})
+  const volumeSeriesRef = useRef(null)
+  const tooltipRef = useRef(null)
 
   useEffect(() => {
     const container = containerRef.current
@@ -22,8 +24,16 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [] }) 
     const candleSeries = chart.addCandlestickSeries({
       upColor: '#10b981', downColor: '#ef4444', borderVisible: false, wickUpColor: '#10b981', wickDownColor: '#ef4444',
     })
+    const volSeries = chart.addHistogramSeries({
+      color: '#64748b',
+      priceFormat: { type: 'volume' },
+      priceScaleId: '',
+      baseLineVisible: false,
+      overlay: true,
+    })
     chartRef.current = chart
     seriesRef.current = candleSeries
+    volumeSeriesRef.current = volSeries
 
     const handleResize = () => {
       chart.applyOptions({ width: container.clientWidth, height: container.clientHeight })
@@ -34,6 +44,7 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [] }) 
       chart.remove()
       chartRef.current = null
       seriesRef.current = null
+      volumeSeriesRef.current = null
       overlaySeriesRef.current = {}
     }
   }, [])
@@ -43,11 +54,47 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [] }) 
     // Convert bars to chart format
     const data = bars.map(b => ({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close }))
     seriesRef.current.setData(data)
+    // Volume histogram (color by up/down)
+    if (volumeSeriesRef.current) {
+      const v = bars.map(b => ({ time: b.time, value: b.volume, color: (b.close >= b.open) ? 'rgba(16,185,129,0.5)' : 'rgba(239,68,68,0.5)' }))
+      volumeSeriesRef.current.setData(v)
+    }
     if (chartRef.current) chartRef.current.timeScale().fitContent()
     // Markers (e.g., EMA crosses)
     if (Array.isArray(markers)) {
       try { seriesRef.current.setMarkers(markers) } catch (_) {}
     }
+  }, [bars])
+
+  // Crosshair tooltip
+  useEffect(() => {
+    const chart = chartRef.current
+    if (!chart) return
+    let tooltip = tooltipRef.current
+    if (!tooltip) {
+      tooltip = document.createElement('div')
+      tooltip.className = 'pointer-events-none absolute bg-slate-900/90 text-slate-200 text-xs px-2 py-1 rounded border border-slate-700 shadow'
+      tooltip.style.transform = 'translate(8px, -24px)'
+      tooltip.style.display = 'none'
+      tooltipRef.current = tooltip
+      const el = containerRef.current
+      if (el) el.appendChild(tooltip)
+    }
+    const sub = chart.subscribeCrosshairMove((param) => {
+      if (!param || !param.point || !param.time) {
+        tooltip.style.display = 'none'
+        return
+      }
+      const { x, y } = param.point
+      const t = param.time
+      const bar = bars.find(b => b.time === t)
+      if (!bar) { tooltip.style.display = 'none'; return }
+      tooltip.innerHTML = `O ${bar.open.toFixed(2)} H ${bar.high.toFixed(2)} L ${bar.low.toFixed(2)} C ${bar.close.toFixed(2)} V ${bar.volume}`
+      tooltip.style.left = `${x}px`
+      tooltip.style.top = `${y}px`
+      tooltip.style.display = 'block'
+    })
+    return () => { try { chart.unsubscribeCrosshairMove(sub) } catch (_) {} }
   }, [bars])
 
   useEffect(() => {
@@ -182,7 +229,7 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [] }) 
   }, [overlays, bars])
 
   return (
-    <div className="card w-full h-[520px] overflow-hidden relative">
+    <div className="card w-full h-[560px] overflow-hidden relative">
       <div ref={containerRef} className="w-full h-full" />
     </div>
   )
