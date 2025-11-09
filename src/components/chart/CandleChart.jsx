@@ -8,6 +8,7 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
   const overlaySeriesRef = useRef({})
   const volumeSeriesRef = useRef(null)
   const tooltipRef = useRef(null)
+  const bandsRef = useRef(null)
   const priceLinesRef = useRef({ saty: {} })
 
   useEffect(() => {
@@ -35,6 +36,19 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
     chartRef.current = chart
     seriesRef.current = candleSeries
     volumeSeriesRef.current = volSeries
+    // Create SATY bands overlay container
+    let bands = bandsRef.current
+    if (!bands) {
+      bands = document.createElement('div')
+      bands.style.position = 'absolute'
+      bands.style.left = '0'
+      bands.style.top = '0'
+      bands.style.right = '0'
+      bands.style.bottom = '0'
+      bands.style.pointerEvents = 'none'
+      bandsRef.current = bands
+      container.appendChild(bands)
+    }
 
     const handleResize = () => {
       chart.applyOptions({ width: container.clientWidth, height: container.clientHeight })
@@ -48,6 +62,9 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       volumeSeriesRef.current = null
       overlaySeriesRef.current = {}
       priceLinesRef.current = { saty: {} }
+      const el = bandsRef.current
+      if (el && el.parentNode) el.parentNode.removeChild(el)
+      bandsRef.current = null
     }
   }, [])
 
@@ -82,7 +99,7 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       const el = containerRef.current
       if (el) el.appendChild(tooltip)
     }
-    const sub = chart.subscribeCrosshairMove((param) => {
+    const onMove = (param) => {
       if (!param || !param.point || !param.time) {
         tooltip.style.display = 'none'
         return
@@ -95,8 +112,9 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       tooltip.style.left = `${x}px`
       tooltip.style.top = `${y}px`
       tooltip.style.display = 'block'
-    })
-    return () => { try { chart.unsubscribeCrosshairMove(sub) } catch (_) {} }
+    }
+    chart.subscribeCrosshairMove(onMove)
+    return () => { try { chart.unsubscribeCrosshairMove(onMove) } catch (_) {} }
   }, [bars])
 
   useEffect(() => {
@@ -261,6 +279,41 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
         removeKeys(Object.keys(lines))
       }
       priceLinesRef.current.saty = lines
+    }
+
+    // SATY shaded bands (horizontal regions across full width)
+    const bandsEl = bandsRef.current
+    const s = overlays.saty
+    const series = seriesRef.current
+    if (bandsEl && s && s.levels && series) {
+      const { pivot, levels } = s
+      const y = (v) => series.priceToCoordinate(v)
+      const make = (key, y1, y2, color) => {
+        if (y1 == null || y2 == null) return
+        let el = bandsEl.querySelector(`.band-${key}`)
+        if (!el) {
+          el = document.createElement('div')
+          el.className = `band-${key}`
+          el.style.position = 'absolute'
+          el.style.left = '0'
+          el.style.right = '0'
+          el.style.pointerEvents = 'none'
+          bandsEl.appendChild(el)
+        }
+        const top = Math.min(y1, y2)
+        const height = Math.max(1, Math.abs(y2 - y1))
+        el.style.top = `${top}px`
+        el.style.height = `${height}px`
+        el.style.background = color
+      }
+      // Trigger bands around pivot
+      make('t0236u', y(pivot), y(levels.t0236.up), 'rgba(148,163,184,0.08)')
+      make('t0236d', y(levels.t0236.dn), y(pivot), 'rgba(148,163,184,0.08)')
+      // ATR bands beyond triggers
+      make('t1000u', y(levels.t0236.up), y(levels.t1000.up), 'rgba(20,184,166,0.06)')
+      make('t1000d', y(levels.t1000.dn), y(levels.t0236.dn), 'rgba(20,184,166,0.06)')
+    } else if (bandsEl) {
+      bandsEl.innerHTML = ''
     }
   }, [overlays, bars])
 
