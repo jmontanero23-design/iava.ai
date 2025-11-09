@@ -86,6 +86,42 @@ export default function BacktestPanel({ symbol, timeframe }) {
               </div>
             </div>
           ) : null}
+          {Array.isArray(res.curveBull) && Array.isArray(res.curveBear) ? (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="text-xs text-slate-400 mb-1">Bull Regime</div>
+                <div className="h-20 flex items-end gap-2">
+                  {res.curveBull.map((p, i) => {
+                    const h = Math.max(2, Math.min(60, Math.round(Math.abs(p.avgFwd) * 0.8)))
+                    const up = p.avgFwd >= 0
+                    const color = up ? 'bg-emerald-500/70' : 'bg-rose-500/70'
+                    return (
+                      <div key={i} title={`th ${p.th}: avg ${p.avgFwd}% · win ${p.winRate}% · n=${p.events}`} className="text-center">
+                        <div className={`w-4 ${color}`} style={{ height: h }} />
+                        <div className="text-[10px] text-slate-400 mt-1">{p.th}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400 mb-1">Bear Regime</div>
+                <div className="h-20 flex items-end gap-2">
+                  {res.curveBear.map((p, i) => {
+                    const h = Math.max(2, Math.min(60, Math.round(Math.abs(p.avgFwd) * 0.8)))
+                    const up = p.avgFwd >= 0
+                    const color = up ? 'bg-emerald-500/70' : 'bg-rose-500/70'
+                    return (
+                      <div key={i} title={`th ${p.th}: avg ${p.avgFwd}% · win ${p.winRate}% · n=${p.events}`} className="text-center">
+                        <div className={`w-4 ${color}`} style={{ height: h }} />
+                        <div className="text-[10px] text-slate-400 mt-1">{p.th}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
     </div>

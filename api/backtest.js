@@ -36,6 +36,8 @@ export default async function handler(req, res) {
     const events = []
     const curveThs = [30,40,50,60,70,80,90]
     const curve = curveThs.map(th => ({ th, rets: [] }))
+    const curveBull = curveThs.map(th => ({ th, rets: [] }))
+    const curveBear = curveThs.map(th => ({ th, rets: [] }))
     // Prepare daily regime states if filtering requested
     let dailyBars = null
     let dailyStates = null
@@ -88,6 +90,22 @@ export default async function handler(req, res) {
         for (const bin of curve) {
           if (st.score >= bin.th) bin.rets.push(fwd)
         }
+        // Also populate regime curves if daily states available
+        if (dailyStates) {
+          // find daily bar index di again (reuse logic)
+          const it2 = bars[i].time
+          let di2 = -1
+          for (let j = 0; j < dailyBars.length; j++) {
+            if (dailyBars[j].time <= it2) di2 = j; else break
+          }
+          if (di2 >= 0) {
+            const ds2 = dailyStates[di2]
+            const isBull = (ds2.pivotNow === 'bullish' && ds2.ichiRegime === 'bullish')
+            const isBear = (ds2.pivotNow === 'bearish' && ds2.ichiRegime === 'bearish')
+            if (isBull) for (const bin of curveBull) { if (st.score >= bin.th) bin.rets.push(fwd) }
+            if (isBear) for (const bin of curveBear) { if (st.score >= bin.th) bin.rets.push(fwd) }
+          }
+        }
       }
       if (scores.length > 400) scores.shift() // keep last 400
     }
@@ -116,6 +134,22 @@ export default async function handler(req, res) {
         const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
         return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)) }
       })
+      if (dailyStates) {
+        out.curveBull = curveBull.map(c => {
+          const arr = c.rets
+          const ev = arr.length
+          const wr = ev ? (arr.filter(x=>x>0).length/ev)*100 : 0
+          const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
+          return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)) }
+        })
+        out.curveBear = curveBear.map(c => {
+          const arr = c.rets
+          const ev = arr.length
+          const wr = ev ? (arr.filter(x=>x>0).length/ev)*100 : 0
+          const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
+          return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)) }
+        })
+      }
     }
     if (format === 'csv') {
       const header = 'time,close,score,forwardReturn\n'
@@ -123,8 +157,18 @@ export default async function handler(req, res) {
       res.setHeader('Content-Type', 'text/csv; charset=utf-8')
       res.status(200).send(header + rows)
     } else {
-      mem.data.set(cacheKey, { at: now, value: out })
-      res.status(200).json(out)
+      // ETag support
+      const body = JSON.stringify(out)
+      const hash = crypto.createHash('sha1').update(body).digest('hex')
+      const etag = `W/"${hash}"`
+      res.setHeader('ETag', etag)
+      const inm = req.headers['if-none-match']
+      if (inm && inm === etag) {
+        res.status(304).end()
+        return
+      }
+      mem.data.set(cacheKey, { at: now, value: out, etag })
+      res.status(200).send(body)
     }
   } catch (e) {
     res.status(500).json({ error: e?.message || 'Unexpected error' })
