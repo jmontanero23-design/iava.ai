@@ -49,11 +49,12 @@ export default function CandleChart({ bars = [], overlays = {} }) {
   useEffect(() => {
     const chart = chartRef.current
     if (!chart) return
-    // Clear existing overlays safely (handle nested groups)
-    const removeValue = (val) => {
-      if (!val) return
-      if (Array.isArray(val)) {
-        val.forEach(removeValue)
+    try {
+      // Clear existing overlays safely (handle nested groups)
+      const removeValue = (val) => {
+        if (!val) return
+        if (Array.isArray(val)) {
+          val.forEach(removeValue)
         return
       }
       if (typeof val === 'object') {
@@ -66,8 +67,8 @@ export default function CandleChart({ bars = [], overlays = {} }) {
         return
       }
     }
-    Object.values(overlaySeriesRef.current).forEach(removeValue)
-    overlaySeriesRef.current = {}
+      Object.values(overlaySeriesRef.current).forEach(removeValue)
+      overlaySeriesRef.current = {}
 
     if (overlays.emaCloud) {
       const upper = chart.addLineSeries({ color: '#f59e0b', lineWidth: 1 })
@@ -140,6 +141,10 @@ export default function CandleChart({ bars = [], overlays = {} }) {
       overlaySeriesRef.current.saty1236D = makeHLine(levels.t1236.dn, '#f59e0b')
       overlaySeriesRef.current.saty1618U = makeHLine(levels.t1618.up, '#a78bfa')
       overlaySeriesRef.current.saty1618D = makeHLine(levels.t1618.dn, '#a78bfa')
+    }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Overlay render error:', e)
     }
   }, [overlays, bars])
 
