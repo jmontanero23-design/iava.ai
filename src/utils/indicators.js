@@ -200,3 +200,112 @@ export function linregMomentum(values, period = 20) {
   }
   return out
 }
+
+// Pivot Ribbon (8/21/34): returns EMAs and state per index
+export function pivotRibbon(values) {
+  const e8 = ema(values, 8)
+  const e21 = ema(values, 21)
+  const e34 = ema(values, 34)
+  const state = values.map((_, i) => {
+    if (e8[i] == null || e21[i] == null || e34[i] == null) return 'neutral'
+    if (e8[i] > e21[i] && e21[i] > e34[i]) return 'bullish'
+    if (e8[i] < e21[i] && e21[i] < e34[i]) return 'bearish'
+    return 'neutral'
+  })
+  const flips = []
+  for (let i = 1; i < state.length; i++) {
+    if (state[i] !== state[i - 1] && state[i] !== 'neutral' && state[i - 1] !== 'neutral') flips.push(i)
+  }
+  return { e8, e21, e34, state, flips }
+}
+
+export function ripsterBias3450(values) {
+  const e34 = ema(values, 34)
+  const e50 = ema(values, 50)
+  const i = values.length - 1
+  let bias = 'neutral'
+  if (e34[i] != null && e50[i] != null) bias = e34[i] > e50[i] ? 'bullish' : e34[i] < e50[i] ? 'bearish' : 'neutral'
+  return { e34, e50, bias }
+}
+
+export function satyTriggerDirection(bars, saty) {
+  if (!bars?.length || !saty?.levels) return null
+  const last = bars[bars.length - 1]
+  const { t0236 } = saty.levels
+  if (last.close > t0236.up) return 'long'
+  if (last.close < t0236.dn) return 'short'
+  return null
+}
+
+export function squeezeState(close, high, low, period = 20) {
+  const sq = ttmSqueeze(close, high, low, period)
+  const mom = linregMomentum(close, period)
+  const i = close.length - 1
+  const prev = i > 0 ? i - 1 : 0
+  const on = sq[i] === 1
+  const fired = sq[prev] === 1 && sq[i] === 0
+  const dir = mom[i] > 0 ? 'up' : mom[i] < 0 ? 'down' : 'flat'
+  return { on, fired, dir, mom, sq }
+}
+
+export function computeStates(bars) {
+  const close = bars.map(b => b.close)
+  const high = bars.map(b => b.high)
+  const low = bars.map(b => b.low)
+  const ribbon = pivotRibbon(close)
+  const saty = satyAtrLevels(bars, 14)
+  const rip = ripsterBias3450(close)
+  const sq = squeezeState(close, high, low, 20)
+  // Ichimoku simple regime: price vs cloud midpoint at last bar
+  const ichi = ichimoku(bars)
+  const i = bars.length - 1
+  let ichiRegime = 'neutral'
+  if (ichi?.spanA && ichi?.spanB) {
+    const a = ichi.spanA[i]
+    const b = ichi.spanB[i]
+    const mid = (a != null && b != null) ? (a + b) / 2 : null
+    if (mid != null) {
+      if (close[i] > Math.max(a, b)) ichiRegime = 'bullish'
+      else if (close[i] < Math.min(a, b)) ichiRegime = 'bearish'
+      else ichiRegime = 'neutral'
+    }
+  }
+
+  const pivotNow = ribbon.state[i]
+  const satyDir = satyTriggerDirection(bars, saty)
+  // Unicorn Score v1 heuristic
+  let score = 0
+  if (pivotNow === 'bullish') score += 20
+  if (rip.bias === 'bullish') score += 20
+  if (satyDir === 'long' && pivotNow === 'bullish') score += 20
+  if (sq.fired && sq.dir === 'up') score += 25
+  if (ichiRegime === 'bullish') score += 15
+
+  const markers = []
+  // Mark 8/21 crosses
+  for (let k = 1; k < close.length; k++) {
+    const prevUp = ribbon.e8[k - 1] != null && ribbon.e21[k - 1] != null && ribbon.e8[k - 1] > ribbon.e21[k - 1]
+    const nowUp = ribbon.e8[k] != null && ribbon.e21[k] != null && ribbon.e8[k] > ribbon.e21[k]
+    if (prevUp !== nowUp && ribbon.e8[k] != null && ribbon.e21[k] != null) {
+      markers.push({
+        time: bars[k].time,
+        position: nowUp ? 'belowBar' : 'aboveBar',
+        color: nowUp ? '#10b981' : '#ef4444',
+        shape: nowUp ? 'arrowUp' : 'arrowDown',
+        text: nowUp ? '8>21' : '8<21',
+      })
+    }
+  }
+
+  return {
+    ribbon,
+    saty,
+    rip,
+    sq,
+    ichiRegime,
+    pivotNow,
+    satyDir,
+    score,
+    markers,
+  }
+}

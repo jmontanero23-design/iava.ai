@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { createChart } from 'lightweight-charts'
 
-export default function CandleChart({ bars = [], overlays = {} }) {
+export default function CandleChart({ bars = [], overlays = {}, markers = [] }) {
   const containerRef = useRef(null)
   const chartRef = useRef(null)
   const seriesRef = useRef(null)
@@ -44,6 +44,10 @@ export default function CandleChart({ bars = [], overlays = {} }) {
     const data = bars.map(b => ({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close }))
     seriesRef.current.setData(data)
     if (chartRef.current) chartRef.current.timeScale().fitContent()
+    // Markers (e.g., EMA crosses)
+    if (Array.isArray(markers)) {
+      try { seriesRef.current.setMarkers(markers) } catch (_) {}
+    }
   }, [bars])
 
   useEffect(() => {

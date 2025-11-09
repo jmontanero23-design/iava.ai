@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import Hero from './components/Hero.jsx'
 import CandleChart from './components/chart/CandleChart.jsx'
-import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend } from './utils/indicators.js'
+import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend, computeStates } from './utils/indicators.js'
 import SqueezePanel from './components/chart/SqueezePanel.jsx'
+import SignalsPanel from './components/SignalsPanel.jsx'
 import { fetchBars as fetchBarsApi } from './services/alpaca.js'
 import HealthBadge from './components/HealthBadge.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
@@ -49,6 +50,8 @@ export default function App() {
     if (showSaty) base.saty = satyAtrLevels(bars, 14)
     return base
   }, [bars, showEma821, showEma512, showEma89, showEma3450, showIchi, showSaty])
+
+  const signalState = useMemo(() => computeStates(bars), [bars])
 
   async function loadBars(s = symbol, tf = timeframe) {
     try {
@@ -125,8 +128,9 @@ export default function App() {
         </div>
         <div className="ml-auto"><HealthBadge /></div>
       </div>
-      <CandleChart bars={bars} overlays={overlays} />
+      <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} />
       {showSqueeze && <SqueezePanel bars={bars} />}
+      <SignalsPanel state={signalState} />
       <section className="card p-4">
         <h2 className="text-lg font-semibold mb-2">Project Structure</h2>
         <ul className="list-disc pl-6 text-slate-300">
