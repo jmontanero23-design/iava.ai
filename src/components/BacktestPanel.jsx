@@ -11,6 +11,7 @@ export default function BacktestPanel({ symbol, timeframe }) {
   const [dailyFilter, setDailyFilter] = useState('none')
   const [batchSymbols, setBatchSymbols] = useState('AAPL,MSFT,NVDA,SPY')
   const [includeSummaryRegimes, setIncludeSummaryRegimes] = useState(true)
+  const [curveThresholds, setCurveThresholds] = useState('30,40,50,60,70,80,90')
 
   const presets = [
     { label: 'Intraday (70 / 10)', th: 70, hz: 10, regime: 'bull' },
@@ -21,7 +22,8 @@ export default function BacktestPanel({ symbol, timeframe }) {
   async function run() {
     try {
       setLoading(true); setErr('')
-      const r = await fetch(`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&curve=${showCurve ? 1 : 0}&dailyFilter=${encodeURIComponent(dailyFilter)}`)
+      const ths = encodeURIComponent(curveThresholds)
+      const r = await fetch(`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&curve=${showCurve ? 1 : 0}&ths=${ths}&dailyFilter=${encodeURIComponent(dailyFilter)}`)
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
       setRes(j)
@@ -59,6 +61,9 @@ export default function BacktestPanel({ symbol, timeframe }) {
           <label className="inline-flex items-center gap-2">Threshold <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" /></label>
           <label className="inline-flex items-center gap-2">Horizon <input type="number" min={1} max={100} value={horizon} onChange={e => setHorizon(parseInt(e.target.value,10)||1)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" /></label>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={showCurve} onChange={e=>setShowCurve(e.target.checked)} /> Curve</label>
+          <label className="inline-flex items-center gap-2">Curve THs
+            <input value={curveThresholds} onChange={e=>setCurveThresholds(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-36" title="Comma-separated thresholds for expectancy curves" />
+          </label>
           <label className="inline-flex items-center gap-2">Regime
             <select value={dailyFilter} onChange={e => setDailyFilter(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
               <option value="none">None</option>

@@ -21,6 +21,13 @@ export default async function handler(req, res) {
     const horizon = Math.max(1, Math.min(100, parseInt(urlObj.searchParams.get('horizon') || '10', 10)))
     const format = (urlObj.searchParams.get('format') || 'json').toLowerCase()
     const wantCurve = (urlObj.searchParams.get('curve') || '1') !== '0'
+    // Optional thresholds list for curve (comma-separated integers)
+    let curveThs = [30,40,50,60,70,80,90]
+    const thsParam = (urlObj.searchParams.get('ths') || '').trim()
+    if (thsParam) {
+      const arr = thsParam.split(',').map(s => parseInt(s.trim(), 10)).filter(n => Number.isFinite(n) && n >= 0 && n <= 100)
+      if (arr.length) curveThs = Array.from(new Set(arr)).sort((a,b)=>a-b)
+    }
     const dailyFilter = (urlObj.searchParams.get('dailyFilter') || 'none').toLowerCase() // none|bull|bear
 
     const cacheKey = `${symbol}|${timeframe}|${limit}|${threshold}|${horizon}`
@@ -42,7 +49,6 @@ export default async function handler(req, res) {
     const scores = []
     const start = Math.min(80, Math.floor(bars.length / 5))
     const events = []
-    const curveThs = [30,40,50,60,70,80,90]
     const curve = curveThs.map(th => ({ th, rets: [] }))
     const curveBull = curveThs.map(th => ({ th, rets: [] }))
     const curveBear = curveThs.map(th => ({ th, rets: [] }))

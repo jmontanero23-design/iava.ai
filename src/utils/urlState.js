@@ -10,6 +10,7 @@ export function readParams() {
     timeframe: p.get('tf') || undefined,
     threshold: num(p.get('th'), undefined),
     enforceDaily: b(p.get('edf')),
+    streaming: b(p.get('str')),
     ema821: b(p.get('e821')),
     ema512: b(p.get('e512')),
     ema89: b(p.get('e89')),
@@ -34,6 +35,7 @@ export function writeParams(state) {
   setS('tf', state.timeframe)
   setN('th', state.threshold)
   setB('edf', state.enforceDaily)
+  setB('str', state.streaming)
   setB('e821', state.showEma821)
   setB('e512', state.showEma512)
   setB('e89', state.showEma89)
@@ -44,4 +46,3 @@ export function writeParams(state) {
   const url = `${window.location.pathname}?${p.toString()}`
   window.history.replaceState(null, '', url)
 }
-
