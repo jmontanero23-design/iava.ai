@@ -5,7 +5,9 @@ export async function fetchBars(symbol = 'AAPL', timeframe = '1Min', limit = 500
   const r = await fetch(`${API_BASE}/api/alpaca/bars?${qs.toString()}`)
   if (!r.ok) throw new Error(`API error ${r.status}`)
   const json = await r.json()
-  return json.bars || []
+  const bars = json.bars || []
+  // Attach symbol for downstream trade panel and logging convenience
+  return bars.map(b => ({ ...b, symbol }))
 }
 
 export async function fetchAccount() {
@@ -13,4 +15,3 @@ export async function fetchAccount() {
   if (!r.ok) throw new Error(`API error ${r.status}`)
   return r.json()
 }
-

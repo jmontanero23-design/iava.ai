@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Hero from './components/Hero.jsx'
 import CandleChart from './components/chart/CandleChart.jsx'
 import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend, computeStates, pivotRibbon } from './utils/indicators.js'
@@ -49,6 +49,8 @@ export default function App() {
   const [showSqueeze, setShowSqueeze] = useState(true)
   const [autoRefresh, setAutoRefresh] = useState(false)
   const [refreshSec, setRefreshSec] = useState(15)
+  const [autoLoadChange, setAutoLoadChange] = useState(true)
+  const loadReq = useRef(0)
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
@@ -79,9 +81,11 @@ export default function App() {
 
   async function loadBars(s = symbol, tf = timeframe) {
     try {
+      const myId = ++loadReq.current
       setLoading(true)
       setError('')
       const res = await fetchBarsApi(s, tf, 500)
+      if (myId !== loadReq.current) return
       if (Array.isArray(res) && res.length) { setBars(res); setUsingSample(false) }
       else throw new Error('No data returned')
     } catch (e) {
@@ -110,6 +114,7 @@ export default function App() {
       if (typeof saved.showEma512 === 'boolean') setShowEma512(saved.showEma512)
       if (typeof saved.showEma89 === 'boolean') setShowEma89(saved.showEma89)
       if (typeof saved.showEma3450 === 'boolean') setShowEma3450(saved.showEma3450)
+      if (typeof saved.autoLoadChange === 'boolean') setAutoLoadChange(saved.autoLoadChange)
     } catch {}
     loadBars()
     // Fetch account once for trade sizing
@@ -122,9 +127,10 @@ export default function App() {
       symbol, timeframe, autoRefresh, refreshSec,
       showIchi, showRibbon, showSaty, showSqueeze,
       showEma821, showEma512, showEma89, showEma3450,
+      autoLoadChange,
     }
     try { localStorage.setItem('iava.settings', JSON.stringify(prefs)) } catch {}
-  }, [symbol, timeframe, autoRefresh, refreshSec, showIchi, showRibbon, showSaty, showSqueeze, showEma821, showEma512, showEma89, showEma3450])
+  }, [symbol, timeframe, autoRefresh, refreshSec, showIchi, showRibbon, showSaty, showSqueeze, showEma821, showEma512, showEma89, showEma3450, autoLoadChange])
 
   useEffect(() => {
     if (!autoRefresh) return
@@ -137,8 +143,8 @@ export default function App() {
       <Hero />
       <div className="card p-4 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <input value={symbol} onChange={e => setSymbol(e.target.value.toUpperCase())} placeholder="Symbol" className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm" style={{width: 90}} />
-          <select value={timeframe} onChange={e => setTimeframe(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm">
+          <input value={symbol} onChange={e => setSymbol(e.target.value.toUpperCase())} onKeyDown={e => { if (e.key === 'Enter') loadBars() }} placeholder="Symbol" className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm" style={{width: 90}} />
+          <select value={timeframe} onChange={e => { const tf = e.target.value; setTimeframe(tf); if (autoLoadChange) loadBars(symbol, tf) }} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm">
             <option value="1Min">1Min</option>
             <option value="5Min">5Min</option>
             <option value="15Min">15Min</option>
@@ -203,6 +209,10 @@ export default function App() {
             <option value={30}>30s</option>
             <option value={60}>60s</option>
           </select>
+          <label className="inline-flex items-center gap-2 text-sm ml-2">
+            <input type="checkbox" className="accent-indigo-500" checked={autoLoadChange} onChange={e => setAutoLoadChange(e.target.checked)} />
+            Auto-Load on Change
+          </label>
         </div>
         <div className="ml-auto"><HealthBadge /></div>
       </div>
