@@ -11,6 +11,7 @@ import BuildInfoFooter from './components/BuildInfoFooter.jsx'
 import Presets from './components/Presets.jsx'
 import StatusBar from './components/StatusBar.jsx'
 import LegendChips from './components/LegendChips.jsx'
+import MarketStats from './components/MarketStats.jsx'
 import UnicornCallout from './components/UnicornCallout.jsx'
 import BacktestPanel from './components/BacktestPanel.jsx'
 import OrdersPanel from './components/OrdersPanel.jsx'
@@ -334,6 +335,7 @@ export default function App() {
         <div className="ml-auto"><HealthBadge /></div>
         <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); alert('Link copied'); } catch(_) {} }} className="ml-2 bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Link</button>
       </div>
+      <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={useStreaming} />
       <LegendChips overlays={overlays} />
       <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} loading={loading} />
       <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} />

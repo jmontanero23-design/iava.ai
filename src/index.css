@@ -3,10 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --surface: #0b1020;
-  --panel: #0f162f;
+  --surface: #05070f;
+  --panel: #0f172a;
   --text: #e5e7eb;
-  --muted: #9ca3af;
+  --muted: #94a3b8;
   --accent: #4f46e5;
 }
 
@@ -15,10 +15,34 @@ html, body, #root {
 }
 
 body {
-  @apply bg-slate-950 text-slate-100 antialiased;
+  background: radial-gradient(circle at top, rgba(79,70,229,0.25), transparent 55%),
+              radial-gradient(circle at bottom, rgba(14,165,233,0.2), transparent 45%),
+              #020617;
+  color: var(--text);
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont;
+  -webkit-font-smoothing: antialiased;
 }
 
 .card {
-  @apply bg-slate-900/60 border border-slate-800 rounded-lg;
+  @apply bg-slate-900/70 border border-slate-800 rounded-xl transition transform duration-200;
+  backdrop-filter: blur(12px);
 }
 
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(2,6,23,0.45);
+  border-color: rgba(99,102,241,0.5);
+}
+
+button,
+input,
+select {
+  transition: background-color 0.2s ease, color 0.2s ease, border 0.2s ease;
+}
+
+.glass-panel {
+  background: rgba(15,23,42,0.65);
+  border: 1px solid rgba(148,163,184,0.2);
+  backdrop-filter: blur(18px);
+  border-radius: 18px;
+}
