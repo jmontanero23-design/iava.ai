@@ -84,12 +84,38 @@ export default function CandleChart({ bars = [], overlays = {} }) {
       c.setData(chik)
       overlaySeriesRef.current.ichimoku = { t, k, a, b, c }
     }
+
+    if (overlays.saty) {
+      const { pivot, levels } = overlays.saty
+      const t0 = bars[0]?.time
+      const t1 = bars.at(-1)?.time
+      const makeHLine = (value, color, lineWidth = 1, style = 0) => {
+        const s = chart.addLineSeries({ color, lineWidth, lineStyle: style })
+        const data = []
+        if (t0 != null && t1 != null && value != null) {
+          data.push({ time: t0, value })
+          data.push({ time: t1, value })
+        }
+        s.setData(data)
+        return s
+      }
+      overlaySeriesRef.current.satyPivot = makeHLine(pivot, '#e5e7eb', 2)
+      overlaySeriesRef.current.saty0236U = makeHLine(levels.t0236.up, '#94a3b8')
+      overlaySeriesRef.current.saty0236D = makeHLine(levels.t0236.dn, '#94a3b8')
+      overlaySeriesRef.current.saty0618U = makeHLine(levels.t0618.up, '#38bdf8')
+      overlaySeriesRef.current.saty0618D = makeHLine(levels.t0618.dn, '#38bdf8')
+      overlaySeriesRef.current.saty1000U = makeHLine(levels.t1000.up, '#14b8a6')
+      overlaySeriesRef.current.saty1000D = makeHLine(levels.t1000.dn, '#14b8a6')
+      overlaySeriesRef.current.saty1236U = makeHLine(levels.t1236.up, '#f59e0b')
+      overlaySeriesRef.current.saty1236D = makeHLine(levels.t1236.dn, '#f59e0b')
+      overlaySeriesRef.current.saty1618U = makeHLine(levels.t1618.up, '#a78bfa')
+      overlaySeriesRef.current.saty1618D = makeHLine(levels.t1618.dn, '#a78bfa')
+    }
   }, [overlays, bars])
 
   return (
-    <div className="card w-full h-[520px] overflow-hidden">
+    <div className="card w-full h-[520px] overflow-hidden relative">
       <div ref={containerRef} className="w-full h-full" />
     </div>
   )
 }
-

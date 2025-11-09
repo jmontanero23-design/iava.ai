@@ -41,6 +41,61 @@ export function emaCloud(values, fast = 8, slow = 21) {
   return { fast: fastEma, slow: slowEma }
 }
 
+// Average True Range
+export function atr(bars, period = 14) {
+  if (!bars?.length) return []
+  const out = new Array(bars.length).fill(null)
+  let prevClose = bars[0].close
+  const trs = []
+  for (let i = 0; i < bars.length; i++) {
+    const b = bars[i]
+    const tr = Math.max(
+      b.high - b.low,
+      Math.abs(b.high - prevClose),
+      Math.abs(b.low - prevClose)
+    )
+    trs.push(tr)
+    prevClose = b.close
+    if (trs.length >= period) {
+      const start = trs.length - period
+      let sum = 0
+      for (let j = start; j < trs.length; j++) sum += trs[j]
+      out[i] = sum / period
+    }
+  }
+  return out
+}
+
+// SATY ATR Levels derived from last ATR and prior close pivot
+export function satyAtrLevels(bars, lookback = 14) {
+  if (!bars?.length) return null
+  const a = atr(bars, lookback)
+  const lastIdx = bars.length - 1
+  const lastAtr = a[lastIdx]
+  const pivot = bars[lastIdx - 1]?.close ?? bars[lastIdx].close
+  if (lastAtr == null) return { pivot, atr: null }
+  const mk = (mul) => ({ up: pivot + mul * lastAtr, dn: pivot - mul * lastAtr })
+  const levels = {
+    t0236: mk(0.236),
+    t0618: mk(0.618),
+    t1000: mk(1.0),
+    t1236: mk(1.236),
+    t1618: mk(1.618),
+  }
+  const lastClose = bars[lastIdx].close
+  const rangeUsed = Math.abs(lastClose - pivot) / lastAtr // in ATRs
+  return { pivot, atr: lastAtr, rangeUsed, levels }
+}
+
+// Simple trend from EMA ribbon (8 vs 34)
+export function pivotRibbonTrend(values, fast = 8, slow = 34) {
+  const eFast = ema(values, fast)
+  const eSlow = ema(values, slow)
+  const i = values.length - 1
+  if (eFast[i] == null || eSlow[i] == null) return 'neutral'
+  return eFast[i] > eSlow[i] ? 'bullish' : eFast[i] < eSlow[i] ? 'bearish' : 'neutral'
+}
+
 // Ichimoku Cloud (standard: 9, 26, 52)
 export function ichimoku(bars, pTenkan = 9, pKijun = 26, pSenkouB = 52) {
   const high = bars.map(b => b.high)
@@ -125,3 +180,23 @@ export function ttmSqueeze(close, high, low, period = 20, multBB = 2, multKC = 1
   return out
 }
 
+// Linear regression slope momentum (approx for TTM histogram)
+export function linregMomentum(values, period = 20) {
+  const n = values.length
+  const out = new Array(n).fill(null)
+  const sumX = (period * (period - 1)) / 2
+  const sumX2 = ((period - 1) * period * (2 * period - 1)) / 6
+  for (let i = period - 1; i < n; i++) {
+    let sumY = 0
+    let sumXY = 0
+    for (let k = 0; k < period; k++) {
+      const y = values[i - (period - 1) + k]
+      sumY += y
+      sumXY += k * y
+    }
+    const denom = period * sumX2 - sumX * sumX
+    const slope = denom !== 0 ? (period * sumXY - sumX * sumY) / denom : 0
+    out[i] = slope
+  }
+  return out
+}

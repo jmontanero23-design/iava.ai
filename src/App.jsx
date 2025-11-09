@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react'
 import Hero from './components/Hero.jsx'
 import CandleChart from './components/chart/CandleChart.jsx'
-import { emaCloud, ichimoku } from './utils/indicators.js'
+import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend } from './utils/indicators.js'
+import SqueezePanel from './components/chart/SqueezePanel.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -24,19 +25,22 @@ export default function App() {
   const [bars] = useState(() => generateSampleOHLC())
   const [showEma, setShowEma] = useState(true)
   const [showIchi, setShowIchi] = useState(true)
+  const [showSaty, setShowSaty] = useState(true)
+  const [showSqueeze, setShowSqueeze] = useState(true)
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
     const base = {}
     if (showEma) base.emaCloud = emaCloud(close, 8, 21)
     if (showIchi) base.ichimoku = ichimoku(bars)
+    if (showSaty) base.saty = satyAtrLevels(bars, 14)
     return base
   }, [bars, showEma, showIchi])
 
   return (
     <div className="min-h-screen p-6 space-y-6">
       <Hero />
-      <div className="card p-4 flex items-center gap-4">
+      <div className="card p-4 flex flex-wrap items-center gap-4">
         <span className="text-sm text-slate-400">Overlays</span>
         <label className="inline-flex items-center gap-2">
           <input type="checkbox" className="accent-indigo-500" checked={showEma} onChange={e => setShowEma(e.target.checked)} />
@@ -46,8 +50,24 @@ export default function App() {
           <input type="checkbox" className="accent-indigo-500" checked={showIchi} onChange={e => setShowIchi(e.target.checked)} />
           <span>Ichimoku</span>
         </label>
+        <label className="inline-flex items-center gap-2">
+          <input type="checkbox" className="accent-indigo-500" checked={showSaty} onChange={e => setShowSaty(e.target.checked)} />
+          <span>SATY ATR Levels</span>
+        </label>
+        <div className="ml-auto text-sm text-slate-400">
+          Trend: <span className="text-slate-200">{pivotRibbonTrend(bars.map(b => b.close))}</span>
+          {showSaty && overlays.saty?.atr ? (
+            <>
+              <span className="mx-2">•</span>
+              ATR: <span className="text-slate-200">{overlays.saty.atr.toFixed(2)}</span>
+              <span className="mx-2">•</span>
+              Range used: <span className="text-slate-200">{Math.round(overlays.saty.rangeUsed * 100)}%</span>
+            </>
+          ) : null}
+        </div>
       </div>
       <CandleChart bars={bars} overlays={overlays} />
+      {showSqueeze && <SqueezePanel bars={bars} />}
       <section className="card p-4">
         <h2 className="text-lg font-semibold mb-2">Project Structure</h2>
         <ul className="list-disc pl-6 text-slate-300">
