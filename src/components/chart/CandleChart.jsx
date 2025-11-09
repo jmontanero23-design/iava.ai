@@ -12,6 +12,7 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
   const priceLinesRef = useRef({ saty: {} })
   const cloudCanvasRef = useRef(null)
   const cloudUnsubRef = useRef(null)
+  const dockRef = useRef(null)
 
   useEffect(() => {
     const container = containerRef.current
@@ -64,6 +65,24 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       container.appendChild(c)
     }
 
+    // Floating info dock (bottom-left)
+    if (!dockRef.current) {
+      const d = document.createElement('div')
+      d.style.position = 'absolute'
+      d.style.left = '8px'
+      d.style.bottom = '8px'
+      d.style.pointerEvents = 'none'
+      d.style.background = 'rgba(2,6,23,0.7)'
+      d.style.border = '1px solid rgba(51,65,85,0.8)'
+      d.style.borderRadius = '8px'
+      d.style.padding = '6px 8px'
+      d.style.fontSize = '11px'
+      d.style.color = '#e2e8f0'
+      d.style.boxShadow = '0 1px 2px rgba(0,0,0,0.3)'
+      dockRef.current = d
+      container.appendChild(d)
+    }
+
     const handleResize = () => {
       chart.applyOptions({ width: container.clientWidth, height: container.clientHeight })
     }
@@ -82,6 +101,9 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       const cc = cloudCanvasRef.current
       if (cc && cc.parentNode) cc.parentNode.removeChild(cc)
       cloudCanvasRef.current = null
+      const dk = dockRef.current
+      if (dk && dk.parentNode) dk.parentNode.removeChild(dk)
+      dockRef.current = null
       if (cloudUnsubRef.current && chart.timeScale) {
         try { chart.timeScale().unsubscribeVisibleTimeRangeChange(cloudUnsubRef.current) } catch(_) {}
       }
@@ -390,6 +412,25 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
     const handler = () => drawCloud()
     chart.timeScale().subscribeVisibleTimeRangeChange(handler)
     cloudUnsubRef.current = handler
+
+    // Update floating dock content
+    try {
+      const d = dockRef.current
+      if (d) {
+        const last = bars[bars.length - 1]
+        if (last) {
+          const saty = overlays?.saty
+          const fmt = (n) => (n == null ? '—' : Number(n).toFixed(2))
+          const lines = []
+          lines.push(`O ${fmt(last.open)}  H ${fmt(last.high)}  L ${fmt(last.low)}  C ${fmt(last.close)}`)
+          if (saty?.atr && saty?.levels) {
+            lines.push(`ATR ${fmt(saty.atr)}  Pivot ${fmt(saty.pivot)}`)
+            lines.push(`±0.236 ${fmt(saty.levels.t0236.dn)} / ${fmt(saty.levels.t0236.up)}  ±1.0 ${fmt(saty.levels.t1000.dn)} / ${fmt(saty.levels.t1000.up)}`)
+          }
+          d.innerHTML = `<div style="line-height:1.2">${lines.map(l => `<div>${l}</div>`).join('')}</div>`
+        }
+      }
+    } catch (_) {}
   }, [overlays, bars])
 
   return (

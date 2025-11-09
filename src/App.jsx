@@ -19,6 +19,7 @@ import SatyTargets from './components/SatyTargets.jsx'
 import InfoPopover from './components/InfoPopover.jsx'
 import SymbolSearch from './components/SymbolSearch.jsx'
 import { readParams, writeParams } from './utils/urlState.js'
+import SignalFeed from './components/SignalFeed.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -61,6 +62,7 @@ export default function App() {
   const [dailyBars, setDailyBars] = useState([])
   const [enforceDaily, setEnforceDaily] = useState(false)
   const [mtfPreset, setMtfPreset] = useState('manual')
+  const [signalHistory, setSignalHistory] = useState([])
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
@@ -189,6 +191,33 @@ export default function App() {
       showIchi: true,
       enforceDaily: true,
     },
+    intradayBreakout: {
+      showEma821: false,
+      showEma512: true,
+      showEma89: true,
+      showEma3450: false,
+      showRibbon: true,
+      showIchi: false,
+      enforceDaily: false,
+    },
+    dailyTrendFollow: {
+      showEma821: true,
+      showEma512: false,
+      showEma89: false,
+      showEma3450: true,
+      showRibbon: true,
+      showIchi: true,
+      enforceDaily: true,
+    },
+    meanRevertIntraday: {
+      showEma821: false,
+      showEma512: false,
+      showEma89: true,
+      showEma3450: false,
+      showRibbon: false,
+      showIchi: false,
+      enforceDaily: false,
+    },
   }
 
   function applyPreset(id) {
@@ -203,6 +232,26 @@ export default function App() {
     if (typeof preset.showIchi === 'boolean') setShowIchi(preset.showIchi)
     if (typeof preset.enforceDaily === 'boolean') setEnforceDaily(preset.enforceDaily)
   }
+
+  // Build signal timeline: append on new last bar
+  useEffect(() => {
+    if (!bars?.length) return
+    const last = bars[bars.length - 1]
+    const lastTime = last.time
+    setSignalHistory(prev => {
+      if (prev.length && prev[0]?.time === lastTime) return prev
+      const ts = new Date(lastTime * 1000)
+      const timeLabel = ts.toLocaleString()
+      const tags = []
+      if (signalState?.pivotNow) tags.push(`Ribbon ${signalState.pivotNow}`)
+      if (signalState?.satyDir) tags.push(`SATY ${signalState.satyDir}`)
+      if (signalState?.sq?.fired) tags.push(`Squeeze ${signalState.sq.dir}`)
+      if (dailyState?.pivotNow) tags.push(`Daily ${dailyState.pivotNow}`)
+      const item = { time: lastTime, timeLabel, score: Math.round(signalState?.score || 0), tags }
+      const next = [item, ...prev].slice(0, 8)
+      return next
+    })
+  }, [bars, signalState, dailyState])
 
   useEffect(() => {
     if (!autoRefresh) return
@@ -243,7 +292,11 @@ export default function App() {
             <option value="manual">Manual</option>
             <option value="trendDaily">Trend + Daily Confluence</option>
             <option value="pullbackDaily">Pullback + Daily Confluence</option>
+            <option value="intradayBreakout">Intraday Breakout</option>
+            <option value="dailyTrendFollow">Daily Trend Follow</option>
+            <option value="meanRevertIntraday">Mean Revert (Intra)</option>
           </select>
+          <InfoPopover title="Presets">Quick configurations for overlays and daily confluence. Use Intraday Breakout for momentum scalps, Daily Trend Follow for swing entries aligned with daily regime, and Mean Revert for counter‑trend fades.</InfoPopover>
         </label>
         <label className="inline-flex items-center gap-2">
           <input type="checkbox" className="accent-indigo-500" checked={showEma821} onChange={e => setShowEma821(e.target.checked)} />
@@ -315,6 +368,7 @@ export default function App() {
       <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={autoRefresh} />
       <LegendChips overlays={overlays} />
       <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} loading={loading} />
+      <SignalFeed items={signalHistory} />
       <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {showSqueeze && <SqueezePanel bars={bars} />}
