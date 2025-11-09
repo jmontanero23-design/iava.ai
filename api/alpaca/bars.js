@@ -36,7 +36,8 @@ export default async function handler(req, res) {
     if (end) qs.set('end', end)
 
     const dataBase = process.env.ALPACA_DATA_URL || 'https://data.alpaca.markets/v2'
-    const endpoint = `${dataBase}/stocks/${encodeURIComponent(symbol)}/bars?${qs.toString()}`
+    qs.set('symbols', symbol)
+    const endpoint = `${dataBase}/stocks/bars?${qs.toString()}`
 
     const r = await fetch(endpoint, {
       headers: {
@@ -50,14 +51,19 @@ export default async function handler(req, res) {
       return
     }
     // Map to compact bar objects the UI expects
-    const raw = Array.isArray(json?.bars) ? json.bars : []
+    let raw = []
+    if (Array.isArray(json?.bars)) {
+      raw = json.bars
+    } else if (json?.bars && Array.isArray(json.bars[symbol])) {
+      raw = json.bars[symbol]
+    }
     const bars = raw.map(b => ({
-      time: Math.floor(new Date(b.t).getTime() / 1000),
-      open: b.o,
-      high: b.h,
-      low: b.l,
-      close: b.c,
-      volume: b.v,
+      time: Math.floor(new Date(b.t || b.Timestamp || b.time).getTime() / 1000),
+      open: b.o ?? b.Open,
+      high: b.h ?? b.High,
+      low: b.l ?? b.Low,
+      close: b.c ?? b.Close,
+      volume: b.v ?? b.Volume,
     }))
     res.status(200).json({ symbol, timeframe, bars })
   } catch (e) {
