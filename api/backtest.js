@@ -11,6 +11,9 @@ export default async function handler(req, res) {
     const symbol = (urlObj.searchParams.get('symbol') || 'AAPL').toUpperCase()
     const timeframe = mapTf(urlObj.searchParams.get('timeframe') || '1Min')
     const limit = Math.min(parseInt(urlObj.searchParams.get('limit') || '1000', 10), 2000)
+    const threshold = Math.max(0, Math.min(100, parseFloat(urlObj.searchParams.get('threshold') || '70')))
+    const horizon = Math.max(1, Math.min(100, parseInt(urlObj.searchParams.get('horizon') || '10', 10)))
+    const format = (urlObj.searchParams.get('format') || 'json').toLowerCase()
 
     const bars = await fetchBars({ key, secret, dataBase, symbol, timeframe, limit })
     if (!bars.length) return res.status(200).json({ symbol, timeframe, bars: 0, scores: [], scoreAvg: 0, scorePcts: { p40: 0, p60: 0, p70: 0 } })
@@ -18,20 +21,38 @@ export default async function handler(req, res) {
     const { computeStates } = await import('../src/utils/indicators.js')
     const scores = []
     const start = Math.min(80, Math.floor(bars.length / 5))
+    const events = []
     for (let i = start; i < bars.length; i++) {
       const slice = bars.slice(0, i + 1)
-      scores.push(computeStates(slice).score)
+      const st = computeStates(slice)
+      scores.push(st.score)
+      if (st.score >= threshold && i + horizon < bars.length) {
+        const entry = bars[i].close
+        const exit = bars[i + horizon].close
+        const fwd = (exit - entry) / entry
+        events.push({ i, time: bars[i].time, close: entry, score: st.score, fwd })
+      }
       if (scores.length > 400) scores.shift() // keep last 400
     }
     const avg = scores.length ? scores.reduce((a,b)=>a+b,0) / scores.length : 0
     const pct = (arr, t) => (arr.filter(x => x >= t).length / (arr.length || 1)) * 100
+    const wins = events.filter(e => e.fwd > 0).length
+    const avgFwd = events.length ? (events.reduce((a,b)=>a+b.fwd,0) / events.length) : 0
     const out = {
       symbol, timeframe, bars: bars.length,
       scoreAvg: Number(avg.toFixed(2)),
       scorePcts: { p40: Number(pct(scores,40).toFixed(2)), p60: Number(pct(scores,60).toFixed(2)), p70: Number(pct(scores,70).toFixed(2)) },
       recentScores: scores.slice(-120),
+      threshold, horizon, events: events.length, winRate: events.length ? Number(((wins/events.length)*100).toFixed(2)) : 0, avgFwd: Number((avgFwd*100).toFixed(2)),
     }
-    res.status(200).json(out)
+    if (format === 'csv') {
+      const header = 'time,close,score,forwardReturn\n'
+      const rows = events.map(e => `${new Date(e.time*1000).toISOString()},${e.close},${e.score.toFixed(2)},${(e.fwd*100).toFixed(2)}%`).join('\n')
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+      res.status(200).send(header + rows)
+    } else {
+      res.status(200).json(out)
+    }
   } catch (e) {
     res.status(500).json({ error: e?.message || 'Unexpected error' })
   }
@@ -65,4 +86,3 @@ async function fetchBars({ key, secret, dataBase, symbol, timeframe, limit }) {
     open: b.o ?? b.Open, high: b.h ?? b.High, low: b.l ?? b.Low, close: b.c ?? b.Close, volume: b.v ?? b.Volume,
   }))
 }
-

@@ -15,6 +15,7 @@ import UnicornCallout from './components/UnicornCallout.jsx'
 import BacktestPanel from './components/BacktestPanel.jsx'
 import OrdersPanel from './components/OrdersPanel.jsx'
 import SatyTargets from './components/SatyTargets.jsx'
+import InfoPopover from './components/InfoPopover.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -53,6 +54,7 @@ export default function App() {
   const [refreshSec, setRefreshSec] = useState(15)
   const [autoLoadChange, setAutoLoadChange] = useState(true)
   const loadReq = useRef(0)
+  const [threshold, setThreshold] = useState(70)
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
@@ -160,7 +162,7 @@ export default function App() {
         <div className="w-full mt-2">
           <Presets symbol={symbol} setSymbol={setSymbol} timeframe={timeframe} setTimeframe={setTimeframe} onLoad={(s, tf) => loadBars(s, tf)} />
         </div>
-        <span className="text-sm text-slate-400">Overlays</span>
+        <span className="text-sm text-slate-400 inline-flex items-center gap-2">Overlays <InfoPopover title="Overlays">Toggle EMA Clouds (pullback/trend), Ichimoku (regime), Pivot Ribbon (8/21/34) and SATY ATR levels (targets).</InfoPopover></span>
         <label className="inline-flex items-center gap-2">
           <input type="checkbox" className="accent-indigo-500" checked={showEma821} onChange={e => setShowEma821(e.target.checked)} />
           <span>EMA 8/21</span>
@@ -215,6 +217,11 @@ export default function App() {
             <input type="checkbox" className="accent-indigo-500" checked={autoLoadChange} onChange={e => setAutoLoadChange(e.target.checked)} />
             Auto-Load on Change
           </label>
+          <label className="inline-flex items-center gap-2 text-sm ml-2">
+            <span>Threshold</span>
+            <input type="range" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10))} />
+            <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
+          </label>
         </div>
         <div className="ml-auto"><HealthBadge /></div>
       </div>
@@ -226,7 +233,7 @@ export default function App() {
         <SignalsPanel state={signalState} />
       </div>
       <BacktestPanel symbol={symbol} timeframe={timeframe} />
-      <UnicornCallout state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account }} />
+      <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account }} />
       <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
       <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />
       <OrdersPanel />
