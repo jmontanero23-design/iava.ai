@@ -7,11 +7,12 @@ export default function BacktestPanel({ symbol, timeframe }) {
   const [err, setErr] = useState('')
   const [threshold, setThreshold] = useState(70)
   const [horizon, setHorizon] = useState(10)
+  const [showCurve, setShowCurve] = useState(true)
 
   async function run() {
     try {
       setLoading(true); setErr('')
-      const r = await fetch(`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}`)
+      const r = await fetch(`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&curve=${showCurve ? 1 : 0}`)
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
       setRes(j)
@@ -29,6 +30,7 @@ export default function BacktestPanel({ symbol, timeframe }) {
         <div className="flex items-center gap-2 text-xs">
           <label className="inline-flex items-center gap-2">Threshold <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" /></label>
           <label className="inline-flex items-center gap-2">Horizon <input type="number" min={1} max={100} value={horizon} onChange={e => setHorizon(parseInt(e.target.value,10)||1)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" /></label>
+          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={showCurve} onChange={e=>setShowCurve(e.target.checked)} /> Curve</label>
           <button onClick={run} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Running…' : 'Run'}</button>
         </div>
       </div>
@@ -56,6 +58,24 @@ export default function BacktestPanel({ symbol, timeframe }) {
                 const color = v >= 70 ? 'bg-emerald-500/70' : v >= 40 ? 'bg-amber-500/70' : 'bg-slate-500/50'
                 return <div key={i} className={`w-[2px] ${color}`} style={{ height: h }} title={`${v.toFixed(1)}`} />
               })}
+            </div>
+          ) : null}
+          {Array.isArray(res.curve) && res.curve.length ? (
+            <div className="mt-3">
+              <div className="text-xs text-slate-400 mb-1">Expectancy vs Threshold</div>
+              <div className="h-20 flex items-end gap-2">
+                {res.curve.map((p, i) => {
+                  const h = Math.max(2, Math.min(60, Math.round(Math.abs(p.avgFwd) * 0.8)))
+                  const up = p.avgFwd >= 0
+                  const color = up ? 'bg-emerald-500/70' : 'bg-rose-500/70'
+                  return (
+                    <div key={i} title={`th ${p.th}: avg ${p.avgFwd}% · win ${p.winRate}% · n=${p.events}`} className="text-center">
+                      <div className={`w-4 ${color}`} style={{ height: h }} />
+                      <div className="text-[10px] text-slate-400 mt-1">{p.th}</div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           ) : null}
         </div>

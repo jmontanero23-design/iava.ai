@@ -17,6 +17,7 @@ export default async function handler(req, res) {
     const threshold = Math.max(0, Math.min(100, parseFloat(urlObj.searchParams.get('threshold') || '70')))
     const horizon = Math.max(1, Math.min(100, parseInt(urlObj.searchParams.get('horizon') || '10', 10)))
     const format = (urlObj.searchParams.get('format') || 'json').toLowerCase()
+    const wantCurve = (urlObj.searchParams.get('curve') || '1') !== '0'
 
     const cacheKey = `${symbol}|${timeframe}|${limit}|${threshold}|${horizon}`
     const now = Date.now()
@@ -31,6 +32,8 @@ export default async function handler(req, res) {
     const scores = []
     const start = Math.min(80, Math.floor(bars.length / 5))
     const events = []
+    const curveThs = [30,40,50,60,70,80,90]
+    const curve = curveThs.map(th => ({ th, rets: [] }))
     for (let i = start; i < bars.length; i++) {
       const slice = bars.slice(0, i + 1)
       const st = computeStates(slice)
@@ -40,6 +43,14 @@ export default async function handler(req, res) {
         const exit = bars[i + horizon].close
         const fwd = (exit - entry) / entry
         events.push({ i, time: bars[i].time, close: entry, score: st.score, fwd })
+      }
+      if (wantCurve && i + horizon < bars.length) {
+        const entry = bars[i].close
+        const exit = bars[i + horizon].close
+        const fwd = (exit - entry) / entry
+        for (const bin of curve) {
+          if (st.score >= bin.th) bin.rets.push(fwd)
+        }
       }
       if (scores.length > 400) scores.shift() // keep last 400
     }
@@ -59,6 +70,15 @@ export default async function handler(req, res) {
       recentScores: scores.slice(-120),
       threshold, horizon, events: events.length, winRate: events.length ? Number(((wins/events.length)*100).toFixed(2)) : 0, avgFwd: Number((avgFwd*100).toFixed(2)),
       avgWin: Number((avgWin*100).toFixed(2)), avgLoss: Number((avgLoss*100).toFixed(2)), profitFactor: profitFactor==null?null:Number(profitFactor.toFixed(2)),
+    }
+    if (wantCurve) {
+      out.curve = curve.map(c => {
+        const arr = c.rets
+        const ev = arr.length
+        const wr = ev ? (arr.filter(x=>x>0).length/ev)*100 : 0
+        const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
+        return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)) }
+      })
     }
     if (format === 'csv') {
       const header = 'time,close,score,forwardReturn\n'

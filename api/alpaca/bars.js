@@ -8,6 +8,9 @@ function mapTimeframe(tf) {
   return '1Min'
 }
 
+const mem = { data: new Map() }
+const TTL = 15 * 1000 // 15s cache
+
 export default async function handler(req, res) {
   try {
     const key = process.env.ALPACA_KEY_ID
@@ -39,6 +42,13 @@ export default async function handler(req, res) {
     qs.set('symbols', symbol)
     const endpoint = `${dataBase}/stocks/bars?${qs.toString()}`
 
+    const cacheKey = `${endpoint}|${key}|${secret}`
+    const now = Date.now()
+    const hit = mem.data.get(cacheKey)
+    if (hit && (now - hit.at) < TTL) {
+      return res.status(200).json({ symbol, timeframe, feed, bars: hit.value })
+    }
+
     const r = await fetch(endpoint, {
       headers: {
         'APCA-API-KEY-ID': key,
@@ -65,6 +75,7 @@ export default async function handler(req, res) {
       close: b.c ?? b.Close,
       volume: b.v ?? b.Volume,
     }))
+    mem.data.set(cacheKey, { at: now, value: bars })
     res.status(200).json({ symbol, timeframe, feed, bars })
   } catch (e) {
     res.status(500).json({ error: e?.message || 'Unexpected error' })

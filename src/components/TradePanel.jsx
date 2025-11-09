@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import InfoPopover from './InfoPopover.jsx'
 import { placeOrder, getClock } from '../services/orders.js'
 
 export default function TradePanel({ bars = [], saty, account, defaultSide = 'buy', onClose }) {
@@ -72,7 +73,7 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-slate-200">Place Bracket Order (Paper)</h3>
+        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Place Bracket Order (Paper) <InfoPopover title="Risk & Brackets">Size: (risk% × equity) / (entry−stop). Bracket orders place take‑profit and stop‑loss together. Tune % and levels before sending.</InfoPopover></h3>
         <button onClick={onClose} className="text-slate-400 hover:text-slate-200 text-sm">Close</button>
       </div>
       <div className="text-xs text-slate-400 mb-2">Market: {clock?.is_open ? <span className="text-emerald-400">Open</span> : <span className="text-amber-400">Closed</span>} · Last: <span className="text-slate-200">{last?.close?.toFixed(2)}</span> · Equity: <span className="text-slate-200">{equity}</span></div>
