@@ -32,6 +32,25 @@ export default function BacktestPanel({ symbol, timeframe }) {
     }
   }
 
+  async function downloadJson() {
+    try {
+      const url = `/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&curve=${showCurve ? 1 : 0}&dailyFilter=${encodeURIComponent(dailyFilter)}&format=json`
+      const r = await fetch(url)
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
+      const blob = new Blob([JSON.stringify(j, null, 2)], { type: 'application/json' })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `backtest_${symbol}_${timeframe}_th${threshold}_hz${horizon}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(a.href)
+    } catch (e) {
+      setErr(String(e.message || e))
+    }
+  }
+
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between">
@@ -48,6 +67,7 @@ export default function BacktestPanel({ symbol, timeframe }) {
             </select>
           </label>
           <button onClick={run} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Running…' : 'Run'}</button>
+          <button onClick={downloadJson} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Download JSON</button>
         </div>
       </div>
       <div className="flex flex-wrap gap-2 text-xs mt-2">
