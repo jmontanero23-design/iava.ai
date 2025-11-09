@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import InfoPopover from './InfoPopover.jsx'
 
 async function api(path, opts) {
   const r = await fetch(path, opts)
@@ -44,7 +45,7 @@ export default function OrdersPanel() {
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-200">Orders & Positions</h3>
+        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Orders & Positions <InfoPopover title="Trading Ops">Manage open orders (cancel) and positions (close). Paper trading recommended while tuning guardrails.</InfoPopover></h3>
         <button onClick={refresh} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Refreshing…' : 'Refresh'}</button>
       </div>
       {msg && <div className="text-xs text-slate-400 mt-2">{msg}</div>}
@@ -83,4 +84,3 @@ export default function OrdersPanel() {
     </div>
   )
 }
-

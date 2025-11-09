@@ -44,11 +44,13 @@ export default async function handler(req, res) {
       if (!jc.is_open) return res.status(400).json({ error: 'Market closed (guardrail)' })
     }
 
+    let positionsCache = null
     if (maxPositions > 0) {
       const rp = await fetch(`${base}/v2/positions`, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
       const jp = await rp.json()
       if (!rp.ok) return res.status(rp.status).json(jp)
-      if (Array.isArray(jp) && jp.length >= maxPositions) return res.status(400).json({ error: `Max positions reached (${jp.length}/${maxPositions})` })
+      positionsCache = Array.isArray(jp) ? jp : []
+      if (positionsCache.length >= maxPositions) return res.status(400).json({ error: `Max positions reached (${positionsCache.length}/${maxPositions})` })
     }
 
     if (maxRiskPct > 0 && stopLoss && typeof stopLoss.stop_price === 'number') {
@@ -71,6 +73,34 @@ export default async function handler(req, res) {
         const riskUsd = perShare * q
         const pct = (riskUsd / equity) * 100
         if (pct > maxRiskPct) return res.status(400).json({ error: `Risk ${pct.toFixed(2)}% exceeds limit ${maxRiskPct}% (guardrail)` })
+      }
+    }
+
+    // Max exposure guardrail (sum market_value / equity)
+    const maxExposurePct = parseFloat(process.env.ORDER_RULE_MAX_EXPOSURE_PCT || '0')
+    if (maxExposurePct > 0) {
+      let pos = positionsCache
+      if (!Array.isArray(pos)) {
+        const rp = await fetch(`${base}/v2/positions`, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
+        pos = await rp.json()
+      }
+      const ra = await fetch(`${base}/v2/account`, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
+      const ja2 = await ra.json()
+      const eq = parseFloat(ja2.equity || '0')
+      const exposure = Array.isArray(pos) ? pos.reduce((sum,p) => sum + Math.abs(parseFloat(p.market_value || '0')), 0) : 0
+      const expPct = eq > 0 ? (exposure / eq) * 100 : 0
+      if (expPct > maxExposurePct) return res.status(400).json({ error: `Exposure ${expPct.toFixed(2)}% exceeds limit ${maxExposurePct}% (guardrail)` })
+    }
+
+    // Min minutes between orders (cooldown)
+    const minMinBetween = parseInt(process.env.ORDER_RULE_MIN_MINUTES_BETWEEN_ORDERS || '0', 10)
+    if (minMinBetween > 0) {
+      const rlast = await fetch(`${base}/v2/orders?status=all&limit=1&direction=desc`, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
+      const jlast = await rlast.json()
+      if (Array.isArray(jlast) && jlast[0]?.created_at) {
+        const t = new Date(jlast[0].created_at).getTime()
+        const dtMin = (Date.now() - t) / 60000
+        if (dtMin < minMinBetween) return res.status(400).json({ error: `Cooldown active: wait ${Math.ceil(minMinBetween - dtMin)} min` })
       }
     }
 

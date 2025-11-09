@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react'
+import InfoPopover from '../InfoPopover.jsx'
 import { linregMomentum, ttmSqueeze } from '../../utils/indicators.js'
 
 export default function SqueezePanel({ bars = [] }) {
@@ -15,7 +16,7 @@ export default function SqueezePanel({ bars = [] }) {
   return (
     <div className="card p-3">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium text-slate-200">TTM Squeeze (approx)</h3>
+        <h3 className="text-sm font-medium text-slate-200 inline-flex items-center gap-2">TTM Squeeze <InfoPopover title="TTM Squeeze">Red dots = squeeze ON (BB inside KC). First green after red = squeeze fires. Histogram is a linear-reg slope proxy for momentum.</InfoPopover></h3>
         <div className="text-xs text-slate-400">red: squeeze ON • green: OFF</div>
       </div>
       <div className="h-28 overflow-hidden">
