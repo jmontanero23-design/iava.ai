@@ -62,7 +62,7 @@ export default function App() {
   const [dailyBars, setDailyBars] = useState([])
   const [enforceDaily, setEnforceDaily] = useState(false)
   const [mtfPreset, setMtfPreset] = useState('manual')
-  const [useStreaming, setUseStreaming] = useState(false)
+  const [streamingEnabled, setStreamingEnabled] = useState(false)
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
@@ -209,7 +209,7 @@ export default function App() {
   useStreamingBars({
     symbol,
     timeframe,
-    enabled: useStreaming,
+    enabled: streamingEnabled,
     onBar: (bar) => {
       setBars(prev => {
         const idx = prev.findIndex(b => b.time === bar.time)
@@ -319,7 +319,7 @@ export default function App() {
             Auto-Load on Change
           </label>
           <label className="inline-flex items-center gap-2 text-sm ml-2">
-            <input type="checkbox" className="accent-indigo-500" checked={useStreaming} onChange={e => setUseStreaming(e.target.checked)} />
+            <input type="checkbox" className="accent-indigo-500" checked={streamingEnabled} onChange={e => setStreamingEnabled(e.target.checked)} />
             Streaming Mode
           </label>
           <label className="inline-flex items-center gap-2 text-sm ml-2">
@@ -335,7 +335,7 @@ export default function App() {
         <div className="ml-auto"><HealthBadge /></div>
         <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); alert('Link copied'); } catch(_) {} }} className="ml-2 bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Link</button>
       </div>
-      <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={useStreaming} />
+      <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streamingEnabled} />
       <LegendChips overlays={overlays} />
       <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} loading={loading} />
       <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} />
@@ -361,5 +361,5 @@ export default function App() {
   )
 }
   useEffect(() => {
-    if (useStreaming && autoRefresh) setAutoRefresh(false)
-  }, [useStreaming])
+    if (streamingEnabled && autoRefresh) setAutoRefresh(false)
+  }, [streamingEnabled])
