@@ -7,7 +7,7 @@ export default function SignalsPanel({ state }) {
     { label: 'Pivot Ribbon', value: state.pivotNow },
     { label: 'Ripster 34/50', value: state.rip?.bias },
     { label: 'SATY Trigger', value: state.satyDir || 'none' },
-    { label: 'Squeeze', value: state.sq?.on ? 'on' : (state.sq?.fired ? `fired ${state.sq?.dir}` : 'off') },
+    { label: 'Squeeze', value: (state.sq?.on ? 'on' : (state.sq?.fired ? `fired ${state.sq?.dir}` : (state.sq?.firedBarsAgo != null ? `fired ${state.sq.firedBarsAgo} bars` : 'off'))) },
     { label: 'Ichimoku', value: state.ichiRegime },
     ...(state._daily ? [
       { label: 'Daily Pivot', value: state._daily.pivotNow },

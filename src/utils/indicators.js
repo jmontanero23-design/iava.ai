@@ -245,7 +245,14 @@ export function squeezeState(close, high, low, period = 20) {
   const on = sq[i] === 1
   const fired = sq[prev] === 1 && sq[i] === 0
   const dir = mom[i] > 0 ? 'up' : mom[i] < 0 ? 'down' : 'flat'
-  return { on, fired, dir, mom, sq }
+  // Find most recent fire index (transition 1 -> 0)
+  let lastFiredIdx = -1
+  for (let k = i; k > 0; k--) {
+    if (sq[k - 1] === 1 && sq[k] === 0) { lastFiredIdx = k; break }
+  }
+  const firedBarsAgo = lastFiredIdx >= 0 ? (i - lastFiredIdx) : null
+  const lastDir = lastFiredIdx >= 0 ? (mom[lastFiredIdx] > 0 ? 'up' : mom[lastFiredIdx] < 0 ? 'down' : 'flat') : null
+  return { on, fired, dir, mom, sq, lastFiredIdx, firedBarsAgo, lastDir }
 }
 
 export function computeStates(bars) {
@@ -280,7 +287,18 @@ export function computeStates(bars) {
   add('pivotRibbon', pivotNow === 'bullish' ? 20 : 0)
   add('ripster3450', rip.bias === 'bullish' ? 20 : 0)
   add('satyTrigger', (satyDir === 'long' && pivotNow === 'bullish') ? 20 : 0)
-  add('squeeze', (sq.fired && sq.dir === 'up') ? 25 : 0)
+  // Squeeze scoring: building potential if ON; decayed boost if recently fired upward
+  let squeezeScore = 0
+  if (sq.on) {
+    squeezeScore = 10
+  } else if (sq.fired && sq.dir === 'up') {
+    squeezeScore = 25
+  } else if (sq.firedBarsAgo != null && sq.firedBarsAgo <= 5 && sq.lastDir === 'up') {
+    // Decay 25 -> 5 over 5 bars
+    const decay = Math.max(5, 25 - (sq.firedBarsAgo * 5))
+    squeezeScore = decay
+  }
+  add('squeeze', squeezeScore)
   add('ichimoku', ichiRegime === 'bullish' ? 15 : 0)
 
   const markers = []
