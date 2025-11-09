@@ -236,7 +236,8 @@ export default function App() {
   }, [symbol])
 
   return (
-    <div className="min-h-screen p-6 space-y-6">
+    <div className="min-h-screen bg-transparent text-slate-100">
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
       <Hero />
       <div className="card p-4 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
@@ -356,7 +357,8 @@ export default function App() {
           <li><code>src/utils</code> – Utilities and shared helpers</li>
         </ul>
       </section>
-      <BuildInfoFooter />
+        <BuildInfoFooter />
+      </div>
     </div>
   )
 }

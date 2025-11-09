@@ -15,23 +15,21 @@ html, body, #root {
 }
 
 body {
-  background: radial-gradient(circle at top, rgba(79,70,229,0.25), transparent 55%),
-              radial-gradient(circle at bottom, rgba(14,165,233,0.2), transparent 45%),
-              #020617;
+  background: radial-gradient(circle at 20% 20%, rgba(79,70,229,0.15), transparent 55%),
+              #040715;
   color: var(--text);
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont;
   -webkit-font-smoothing: antialiased;
 }
 
 .card {
-  @apply bg-slate-900/70 border border-slate-800 rounded-xl transition transform duration-200;
-  backdrop-filter: blur(12px);
+  @apply bg-slate-900/80 border border-slate-800 rounded-xl transition duration-200;
+  backdrop-filter: blur(6px);
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px rgba(2,6,23,0.45);
-  border-color: rgba(99,102,241,0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(2,6,23,0.35);
 }
 
 button,
