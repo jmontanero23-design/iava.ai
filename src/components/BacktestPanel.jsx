@@ -9,6 +9,7 @@ export default function BacktestPanel({ symbol, timeframe }) {
   const [horizon, setHorizon] = useState(10)
   const [showCurve, setShowCurve] = useState(true)
   const [dailyFilter, setDailyFilter] = useState('none')
+  const [batchSymbols, setBatchSymbols] = useState('AAPL,MSFT,NVDA,SPY')
 
   async function run() {
     try {
@@ -59,6 +60,11 @@ export default function BacktestPanel({ symbol, timeframe }) {
             <div><span className="text-slate-400">Profit Factor</span> {res.profitFactor ?? '—'}</div>
           </div>
           <div className="mt-2 text-xs"><a className="underline hover:text-slate-300" href={`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&format=csv`} target="_blank" rel="noreferrer">Download CSV</a></div>
+          <div className="mt-2 text-xs flex items-center gap-2">
+            <span className="text-slate-400">Batch CSV (symbols):</span>
+            <input value={batchSymbols} onChange={e=>setBatchSymbols(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-64" />
+            <a className="underline hover:text-slate-300" href={`/api/backtest_batch?symbols=${encodeURIComponent(batchSymbols)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&dailyFilter=${dailyFilter}`} target="_blank" rel="noreferrer">Download</a>
+          </div>
           {Array.isArray(res.recentScores) && res.recentScores.length ? (
             <div className="mt-3 h-16 flex items-end gap-[2px]">
               {res.recentScores.map((v, i) => {
