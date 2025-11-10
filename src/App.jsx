@@ -18,6 +18,7 @@ import UnicornActionBar from './components/UnicornActionBar.jsx'
 import BacktestPanel from './components/BacktestPanel.jsx'
 import BatchBacktestPanel from './components/BatchBacktestPanel.jsx'
 import RateLimitBanner from './components/RateLimitBanner.jsx'
+import HelpFab from './components/HelpFab.jsx'
 import OrdersPanel from './components/OrdersPanel.jsx'
 import SatyTargets from './components/SatyTargets.jsx'
 import InfoPopover from './components/InfoPopover.jsx'
@@ -146,6 +147,85 @@ export default function App() {
     }
     return base
   }, [bars, showEma821, showEma512, showEma89, showEma3450, showIchi, showSaty, showSqueeze])
+
+  // Preset configs (used by hints, applyPreset, and AI suggestions)
+  const presets = {
+    manual: null,
+    trendDaily: {
+      showEma821: true,
+      showEma512: false,
+      showEma89: false,
+      showEma3450: true,
+      showRibbon: true,
+      showIchi: true,
+      enforceDaily: true,
+    },
+    pullbackDaily: {
+      showEma821: false,
+      showEma512: true,
+      showEma89: true,
+      showEma3450: true,
+      showRibbon: true,
+      showIchi: true,
+      enforceDaily: true,
+    },
+    intradayBreakout: {
+      showEma821: false,
+      showEma512: true,
+      showEma89: true,
+      showEma3450: false,
+      showRibbon: true,
+      showIchi: false,
+      enforceDaily: false,
+    },
+    dailyTrendFollow: {
+      showEma821: true,
+      showEma512: false,
+      showEma89: false,
+      showEma3450: true,
+      showRibbon: true,
+      showIchi: true,
+      enforceDaily: true,
+    },
+    meanRevertIntraday: {
+      showEma821: false,
+      showEma512: false,
+      showEma89: true,
+      showEma3450: false,
+      showRibbon: false,
+      showIchi: false,
+      enforceDaily: false,
+    },
+    breakoutDailyStrong: {
+      showEma821: true,
+      showEma512: true,
+      showEma89: false,
+      showEma3450: true,
+      showRibbon: true,
+      showIchi: true,
+      enforceDaily: true,
+    },
+    momentumContinuation: {
+      showEma821: true,
+      showEma512: false,
+      showEma89: true,
+      showEma3450: false,
+      showRibbon: true,
+      showIchi: false,
+      enforceDaily: false,
+    },
+  }
+
+  const presetDescriptions = {
+    manual: 'Customize overlays, gating, and parameters manually. Hint: red chips on the chart show overlays a preset expects that are currently OFF.',
+    trendDaily: 'Trend-following with EMA 8/21/34 + Ichimoku; Daily confluence ON. Use for aligned trends. Hint: red chips on chart indicate expected overlays are OFF.',
+    pullbackDaily: 'Pullbacks with EMA 5/12 and 8/9 in trend context; Daily confluence ON. Hint: red chips on chart indicate expected overlays are OFF.',
+    intradayBreakout: 'Intraday momentum breakouts; lighter regime filter. Best on liquid names during session. Hint: red chips on chart indicate expected overlays are OFF.',
+    dailyTrendFollow: 'Swing trend entries with Daily alignment; higher conviction, slower cadence. Hint: red chips on chart indicate expected overlays are OFF.',
+    meanRevertIntraday: 'Counter‑trend fades on intraday extremes; use smaller risk and tighter stops. Hint: red chips on chart indicate expected overlays are OFF.',
+    breakoutDailyStrong: 'Stronger breakout stack (EMAs + Ichimoku) with Daily confluence ON. Hint: red chips on chart indicate expected overlays are OFF.',
+    momentumContinuation: 'Continuation after initial push; ribbon + fast EMA cloud for momentum. Hint: red chips on chart indicate expected overlays are OFF.',
+  }
 
   // Preset overlay expectations vs current state (for gentle hints)
   const presetExpected = useMemo(() => {
@@ -293,84 +373,6 @@ export default function App() {
     writeParams({ symbol, timeframe, threshold, enforceDaily, streaming, consensusBonus, showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty })
   }, [symbol, timeframe, threshold, enforceDaily, streaming, consensusBonus, showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty])
 
-  const presets = {
-    manual: null,
-    trendDaily: {
-      showEma821: true,
-      showEma512: false,
-      showEma89: false,
-      showEma3450: true,
-      showRibbon: true,
-      showIchi: true,
-      enforceDaily: true,
-    },
-    pullbackDaily: {
-      showEma821: false,
-      showEma512: true,
-      showEma89: true,
-      showEma3450: true,
-      showRibbon: true,
-      showIchi: true,
-      enforceDaily: true,
-    },
-    intradayBreakout: {
-      showEma821: false,
-      showEma512: true,
-      showEma89: true,
-      showEma3450: false,
-      showRibbon: true,
-      showIchi: false,
-      enforceDaily: false,
-    },
-    dailyTrendFollow: {
-      showEma821: true,
-      showEma512: false,
-      showEma89: false,
-      showEma3450: true,
-      showRibbon: true,
-      showIchi: true,
-      enforceDaily: true,
-    },
-    meanRevertIntraday: {
-      showEma821: false,
-      showEma512: false,
-      showEma89: true,
-      showEma3450: false,
-      showRibbon: false,
-      showIchi: false,
-      enforceDaily: false,
-    },
-
-    breakoutDailyStrong: {
-      showEma821: true,
-      showEma512: true,
-      showEma89: false,
-      showEma3450: true,
-      showRibbon: true,
-      showIchi: true,
-      enforceDaily: true,
-    },
-    momentumContinuation: {
-      showEma821: true,
-      showEma512: false,
-      showEma89: true,
-      showEma3450: false,
-      showRibbon: true,
-      showIchi: false,
-      enforceDaily: false,
-    },
-  }
-
-  const presetDescriptions = {
-    manual: 'Customize overlays, gating, and parameters manually. Hint: red chips on the chart show overlays a preset expects that are currently OFF.',
-    trendDaily: 'Trend-following with EMA 8/21/34 + Ichimoku; Daily confluence ON. Use for aligned trends. Hint: red chips on chart indicate expected overlays are OFF.',
-    pullbackDaily: 'Pullbacks with EMA 5/12 and 8/9 in trend context; Daily confluence ON. Hint: red chips on chart indicate expected overlays are OFF.',
-    intradayBreakout: 'Intraday momentum breakouts; lighter regime filter. Best on liquid names during session. Hint: red chips on chart indicate expected overlays are OFF.',
-    dailyTrendFollow: 'Swing trend entries with Daily alignment; higher conviction, slower cadence. Hint: red chips on chart indicate expected overlays are OFF.',
-    meanRevertIntraday: 'Counter‑trend fades on intraday extremes; use smaller risk and tighter stops. Hint: red chips on chart indicate expected overlays are OFF.',
-    breakoutDailyStrong: 'Stronger breakout stack (EMAs + Ichimoku) with Daily confluence ON. Hint: red chips on chart indicate expected overlays are OFF.',
-    momentumContinuation: 'Continuation after initial push; ribbon + fast EMA cloud for momentum. Hint: red chips on chart indicate expected overlays are OFF.',
-  }
 
   function applyPreset(id) {
     setMtfPreset(id)
@@ -659,6 +661,7 @@ export default function App() {
       )}
       <BacktestPanel symbol={symbol} timeframe={timeframe} preset={backtestPreset} />
       <BatchBacktestPanel defaultTimeframe={timeframe} />
+      <HelpFab context={{ symbol, timeframe, enforceDaily, consensus: consensus?.align || false, overlays: { showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty, showSqueeze }, score: Math.round((signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0)), daily: dailyState ? { pivot: dailyState.pivotNow, ichi: dailyState.ichiRegime } : null }} />
       <UnicornCallout threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily, _consensus: consensus, _timeframe: timeframe }} />
       <UnicornActionBar threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} />
       <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />

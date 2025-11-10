@@ -93,7 +93,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Orders & Positions <InfoPopover title="Trading Ops">Place orders and manage open orders/positions. Bracket orders will set both take‑profit and stop‑loss relative to last price. Guardrails may reject orders (e.g., market closed).</InfoPopover></h3>
+        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Orders & Positions <InfoPopover title="Trading Ops">Place orders and manage open orders/positions. Bracket orders set both take‑profit and stop‑loss. Use Risk % + Calc Qty for consistent sizing. Guardrails may reject orders (market closed, risk/exposure, cooldown, daily loss cap).</InfoPopover></h3>
         <button onClick={refresh} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Refreshing…' : 'Refresh'}</button>
       </div>
       {msg && <div className="text-xs text-slate-400 mt-2">{msg}</div>}
@@ -125,7 +125,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
           {klass === 'bracket' && (
             <>
               <label className="inline-flex items-center gap-2">
-                <input type="checkbox" checked={useSaty} onChange={e=>setUseSaty(e.target.checked)} /> Use SATY stops
+                <input type="checkbox" checked={useSaty} onChange={e=>setUseSaty(e.target.checked)} /> Use SATY stops <InfoPopover title="SATY Stops">Stop/TP anchor to SATY ATR levels: ±0.236 (triggers), ±1.000 (primary), ±1.618 (extensions). Choose Stop/TP levels, then Calc Qty via Risk %.</InfoPopover>
               </label>
               {!useSaty && (
                 <>
@@ -165,6 +165,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
             <span className="text-xs text-slate-400">Risk %</span>
             <input type="number" step="0.1" value={riskPct} onChange={e=>setRiskPct(parseFloat(e.target.value)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24" />
           </label>
+          <InfoPopover title="Risk Sizing">Calc Qty = (Equity × Risk%) ÷ (Entry − Stop). Adjust Risk % and Stop (SATY or %) to size positions consistently.</InfoPopover>
           <button onClick={calcQtyFromRisk} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Calc Qty</button>
           <button onClick={async ()=>{
             setMsg('')

@@ -96,6 +96,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
           <label className="inline-flex items-center gap-2">HZs
             <input value={hzs} onChange={e=>setHzs(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-28" title="Comma-separated horizons for matrix heatmap" />
           </label>
+          <InfoPopover title="Heatmap (HZs)">Enter multiple horizons (e.g., 5,10,20) to render a Threshold × Horizon heatmap of avg forward % returns. Helps pick robust thresholds and holding periods.</InfoPopover>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={regimeCurves} onChange={e=>setRegimeCurves(e.target.checked)} disabled={assetClass!=='stocks'} /> Compare Regimes</label>
           <label className="inline-flex items-center gap-2">Regime
             <select value={dailyFilter} onChange={e => setDailyFilter(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1" disabled={assetClass!=='stocks'}>
