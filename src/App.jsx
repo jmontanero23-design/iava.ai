@@ -268,6 +268,17 @@ export default function App() {
     },
   }
 
+  const presetDescriptions = {
+    manual: 'Customize overlays, gating, and parameters manually.',
+    trendDaily: 'Trend-following with EMA 8/21/34 + Ichimoku; Daily confluence ON. Use for aligned trends.',
+    pullbackDaily: 'Pullbacks with EMA 5/12 and 8/9 in trend context; Daily confluence ON.',
+    intradayBreakout: 'Intraday momentum breakouts; lighter regime filter. Best on liquid names during session.',
+    dailyTrendFollow: 'Swing trend entries with Daily alignment; higher conviction, slower cadence.',
+    meanRevertIntraday: 'Counter‑trend fades on intraday extremes; use smaller risk and tighter stops.',
+    breakoutDailyStrong: 'Stronger breakout stack (EMAs + Ichimoku) with Daily confluence ON.',
+    momentumContinuation: 'Continuation after initial push; ribbon + fast EMA cloud for momentum.',
+  }
+
   function applyPreset(id) {
     setMtfPreset(id)
     const preset = presets[id]
@@ -367,8 +378,10 @@ export default function App() {
             <option value="intradayBreakout">Intraday Breakout</option>
             <option value="dailyTrendFollow">Daily Trend Follow</option>
             <option value="meanRevertIntraday">Mean Revert (Intra)</option>
+            <option value="breakoutDailyStrong">Breakout (Daily, Strong)</option>
+            <option value="momentumContinuation">Momentum Continuation</option>
           </select>
-          <InfoPopover title="Presets">Quick configurations for overlays and daily confluence. Use Intraday Breakout for momentum scalps, Daily Trend Follow for swing entries aligned with daily regime, and Mean Revert for counter‑trend fades.</InfoPopover>
+          <InfoPopover title="Preset Guidance">{presetDescriptions[mtfPreset] || "Strategy-driven overlay & gating configuration."}</InfoPopover>
         </label>
         <label className="inline-flex items-center gap-2">
           <input type="checkbox" className="accent-indigo-500" checked={showEma821} onChange={e => setShowEma821(e.target.checked)} />
@@ -443,7 +456,23 @@ export default function App() {
       </div>
       <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streaming || autoRefresh} />
       <LegendChips overlays={overlays} />
-      <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} loading={loading} focusTime={focusTime} />
+      <CandleChart
+        bars={bars}
+        overlays={overlays}
+        markers={signalState.markers}
+        loading={loading}
+        focusTime={focusTime}
+        overlayToggles={{
+          ema821: () => setShowEma821(v => !v),
+          ema512: () => setShowEma512(v => !v),
+          ema89: () => setShowEma89(v => !v),
+          ema3450: () => setShowEma3450(v => !v),
+          ribbon: () => setShowRibbon(v => !v),
+          ichi: () => setShowIchi(v => !v),
+          saty: () => setShowSaty(v => !v),
+          squeeze: () => setShowSqueeze(v => !v),
+        }}
+      />
       <OverlayChips
         showEma821={showEma821} setShowEma821={setShowEma821}
         showEma512={showEma512} setShowEma512={setShowEma512}
