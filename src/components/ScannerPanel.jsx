@@ -83,9 +83,11 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
       const chunk = (arr, n) => arr.reduce((acc, x, i) => { if (i % n === 0) acc.push([]); acc[acc.length-1].push(x); return acc }, [])
       const chunks = chunk(syms, 25)
       const acc = { longs: [], shorts: [] }
+      let totalScanned = 0
+      let totals = { neutralSkipped: 0, consensusBlocked: 0, dailyBlocked: 0, thresholdRejected: 0, acceptedLongs: 0, acceptedShorts: 0 }
       for (let i = 0; i < chunks.length; i++) {
         if (abortRef.current.stop) break
-        setProgress(`Scanning ${i+1}/${chunks.length}…`)
+        setProgress(`Scanning ${i+1}/${chunks.length}… L${acc.longs.length} S${acc.shorts.length}`)
         const list = chunks[i].join(',')
         const qs = new URLSearchParams({ symbols: list, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', returnAll: '1', requireConsensus: requireConsensus ? '1' : '0', consensusBonus: consensusBonus ? '1' : '0', assetClass })
         const r = await fetch(`/api/scan?${qs.toString()}`)
@@ -93,11 +95,21 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
         if (r.ok) {
           acc.longs.push(...(j.longs || []))
           acc.shorts.push(...(j.shorts || []))
+          totalScanned += chunks[i].length
+          if (j.counts) {
+            totals.neutralSkipped += j.counts.neutralSkipped || 0
+            totals.consensusBlocked += j.counts.consensusBlocked || 0
+            totals.dailyBlocked += j.counts.dailyBlocked || 0
+            totals.thresholdRejected += j.counts.thresholdRejected || 0
+            totals.acceptedLongs += j.counts.acceptedLongs || 0
+            totals.acceptedShorts += j.counts.acceptedShorts || 0
+          }
+          setProgress(`Scanning ${i+1}/${chunks.length}… scanned ${totalScanned}/${syms.length} · L${acc.longs.length} S${acc.shorts.length}`)
         }
       }
       acc.longs.sort((a,b)=>b.score-a.score)
       acc.shorts.sort((a,b)=>b.score-a.score)
-      setRes({ timeframe, threshold, enforceDaily, universe: syms.length, longs: acc.longs.slice(0, top), shorts: acc.shorts.slice(0, top) })
+      setRes({ timeframe, threshold, enforceDaily, universe: syms.length, longs: acc.longs.slice(0, top), shorts: acc.shorts.slice(0, top), counts: totals })
       setProgress('')
     } catch (e) {
       setErr(String(e.message || e))
@@ -236,11 +248,17 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
                 alert('Watchlist saved')
               } catch (e) { alert('Save failed') }
             }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Save</button>
+            <button onClick={async ()=>{
+              try { const { save } = await import('../utils/watchlists.js'); const longs = (res.longs||[]).map(x=>x.symbol); save((wlName||'scanner-top')+"-longs", longs); alert('Saved longs') } catch { alert('Save failed') }
+            }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Save Longs</button>
+            <button onClick={async ()=>{
+              try { const { save } = await import('../utils/watchlists.js'); const shorts = (res.shorts||[]).map(x=>x.symbol); save((wlName||'scanner-top')+"-shorts", shorts); alert('Saved shorts') } catch { alert('Save failed') }
+            }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Save Shorts</button>
             <button onClick={exportCsv} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Export CSV</button>
             <button onClick={exportJson} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Export JSON</button>
           </div>
           <div className="md:col-span-2 text-xs text-slate-500">
-            {assetClass.toUpperCase()} • Universe {res.universe} • TF {res.timeframe} • TH ≥{res.threshold} • Daily {res.enforceDaily ? 'On' : 'Off'} • Consensus {requireConsensus ? 'On' : 'Off'} • Results L{res.longs?.length||0}/S{res.shorts?.length||0}
+            {assetClass.toUpperCase()} • Universe {res.universe} • TF {res.timeframe} • TH ≥{res.threshold} • Daily {res.enforceDaily ? 'On' : 'Off'} • Consensus {requireConsensus ? 'On' : 'Off'} • Bonus {consensusBonus ? '+10' : 'Off'} • Results L{res.longs?.length||0}/S{res.shorts?.length||0}
             {res.counts ? (
               <>
                 <span className="mx-2">•</span>

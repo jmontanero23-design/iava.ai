@@ -358,7 +358,7 @@ export default function App() {
     } catch {}
     loadBars()
     loadDaily()
-    loadSecondary()
+    if (consensusBonus) loadSecondary()
     // Fetch account once for trade sizing
     fetch('/api/alpaca/account').then(r => r.json()).then(setAccount).catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -466,7 +466,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol])
 
-  useEffect(() => { loadSecondary(symbol, timeframe) /* eslint-disable-line react-hooks/exhaustive-deps */ }, [timeframe])
+  useEffect(() => { if (consensusBonus) loadSecondary(symbol, timeframe); else { setSecBars([]); setConsensus(null) } /* eslint-disable-line react-hooks/exhaustive-deps */ }, [timeframe, consensusBonus])
 
   // Compute consensus with secondary timeframe
   useEffect(() => {
