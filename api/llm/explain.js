@@ -56,6 +56,8 @@ Explain briefly why the current score looks the way it does. No advice.`
 }
 
 async function callOpenAI({ apiKey, model, system, prompt, response_format }) {
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), 15000)
   const makeReq = async (withJsonMode) => {
     const payload = {
       model,
@@ -67,7 +69,8 @@ async function callOpenAI({ apiKey, model, system, prompt, response_format }) {
     const r = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: ctrl.signal,
     })
     const j = await r.json()
     return { ok: r.ok, status: r.status, body: j }
@@ -82,11 +85,11 @@ async function callOpenAI({ apiKey, model, system, prompt, response_format }) {
       throw new Error(msg)
     }
     const text2 = (second.body?.choices?.[0]?.message?.content || '').trim()
-    return safeJsonFromText(text2)
+    clearTimeout(t); return safeJsonFromText(text2)
   }
   const text = (first.body?.choices?.[0]?.message?.content || '').trim()
   // If model honored JSON mode, content should be JSON; still guard with safe parse
-  try { return JSON.parse(text) } catch { return safeJsonFromText(text) }
+  try { clearTimeout(t); return JSON.parse(text) } catch { clearTimeout(t); return safeJsonFromText(text) }
 }
 
 function safeJsonFromText(text) {
@@ -100,6 +103,8 @@ function safeJsonFromText(text) {
 }
 
 async function callAnthropic({ apiKey, model, system, prompt }) {
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), 15000)
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -112,10 +117,11 @@ async function callAnthropic({ apiKey, model, system, prompt }) {
       max_tokens: 300,
       system,
       messages: [{ role: 'user', content: prompt }],
-    })
+    }),
+    signal: ctrl.signal,
   })
   const j = await r.json()
-  if (!r.ok) throw new Error(j?.error?.message || `Anthropic ${r.status}`)
+  if (!r.ok) { clearTimeout(t); throw new Error(j?.error?.message || `Anthropic ${r.status}`) }
   const text = j?.content?.[0]?.text?.trim() || '{}'
-  try { return JSON.parse(text) } catch { return { explanation: text, highlights: [], confidence: 0.5 } }
+  try { clearTimeout(t); return JSON.parse(text) } catch { clearTimeout(t); return { explanation: text, highlights: [], confidence: 0.5 } }
 }

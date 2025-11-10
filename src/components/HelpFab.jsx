@@ -33,7 +33,7 @@ export default function HelpFab({ context = {} }) {
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
       setAns(j.answer || '')
     } catch (e) {
-      setAns(String(e.message || e))
+      setAns(`${String(e.message || e)}\n\nTip: open /api/health to check AI status.`)
     } finally {
       setLoading(false)
     }

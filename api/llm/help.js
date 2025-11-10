@@ -36,24 +36,29 @@ Do not give financial advice; provide usage guidance and interpretations only.`
 
 async function callOpenAI({ apiKey, model, system, prompt }) {
   // Simple text answer; robust to models without JSON mode
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), 15000)
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, messages: [ { role: 'system', content: system }, { role: 'user', content: prompt } ], temperature: 0.2, max_tokens: 350 })
+    body: JSON.stringify({ model, messages: [ { role: 'system', content: system }, { role: 'user', content: prompt } ], temperature: 0.2, max_tokens: 350 }),
+    signal: ctrl.signal,
   })
   const j = await r.json()
-  if (!r.ok) throw new Error(j?.error?.message || `OpenAI ${r.status}`)
-  return (j?.choices?.[0]?.message?.content || '').trim()
+  if (!r.ok) { clearTimeout(t); throw new Error(j?.error?.message || `OpenAI ${r.status}`) }
+  clearTimeout(t); return (j?.choices?.[0]?.message?.content || '').trim()
 }
 
 async function callAnthropic({ apiKey, model, system, prompt }) {
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), 15000)
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    body: JSON.stringify({ model, max_tokens: 350, system, messages: [{ role: 'user', content: prompt }] })
+    body: JSON.stringify({ model, max_tokens: 350, system, messages: [{ role: 'user', content: prompt }] }),
+    signal: ctrl.signal,
   })
   const j = await r.json()
-  if (!r.ok) throw new Error(j?.error?.message || `Anthropic ${r.status}`)
-  return (j?.content?.[0]?.text || '').trim()
+  if (!r.ok) { clearTimeout(t); throw new Error(j?.error?.message || `Anthropic ${r.status}`) }
+  clearTimeout(t); return (j?.content?.[0]?.text || '').trim()
 }
-

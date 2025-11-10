@@ -267,7 +267,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
           ) : null}
           {Array.isArray(res.matrix) && res.matrix.length ? (
             <div className="mt-4">
-              <div className="text-xs text-slate-400 mb-1">Heatmap: Avg Fwd % (Threshold × Horizon)</div>
+              <div className="text-xs text-slate-400 mb-1">Heatmap: Avg Fwd % (Threshold × Horizon) <span className="text-slate-500">(hover shows Win%, Median%)</span></div>
               <div className="inline-block border border-slate-700 rounded overflow-hidden">
                 <table className="text-xs">
                   <thead>
@@ -289,7 +289,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
                           const up = val >= 0
                           const mag = Math.min(1, Math.abs(val) / 5) // scale to 5%
                           const bg = up ? `rgba(16,185,129,${0.15+mag*0.35})` : `rgba(239,68,68,${0.15+mag*0.35})`
-                          const tip = cell ? `H${row.hz} · TH ${thRow.th} → avg ${val.toFixed(2)}% · win ${cell.winRate}% · n=${cell.events}` : ''
+                          const tip = cell ? `H${row.hz} · TH ${thRow.th} → avg ${val.toFixed(2)}% · med ${(cell.medianFwd ?? 0).toFixed(2)}% · win ${cell.winRate}% · n=${cell.events}` : ''
                           return <td key={row.hz} className="px-2 py-1 border-r border-slate-800" style={{ background:bg }} title={tip}>{val.toFixed(2)}%</td>
                         })}
                       </tr>
