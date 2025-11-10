@@ -49,6 +49,16 @@ export default async function handler(req, res) {
         const st = computeStates(bars)
         let dir = st.satyDir || (st.pivotNow === 'bullish' ? 'long' : st.pivotNow === 'bearish' ? 'short' : null)
         if (!dir) return // skip neutral
+        if (requireConsensus) {
+          const secTf = mapSecondary(timeframe)
+          if (secTf) {
+            const secBars = await fetchBars({ key, secret, dataBase, symbol: sym, timeframe: secTf, limit })
+            if (!secBars.length) return
+            const sec = computeStates(secBars)
+            const align = (st.pivotNow === sec.pivotNow) && st.pivotNow !== 'neutral'
+            if (!align) return
+          }
+        }
         if (enforceDaily) {
           const d = dailyMap[sym]
           if (!d || !d.length) return
@@ -122,4 +132,12 @@ async function fetchBars({ key, secret, dataBase, symbol, timeframe, limit }) {
     time: Math.floor(new Date(b.t || b.Timestamp || b.time).getTime() / 1000),
     open: b.o ?? b.Open, high: b.h ?? b.High, low: b.l ?? b.Low, close: b.c ?? b.Close, volume: b.v ?? b.Volume,
   }))
+}
+
+function mapSecondary(tf) {
+  const t = String(tf || '').toLowerCase()
+  if (t === '1min') return '5Min'
+  if (t === '5min') return '15Min'
+  if (t === '15min') return '1Hour'
+  return null
 }

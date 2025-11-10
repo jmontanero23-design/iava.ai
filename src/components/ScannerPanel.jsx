@@ -15,11 +15,12 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
   const [progress, setProgress] = useState('')
   const [lists, setLists] = useState([])
   const abortRef = React.useRef({ stop: false })
+  const [requireConsensus, setRequireConsensus] = useState(false)
 
   async function run() {
     try {
       setLoading(true); setErr('')
-      const qs = new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0' })
+      const qs = new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', requireConsensus: requireConsensus ? '1' : '0' })
       const r = await fetch(`/api/scan?${qs.toString()}`)
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
@@ -47,7 +48,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
         if (abortRef.current.stop) break
         setProgress(`Scanning ${i+1}/${chunks.length}…`)
         const list = chunks[i].join(',')
-        const qs = new URLSearchParams({ symbols: list, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', returnAll: '1' })
+        const qs = new URLSearchParams({ symbols: list, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', returnAll: '1', requireConsensus: requireConsensus ? '1' : '0' })
         const r = await fetch(`/api/scan?${qs.toString()}`)
         const j = await r.json()
         if (r.ok) {
@@ -119,6 +120,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
             <input type="number" min={1} max={100} value={top} onChange={e=>setTop(Math.max(1,parseInt(e.target.value,10)||10))} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
           </label>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={enforceDaily} onChange={e=>setEnforceDaily(e.target.checked)} />Daily</label>
+          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={requireConsensus} onChange={e=>setRequireConsensus(e.target.checked)} />Consensus</label>
           <button onClick={async()=>{ if (universe === 'all') await fullScanAll(); else await run(); }} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Scanning…' : 'Scan'}</button>
         </div>
       </div>
