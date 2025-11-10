@@ -53,10 +53,16 @@ export default function UnicornCallout({ state, threshold = 70 }) {
       </div>
     )
   }
+  // Soft risk: if daily confluence is not enforced but we have daily data and it mismatches, reduce default risk
+  const softRiskPct = (!state._enforceDaily && state._daily)
+    ? ((dir === 'short' ? dailyBear : dailyBull) ? 1.0 : 0.5)
+    : 1.0
+  const softNote = softRiskPct < 1.0 ? ' · risk reduced (daily mismatch)' : ''
+
   return (
     <div className="card p-4 border-emerald-700/60" style={{ background: 'linear-gradient(180deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02))' }}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-emerald-300">Unicorn Signal</h3>
+        <h3 className="text-sm font-semibold text-emerald-300">Unicorn Signal{softNote}</h3>
         <div className="flex items-center gap-3">
           <div className="text-sm font-bold text-emerald-400">Score: {Math.round(state.score)}</div>
           <button onClick={sendToN8N} className="bg-emerald-700/30 hover:bg-emerald-700/40 text-emerald-200 text-xs rounded px-2 py-1">Send to n8n</button>
@@ -72,7 +78,7 @@ export default function UnicornCallout({ state, threshold = 70 }) {
         )}
       </div>
         {open && <div className="mt-3">
-        <TradePanel bars={state._bars || []} saty={state.saty} account={state._account || {}} defaultSide={state.satyDir === 'short' ? 'sell' : 'buy'} defaultRiskPct={1} onClose={() => setOpen(false)} />
+        <TradePanel bars={state._bars || []} saty={state.saty} account={state._account || {}} defaultSide={state.satyDir === 'short' ? 'sell' : 'buy'} defaultRiskPct={softRiskPct} onClose={() => setOpen(false)} />
       </div>}
     </div>
   )

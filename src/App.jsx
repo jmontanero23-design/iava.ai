@@ -233,6 +233,25 @@ export default function App() {
       showIchi: false,
       enforceDaily: false,
     },
+
+    breakoutDailyStrong: {
+      showEma821: true,
+      showEma512: true,
+      showEma89: false,
+      showEma3450: true,
+      showRibbon: true,
+      showIchi: true,
+      enforceDaily: true,
+    },
+    momentumContinuation: {
+      showEma821: true,
+      showEma512: false,
+      showEma89: true,
+      showEma3450: false,
+      showRibbon: true,
+      showIchi: false,
+      enforceDaily: false,
+    },
   }
 
   function applyPreset(id) {
