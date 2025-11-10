@@ -24,6 +24,7 @@ import SignalFeed from './components/SignalFeed.jsx'
 import OverlayChips from './components/OverlayChips.jsx'
 import useStreamingBars from './hooks/useStreamingBars.js'
 import WatchlistPanel from './components/WatchlistPanel.jsx'
+import WatchlistNavigator from './components/WatchlistNavigator.jsx'
 import ScannerPanel from './components/ScannerPanel.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
@@ -425,6 +426,7 @@ export default function App() {
         <SignalsPanel state={signalState} />
       </div>
       <ScannerPanel onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf || timeframe); loadBars(sym, tf || timeframe) }} defaultTimeframe={timeframe} />
+      <WatchlistNavigator onLoadSymbol={(sym, tf) => { setSymbol(sym); loadBars(sym, tf || timeframe) }} timeframe={timeframe} />
       <WatchlistPanel onLoadSymbol={(sym) => { setSymbol(sym); loadBars(sym, timeframe) }} />
       <BacktestPanel symbol={symbol} timeframe={timeframe} />
       <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
