@@ -17,6 +17,28 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
   const abortRef = React.useRef({ stop: false })
   const [requireConsensus, setRequireConsensus] = useState(false)
 
+  function exportCsv() {
+    try {
+      if (!res) return
+      const rows = []
+      rows.push('symbol,dir,score,time,close')
+      const add = (arr, dir) => (arr||[]).forEach(r => {
+        const iso = r.last?.time ? new Date(r.last.time*1000).toISOString() : ''
+        const close = r.last?.close != null ? String(r.last.close) : ''
+        rows.push(`${r.symbol},${dir},${Math.round(r.score)},${iso},${close}`)
+      })
+      add(res.longs, 'long'); add(res.shorts, 'short')
+      const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `scan_${timeframe}_th${threshold}_${Date.now()}.csv`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(a.href)
+    } catch {}
+  }
+
   async function run() {
     try {
       setLoading(true); setErr('')
@@ -165,6 +187,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
                 alert('Watchlist saved')
               } catch (e) { alert('Save failed') }
             }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Save</button>
+            <button onClick={exportCsv} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Export CSV</button>
           </div>
           <div className="md:col-span-2 text-xs text-slate-500">
             Universe {res.universe} • Timeframe {res.timeframe} • Threshold ≥{res.threshold} • Daily {res.enforceDaily ? 'On' : 'Off'} • Consensus {requireConsensus ? 'On' : 'Off'} • Results L{res.longs?.length||0}/S{res.shorts?.length||0}
