@@ -97,9 +97,9 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Orders & Positions <InfoPopover title="Trading Ops">Place orders and manage open orders/positions. Bracket orders set both take‑profit and stop‑loss. Use Risk % + Calc Qty for consistent sizing. Guardrails may reject orders (market closed, risk/exposure, cooldown, daily loss cap).</InfoPopover></h3>
         <div className="flex items-center gap-2">
-          <button onClick={refresh} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Refreshing…' : 'Refresh'}</button>
-          <button onClick={async()=>{ const r = await api('/api/alpaca/orders_cancel_all', { method:'POST' }); setMsg(r.ok ? 'Cancel all sent' : (r.json?.message || r.text || 'Cancel all error')); refresh() }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700" title="Cancel all open orders">Cancel All</button>
-          <button onClick={async()=>{ const r = await api('/api/alpaca/positions_close_all', { method:'POST' }); setMsg(r.ok ? 'Close all sent' : (r.json?.message || r.text || 'Close all error')); refresh() }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700" title="Close all open positions">Close All</button>
+          <button onClick={refresh} disabled={loading} className="btn btn-xs">{loading ? 'Refreshing…' : 'Refresh'}</button>
+          <button onClick={async()=>{ const r = await api('/api/alpaca/orders_cancel_all', { method:'POST' }); setMsg(r.ok ? 'Cancel all sent' : (r.json?.message || r.text || 'Cancel all error')); refresh() }} className="btn btn-xs" title="Cancel all open orders">Cancel All</button>
+          <button onClick={async()=>{ const r = await api('/api/alpaca/positions_close_all', { method:'POST' }); setMsg(r.ok ? 'Close all sent' : (r.json?.message || r.text || 'Close all error')); refresh() }} className="btn btn-xs" title="Close all open positions">Close All</button>
         </div>
       </div>
       {rules ? (
@@ -119,22 +119,22 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
         <div className="flex flex-wrap items-end gap-2 text-sm">
           <label className="inline-flex flex-col">
             <span className="text-xs text-slate-400">Symbol</span>
-            <input value={sym} onChange={e=>setSym(e.target.value.toUpperCase())} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24" />
+            <input value={sym} onChange={e=>setSym(e.target.value.toUpperCase())} className="input w-24" />
           </label>
           <label className="inline-flex flex-col">
             <span className="text-xs text-slate-400">Side</span>
-            <select value={side} onChange={e=>setSide(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+            <select value={side} onChange={e=>setSide(e.target.value)} className="select">
               <option value="buy">Buy</option>
               <option value="sell">Sell</option>
             </select>
           </label>
           <label className="inline-flex flex-col">
             <span className="text-xs text-slate-400">Qty</span>
-            <input type="number" min={1} value={qty} onChange={e=>setQty(Math.max(1, parseInt(e.target.value,10)||1))} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24" />
+            <input type="number" min={1} value={qty} onChange={e=>setQty(Math.max(1, parseInt(e.target.value,10)||1))} className="input w-24" />
           </label>
           <label className="inline-flex flex-col">
             <span className="text-xs text-slate-400">Class</span>
-            <select value={klass} onChange={e=>setKlass(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+            <select value={klass} onChange={e=>setKlass(e.target.value)} className="select">
               <option value="market">Market</option>
               <option value="bracket">Bracket</option>
             </select>
@@ -142,17 +142,17 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
           {klass === 'bracket' && (
             <>
               <label className="inline-flex items-center gap-2">
-                <input type="checkbox" checked={useSaty} onChange={e=>setUseSaty(e.target.checked)} /> Use SATY stops <InfoPopover title="SATY Stops">Stop/TP anchor to SATY ATR levels: ±0.236 (triggers), ±1.000 (primary), ±1.618 (extensions). Choose Stop/TP levels, then Calc Qty via Risk %.</InfoPopover>
+                <input className="checkbox" type="checkbox" checked={useSaty} onChange={e=>setUseSaty(e.target.checked)} /> Use SATY stops <InfoPopover title="SATY Stops">Stop/TP anchor to SATY ATR levels: ±0.236 (triggers), ±1.000 (primary), ±1.618 (extensions). Choose Stop/TP levels, then Calc Qty via Risk %.</InfoPopover>
               </label>
               {!useSaty && (
                 <>
                   <label className="inline-flex flex-col">
                     <span className="text-xs text-slate-400">TP %</span>
-                    <input type="number" step="0.1" value={tpPct} onChange={e=>setTpPct(parseFloat(e.target.value)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24" />
+                    <input type="number" step="0.1" value={tpPct} onChange={e=>setTpPct(parseFloat(e.target.value)||0)} className="input w-24" />
                   </label>
                   <label className="inline-flex flex-col">
                     <span className="text-xs text-slate-400">SL %</span>
-                    <input type="number" step="0.1" value={slPct} onChange={e=>setSlPct(parseFloat(e.target.value)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24" />
+                    <input type="number" step="0.1" value={slPct} onChange={e=>setSlPct(parseFloat(e.target.value)||0)} className="input w-24" />
                   </label>
                 </>
               )}
@@ -160,7 +160,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
                 <>
                   <label className="inline-flex flex-col">
                     <span className="text-xs text-slate-400">Stop Level</span>
-                    <select value={stopLevel} onChange={e=>setStopLevel(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-28">
+                    <select value={stopLevel} onChange={e=>setStopLevel(e.target.value)} className="select w-28">
                       <option value="t0236">±0.236</option>
                       <option value="t1000">±1.000</option>
                       <option value="t1618">±1.618</option>
@@ -168,7 +168,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
                   </label>
                   <label className="inline-flex flex-col">
                     <span className="text-xs text-slate-400">TP Level</span>
-                    <select value={tpLevel} onChange={e=>setTpLevel(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-28">
+                    <select value={tpLevel} onChange={e=>setTpLevel(e.target.value)} className="select w-28">
                       <option value="t1000">±1.000</option>
                       <option value="t0236">±0.236</option>
                       <option value="t1618">±1.618</option>
@@ -180,10 +180,10 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
           )}
           <label className="inline-flex flex-col">
             <span className="text-xs text-slate-400">Risk %</span>
-            <input type="number" step="0.1" value={riskPct} onChange={e=>setRiskPct(parseFloat(e.target.value)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24" />
+            <input type="number" step="0.1" value={riskPct} onChange={e=>setRiskPct(parseFloat(e.target.value)||0)} className="input w-24" />
           </label>
           <InfoPopover title="Risk Sizing">Calc Qty = (Equity × Risk%) ÷ (Entry − Stop). Adjust Risk % and Stop (SATY or %) to size positions consistently.</InfoPopover>
-          <button onClick={calcQtyFromRisk} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Calc Qty</button>
+          <button onClick={calcQtyFromRisk} className="btn btn-xs">Calc Qty</button>
           <button onClick={async ()=>{
             setMsg('')
             const payload = { symbol: sym, side, qty, type: 'market' }
