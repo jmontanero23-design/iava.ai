@@ -13,6 +13,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
   const [includeSummaryRegimes, setIncludeSummaryRegimes] = useState(true)
   const [curveThresholds, setCurveThresholds] = useState('30,40,50,60,70,80,90')
   const [regimeCurves, setRegimeCurves] = useState(false)
+  const [assetClass, setAssetClass] = useState('stocks')
 
   const presets = [
     { label: 'Intraday (70 / 10)', th: 70, hz: 10, regime: 'bull' },
@@ -24,7 +25,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
     try {
       setLoading(true); setErr('')
       const ths = encodeURIComponent(curveThresholds)
-      const r = await fetch(`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&curve=${showCurve ? 1 : 0}&ths=${ths}&dailyFilter=${encodeURIComponent(dailyFilter)}&regimeCurves=${regimeCurves ? 1 : 0}`)
+      const r = await fetch(`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&curve=${showCurve ? 1 : 0}&ths=${ths}&dailyFilter=${encodeURIComponent(assetClass==='stocks'?dailyFilter:'none')}&regimeCurves=${assetClass==='stocks' && regimeCurves ? 1 : 0}&assetClass=${encodeURIComponent(assetClass)}`)
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
       setRes(j)
@@ -66,6 +67,12 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Backtest Snapshot <InfoPopover title="Backtest">Runs a quick score-based scan: counts events where Score ≥ threshold and shows forward returns after horizon bars.</InfoPopover></h3>
         <div className="flex items-center gap-2 text-xs">
+          <label className="inline-flex items-center gap-2">Asset
+            <select value={assetClass} onChange={e=>setAssetClass(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+              <option value="stocks">Stocks</option>
+              <option value="crypto">Crypto</option>
+            </select>
+          </label>
           {preset ? (
             <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700" title="Preset parameters">
               TH {preset.th} · H {preset.hz} · {preset.regime || 'none'}
@@ -85,9 +92,9 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
           <label className="inline-flex items-center gap-2">Curve THs
             <input value={curveThresholds} onChange={e=>setCurveThresholds(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-36" title="Comma-separated thresholds for expectancy curves" />
           </label>
-          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={regimeCurves} onChange={e=>setRegimeCurves(e.target.checked)} /> Compare Regimes</label>
+          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={regimeCurves} onChange={e=>setRegimeCurves(e.target.checked)} disabled={assetClass!=='stocks'} /> Compare Regimes</label>
           <label className="inline-flex items-center gap-2">Regime
-            <select value={dailyFilter} onChange={e => setDailyFilter(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+            <select value={dailyFilter} onChange={e => setDailyFilter(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1" disabled={assetClass!=='stocks'}>
               <option value="none">None</option>
               <option value="bull">Daily Bullish</option>
               <option value="bear">Daily Bearish</option>

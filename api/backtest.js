@@ -29,6 +29,7 @@ export default async function handler(req, res) {
       if (arr.length) curveThs = Array.from(new Set(arr)).sort((a,b)=>a-b)
     }
     const dailyFilter = (urlObj.searchParams.get('dailyFilter') || 'none').toLowerCase() // none|bull|bear
+    const assetClass = (urlObj.searchParams.get('assetClass') || 'stocks').toLowerCase() // stocks|crypto
     const regimeCurves = (urlObj.searchParams.get('regimeCurves') || '0') !== '0'
 
     const cacheKey = `${symbol}|${timeframe}|${limit}|${threshold}|${horizon}`
@@ -43,7 +44,9 @@ export default async function handler(req, res) {
       res.status(200).send(cached.body)
       return
     }
-    const bars = await fetchBars({ key, secret, dataBase, symbol, timeframe, limit })
+    const bars = assetClass === 'crypto'
+      ? await fetchBarsCrypto({ key, secret, dataBaseCrypto: process.env.ALPACA_DATA_CRYPTO_URL || 'https://data.alpaca.markets/v1beta3', symbol, timeframe, limit })
+      : await fetchBars({ key, secret, dataBase, symbol, timeframe, limit })
     if (!bars.length) return res.status(200).json({ symbol, timeframe, bars: 0, scores: [], scoreAvg: 0, scorePcts: { p40: 0, p60: 0, p70: 0 } })
 
     const { computeStates } = await import('../src/utils/indicators.js')
@@ -56,7 +59,7 @@ export default async function handler(req, res) {
     // Prepare daily regime states if filtering requested
     let dailyBars = null
     let dailyStates = null
-    if (dailyFilter !== 'none' || regimeCurves) {
+    if ((dailyFilter !== 'none' || regimeCurves) && assetClass === 'stocks') {
       const dkey = `${symbol}|1Day|400`
       dailyBars = getCache(dailyCache, dkey, DAILY_TTL)
       if (!dailyBars) {
@@ -72,7 +75,7 @@ export default async function handler(req, res) {
       const slice = bars.slice(0, i + 1)
       const st = computeStates(slice)
       // Optional daily regime filter
-      if (dailyStates && dailyFilter !== 'none') {
+      if (dailyStates && dailyFilter !== 'none' && assetClass === 'stocks') {
         const it = bars[i].time
         let di = -1
         for (let j = 0; j < dailyBars.length; j++) {
@@ -103,7 +106,7 @@ export default async function handler(req, res) {
           if (st.score >= bin.th) bin.rets.push(fwd)
         }
         // Also populate regime curves if daily states available
-        if (dailyStates && regimeCurves) {
+        if (dailyStates && regimeCurves && assetClass === 'stocks') {
           // find daily bar index di again (reuse logic)
           const it2 = bars[i].time
           let di2 = -1
@@ -136,7 +139,7 @@ export default async function handler(req, res) {
       scoreAvg: Number(avg.toFixed(2)),
       scorePcts: { p40: Number(pct(scores,40).toFixed(2)), p60: Number(pct(scores,60).toFixed(2)), p70: Number(pct(scores,70).toFixed(2)) },
       recentScores: scores.slice(-120),
-      threshold, horizon, dailyFilter, events: events.length, winRate: events.length ? Number(((wins/events.length)*100).toFixed(2)) : 0, avgFwd: Number((avgFwd*100).toFixed(2)),
+      threshold, horizon, dailyFilter: assetClass==='stocks'?dailyFilter:'none', events: events.length, winRate: events.length ? Number(((wins/events.length)*100).toFixed(2)) : 0, avgFwd: Number((avgFwd*100).toFixed(2)),
       medianFwd: Number((medFwd*100).toFixed(2)),
       avgWin: Number((avgWin*100).toFixed(2)), avgLoss: Number((avgLoss*100).toFixed(2)), profitFactor: profitFactor==null?null:Number(profitFactor.toFixed(2)),
     }
@@ -220,6 +223,26 @@ async function fetchBars({ key, secret, dataBase, symbol, timeframe, limit }) {
   let raw = []
   if (Array.isArray(j?.bars?.[symbol])) raw = j.bars[symbol]
   else if (Array.isArray(j?.bars)) raw = j.bars
+  return raw.map(b => ({
+    time: Math.floor(new Date(b.t || b.Timestamp || b.time).getTime() / 1000),
+    open: b.o ?? b.Open, high: b.h ?? b.High, low: b.l ?? b.Low, close: b.c ?? b.Close, volume: b.v ?? b.Volume,
+  }))
+}
+
+async function fetchBarsCrypto({ key, secret, dataBaseCrypto, symbol, timeframe, limit }) {
+  const qs = new URLSearchParams({ symbols: symbol, timeframe, limit: String(limit) })
+  const now = new Date()
+  const backDays = timeframe === '1Day' ? 365 * 2 : 21
+  const startDate = new Date(now.getTime() - backDays * 24 * 60 * 60 * 1000)
+  qs.set('start', startDate.toISOString())
+  const endpoint = `${dataBaseCrypto}/crypto/us/bars?${qs.toString()}`
+  const r = await fetch(endpoint, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
+  const j = await r.json()
+  if (!r.ok) throw new Error(JSON.stringify(j))
+  let raw = []
+  if (Array.isArray(j?.bars?.[symbol])) raw = j.bars[symbol]
+  else if (Array.isArray(j?.bars)) raw = j.bars
+  else if (Array.isArray(j?.data?.bars)) raw = j.data.bars
   return raw.map(b => ({
     time: Math.floor(new Date(b.t || b.Timestamp || b.time).getTime() / 1000),
     open: b.o ?? b.Open, high: b.h ?? b.High, low: b.l ?? b.Low, close: b.c ?? b.Close, volume: b.v ?? b.Volume,

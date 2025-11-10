@@ -21,6 +21,7 @@ export default function HealthBadge() {
   const d = state.data || {}
   const live = d.api?.hasKeys && d.api?.alpacaAccount
   const llm = d.api?.llm || {}
+  const n8n = d.api?.n8n || {}
   return (
     <span className="text-xs">
       <span className={live ? 'text-emerald-400' : 'text-amber-400'}>
@@ -34,6 +35,14 @@ export default function HealthBadge() {
           <span className="text-slate-500"> · </span>
           <span className={llm.configured ? 'text-emerald-400' : 'text-amber-400'} title={`LLM ${llm.provider || 'none'}`}>
             LLM
+          </span>
+        </>
+      ) : null}
+      {typeof n8n.configured === 'boolean' ? (
+        <>
+          <span className="text-slate-500"> · </span>
+          <span className={n8n.configured ? 'text-emerald-400' : 'text-amber-400'} title="n8n webhook">
+            n8n
           </span>
         </>
       ) : null}
