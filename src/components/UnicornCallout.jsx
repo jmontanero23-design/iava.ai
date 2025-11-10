@@ -14,6 +14,7 @@ export default function UnicornCallout({ state, threshold = 70 }) {
   const [expErr, setExpErr] = useState('')
   const [exp, setExp] = useState(null)
   const [llmReady, setLlmReady] = useState(null)
+  const [n8nReady, setN8nReady] = useState(null)
   const bonus = state._consensus?.align ? 10 : 0
   const scoreLabel = bonus ? `${Math.round(state.score)} (+${bonus} consensus)` : `${Math.round(state.score)}`
   async function sendToN8N() {
@@ -45,7 +46,10 @@ export default function UnicornCallout({ state, threshold = 70 }) {
       try {
         const r = await fetch('/api/health')
         const j = await r.json()
-        if (mounted) setLlmReady(Boolean(j?.api?.llm?.configured))
+        if (mounted) {
+          setLlmReady(Boolean(j?.api?.llm?.configured))
+          setN8nReady(Boolean(j?.api?.n8n?.configured))
+        }
       } catch { if (mounted) setLlmReady(false) }
     })()
     return () => { mounted = false }
@@ -96,7 +100,7 @@ export default function UnicornCallout({ state, threshold = 70 }) {
         <h3 className="text-sm font-semibold text-emerald-300">Unicorn Signal{softNote}</h3>
         <div className="flex items-center gap-3">
           <div className="text-sm font-bold text-emerald-400">Score: {scoreLabel}</div>
-          <button onClick={sendToN8N} className="bg-emerald-700/30 hover:bg-emerald-700/40 text-emerald-200 text-xs rounded px-2 py-1">Send to n8n</button>
+          <button onClick={sendToN8N} disabled={n8nReady === false} title={n8nReady === false ? 'n8n not configured' : ''} className="bg-emerald-700/30 hover:bg-emerald-700/40 disabled:opacity-50 disabled:cursor-not-allowed text-emerald-200 text-xs rounded px-2 py-1">Send to n8n</button>
           <button onClick={explain} disabled={expLoading || llmReady === false} title={llmReady === false ? 'LLM not configured' : ''} className="bg-slate-800 hover:bg-slate-700 text-emerald-200 text-xs rounded px-2 py-1 border border-slate-700">{expLoading ? 'Explaining…' : 'Explain'}</button>
           <button onClick={() => setOpen(v => !v)} className="bg-emerald-700/30 hover:bg-emerald-700/40 text-emerald-200 text-xs rounded px-2 py-1">{open ? 'Hide Trade' : 'Trade (Paper)'}</button>
         </div>
