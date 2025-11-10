@@ -419,6 +419,7 @@ export default function App() {
         {showSqueeze && <SqueezePanel bars={bars} />}
         <SignalsPanel state={signalState} />
       </div>
+      <ScannerPanel onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf); loadBars(sym, tf) }} defaultTimeframe={timeframe} />
       <BacktestPanel symbol={symbol} timeframe={timeframe} />
       <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
       <UnicornActionBar threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} />
