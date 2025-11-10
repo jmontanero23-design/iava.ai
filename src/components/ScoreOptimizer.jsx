@@ -42,14 +42,19 @@ export default function ScoreOptimizer({ symbol = 'SPY', timeframe = '15' }) {
     }
     updateWeights(newWeights)
     setApplied(true)
-    // Force re-render by updating a dummy state
-    setTimeout(() => window.location.reload(), 500)
+    // Show success feedback
+    setTimeout(() => {
+      alert('Weights applied! Scores will update on next data load.')
+    }, 100)
   }
 
   function resetToDefaults() {
     resetWeights()
     setApplied(false)
-    setTimeout(() => window.location.reload(), 500)
+    // Show success feedback
+    setTimeout(() => {
+      alert('Weights reset to defaults! Scores will update on next data load.')
+    }, 100)
   }
 
   return (

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import TradePanel from './TradePanel.jsx'
 import { logSignal } from '../utils/tradeLogger.js'
 
-export default function UnicornCallout({ state, threshold = 70 }) {
+export default function UnicornCallout({ state, threshold = 70, timeframe = '15Min' }) {
   if (!state || state.score == null || state.score < threshold) return null
   const facts = []
   if (state.pivotNow) facts.push(`Pivot: ${state.pivotNow}`)
@@ -17,7 +17,6 @@ export default function UnicornCallout({ state, threshold = 70 }) {
   useEffect(() => {
     if (!logged.current && state.score >= threshold) {
       const symbol = state._bars?.[0]?.symbol || 'UNKNOWN'
-      const timeframe = '15'  // TODO: get from props
       logSignal({
         symbol,
         timeframe,

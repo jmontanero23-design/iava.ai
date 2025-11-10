@@ -180,7 +180,7 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
           </label>
         )}
         <label className="flex items-center gap-2 col-span-2">
-          <input type="checkbox" checked={usePartials} onChange={e => setUsePartials(e.target.checked)} className="rounded" />
+          <input type="checkbox" checked={usePartials} onChange={e => setUsePartials(e.target.checked)} className="rounded" aria-label="Use partial exits strategy" />
           <span className="text-xs text-slate-300">Use Partial Exits (50% at 1R, 25% at 2R, 25% at 3R)</span>
         </label>
       </div>
@@ -211,7 +211,7 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
       )}
 
       <div className="mt-3 flex items-center gap-3">
-        <button onClick={submit} disabled={submitting || !qty || !stop || (!usePartials && !tp)} className="bg-emerald-600 hover:bg-emerald-500 rounded px-3 py-1 text-sm disabled:opacity-50">{submitting ? 'Placing…' : (usePartials ? 'Place 3 Orders' : 'Place Order')}</button>
+        <button onClick={submit} disabled={submitting || !qty || !stop || (!usePartials && !tp)} className="btn btn-success px-3 py-1 text-sm">{submitting ? 'Placing…' : (usePartials ? 'Place 3 Orders' : 'Place Order')}</button>
         {result?.ok && !result.partials && <span className="text-emerald-400 text-sm">Order placed: {result.order?.id}</span>}
         {result?.ok && result.partials && <span className="text-emerald-400 text-sm">{result.orders?.length || 0} orders placed</span>}
         {result && !result.ok && <span className="text-rose-400 text-sm">{result.error}</span>}

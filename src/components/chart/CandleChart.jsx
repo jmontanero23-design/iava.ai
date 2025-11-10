@@ -14,6 +14,7 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
   const cloudCanvasRef = useRef(null)
   const cloudUnsubRef = useRef(null)
   const dockRef = useRef(null)
+  const hudRef = useRef(null)
   const lastFocusRef = useRef(null)
   const squeezeCanvasRef = useRef(null)
 
@@ -76,6 +77,14 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       container.appendChild(d)
     }
 
+    // HUD chips (top-left OHLC / ATR / targets)
+    if (!hudRef.current) {
+      const h = document.createElement('div')
+      h.className = 'chart-hud'
+      hudRef.current = h
+      container.appendChild(h)
+    }
+
     // Squeeze shading canvas (vertical bands)
     if (!squeezeCanvasRef.current) {
       const c2 = document.createElement('canvas')
@@ -113,6 +122,9 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       const dk = dockRef.current
       if (dk && dk.parentNode) dk.parentNode.removeChild(dk)
       dockRef.current = null
+      const hud = hudRef.current
+      if (hud && hud.parentNode) hud.parentNode.removeChild(hud)
+      hudRef.current = null
       if (cloudUnsubRef.current && chart.timeScale) {
         try { chart.timeScale().unsubscribeVisibleTimeRangeChange(cloudUnsubRef.current) } catch(_) {}
       }

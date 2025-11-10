@@ -323,7 +323,7 @@ export default function App() {
             <option value="1Hour">1 Hour</option>
             <option value="1Day">1 Day</option>
           </select>
-          <button onClick={() => loadBars()} className="bg-indigo-600 hover:bg-indigo-500 rounded px-4 py-2 text-sm font-medium transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40">
+          <button onClick={() => loadBars()} className="btn btn-primary px-4 py-2 text-sm font-medium" disabled={loading}>
             {loading ? 'Loading...' : 'Load Data'}
           </button>
 
@@ -343,17 +343,17 @@ export default function App() {
           {/* Quick Toggles */}
           <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-700">
             <label className="inline-flex items-center gap-2 text-sm cursor-pointer hover:text-slate-200 transition-colors">
-              <input type="checkbox" className="accent-indigo-500" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />
+              <input type="checkbox" className="accent-indigo-500" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} aria-label="Enable auto-refresh" />
               <span className="text-slate-400">Auto-Refresh</span>
             </label>
             {!autoRefresh && timeframe !== '1Day' && (
               <label className="inline-flex items-center gap-2 text-sm cursor-pointer hover:text-slate-200 transition-colors">
-                <input type="checkbox" className="accent-cyan-500" checked={streaming} onChange={e => { setStreaming(e.target.checked); if (e.target.checked) setAutoRefresh(false) }} />
+                <input type="checkbox" className="accent-cyan-500" checked={streaming} onChange={e => { setStreaming(e.target.checked); if (e.target.checked) setAutoRefresh(false) }} aria-label="Enable streaming data" />
                 <span className="text-slate-400">Stream</span>
               </label>
             )}
             <label className="inline-flex items-center gap-2 text-sm cursor-pointer hover:text-slate-200 transition-colors">
-              <input type="checkbox" className="accent-emerald-500" checked={enforceDaily} onChange={e => setEnforceDaily(e.target.checked)} />
+              <input type="checkbox" className="accent-emerald-500" checked={enforceDaily} onChange={e => setEnforceDaily(e.target.checked)} aria-label="Enforce daily timeframe confluence" />
               <span className="text-slate-400">Daily Confluence</span>
             </label>
           </div>
@@ -391,7 +391,7 @@ export default function App() {
       <SignalFeed items={signalHistory} onSelect={(item) => setFocusTime(item.time)} />
       <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} rateLimitUntil={rateLimitUntil} />
       {/* Unicorn Signal Callout (always visible when triggered) */}
-      <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
+      <UnicornCallout threshold={threshold} timeframe={timeframe} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
 
       {/* Navigation Tabs */}
       <div className="card p-1 flex gap-1">
