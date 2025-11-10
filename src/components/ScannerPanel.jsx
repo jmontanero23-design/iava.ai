@@ -14,6 +14,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
   const [universe, setUniverse] = useState('manual') // manual | all
   const [progress, setProgress] = useState('')
   const [lists, setLists] = useState([])
+  const abortRef = React.useRef({ stop: false })
 
   async function run() {
     try {
@@ -33,6 +34,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
   async function fullScanAll() {
     try {
       setLoading(true); setErr(''); setProgress('Fetching universe…')
+      abortRef.current.stop = false
       const ur = await fetch('/api/universe')
       const uj = await ur.json()
       if (!ur.ok) throw new Error(uj?.error || `HTTP ${ur.status}`)
@@ -42,6 +44,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
       const chunks = chunk(syms, 25)
       const acc = { longs: [], shorts: [] }
       for (let i = 0; i < chunks.length; i++) {
+        if (abortRef.current.stop) break
         setProgress(`Scanning ${i+1}/${chunks.length}…`)
         const list = chunks[i].join(',')
         const qs = new URLSearchParams({ symbols: list, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', returnAll: '1' })

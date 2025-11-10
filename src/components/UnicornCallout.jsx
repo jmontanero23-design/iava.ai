@@ -10,6 +10,8 @@ export default function UnicornCallout({ state, threshold = 70 }) {
   if (state.sq?.fired) facts.push(`Squeeze: fired ${state.sq.dir}`)
   if (state.ichiRegime) facts.push(`Ichimoku: ${state.ichiRegime}`)
   const [overrideOpen, setOverrideOpen] = useState(false)
+  const bonus = state._consensus?.align ? 10 : 0
+  const scoreLabel = bonus ? `${Math.round(state.score)} (+${bonus} consensus)` : `${Math.round(state.score)}`
   async function sendToN8N() {
     try {
       const payload = { type: 'unicorn_signal', at: new Date().toISOString(), score: state.score, facts, context: state }
@@ -35,7 +37,7 @@ export default function UnicornCallout({ state, threshold = 70 }) {
       <div className="card p-4 border-slate-700/60" style={{ background: 'linear-gradient(180deg, rgba(100,116,139,0.08), rgba(100,116,139,0.02))' }}>
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-slate-300">Unicorn Signal (blocked by Daily Confluence)</h3>
-          <div className="text-sm font-bold text-slate-400">Score: {Math.round(state.score)}</div>
+          <div className="text-sm font-bold text-slate-400">Score: {scoreLabel}</div>
         </div>
         <div className="mt-2 text-xs text-slate-400">
           Required ({dir}): Daily Pivot and Ichimoku must be {dir === 'short' ? 'bearish' : 'bullish'}. <span className="ml-2">Currently: Pivot {dailyPivot || '—'}, Ichimoku {dailyIchi || '—'}.</span>
@@ -64,7 +66,7 @@ export default function UnicornCallout({ state, threshold = 70 }) {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-emerald-300">Unicorn Signal{softNote}</h3>
         <div className="flex items-center gap-3">
-          <div className="text-sm font-bold text-emerald-400">Score: {Math.round(state.score)}</div>
+          <div className="text-sm font-bold text-emerald-400">Score: {scoreLabel}</div>
           <button onClick={sendToN8N} className="bg-emerald-700/30 hover:bg-emerald-700/40 text-emerald-200 text-xs rounded px-2 py-1">Send to n8n</button>
           <button onClick={() => setOpen(v => !v)} className="bg-emerald-700/30 hover:bg-emerald-700/40 text-emerald-200 text-xs rounded px-2 py-1">{open ? 'Hide Trade' : 'Trade (Paper)'}</button>
         </div>

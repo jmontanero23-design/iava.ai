@@ -36,7 +36,7 @@ export default function MarketStats({ bars = [], saty, symbol, timeframe, stream
       </div>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
         {items.map(item => (
-          <div key={item.label} className="bg-slate-900/40 rounded-lg px-3 py-2 border border-slate-800">
+          <div key={item.label} className="bg-slate-900/40 rounded-lg px-3 py-2 border border-slate-800" title={item.title || ''}>
             <div className="text-xs uppercase tracking-wide text-slate-500">{item.label}</div>
             <div className={`text-base font-semibold ${item.accent || 'text-slate-100'}`}>{item.value}</div>
           </div>

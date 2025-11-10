@@ -188,6 +188,7 @@ export default function App() {
       if (saved.timeframe) setTimeframe(saved.timeframe)
       if (typeof saved.autoRefresh === 'boolean') setAutoRefresh(saved.autoRefresh)
       if (typeof saved.refreshSec === 'number') setRefreshSec(saved.refreshSec)
+      if (typeof saved.streaming === 'boolean') setStreaming(saved.streaming)
       if (typeof saved.showIchi === 'boolean') setShowIchi(saved.showIchi)
       if (typeof saved.showRibbon === 'boolean') setShowRibbon(saved.showRibbon)
       if (typeof saved.showSaty === 'boolean') setShowSaty(saved.showSaty)
@@ -224,7 +225,7 @@ export default function App() {
       symbol, timeframe, autoRefresh, refreshSec,
       showIchi, showRibbon, showSaty, showSqueeze,
       showEma821, showEma512, showEma89, showEma3450,
-      autoLoadChange,
+      autoLoadChange, streaming,
     }
     try { localStorage.setItem('iava.settings', JSON.stringify(prefs)) } catch {}
   }, [symbol, timeframe, autoRefresh, refreshSec, showIchi, showRibbon, showSaty, showSqueeze, showEma821, showEma512, showEma89, showEma3450, autoLoadChange])
@@ -547,7 +548,7 @@ export default function App() {
         </div>
       )}
       <BacktestPanel symbol={symbol} timeframe={timeframe} preset={backtestPreset} />
-      <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
+      <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily, _consensus: consensus }} />
       <UnicornActionBar threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} />
       <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
       <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />
