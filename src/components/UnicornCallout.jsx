@@ -99,7 +99,7 @@ export default function UnicornCallout({ state, threshold = 70 }) {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-emerald-300">Unicorn Signal{softNote}</h3>
         <div className="flex items-center gap-3">
-          <div className="text-sm font-bold text-emerald-400">Score: {scoreLabel}</div>
+          <div className="text-sm font-bold bg-gradient-to-r from-emerald-400 to-cyan-300 bg-clip-text text-transparent">Score: {scoreLabel}</div>
           <button onClick={sendToN8N} disabled={n8nReady === false} title={n8nReady === false ? 'n8n not configured' : ''} className="bg-emerald-700/30 hover:bg-emerald-700/40 disabled:opacity-50 disabled:cursor-not-allowed text-emerald-200 text-xs rounded px-2 py-1">Send to n8n</button>
           <button onClick={explain} disabled={expLoading || llmReady === false} title={llmReady === false ? 'LLM not configured' : ''} className="bg-slate-800 hover:bg-slate-700 text-emerald-200 text-xs rounded px-2 py-1 border border-slate-700">{expLoading ? 'Explaining…' : 'Explain'}</button>
           <button onClick={() => setOpen(v => !v)} className="bg-emerald-700/30 hover:bg-emerald-700/40 text-emerald-200 text-xs rounded px-2 py-1">{open ? 'Hide Trade' : 'Trade (Paper)'}</button>

@@ -6,7 +6,7 @@ export default function Hero() {
       <div className="absolute inset-0 opacity-40 bg-gradient-to-r from-indigo-600 via-sky-500 to-transparent blur-3xl" />
       <div className="relative">
         <p className="uppercase tracking-[0.3em] text-xs text-slate-300/70 mb-3">AI SIGNAL FLIGHT DECK</p>
-        <h1 className="text-3xl md:text-4xl font-semibold text-white">
+        <h1 className="text-3xl md:text-4xl font-semibold bg-gradient-to-r from-indigo-200 via-sky-200 to-cyan-200 bg-clip-text text-transparent">
           iAVA.ai · Intelligent Alpha Velocity Assistant
         </h1>
         <p className="text-slate-300 mt-3 max-w-3xl">
