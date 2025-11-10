@@ -96,7 +96,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Market Scanner <InfoPopover title="Scanner">Scans a symbol list and surfaces the highest Unicorn Scores for longs/shorts, optional daily confluence.</InfoPopover></h3>
+        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Market Scanner <InfoPopover title="Scanner">Scans a symbol list and surfaces the highest Unicorn Scores for longs/shorts.\n\nTips:\n- Enable Daily to require Daily Pivot + Ichimoku agreement.\n- Enable Consensus to require secondary timeframe alignment (Chart’s Consensus Bonus = +10).\n- Threshold applies after gating. Counts show what was filtered.</InfoPopover></h3>
         <div className="flex items-center gap-2 text-xs">
           <label className="inline-flex items-center gap-2">TF
             <select value={timeframe} onChange={e=>setTimeframe(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">

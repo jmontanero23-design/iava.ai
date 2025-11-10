@@ -21,8 +21,8 @@ export default async function handler(req, res) {
     const symbolsParam = (url.searchParams.get('symbols') || '').trim()
     const symbols = symbolsParam ? symbolsParam.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : getDefaultSymbols()
 
-    // Cache by query
-    const cacheKey = JSON.stringify({ timeframe, limit, top, threshold, enforceDaily, symbols })
+    // Cache by query (include gating flags)
+    const cacheKey = JSON.stringify({ timeframe, limit, top, threshold, enforceDaily, requireConsensus, returnAll, symbols })
     const cached = getCache(cacheMap, cacheKey, ttlFor(timeframe))
     const inm = req.headers['if-none-match']
     if (cached) {

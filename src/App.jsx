@@ -486,6 +486,9 @@ export default function App() {
         <div className="w-full mt-2">
           <Presets symbol={symbol} setSymbol={setSymbol} timeframe={timeframe} setTimeframe={setTimeframe} onLoad={(s, tf) => loadBars(s, tf)} />
         </div>
+        <div className="text-[11px] text-slate-500 -mt-1">
+          Shortcuts: 1–7 switch presets · ←/→ navigate watchlist · Space toggle Auto
+        </div>
         <span className="text-sm text-slate-400 inline-flex items-center gap-2">Overlays <InfoPopover title="Overlays">Toggle EMA Clouds (pullback/trend), Ichimoku (regime), Pivot Ribbon (8/21/34) and SATY ATR levels (targets).</InfoPopover></span>
         <label className="inline-flex items-center gap-2 text-sm">
           Preset
