@@ -9,7 +9,7 @@ export default function UnicornCallout({ state, threshold = 70 }) {
   if (state.satyDir) facts.push(`SATY: ${state.satyDir}`)
   if (state.sq?.fired) facts.push(`Squeeze: fired ${state.sq.dir}`)
   if (state.ichiRegime) facts.push(`Ichimoku: ${state.ichiRegime}`)
-  const [open, setOpen] = useState(false)
+  const [overrideOpen, setOverrideOpen] = useState(false)
   async function sendToN8N() {
     try {
       const payload = { type: 'unicorn_signal', at: new Date().toISOString(), score: state.score, facts, context: state }
@@ -22,11 +22,15 @@ export default function UnicornCallout({ state, threshold = 70 }) {
   }
   // Determine intended direction from state (prefer SATY), fallback to ribbon
   const dir = state.satyDir || (state.pivotNow === 'bearish' ? 'short' : 'long')
-  const dailyBull = state._daily ? (state._daily.pivotNow === 'bullish' && state._daily.ichiRegime === 'bullish') : true
-  const dailyBear = state._daily ? (state._daily.pivotNow === 'bearish' && state._daily.ichiRegime === 'bearish') : true
+  const dailyPivot = state._daily?.pivotNow
+  const dailyIchi = state._daily?.ichiRegime
+  const dailyBull = state._daily ? (dailyPivot === 'bullish' && dailyIchi === 'bullish') : true
+  const dailyBear = state._daily ? (dailyPivot === 'bearish' && dailyIchi === 'bearish') : true
   const confluenceOk = dir === 'short' ? dailyBear : dailyBull
+  // Trade open state when not blocked
+  const [open, setOpen] = useState(false)
   if (state._enforceDaily && !confluenceOk) {
-    // Show muted info when confluence not met
+    // Show muted info when confluence not met, with an explicit paper-trade override
     return (
       <div className="card p-4 border-slate-700/60" style={{ background: 'linear-gradient(180deg, rgba(100,116,139,0.08), rgba(100,116,139,0.02))' }}>
         <div className="flex items-center justify-between">
@@ -34,8 +38,18 @@ export default function UnicornCallout({ state, threshold = 70 }) {
           <div className="text-sm font-bold text-slate-400">Score: {Math.round(state.score)}</div>
         </div>
         <div className="mt-2 text-xs text-slate-400">
-          Required: {dir === 'short' ? 'bearish' : 'bullish'} Daily Pivot and Ichimoku regime. Adjust threshold or disable confluence to proceed.
+          Required ({dir}): Daily Pivot and Ichimoku must be {dir === 'short' ? 'bearish' : 'bullish'}. <span className="ml-2">Currently: Pivot {dailyPivot || '—'}, Ichimoku {dailyIchi || '—'}.</span>
         </div>
+        <div className="mt-2 flex items-center gap-2">
+          <button onClick={() => setOverrideOpen(v => !v)} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{overrideOpen ? 'Hide Trade' : 'Proceed (Paper)'}
+          </button>
+          <span className="text-xs text-slate-500">Proceed opens a paper trade ticket without daily confluence. Use with caution.</span>
+        </div>
+        {overrideOpen && (
+          <div className="mt-3">
+            <TradePanel bars={state._bars || []} saty={state.saty} account={state._account || {}} defaultSide={state.satyDir === 'short' ? 'sell' : 'buy'} onClose={() => setOverrideOpen(false)} />
+          </div>
+        )}
       </div>
     )
   }
