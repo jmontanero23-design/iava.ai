@@ -13,9 +13,10 @@ export default async function handler(req, res) {
     const url = new URL(req.url, 'http://localhost')
     const timeframe = mapTf(url.searchParams.get('timeframe') || '5Min')
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '500', 10), 2000)
-    const top = Math.min(parseInt(url.searchParams.get('top') || '10', 10), 50)
+    const top = Math.min(parseInt(url.searchParams.get('top') || '10', 10), 100)
     const threshold = Math.max(0, Math.min(100, parseFloat(url.searchParams.get('threshold') || '70')))
     const enforceDaily = (url.searchParams.get('enforceDaily') || '1') !== '0'
+    const returnAll = (url.searchParams.get('returnAll') || '0') === '1'
     const symbolsParam = (url.searchParams.get('symbols') || '').trim()
     const symbols = symbolsParam ? symbolsParam.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : getDefaultSymbols()
 
@@ -64,8 +65,10 @@ export default async function handler(req, res) {
 
     // Apply threshold before slicing top N to better match chart expectations
     const filt = results.filter(r => r.score >= threshold)
-    const longs = filt.filter(r => r.dir === 'long').sort((a,b) => b.score - a.score).slice(0, top)
-    const shorts = filt.filter(r => r.dir === 'short').sort((a,b) => b.score - a.score).slice(0, top)
+    const longsAll = filt.filter(r => r.dir === 'long').sort((a,b) => b.score - a.score)
+    const shortsAll = filt.filter(r => r.dir === 'short').sort((a,b) => b.score - a.score)
+    const longs = returnAll ? longsAll : longsAll.slice(0, top)
+    const shorts = returnAll ? shortsAll : shortsAll.slice(0, top)
     const payload = { timeframe, threshold, enforceDaily, universe: symbols.length, longs, shorts }
     const body = JSON.stringify(payload)
     const etag = `W/"${crypto.createHash('sha1').update(body).digest('hex')}"`
