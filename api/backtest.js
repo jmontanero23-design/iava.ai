@@ -29,6 +29,7 @@ export default async function handler(req, res) {
       if (arr.length) curveThs = Array.from(new Set(arr)).sort((a,b)=>a-b)
     }
     const dailyFilter = (urlObj.searchParams.get('dailyFilter') || 'none').toLowerCase() // none|bull|bear
+    const regimeCurves = (urlObj.searchParams.get('regimeCurves') || '0') !== '0'
 
     const cacheKey = `${symbol}|${timeframe}|${limit}|${threshold}|${horizon}`
     const cached = getCache(dataCache, cacheKey, TTL)
@@ -55,7 +56,7 @@ export default async function handler(req, res) {
     // Prepare daily regime states if filtering requested
     let dailyBars = null
     let dailyStates = null
-    if (dailyFilter !== 'none') {
+    if (dailyFilter !== 'none' || regimeCurves) {
       const dkey = `${symbol}|1Day|400`
       dailyBars = getCache(dailyCache, dkey, DAILY_TTL)
       if (!dailyBars) {
@@ -71,7 +72,7 @@ export default async function handler(req, res) {
       const slice = bars.slice(0, i + 1)
       const st = computeStates(slice)
       // Optional daily regime filter
-      if (dailyStates) {
+      if (dailyStates && dailyFilter !== 'none') {
         const it = bars[i].time
         let di = -1
         for (let j = 0; j < dailyBars.length; j++) {
@@ -102,7 +103,7 @@ export default async function handler(req, res) {
           if (st.score >= bin.th) bin.rets.push(fwd)
         }
         // Also populate regime curves if daily states available
-        if (dailyStates) {
+        if (dailyStates && regimeCurves) {
           // find daily bar index di again (reuse logic)
           const it2 = bars[i].time
           let di2 = -1

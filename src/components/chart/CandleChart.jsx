@@ -14,6 +14,7 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
   const cloudUnsubRef = useRef(null)
   const dockRef = useRef(null)
   const lastFocusRef = useRef(null)
+  const squeezeCanvasRef = useRef(null)
 
   useEffect(() => {
     const container = containerRef.current
@@ -84,6 +85,19 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       container.appendChild(d)
     }
 
+    // Squeeze shading canvas (vertical bands)
+    if (!squeezeCanvasRef.current) {
+      const c2 = document.createElement('canvas')
+      c2.style.position = 'absolute'
+      c2.style.left = '0'
+      c2.style.top = '0'
+      c2.style.right = '0'
+      c2.style.bottom = '0'
+      c2.style.pointerEvents = 'none'
+      squeezeCanvasRef.current = c2
+      container.appendChild(c2)
+    }
+
     const handleResize = () => {
       chart.applyOptions({ width: container.clientWidth, height: container.clientHeight })
     }
@@ -102,6 +116,9 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       const cc = cloudCanvasRef.current
       if (cc && cc.parentNode) cc.parentNode.removeChild(cc)
       cloudCanvasRef.current = null
+      const sc = squeezeCanvasRef.current
+      if (sc && sc.parentNode) sc.parentNode.removeChild(sc)
+      squeezeCanvasRef.current = null
       const dk = dockRef.current
       if (dk && dk.parentNode) dk.parentNode.removeChild(dk)
       dockRef.current = null
@@ -463,6 +480,38 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
             }
           }
           d.innerHTML = `<div style="line-height:1.2">${lines.map(l => `<div>${l}</div>`).join('')}</div>`
+        }
+      }
+    } catch (_) {}
+    // Draw Squeeze ON shading (vertical faint stripes)
+    try {
+      const c2 = squeezeCanvasRef.current
+      const sref = seriesRef.current
+      const ts = chartRef.current?.timeScale?.()
+      const onArr = overlays?.squeezeOn
+      const el = containerRef.current
+      if (c2 && sref && ts && onArr && el) {
+        c2.width = el.clientWidth
+        c2.height = el.clientHeight
+        const ctx2 = c2.getContext('2d')
+        ctx2.clearRect(0,0,c2.width,c2.height)
+        // Build segments of consecutive ON bars
+        let segStart = -1
+        for (let i = 0; i < bars.length; i++) {
+          const on = onArr[i] === 1
+          if (on && segStart === -1) segStart = i
+          if ((!on || i === bars.length - 1) && segStart !== -1) {
+            const endIdx = on ? i : i - 1
+            const x1 = ts.timeToCoordinate(bars[segStart]?.time)
+            const x2 = ts.timeToCoordinate(bars[endIdx]?.time)
+            if (x1 != null && x2 != null) {
+              const left = Math.min(x1, x2)
+              const right = Math.max(x1, x2)
+              ctx2.fillStyle = 'rgba(244,63,94,0.06)'
+              ctx2.fillRect(left, 0, Math.max(1, right - left), c2.height)
+            }
+            segStart = -1
+          }
         }
       }
     } catch (_) {}
