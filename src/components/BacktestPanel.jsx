@@ -64,6 +64,61 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
       setErr(String(e.message || e))
     }
   }
+  async function downloadSummaryJson() {
+    try {
+      const url = `/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&dailyFilter=${encodeURIComponent(assetClass==='stocks'?dailyFilter:'none')}&regimeCurves=${assetClass==='stocks' && regimeCurves ? 1 : 0}&format=summary-json`
+      const r = await fetch(url)
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
+      const blob = new Blob([JSON.stringify(j, null, 2)], { type: 'application/json' })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `backtest_summary_${symbol}_${timeframe}_th${threshold}_hz${horizon}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(a.href)
+    } catch (e) {
+      setErr(String(e.message || e))
+    }
+  }
+  async function downloadSummaryCsv() {
+    try {
+      const url = `/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&dailyFilter=${encodeURIComponent(assetClass==='stocks'?dailyFilter:'none')}&regimeCurves=${assetClass==='stocks' && regimeCurves ? 1 : 0}&format=summary`
+      const r = await fetch(url)
+      const txt = await r.text()
+      if (!r.ok) throw new Error(txt || `HTTP ${r.status}`)
+      const blob = new Blob([txt], { type: 'text/csv;charset=utf-8' })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `backtest_summary_${symbol}_${timeframe}_th${threshold}_hz${horizon}.csv`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(a.href)
+    } catch (e) {
+      setErr(String(e.message || e))
+    }
+  }
+
+  async function downloadCsv() {
+    try {
+      const url = `/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&dailyFilter=${encodeURIComponent(assetClass==='stocks'?dailyFilter:'none')}&format=csv`
+      const r = await fetch(url)
+      const txt = await r.text()
+      if (!r.ok) throw new Error(txt || `HTTP ${r.status}`)
+      const blob = new Blob([txt], { type: 'text/csv;charset=utf-8' })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `backtest_${symbol}_${timeframe}_th${threshold}_hz${horizon}.csv`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(a.href)
+    } catch (e) {
+      setErr(String(e.message || e))
+    }
+  }
 
   return (
     <div className="card p-4">
@@ -112,6 +167,9 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
           </label>
           <button onClick={run} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Running…' : 'Run'}</button>
           <button onClick={downloadJson} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Download JSON</button>
+          <button onClick={downloadCsv} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Download CSV</button>
+          <button onClick={downloadSummaryCsv} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Summary CSV</button>
+          <button onClick={downloadSummaryJson} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Summary JSON</button>
           {preset && (
             <button onClick={() => { if (typeof preset.th === 'number') setThreshold(preset.th); if (typeof preset.hz === 'number') setHorizon(preset.hz); if (preset.regime) setDailyFilter(preset.regime) }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Apply Preset</button>
           )}
@@ -198,7 +256,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
                   const up = p.avgFwd >= 0
                   const color = up ? 'bg-emerald-500/70' : 'bg-rose-500/70'
                   return (
-                    <div key={i} title={`th ${p.th}: avg ${p.avgFwd}% · win ${p.winRate}% · n=${p.events}`} className="text-center">
+                    <div key={i} title={`th ${p.th}: avg ${p.avgFwd}% · med ${p.medianFwd ?? '—'}% · win ${p.winRate}% · n=${p.events}`} className="text-center">
                       <div className={`w-4 ${color}`} style={{ height: h }} />
                       <div className="text-[10px] text-slate-400 mt-1">{p.th}</div>
                     </div>
@@ -252,7 +310,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
                     const up = p.avgFwd >= 0
                     const color = up ? 'bg-emerald-500/70' : 'bg-rose-500/70'
                     return (
-                      <div key={i} title={`th ${p.th}: avg ${p.avgFwd}% · win ${p.winRate}% · n=${p.events}`} className="text-center">
+                      <div key={i} title={`th ${p.th}: avg ${p.avgFwd}% · med ${p.medianFwd ?? '—'}% · win ${p.winRate}% · n=${p.events}`} className="text-center">
                         <div className={`w-4 ${color}`} style={{ height: h }} />
                         <div className="text-[10px] text-slate-400 mt-1">{p.th}</div>
                       </div>
@@ -268,7 +326,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
                     const up = p.avgFwd >= 0
                     const color = up ? 'bg-emerald-500/70' : 'bg-rose-500/70'
                     return (
-                      <div key={i} title={`th ${p.th}: avg ${p.avgFwd}% · win ${p.winRate}% · n=${p.events}`} className="text-center">
+                      <div key={i} title={`th ${p.th}: avg ${p.avgFwd}% · med ${p.medianFwd ?? '—'}% · win ${p.winRate}% · n=${p.events}`} className="text-center">
                         <div className={`w-4 ${color}`} style={{ height: h }} />
                         <div className="text-[10px] text-slate-400 mt-1">{p.th}</div>
                       </div>

@@ -19,6 +19,7 @@ export default async function handler(req, res) {
     const enforceDaily = (url.searchParams.get('enforceDaily') || '1') !== '0'
     const returnAll = (url.searchParams.get('returnAll') || '0') === '1'
     const requireConsensus = (url.searchParams.get('requireConsensus') || '0') === '1'
+    const consensusBonus = (url.searchParams.get('consensusBonus') || '0') === '1'
     const assetClass = (url.searchParams.get('assetClass') || 'stocks').toLowerCase()
     const symbolsParam = (url.searchParams.get('symbols') || '').trim()
     const symbols = symbolsParam ? symbolsParam.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : getDefaultSymbols()
@@ -63,21 +64,22 @@ export default async function handler(req, res) {
             const st = computeStates(bars)
             let dir = st.satyDir || (st.pivotNow === 'bullish' ? 'long' : st.pivotNow === 'bearish' ? 'short' : null)
             if (!dir) { neutralSkipped++; continue }
+            // Secondary timeframe alignment (used for gating and/or bonus)
             let consensusAligned = false
-            if (requireConsensus) {
+            if (requireConsensus || consensusBonus) {
               const secTf = mapSecondary(timeframe)
               if (secTf) {
                 const secBars = assetClass === 'crypto'
                   ? await fetchBarsCrypto({ key, secret, dataBaseCrypto, symbol: sym, timeframe: secTf, limit })
                   : await fetchBars({ key, secret, dataBase, symbol: sym, timeframe: secTf, limit })
-                if (!secBars.length) continue
-                const sec = computeStates(secBars)
-                const align = (st.pivotNow === sec.pivotNow) && st.pivotNow !== 'neutral'
-                if (!align) { consensusBlocked++; continue }
-                consensusAligned = true
+                if (secBars.length) {
+                  const sec = computeStates(secBars)
+                  consensusAligned = (st.pivotNow === sec.pivotNow) && st.pivotNow !== 'neutral'
+                }
               }
+              if (requireConsensus && !consensusAligned) { consensusBlocked++; continue }
             }
-            const scoreOut = st.score + (consensusAligned ? 10 : 0)
+            const scoreOut = st.score + ((consensusBonus && consensusAligned) ? 10 : 0) + ((requireConsensus && consensusAligned) ? 10 : 0)
             if (enforceDaily && assetClass === 'stocks') {
               const d = dailyMap[sym]
               if (!d || !d.length) continue

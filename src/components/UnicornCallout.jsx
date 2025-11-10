@@ -120,6 +120,9 @@ export default function UnicornCallout({ state, threshold = 70 }) {
             })()}
           </div>
         )}
+        <div className="mt-2 flex items-center gap-2">
+          <button onClick={() => { try { const el = document.createElement('textarea'); const why = (()=>{ try { const arr = Object.entries(state.components).filter(([,v])=>v>0).map(([k,v]) => `${k}+${v}`); if (state._consensus?.align) arr.push('consensus+10'); return `Why: ${arr.join(', ')}` } catch { return '' } })(); el.value = why; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); alert('Copied Why to clipboard') } catch(_) {} }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Why</button>
+        </div>
         {exp && (
           <div className="mt-3 p-2 rounded border border-slate-700 bg-slate-900/60">
             <div className="text-xs text-slate-400 mb-1">AI Explanation</div>

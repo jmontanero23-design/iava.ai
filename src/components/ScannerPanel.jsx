@@ -16,6 +16,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
   const [lists, setLists] = useState([])
   const abortRef = React.useRef({ stop: false })
   const [requireConsensus, setRequireConsensus] = useState(false)
+  const [consensusBonus, setConsensusBonus] = useState(false)
   const [assetClass, setAssetClass] = useState('stocks') // stocks | crypto
   const [exporting, setExporting] = useState(false)
 
@@ -58,7 +59,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
   async function run() {
     try {
       setLoading(true); setErr('')
-      const qs = new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', requireConsensus: requireConsensus ? '1' : '0', assetClass })
+      const qs = new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', requireConsensus: requireConsensus ? '1' : '0', consensusBonus: consensusBonus ? '1' : '0', assetClass })
       const r = await fetch(`/api/scan?${qs.toString()}`)
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
@@ -86,7 +87,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
         if (abortRef.current.stop) break
         setProgress(`Scanning ${i+1}/${chunks.length}…`)
         const list = chunks[i].join(',')
-        const qs = new URLSearchParams({ symbols: list, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', returnAll: '1', requireConsensus: requireConsensus ? '1' : '0', assetClass })
+        const qs = new URLSearchParams({ symbols: list, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', returnAll: '1', requireConsensus: requireConsensus ? '1' : '0', consensusBonus: consensusBonus ? '1' : '0', assetClass })
         const r = await fetch(`/api/scan?${qs.toString()}`)
         const j = await r.json()
         if (r.ok) {
@@ -183,6 +184,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
           </label>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={enforceDaily} onChange={e=>setEnforceDaily(e.target.checked)} />Daily</label>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={requireConsensus} onChange={e=>setRequireConsensus(e.target.checked)} />Consensus</label>
+          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={consensusBonus} onChange={e=>setConsensusBonus(e.target.checked)} />Bonus +10 <InfoPopover title="Consensus Bonus (+10)">Adds +10 to the score when secondary timeframe trend aligns with the primary (same as the chart’s Consensus Bonus). Use with Consensus gating for stricter filtering, or alone to boost aligned names.</InfoPopover></label>
           <button onClick={async()=>{ if (universe === 'all') await fullScanAll(); else await run(); }} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Scanning…' : 'Scan'}</button>
           {universe === 'all' && (
             <button onClick={()=>{ abortRef.current.stop = true; setProgress('Stopping…') }} disabled={!loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Stop</button>
@@ -192,6 +194,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
       <div className="mt-2 text-xs text-slate-400">Symbols (paste or import) {assetClass === 'crypto' ? 'e.g., BTC/USD, ETH/USD' : ''}</div>
       <textarea value={symbols} onChange={e=>setSymbols(e.target.value)} className="mt-1 w-full h-16 bg-slate-800 border border-slate-700 rounded p-2 text-sm" />
       <div className="mt-1 flex items-center gap-2 text-xs">
+        <button onClick={()=>setTop(100)} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700" title="Show up to 100 results">Top 100</button>
         <input type="file" accept=".csv,.txt" onChange={async (e)=>{
           const f = e.target.files?.[0]; if (!f) return
           const txt = await f.text()

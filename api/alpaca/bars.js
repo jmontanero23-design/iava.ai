@@ -20,6 +20,7 @@ const TTL_MAP = {
 }
 
 const cacheMap = getCacheMap('bars')
+const CACHE_DISABLED = ((process.env.ALPACA_DISABLE_CACHE || 'false').toLowerCase() === 'true')
 const pending = new Map()
 
 export default async function handler(req, res) {
@@ -55,16 +56,18 @@ export default async function handler(req, res) {
 
     const cacheKey = `${endpoint}|${key}|${secret}`
     const ttl = TTL_MAP[timeframe] || 15000
-    const cached = getCache(cacheMap, cacheKey, ttl)
-    const inm = req.headers['if-none-match']
-    if (cached) {
-      res.setHeader('ETag', cached.etag)
-      if (inm && inm === cached.etag) {
-        res.status(304).end()
+    if (!CACHE_DISABLED) {
+      const cached = getCache(cacheMap, cacheKey, ttl)
+      const inm = req.headers['if-none-match']
+      if (cached) {
+        res.setHeader('ETag', cached.etag)
+        if (inm && inm === cached.etag) {
+          res.status(304).end()
+          return
+        }
+        res.status(200).send(cached.body)
         return
       }
-      res.status(200).send(cached.body)
-      return
     }
 
     // De-duplicate in-flight upstream fetches by endpoint/key
@@ -111,7 +114,7 @@ export default async function handler(req, res) {
       const payload = { symbol, timeframe, feed, bars }
       const body = JSON.stringify(payload)
       const etag = `W/"${crypto.createHash('sha1').update(body).digest('hex')}"`
-      setCache(cacheMap, cacheKey, { body, etag })
+      if (!CACHE_DISABLED) setCache(cacheMap, cacheKey, { body, etag })
       return { status: 200, body, etag }
     })()
     pending.set(cacheKey, task)

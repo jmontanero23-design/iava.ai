@@ -192,7 +192,8 @@ export default async function handler(req, res) {
         const ev = arr.length
         const wr = ev ? (arr.filter(x=>x>0).length/ev)*100 : 0
         const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
-        return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)) }
+        const med = ev ? median(arr)*100 : 0
+        return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)), medianFwd: Number(med.toFixed(2)) }
       })
       if (dailyStates) {
         out.curveBull = curveBull.map(c => {
@@ -200,14 +201,16 @@ export default async function handler(req, res) {
           const ev = arr.length
           const wr = ev ? (arr.filter(x=>x>0).length/ev)*100 : 0
           const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
-          return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)) }
+          const med = ev ? median(arr)*100 : 0
+          return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)), medianFwd: Number(med.toFixed(2)) }
         })
         out.curveBear = curveBear.map(c => {
           const arr = c.rets
           const ev = arr.length
           const wr = ev ? (arr.filter(x=>x>0).length/ev)*100 : 0
           const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
-          return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)) }
+          const med = ev ? median(arr)*100 : 0
+          return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)), medianFwd: Number(med.toFixed(2)) }
         })
       }
       if (matrix) {
@@ -223,7 +226,33 @@ export default async function handler(req, res) {
         }))
       }
     }
-    if (format === 'csv') {
+    if (format === 'summary' || format === 'summary-json') {
+      // Build summary from curve(s)
+      if (format === 'summary-json') {
+        const summary = []
+        const pushRows = (regime, arr) => {
+          if (!Array.isArray(arr)) return
+          for (const c of arr) summary.push({ regime, threshold: c.th, events: c.events, winRate: c.winRate, avgFwd: c.avgFwd, medianFwd: c.medianFwd })
+        }
+        pushRows('all', out.curve)
+        if (regimeCurves && out.curveBull) pushRows('bull', out.curveBull)
+        if (regimeCurves && out.curveBear) pushRows('bear', out.curveBear)
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.status(200).send(JSON.stringify({ summary }))
+      } else {
+        let header = 'regime,threshold,events,winRate,avgFwd,medianFwd\n'
+        const rows = []
+        const pushRows = (regime, arr) => {
+          if (!Array.isArray(arr)) return
+          for (const c of arr) rows.push(`${regime},${c.th},${c.events},${c.winRate}%,${c.avgFwd}%,${c.medianFwd}%`)
+        }
+        pushRows('all', out.curve)
+        if (regimeCurves && out.curveBull) pushRows('bull', out.curveBull)
+        if (regimeCurves && out.curveBear) pushRows('bear', out.curveBear)
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+        res.status(200).send(header + rows.join('\n'))
+      }
+    } else if (format === 'csv') {
       const header = 'time,close,score,forwardReturn\n'
       const rows = events.map(e => `${new Date(e.time*1000).toISOString()},${e.close},${e.score.toFixed(2)},${(e.fwd*100).toFixed(2)}%`).join('\n')
       res.setHeader('Content-Type', 'text/csv; charset=utf-8')

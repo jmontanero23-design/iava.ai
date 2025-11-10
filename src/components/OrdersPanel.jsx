@@ -23,6 +23,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
   const [stopLevel, setStopLevel] = useState('t0236')
   const [tpLevel, setTpLevel] = useState('t1000')
   const [account, setAccount] = useState(null)
+  const [rules, setRules] = useState(null)
 
   useEffect(() => setSym(currentSymbol || 'AAPL'), [currentSymbol])
 
@@ -41,6 +42,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
   }, [klass, side, tpPct, slPct, lastPrice, useSaty, saty, stopLevel, tpLevel])
 
   useEffect(() => { (async () => { try { const r = await fetch('/api/alpaca/account'); const j = await r.json(); if (r.ok) setAccount(j) } catch {} })() }, [])
+  useEffect(() => { (async () => { try { const r = await fetch('/api/config'); const j = await r.json(); if (r.ok) setRules(j?.order || null) } catch {} })() }, [])
 
   function calcQtyFromRisk() {
     const price = Number(lastPrice || 0)
@@ -94,8 +96,23 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
     <div className="card p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Orders & Positions <InfoPopover title="Trading Ops">Place orders and manage open orders/positions. Bracket orders set both take‑profit and stop‑loss. Use Risk % + Calc Qty for consistent sizing. Guardrails may reject orders (market closed, risk/exposure, cooldown, daily loss cap).</InfoPopover></h3>
-        <button onClick={refresh} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Refreshing…' : 'Refresh'}</button>
+        <div className="flex items-center gap-2">
+          <button onClick={refresh} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Refreshing…' : 'Refresh'}</button>
+          <button onClick={async()=>{ const r = await api('/api/alpaca/orders_cancel_all', { method:'POST' }); setMsg(r.ok ? 'Cancel all sent' : (r.json?.message || r.text || 'Cancel all error')); refresh() }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700" title="Cancel all open orders">Cancel All</button>
+          <button onClick={async()=>{ const r = await api('/api/alpaca/positions_close_all', { method:'POST' }); setMsg(r.ok ? 'Close all sent' : (r.json?.message || r.text || 'Close all error')); refresh() }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700" title="Close all open positions">Close All</button>
+        </div>
       </div>
+      {rules ? (
+        <div className="mt-2 text-xs text-slate-400">
+          <span className="mr-2">Rules:</span>
+          <span className="mr-2" title="Require market open">{rules.marketOpenRequired ? 'Open' : 'Open: off'}</span>
+          {rules.maxPositions > 0 && <span className="mr-2" title="Max concurrent positions">MaxPos {rules.maxPositions}</span>}
+          {rules.maxRiskPct > 0 && <span className="mr-2" title="Per-order risk cap">Risk ≤ {rules.maxRiskPct}%</span>}
+          {rules.maxDailyLossPct > 0 && <span className="mr-2" title="Daily loss cap">DailyLoss ≤ {rules.maxDailyLossPct}%</span>}
+          {rules.maxExposurePct > 0 && <span className="mr-2" title="Total exposure cap">Exposure ≤ {rules.maxExposurePct}%</span>}
+          {rules.minMinutesBetweenOrders > 0 && <span className="mr-2" title="Cooldown between orders">Cooldown {rules.minMinutesBetweenOrders}m</span>}
+        </div>
+      ) : null}
       {msg && <div className="text-xs text-slate-400 mt-2">{msg}</div>}
       {/* Order Entry */}
       <div className="mt-3 p-2 border border-slate-800 rounded">

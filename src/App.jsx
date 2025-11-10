@@ -84,6 +84,7 @@ export default function App() {
   const [presetSuggestErr, setPresetSuggestErr] = useState('')
   const [llmReady, setLlmReady] = useState(null)
   const [rateLimitUntil, setRateLimitUntil] = useState(0)
+  const showRateBanner = (import.meta.env.VITE_SHOW_RATE_BANNER || 'false').toString().toLowerCase() === 'true'
   // Keyboard shortcuts (presets and nav)
   useEffect(() => {
     const handler = (e) => {
@@ -276,14 +277,19 @@ export default function App() {
       else throw new Error('No data returned')
     } catch (e) {
       if (e && e.code === 'RATE_LIMIT') {
-        const secs = Math.max(3, parseInt(e.retryAfter || '0', 10) || 5)
-        setRateLimitUntil(Date.now() + secs * 1000)
-        setError('Rate limit hit. Please wait a moment…')
+        if (showRateBanner) {
+          const secs = Math.max(3, parseInt(e.retryAfter || '0', 10) || 5)
+          setRateLimitUntil(Date.now() + secs * 1000)
+          setError('Rate limit hit. Using current data…')
+        } else {
+          setError('')
+        }
       } else {
-        setError(e?.message || 'Failed to load data; showing sample')
+        setError(e?.message || 'Failed to load data; using sample if empty')
       }
-      setBars(generateSampleOHLC())
-      setUsingSample(true)
+      // Only fall back to sample if we have nothing to show yet; otherwise keep current bars
+      setBars(prev => (Array.isArray(prev) && prev.length) ? prev : generateSampleOHLC())
+      setUsingSample(prev => (Array.isArray(bars) && bars.length) ? prev : true)
     } finally {
       setLoading(false)
       setUpdatedAt(Date.now())
@@ -495,7 +501,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-transparent text-slate-100">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
-      <RateLimitBanner until={rateLimitUntil} />
+      {showRateBanner && <RateLimitBanner until={rateLimitUntil} />}
       <Hero />
       <div className="card p-4 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
