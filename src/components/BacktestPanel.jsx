@@ -14,6 +14,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
   const [curveThresholds, setCurveThresholds] = useState('30,40,50,60,70,80,90')
   const [regimeCurves, setRegimeCurves] = useState(false)
   const [assetClass, setAssetClass] = useState('stocks')
+  const [consensus, setConsensus] = useState(false)
   const [hzs, setHzs] = useState('5,10,20')
 
   const presets = [
@@ -26,7 +27,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
     try {
       setLoading(true); setErr('')
       const ths = encodeURIComponent(curveThresholds)
-      const r = await fetch(`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&curve=${showCurve ? 1 : 0}&ths=${ths}&hzs=${encodeURIComponent(hzs)}&dailyFilter=${encodeURIComponent(assetClass==='stocks'?dailyFilter:'none')}&regimeCurves=${assetClass==='stocks' && regimeCurves ? 1 : 0}&assetClass=${encodeURIComponent(assetClass)}`)
+      const r = await fetch(`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&curve=${showCurve ? 1 : 0}&ths=${ths}&hzs=${encodeURIComponent(hzs)}&dailyFilter=${encodeURIComponent(assetClass==='stocks'?dailyFilter:'none')}&regimeCurves=${assetClass==='stocks' && regimeCurves ? 1 : 0}&assetClass=${encodeURIComponent(assetClass)}&consensus=${consensus ? 1 : 0}`)
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
       setRes(j)
@@ -97,6 +98,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
             <input value={hzs} onChange={e=>setHzs(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-28" title="Comma-separated horizons for matrix heatmap" />
           </label>
           <InfoPopover title="Heatmap (HZs)">Enter multiple horizons (e.g., 5,10,20) to render a Threshold × Horizon heatmap of avg forward % returns. Helps pick robust thresholds and holding periods.</InfoPopover>
+          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={consensus} onChange={e=>setConsensus(e.target.checked)} /> Consensus Bonus <span className="text-slate-500">(+10 if primary and secondary TFs agree)</span></label>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={regimeCurves} onChange={e=>setRegimeCurves(e.target.checked)} disabled={assetClass!=='stocks'} /> Compare Regimes</label>
           <label className="inline-flex items-center gap-2">Regime
             <select value={dailyFilter} onChange={e => setDailyFilter(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1" disabled={assetClass!=='stocks'}>

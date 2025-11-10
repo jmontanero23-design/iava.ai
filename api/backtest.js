@@ -31,6 +31,7 @@ export default async function handler(req, res) {
     const dailyFilter = (urlObj.searchParams.get('dailyFilter') || 'none').toLowerCase() // none|bull|bear
     const assetClass = (urlObj.searchParams.get('assetClass') || 'stocks').toLowerCase() // stocks|crypto
     const regimeCurves = (urlObj.searchParams.get('regimeCurves') || '0') !== '0'
+    const consensusBonus = (urlObj.searchParams.get('consensus') || '0') !== '0'
     // Optional multi-horizon matrix: comma-separated
     const hzsParam = (urlObj.searchParams.get('hzs') || '').trim()
     let horizonSet = null
@@ -57,6 +58,28 @@ export default async function handler(req, res) {
     if (!bars.length) return res.status(200).json({ symbol, timeframe, bars: 0, scores: [], scoreAvg: 0, scorePcts: { p40: 0, p60: 0, p70: 0 } })
 
     const { computeStates } = await import('../src/utils/indicators.js')
+    // Secondary timeframe states for consensus bonus (optional)
+    let secBars = null
+    let secStates = null
+    if (consensusBonus) {
+      const secTf = mapSecondary(timeframe)
+      if (secTf) {
+        secBars = assetClass === 'crypto'
+          ? await fetchBarsCrypto({ key, secret, dataBaseCrypto: process.env.ALPACA_DATA_CRYPTO_URL || 'https://data.alpaca.markets/v1beta3', symbol, timeframe: secTf, limit })
+          : await fetchBars({ key, secret, dataBase, symbol, timeframe: secTf, limit })
+        if (secBars?.length) {
+          secStates = []
+          for (let i = 0; i < bars.length; i++) {
+            // find last sec bar time <= primary time
+            const t = bars[i].time
+            let j = -1
+            for (let k = 0; k < secBars.length; k++) { if (secBars[k].time <= t) j = k; else break }
+            if (j >= 0) secStates[i] = computeStates(secBars.slice(0, j + 1))
+            else secStates[i] = null
+          }
+        }
+      }
+    }
     const scores = []
     const start = Math.min(80, Math.floor(bars.length / 5))
     const events = []
@@ -99,8 +122,10 @@ export default async function handler(req, res) {
           }
         }
       }
-      scores.push(st.score)
-      if (st.score >= threshold && i + horizon < bars.length) {
+      const bonus = (consensusBonus && secStates && secStates[i]) ? ((st.pivotNow !== 'neutral' && secStates[i].pivotNow === st.pivotNow) ? 10 : 0) : 0
+      const scoreNow = st.score + bonus
+      scores.push(scoreNow)
+      if (scoreNow >= threshold && i + horizon < bars.length) {
         const entry = bars[i].close
         const exit = bars[i + horizon].close
         const fwd = (exit - entry) / entry
@@ -111,7 +136,7 @@ export default async function handler(req, res) {
         const exit = bars[i + horizon].close
         const fwd = (exit - entry) / entry
         for (const bin of curve) {
-          if (st.score >= bin.th) bin.rets.push(fwd)
+          if (scoreNow >= bin.th) bin.rets.push(fwd)
         }
         // Also populate regime curves if daily states available
         if (dailyStates && regimeCurves && assetClass === 'stocks') {
@@ -230,6 +255,14 @@ function mapTf(tf) {
   if (t === '1h' || t === '1hour') return '1Hour'
   if (t === '1d' || t === '1day' || t === 'day') return '1Day'
   return '1Min'
+}
+
+function mapSecondary(tf) {
+  const t = String(tf || '').toLowerCase()
+  if (t === '1m' || t === '1min') return '5Min'
+  if (t === '5m' || t === '5min') return '15Min'
+  if (t === '15m' || t === '15min') return '1Hour'
+  return null
 }
 
 function median(arr) {
