@@ -80,6 +80,7 @@ export default function App() {
   const [presetSuggesting, setPresetSuggesting] = useState(false)
   const [presetSuggestErr, setPresetSuggestErr] = useState('')
   const [llmReady, setLlmReady] = useState(null)
+  const [rateLimitUntil, setRateLimitUntil] = useState(0)
   // Keyboard shortcuts (presets and nav)
   useEffect(() => {
     const handler = (e) => {
@@ -192,7 +193,13 @@ export default function App() {
       if (Array.isArray(res) && res.length) { setBars(res); setUsingSample(false) }
       else throw new Error('No data returned')
     } catch (e) {
-      setError(e?.message || 'Failed to load data; showing sample')
+      if (e && e.code === 'RATE_LIMIT') {
+        const secs = Math.max(3, parseInt(e.retryAfter || '0', 10) || 5)
+        setRateLimitUntil(Date.now() + secs * 1000)
+        setError('Rate limit hit. Please wait a moment…')
+      } else {
+        setError(e?.message || 'Failed to load data; showing sample')
+      }
       setBars(generateSampleOHLC())
       setUsingSample(true)
     } finally {
@@ -634,7 +641,7 @@ export default function App() {
         showSaty={showSaty} setShowSaty={setShowSaty}
       />
       <SignalFeed items={signalHistory} onSelect={(item) => setFocusTime(item.time)} />
-      <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} />
+      <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} rateLimitUntil={rateLimitUntil} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {showSqueeze && <SqueezePanel bars={bars} />}
         <SignalsPanel bars={bars} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), components: { ...(signalState?.components||{}), ...(consensusBonus && consensus?.align ? { consensus: 10 } : {}) } }} />
