@@ -41,7 +41,7 @@ export default function HealthBadge() {
       {typeof n8n.configured === 'boolean' ? (
         <>
           <span className="text-slate-500"> · </span>
-          <span className={n8n.configured ? 'text-emerald-400' : 'text-amber-400'} title="n8n webhook">
+          <span className={(n8n.configured && n8n.enabled)!==false ? 'text-emerald-400' : 'text-amber-400'} title={`n8n ${n8n.enabled===false?'disabled':(n8n.configured?'configured':'missing')}`}>
             n8n
           </span>
         </>

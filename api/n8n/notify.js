@@ -3,6 +3,9 @@ import crypto from 'node:crypto'
 export default async function handler(req, res) {
   try {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+    if ((process.env.N8N_ENABLED || 'true').toLowerCase() === 'false') {
+      return res.status(503).json({ error: 'n8n disabled by env (N8N_ENABLED=false)' })
+    }
     const target = process.env.N8N_WEBHOOK_URL
     if (!target) return res.status(500).json({ error: 'N8N_WEBHOOK_URL not set' })
     const chunks = []

@@ -78,6 +78,7 @@ export default function App() {
   const [consensusBonus, setConsensusBonus] = useState(false)
   const [presetSuggesting, setPresetSuggesting] = useState(false)
   const [presetSuggestErr, setPresetSuggestErr] = useState('')
+  const [llmReady, setLlmReady] = useState(null)
   // Keyboard shortcuts (presets and nav)
   useEffect(() => {
     const handler = (e) => {
@@ -374,6 +375,19 @@ export default function App() {
     if (typeof preset.enforceDaily === 'boolean') setEnforceDaily(preset.enforceDaily)
   }
 
+  // Detect LLM availability for Suggest Preset (AI) enable/disable
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const r = await fetch('/api/health')
+        const j = await r.json()
+        if (mounted) setLlmReady(Boolean(j?.api?.llm?.configured))
+      } catch { if (mounted) setLlmReady(false) }
+    })()
+    return () => { mounted = false }
+  }, [])
+
   async function suggestPresetAI() {
     try {
       setPresetSuggesting(true); setPresetSuggestErr('')
@@ -504,7 +518,7 @@ export default function App() {
             <option value="momentumContinuation">Momentum Continuation</option>
           </select>
           <InfoPopover title="Preset Guidance">{presetDescriptions[mtfPreset] || "Strategy-driven overlay & gating configuration."}</InfoPopover>
-          <button onClick={suggestPresetAI} disabled={presetSuggesting} className="ml-2 bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">
+          <button onClick={suggestPresetAI} disabled={presetSuggesting || llmReady === false} title={llmReady === false ? 'LLM not configured' : ''} className="ml-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-xs rounded px-2 py-1 border border-slate-700">
             {presetSuggesting ? 'Suggesting…' : 'Suggest Preset (AI)'}
           </button>
           {presetSuggestErr && <span className="text-xs text-rose-400 ml-2">{presetSuggestErr}</span>}
