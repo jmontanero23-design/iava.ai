@@ -8,7 +8,6 @@ import SatyPanel from './components/SatyPanel.jsx'
 import { fetchBars as fetchBarsApi } from './services/alpaca.js'
 import HealthBadge from './components/HealthBadge.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
-import Presets from './components/Presets.jsx'
 import StatusBar from './components/StatusBar.jsx'
 import LegendChips from './components/LegendChips.jsx'
 import MarketStats from './components/MarketStats.jsx'
@@ -308,9 +307,10 @@ export default function App() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <Hero />
 
-      {/* Controls Section */}
-      <div className="card p-5 space-y-4">
+      {/* Unified Control Bar */}
+      <div className="card p-4">
         <div className="flex flex-wrap items-center gap-3">
+          {/* Primary Controls */}
           <SymbolSearch value={symbol} onChange={setSymbol} onSubmit={(sym) => loadBars(sym, timeframe)} />
           <select value={timeframe} onChange={e => { const tf = e.target.value; setTimeframe(tf); if (autoLoadChange) loadBars(symbol, tf) }} className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
             <option value="1Min">1 Min</option>
@@ -322,97 +322,52 @@ export default function App() {
           <button onClick={() => loadBars()} className="bg-indigo-600 hover:bg-indigo-500 rounded px-4 py-2 text-sm font-medium transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40">
             {loading ? 'Loading...' : 'Load Data'}
           </button>
-          {error && !loading && <span className="text-xs text-rose-400 ml-2">{error}</span>}
+
+          {/* Strategy Preset */}
+          <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-700">
+            <span className="text-xs text-slate-400">Strategy:</span>
+            <select value={mtfPreset} onChange={e => applyPreset(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+              <option value="manual">Manual</option>
+              <option value="trendDaily">Trend Daily</option>
+              <option value="pullbackDaily">Pullback Daily</option>
+              <option value="intradayBreakout">Intraday Breakout</option>
+              <option value="dailyTrendFollow">Daily Trend Follow</option>
+              <option value="meanRevertIntraday">Mean Revert Intraday</option>
+            </select>
+          </div>
+
+          {/* Quick Toggles */}
+          <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-700">
+            <label className="inline-flex items-center gap-2 text-sm cursor-pointer hover:text-slate-200 transition-colors">
+              <input type="checkbox" className="accent-indigo-500" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />
+              <span className="text-slate-400">Auto-Refresh</span>
+            </label>
+            {!autoRefresh && timeframe !== '1Day' && (
+              <label className="inline-flex items-center gap-2 text-sm cursor-pointer hover:text-slate-200 transition-colors">
+                <input type="checkbox" className="accent-cyan-500" checked={streaming} onChange={e => { setStreaming(e.target.checked); if (e.target.checked) setAutoRefresh(false) }} />
+                <span className="text-slate-400">Stream</span>
+              </label>
+            )}
+            <label className="inline-flex items-center gap-2 text-sm cursor-pointer hover:text-slate-200 transition-colors">
+              <input type="checkbox" className="accent-emerald-500" checked={enforceDaily} onChange={e => setEnforceDaily(e.target.checked)} />
+              <span className="text-slate-400">Daily Confluence</span>
+            </label>
+          </div>
+
+          {/* Threshold */}
+          <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-700">
+            <span className="text-xs text-slate-400">Threshold:</span>
+            <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16 text-sm text-center focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          {/* Right Side */}
+          {error && !loading && <span className="text-xs text-rose-400">{error}</span>}
           <div className="ml-auto flex items-center gap-3">
             <HealthBadge />
-            <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); alert('Link copied'); } catch(_) {} }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-3 py-2 border border-slate-700">
-              📋 Copy Link
+            <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); alert('Link copied'); } catch(_) {} }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-3 py-2 border border-slate-700 transition-all">
+              📋 Share
             </button>
           </div>
-        </div>
-        <div className="w-full mt-2">
-          <Presets symbol={symbol} setSymbol={setSymbol} timeframe={timeframe} setTimeframe={setTimeframe} onLoad={(s, tf) => loadBars(s, tf)} />
-        </div>
-        <span className="text-sm text-slate-400 inline-flex items-center gap-2">Overlays <InfoPopover title="Overlays">Toggle EMA Clouds (pullback/trend), Ichimoku (regime), Pivot Ribbon (8/21/34) and SATY ATR levels (targets).</InfoPopover></span>
-        <label className="inline-flex items-center gap-2 text-sm">
-          Preset
-          <select value={mtfPreset} onChange={e => applyPreset(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
-            <option value="manual">Manual</option>
-            <option value="trendDaily">Trend + Daily Confluence</option>
-            <option value="pullbackDaily">Pullback + Daily Confluence</option>
-            <option value="intradayBreakout">Intraday Breakout</option>
-            <option value="dailyTrendFollow">Daily Trend Follow</option>
-            <option value="meanRevertIntraday">Mean Revert (Intra)</option>
-          </select>
-          <InfoPopover title="Presets">Quick configurations for overlays and daily confluence. Use Intraday Breakout for momentum scalps, Daily Trend Follow for swing entries aligned with daily regime, and Mean Revert for counter‑trend fades.</InfoPopover>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-indigo-500" checked={showEma821} onChange={e => setShowEma821(e.target.checked)} />
-          <span>EMA 8/21</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-cyan-500" checked={showEma512} onChange={e => setShowEma512(e.target.checked)} />
-          <span>EMA 5/12</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-violet-500" checked={showEma89} onChange={e => setShowEma89(e.target.checked)} />
-          <span>EMA 8/9</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-emerald-500" checked={showEma3450} onChange={e => setShowEma3450(e.target.checked)} />
-          <span>EMA 34/50</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-indigo-500" checked={showIchi} onChange={e => setShowIchi(e.target.checked)} />
-          <span>Ichimoku</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-lime-500" checked={showRibbon} onChange={e => setShowRibbon(e.target.checked)} />
-          <span>Pivot Ribbon</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-indigo-500" checked={showSaty} onChange={e => setShowSaty(e.target.checked)} />
-          <span>SATY ATR Levels</span>
-        </label>
-        <div className="ml-auto text-sm text-slate-400">
-          Trend: <span className="text-slate-200">{pivotRibbonTrend(bars.map(b => b.close))}</span>
-          {showSaty && overlays.saty?.atr ? (
-            <>
-              <span className="mx-2">•</span>
-              ATR: <span className="text-slate-200">{overlays.saty.atr.toFixed(2)}</span>
-              <span className="mx-2">•</span>
-              Range used: <span className="text-slate-200">{Math.round(overlays.saty.rangeUsed * 100)}%</span>
-            </>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2 ml-4">
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input type="checkbox" className="accent-indigo-500" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />
-            Auto-Refresh
-          </label>
-          <select value={refreshSec} onChange={e => setRefreshSec(parseInt(e.target.value,10))} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm">
-            <option value={5}>5s</option>
-            <option value={15}>15s</option>
-            <option value={30}>30s</option>
-            <option value={60}>60s</option>
-          </select>
-          <label className="inline-flex items-center gap-2 text-sm ml-2" title={timeframe==='1Day' ? 'Streaming disabled on Daily' : ''}>
-            <input type="checkbox" className="accent-cyan-500" checked={streaming} disabled={timeframe==='1Day'} onChange={e => { setStreaming(e.target.checked); if (e.target.checked) setAutoRefresh(false) }} />
-            Streaming (beta) <InfoPopover title="Streaming (beta)">Live bars via SSE. Use for intraday. Falls back to polling when off.</InfoPopover>
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm ml-2">
-            <input type="checkbox" className="accent-indigo-500" checked={autoLoadChange} onChange={e => setAutoLoadChange(e.target.checked)} />
-            Auto-Load on Change
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm ml-2">
-            <input type="checkbox" className="accent-indigo-500" checked={enforceDaily} onChange={e => setEnforceDaily(e.target.checked)} />
-            Enforce Daily Confluence
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm ml-2">
-            <span>Threshold</span>
-            <input type="range" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10))} />
-            <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
-          </label>
         </div>
       </div>
 
@@ -438,25 +393,25 @@ export default function App() {
       <div className="card p-1 flex gap-1">
         <button
           onClick={() => setActiveSection('chart')}
-          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-colors ${activeSection === 'chart' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-all ${activeSection === 'chart' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
         >
           📊 Chart & Signals
         </button>
         <button
           onClick={() => setActiveSection('analysis')}
-          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-colors ${activeSection === 'analysis' ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-all ${activeSection === 'analysis' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
         >
           🔬 Analysis
         </button>
         <button
           onClick={() => setActiveSection('portfolio')}
-          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-colors ${activeSection === 'portfolio' ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-all ${activeSection === 'portfolio' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
         >
           💼 Portfolio
         </button>
         <button
           onClick={() => setActiveSection('tools')}
-          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-colors ${activeSection === 'tools' ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-all ${activeSection === 'tools' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
         >
           🛠️ Tools
         </button>
