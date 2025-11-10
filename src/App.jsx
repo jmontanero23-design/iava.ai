@@ -9,6 +9,7 @@ import { fetchBars as fetchBarsApi } from './services/alpaca.js'
 import HealthBadge from './components/HealthBadge.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
 import Presets from './components/Presets.jsx'
+import PresetHelp from './components/PresetHelp.jsx'
 import StatusBar from './components/StatusBar.jsx'
 import LegendChips from './components/LegendChips.jsx'
 import MarketStats from './components/MarketStats.jsx'
@@ -518,6 +519,7 @@ export default function App() {
             <option value="momentumContinuation">Momentum Continuation</option>
           </select>
           <InfoPopover title="Preset Guidance">{presetDescriptions[mtfPreset] || "Strategy-driven overlay & gating configuration."}</InfoPopover>
+          <PresetHelp descriptions={presetDescriptions} />
           <button onClick={suggestPresetAI} disabled={presetSuggesting || llmReady === false} title={llmReady === false ? 'LLM not configured' : ''} className="ml-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-xs rounded px-2 py-1 border border-slate-700">
             {presetSuggesting ? 'Suggesting…' : 'Suggest Preset (AI)'}
           </button>

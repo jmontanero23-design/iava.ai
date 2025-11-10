@@ -209,6 +209,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
                 {res.enforceDaily ? <span className="ml-2" title="Filtered by Daily confluence mismatch">⚠ Daily {res.counts.dailyBlocked ?? 0}</span> : null}
                 <span className="ml-2" title="Below threshold after gating">↓ Below TH {res.counts.thresholdRejected ?? 0}</span>
                 <span className="ml-2" title="Accepted before Top N slicing">✓ Accepted L{res.counts.acceptedLongs ?? 0}/S{res.counts.acceptedShorts ?? 0}</span>
+                <span className="ml-2" title="Visible results after Top N">• Showing top {top}</span>
               </>
             ) : null}
           </div>
