@@ -75,6 +75,8 @@ export default function App() {
   const [secBars, setSecBars] = useState([])
   const [consensus, setConsensus] = useState(null)
   const [consensusBonus, setConsensusBonus] = useState(false)
+  const [presetSuggesting, setPresetSuggesting] = useState(false)
+  const [presetSuggestErr, setPresetSuggestErr] = useState('')
 
   function mlabel(id) {
     const map = {
@@ -330,6 +332,28 @@ export default function App() {
     if (typeof preset.enforceDaily === 'boolean') setEnforceDaily(preset.enforceDaily)
   }
 
+  async function suggestPresetAI() {
+    try {
+      setPresetSuggesting(true); setPresetSuggestErr('')
+      const statePayload = { ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _timeframe: timeframe }
+      const allowed = Object.keys(presets).filter(k => k !== 'manual')
+      const r = await fetch('/api/llm/preset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state: statePayload, presets: allowed }) })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
+      const label = mlabel(j.presetId || '')
+      const reason = j.reason || 'AI suggestion'
+      const apply = window.confirm(`AI suggests: ${label}\nReason: ${reason}\nApply this preset and parameters?`)
+      if (apply && j.presetId && presets[j.presetId]) {
+        applyPreset(j.presetId)
+        if (j.params && typeof j.params.th === 'number') setThreshold(Math.max(0, Math.min(100, Math.round(j.params.th))))
+      }
+    } catch (e) {
+      setPresetSuggestErr(String(e.message || e))
+    } finally {
+      setPresetSuggesting(false)
+    }
+  }
+
   // Build signal timeline: append on new last bar, include top contributors
   useEffect(() => {
     if (!bars?.length) return
@@ -435,6 +459,10 @@ export default function App() {
             <option value="momentumContinuation">Momentum Continuation</option>
           </select>
           <InfoPopover title="Preset Guidance">{presetDescriptions[mtfPreset] || "Strategy-driven overlay & gating configuration."}</InfoPopover>
+          <button onClick={suggestPresetAI} disabled={presetSuggesting} className="ml-2 bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">
+            {presetSuggesting ? 'Suggesting…' : 'Suggest Preset (AI)'}
+          </button>
+          {presetSuggestErr && <span className="text-xs text-rose-400 ml-2">{presetSuggestErr}</span>}
         </label>
         <label className="inline-flex items-center gap-2">
           <input type="checkbox" className="accent-indigo-500" checked={showEma821} onChange={e => setShowEma821(e.target.checked)} />
@@ -511,7 +539,7 @@ export default function App() {
         <div className="ml-auto"><HealthBadge /></div>
         <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); alert('Link copied'); } catch(_) {} }} className="ml-2 bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Link</button>
       </div>
-      <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streaming || autoRefresh} consensus={consensus} />
+      <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streaming || autoRefresh} consensus={consensus} threshold={threshold} />
       <LegendChips overlays={overlays} />
       <CandleChart
         bars={bars}
