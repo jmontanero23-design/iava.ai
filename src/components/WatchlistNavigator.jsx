@@ -16,7 +16,8 @@ export default function WatchlistNavigator({ onLoadSymbol, timeframe }) {
       const all = mod.getAll()
       setLists(all)
       const names = Object.keys(all)
-      const defaultName = name || (names[0] || '')
+      const preferred = mod.getActive() || ''
+      const defaultName = name || preferred || (names[0] || '')
       setName(defaultName)
       setSymbols(all[defaultName]?.symbols || [])
       setIdx(0)

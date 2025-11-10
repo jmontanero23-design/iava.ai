@@ -12,8 +12,10 @@ export default function WatchlistPanel({ onLoadSymbol }) {
       const all = mod.getAll()
       setLists(all)
       const names = Object.keys(all)
-      if (!active && names.length) setActive(names[0])
-      if (active && all[active]) setSymbols(all[active].symbols || [])
+      const preferred = mod.getActive() || ''
+      const selected = active || preferred || (names[0] || '')
+      if (!active && selected) setActive(selected)
+      if (selected && all[selected]) setSymbols(all[selected].symbols || [])
       else if (names.length) setSymbols(all[names[0]].symbols || [])
       else setSymbols([])
     }).catch(()=>{})
@@ -49,6 +51,7 @@ export default function WatchlistPanel({ onLoadSymbol }) {
             }
           } catch {}
         }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700 text-xs">Rename</button>
+        <button onClick={async()=>{ try { const mod = await import('../utils/watchlists.js'); if (active) { mod.setActive(active); alert('Set active') } } catch {} }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700 text-xs">Set Active</button>
         <button onClick={async()=>{
           try { const mod = await import('../utils/watchlists.js'); if (active) { mod.remove(active); setActive(''); setSymbols([]); refresh() } } catch {}
         }} className="bg-rose-700/30 hover:bg-rose-700/40 text-rose-200 rounded px-2 py-1 text-xs">Delete</button>
@@ -58,8 +61,10 @@ export default function WatchlistPanel({ onLoadSymbol }) {
         {symbols.map(sym => (
           <button key={sym} onClick={() => onLoadSymbol?.(sym)} className="px-2 py-1 rounded border border-slate-800 bg-slate-900/50 hover:border-slate-700 text-slate-200 text-sm">{sym}</button>
         ))}
+        {active && (
+          <div className="col-span-full text-xs text-slate-500 mt-2">Active list: <span className="text-slate-300">{active}</span></div>
+        )}
       </div>
     </div>
   )
 }
-

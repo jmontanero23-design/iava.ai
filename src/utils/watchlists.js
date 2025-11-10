@@ -34,3 +34,11 @@ export function remove(name) {
   const all = getAll()
   if (all[name]) { delete all[name]; persist(all) }
 }
+
+export function setActive(name) {
+  try { localStorage.setItem('iava.activeWatchlist', String(name || '')) } catch {}
+}
+
+export function getActive() {
+  try { return localStorage.getItem('iava.activeWatchlist') || '' } catch { return '' }
+}
