@@ -67,6 +67,9 @@ export default function SignalsPanel({ state, bars = [] }) {
               <span key={k} className="px-2 py-1 rounded border border-slate-800" style={{ background:'rgba(2,6,23,0.6)'}}>{k}: <span className="text-slate-200">{v}</span></span>
             ))}
           </div>
+          <div className="mt-2">
+            <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'Explain my current Unicorn Score and main contributors.', context: { score: state.score, components: state.components, pivot: state.pivotNow, satyDir: state.satyDir, ichimoku: state.ichiRegime } } })) } catch {} }} className="text-xs text-slate-400 underline">Ask AI about this score</button>
+          </div>
         </div>
       )}
     </div>

@@ -6,13 +6,29 @@ export default function HelpFab({ context = {} }) {
   const [ans, setAns] = useState('')
   const [loading, setLoading] = useState(false)
   const [llmReady, setLlmReady] = useState(null)
+  const [eventCtx, setEventCtx] = useState(null)
 
   useEffect(() => { (async () => { try { const r = await fetch('/api/health'); const j = await r.json(); setLlmReady(Boolean(j?.api?.llm?.configured)) } catch { setLlmReady(false) } })() }, [])
+
+  useEffect(() => {
+    function onHelp(ev) {
+      try {
+        const detail = ev.detail || {}
+        if (typeof detail.question === 'string') setQ(detail.question)
+        if (detail.context) setEventCtx(detail.context)
+        setAns('')
+        setOpen(true)
+      } catch {}
+    }
+    window.addEventListener('iava.help', onHelp)
+    return () => window.removeEventListener('iava.help', onHelp)
+  }, [])
 
   async function ask() {
     try {
       setLoading(true); setAns('')
-      const r = await fetch('/api/llm/help', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q, context }) })
+      const merged = { ...(context||{}), ...(eventCtx||{}) }
+      const r = await fetch('/api/llm/help', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q, context: merged }) })
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
       setAns(j.answer || '')
@@ -42,4 +58,3 @@ export default function HelpFab({ context = {} }) {
     </>
   )
 }
-

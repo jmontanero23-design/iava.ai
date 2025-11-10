@@ -599,14 +599,14 @@ export default function App() {
           </label>
           <label className="inline-flex items-center gap-2 text-sm ml-2">
             <input type="checkbox" className="accent-indigo-500" checked={enforceDaily} onChange={e => setEnforceDaily(e.target.checked)} />
-            Enforce Daily Confluence
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm ml-2" title="Add +10 to score when primary and secondary TFs agree (visual consensus).">
-            <input type="checkbox" className="accent-indigo-500" checked={consensusBonus} onChange={e => setConsensusBonus(e.target.checked)} />
-            Consensus Bonus
+            Enforce Daily Confluence <InfoPopover title="Daily Confluence">Requires Daily Pivot + Ichimoku agreement with your direction (bull for longs, bear for shorts). Use for higher conviction; toggle off to explore setups with soft risk.</InfoPopover>
           </label>
           <label className="inline-flex items-center gap-2 text-sm ml-2">
-            <span>Threshold</span>
+            <input type="checkbox" className="accent-indigo-500" checked={consensusBonus} onChange={e => setConsensusBonus(e.target.checked)} />
+            Consensus Bonus <InfoPopover title="Consensus Bonus">Adds +10 to displayed score when primary TF trend matches the secondary TF (e.g., 5→15Min). Use as a visual nudge; does not change API backtests unless you enable consensus server-side.</InfoPopover>
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm ml-2">
+            <span>Threshold</span> <InfoPopover title="Threshold">Minimum Unicorn Score to consider a setup. Raise to be more selective; lower to explore more candidates. Scanner applies threshold after gating.</InfoPopover>
             <input type="range" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10))} />
             <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
           </label>

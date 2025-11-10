@@ -118,15 +118,6 @@ export default async function handler(req, res) {
     try {
       const { status, body, etag } = await task
       if (etag) res.setHeader('ETag', etag)
-      if (status === 429) {
-        // Short negative cache to avoid hammering (5s default or Retry-After)
-        try {
-          const parsed = JSON.parse(body)
-          const ms = Math.min(15000, Math.max(3000, (parseInt(parsed.retryAfter,10)||5)*1000))
-          setCache(cacheMap, cacheKey, { body, etag: `W/"rl-${Date.now()}"` })
-          setTimeout(() => { /* allow eviction naturally by TTL */ }, ms)
-        } catch {}
-      }
       res.status(status).send(body)
     } finally {
       pending.delete(cacheKey)
