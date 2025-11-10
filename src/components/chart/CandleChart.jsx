@@ -556,6 +556,24 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
               <button key={key} onClick={overlayToggles[key]} className="px-2 py-0.5 rounded border border-slate-700 hover:border-slate-500" title={`Toggle ${key}`}>{key}</button>
             ) : null
           ))}
+          {/* Active overlay chips */}
+          <div className="flex items-center gap-1 ml-2">
+            {(() => {
+              const chips = []
+              try {
+                if (Array.isArray(overlays?.emaClouds)) overlays.emaClouds.forEach(c => chips.push({ label: `EMA ${c.key}`, color: c.color || '#94a3b8' }))
+                if (overlays?.ribbon) chips.push({ label: 'Ribbon', color: '#94a3b8' })
+                if (overlays?.ichimoku) chips.push({ label: 'Ichi', color: '#60a5fa' })
+                if (overlays?.saty) chips.push({ label: 'SATY', color: '#14b8a6' })
+                if (overlays?.squeezeBands) chips.push({ label: 'Squeeze', color: '#f43f5e' })
+              } catch {}
+              return chips.slice(0,6).map((c,i) => (
+                <span key={i} className="px-1.5 py-0.5 rounded-full border border-slate-700" style={{ background:'rgba(2,6,23,0.6)'}} title={c.label}>
+                  <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ background:c.color }}></span>{c.label}
+                </span>
+              ))
+            })()}
+          </div>
         </div>
       ) : null}
 

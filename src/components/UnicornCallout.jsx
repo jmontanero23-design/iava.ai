@@ -76,7 +76,15 @@ export default function UnicornCallout({ state, threshold = 70 }) {
           {facts.map((f, i) => <li key={i}>{f}</li>)}
         </ul>
         {state.components && (
-          <div className="mt-2 text-xs text-slate-300">Why: {Object.entries(state.components).filter(([,v])=>v>0).map(([k,v]) => `${k}+${v}`).join(', ')}</div>
+          <div className="mt-2 text-xs text-slate-300">
+            {(() => {
+              try {
+                const arr = Object.entries(state.components).filter(([,v])=>v>0).map(([k,v]) => `${k}+${v}`)
+                if (state._consensus?.align) arr.push('consensus+10')
+                return `Why: ${arr.join(', ')}`
+              } catch { return null }
+            })()}
+          </div>
         )}
       </div>
         {open && <div className="mt-3">
