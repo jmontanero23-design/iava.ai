@@ -56,21 +56,47 @@ Explain briefly why the current score looks the way it does. No advice.`
 }
 
 async function callOpenAI({ apiKey, model, system, prompt, response_format }) {
-  const r = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  const makeReq = async (withJsonMode) => {
+    const payload = {
       model,
       messages: [ { role: 'system', content: system }, { role: 'user', content: prompt } ],
       temperature: 0.2,
       max_tokens: 300,
-      response_format,
+    }
+    if (withJsonMode && response_format) payload.response_format = response_format
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     })
-  })
-  const j = await r.json()
-  if (!r.ok) throw new Error(j?.error?.message || `OpenAI ${r.status}`)
-  let text = j?.choices?.[0]?.message?.content?.trim() || '{}'
-  try { return JSON.parse(text) } catch { return { explanation: text, highlights: [], confidence: 0.5 } }
+    const j = await r.json()
+    return { ok: r.ok, status: r.status, body: j }
+  }
+  // First try with JSON mode, then fallback to plain text
+  let first = await makeReq(Boolean(response_format))
+  if (!first.ok) {
+    // Fallback: retry without response_format (some models may not support JSON mode)
+    const second = await makeReq(false)
+    if (!second.ok) {
+      const msg = second?.body?.error?.message || first?.body?.error?.message || `OpenAI ${second.status || first.status}`
+      throw new Error(msg)
+    }
+    const text2 = (second.body?.choices?.[0]?.message?.content || '').trim()
+    return safeJsonFromText(text2)
+  }
+  const text = (first.body?.choices?.[0]?.message?.content || '').trim()
+  // If model honored JSON mode, content should be JSON; still guard with safe parse
+  try { return JSON.parse(text) } catch { return safeJsonFromText(text) }
+}
+
+function safeJsonFromText(text) {
+  if (!text) return { explanation: '', highlights: [], confidence: 0.5 }
+  // Try to extract a JSON object if wrapped in code fences
+  const m = text.match(/\{[\s\S]*\}/)
+  if (m) {
+    try { return JSON.parse(m[0]) } catch {}
+  }
+  return { explanation: text, highlights: [], confidence: 0.5 }
 }
 
 async function callAnthropic({ apiKey, model, system, prompt }) {

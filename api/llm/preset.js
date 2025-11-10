@@ -58,21 +58,44 @@ Pick the best preset id and propose params {th,hz,regime}. No advice.`
 }
 
 async function callOpenAI({ apiKey, model, system, prompt, response_format }) {
-  const r = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  const makeReq = async (withJsonMode) => {
+    const payload = {
       model,
       messages: [ { role: 'system', content: system }, { role: 'user', content: prompt } ],
       temperature: 0.2,
       max_tokens: 300,
-      response_format,
+    }
+    if (withJsonMode && response_format) payload.response_format = response_format
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     })
-  })
-  const j = await r.json()
-  if (!r.ok) throw new Error(j?.error?.message || `OpenAI ${r.status}`)
-  let text = j?.choices?.[0]?.message?.content?.trim() || '{}'
-  try { return JSON.parse(text) } catch { return { presetId: 'manual', reason: text, params: { th: 70, hz: 10, regime: 'none' } } }
+    const j = await r.json()
+    return { ok: r.ok, status: r.status, body: j }
+  }
+  let first = await makeReq(Boolean(response_format))
+  if (!first.ok) {
+    const second = await makeReq(false)
+    if (!second.ok) {
+      const msg = second?.body?.error?.message || first?.body?.error?.message || `OpenAI ${second.status || first.status}`
+      throw new Error(msg)
+    }
+    const text2 = (second.body?.choices?.[0]?.message?.content || '').trim()
+    return safePresetFromText(text2)
+  }
+  const text = (first.body?.choices?.[0]?.message?.content || '').trim()
+  try { return JSON.parse(text) } catch { return safePresetFromText(text) }
+}
+
+function safePresetFromText(text) {
+  const fallback = { presetId: 'manual', reason: (text || 'AI preset'), params: { th: 70, hz: 10, regime: 'none' } }
+  if (!text) return fallback
+  const m = text.match(/\{[\s\S]*\}/)
+  if (m) {
+    try { return JSON.parse(m[0]) } catch { return fallback }
+  }
+  return fallback
 }
 
 async function callAnthropic({ apiKey, model, system, prompt }) {
