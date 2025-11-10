@@ -29,6 +29,7 @@ import WatchlistPanel from './components/WatchlistPanel.jsx'
 import WatchlistNavigator from './components/WatchlistNavigator.jsx'
 import HelpFab from './components/HelpFab.jsx'
 import RateLimitBanner from './components/RateLimitBanner.jsx'
+import { rateLimiter } from './utils/rateLimiter.js'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -75,6 +76,7 @@ export default function App() {
   const [focusTime, setFocusTime] = useState(null)
   const [streaming, setStreaming] = useState(false)
   const [activeSection, setActiveSection] = useState('chart') // chart, analysis, portfolio, tools
+  const [rateLimitUntil, setRateLimitUntil] = useState(0)
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
@@ -109,12 +111,14 @@ export default function App() {
       const myId = ++loadReq.current
       setLoading(true)
       setError('')
+      setRateLimitUntil(rateLimiter.rateLimitUntil)
       const res = await fetchBarsApi(s, tf, 500)
       if (myId !== loadReq.current) return
       if (Array.isArray(res) && res.length) { setBars(res); setUsingSample(false) }
       else throw new Error('No data returned')
     } catch (e) {
       setError(e?.message || 'Failed to load data; showing sample')
+      setRateLimitUntil(rateLimiter.rateLimitUntil)
       setBars(generateSampleOHLC())
       setUsingSample(true)
     } finally {
@@ -303,7 +307,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-      <RateLimitBanner />
+      <RateLimitBanner until={rateLimitUntil} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <Hero />
 
@@ -385,7 +389,7 @@ export default function App() {
         showSaty={showSaty} setShowSaty={setShowSaty}
       />
       <SignalFeed items={signalHistory} onSelect={(item) => setFocusTime(item.time)} />
-      <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} />
+      <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} rateLimitUntil={rateLimitUntil} />
       {/* Unicorn Signal Callout (always visible when triggered) */}
       <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
 
