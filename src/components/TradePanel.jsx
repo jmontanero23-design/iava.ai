@@ -79,22 +79,22 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
       <div className="text-xs text-slate-400 mb-2">Market: {clock?.is_open ? <span className="text-emerald-400">Open</span> : <span className="text-amber-400">Closed</span>} · Last: <span className="text-slate-200">{last?.close?.toFixed(2)}</span> · Equity: <span className="text-slate-200">{equity}</span></div>
       <div className="grid grid-cols-2 gap-3 text-sm">
         <label className="flex items-center gap-2">Side
-          <select value={side} onChange={e => setSide(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+          <select value={side} onChange={e => setSide(e.target.value)} className="select">
             <option value="buy">Buy</option>
             <option value="sell">Sell</option>
           </select>
         </label>
         <label className="flex items-center gap-2">Risk %
-          <input type="number" value={riskPct} onChange={e => setRiskPct(Number(e.target.value))} min={0.1} max={5} step={0.1} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24" />
+          <input type="number" value={riskPct} onChange={e => setRiskPct(Number(e.target.value))} min={0.1} max={5} step={0.1} className="input w-24" />
         </label>
         <label className="flex items-center gap-2">Qty
-          <input type="number" value={qty} onChange={e => setQty(Number(e.target.value))} min={1} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24" />
+          <input type="number" value={qty} onChange={e => setQty(Number(e.target.value))} min={1} className="input w-24" />
         </label>
         <label className="flex items-center gap-2">Stop
-          <input type="number" value={stop ?? ''} onChange={e => setStop(Number(e.target.value))} step={0.01} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-32" />
+          <input type="number" value={stop ?? ''} onChange={e => setStop(Number(e.target.value))} step={0.01} className="input w-32" />
         </label>
         <label className="flex items-center gap-2">Take Profit
-          <input type="number" value={tp ?? ''} onChange={e => setTp(Number(e.target.value))} step={0.01} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-32" />
+          <input type="number" value={tp ?? ''} onChange={e => setTp(Number(e.target.value))} step={0.01} className="input w-32" />
         </label>
       </div>
       <div className="mt-3 flex items-center gap-3">
