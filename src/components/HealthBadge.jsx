@@ -20,6 +20,7 @@ export default function HealthBadge() {
   if (!state.ok) return <span className="text-xs text-rose-400">Health: error</span>
   const d = state.data || {}
   const live = d.api?.hasKeys && d.api?.alpacaAccount
+  const llm = d.api?.llm || {}
   return (
     <span className="text-xs">
       <span className={live ? 'text-emerald-400' : 'text-amber-400'}>
@@ -28,7 +29,14 @@ export default function HealthBadge() {
       <span className="text-slate-500"> · </span>
       <span className="text-slate-300">{d.env || 'env'}</span>
       {d.commit ? <span className="text-slate-500"> · <span className="text-slate-400">{d.commit}</span></span> : null}
+      {typeof llm.configured === 'boolean' ? (
+        <>
+          <span className="text-slate-500"> · </span>
+          <span className={llm.configured ? 'text-emerald-400' : 'text-amber-400'} title={`LLM ${llm.provider || 'none'}`}>
+            LLM
+          </span>
+        </>
+      ) : null}
     </span>
   )
 }
-

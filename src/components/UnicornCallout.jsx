@@ -104,6 +104,20 @@ export default function UnicornCallout({ state, threshold = 70 }) {
             })()}
           </div>
         )}
+        {exp && (
+          <div className="mt-3 p-2 rounded border border-slate-700 bg-slate-900/60">
+            <div className="text-xs text-slate-400 mb-1">AI Explanation</div>
+            <div className="text-sm text-slate-200">{exp.explanation || ''}</div>
+            {Array.isArray(exp.highlights) && exp.highlights.length > 0 && (
+              <ul className="mt-2 text-xs list-disc pl-5 text-slate-300">
+                {exp.highlights.map((h, i) => <li key={i}>{h}</li>)}
+              </ul>
+            )}
+            {typeof exp.confidence === 'number' && (
+              <div className="mt-2 text-xs text-slate-400">Confidence: {Math.round(exp.confidence * 100)}%</div>
+            )}
+          </div>
+        )}
         {expErr ? <div className="mt-2 text-xs text-rose-400">{expErr}</div> : null}
       </div>
         {open && <div className="mt-3">
