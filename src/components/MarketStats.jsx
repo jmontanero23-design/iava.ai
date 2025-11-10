@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 
-export default function MarketStats({ bars = [], saty, symbol, timeframe, streaming }) {
+export default function MarketStats({ bars = [], saty, symbol, timeframe, streaming, consensus }) {
   const stats = useMemo(() => {
     if (!bars.length) return null
     const last = bars[bars.length - 1]
@@ -21,6 +21,10 @@ export default function MarketStats({ bars = [], saty, symbol, timeframe, stream
     { label: 'Range Used', value: stats.rangePct ? `${stats.rangePct.toFixed(0)}%` : '—' },
     { label: 'Mode', value: streaming ? 'Streaming' : 'Polling', accent: streaming ? 'text-cyan-300' : 'text-slate-300' },
   ]
+  if (consensus && consensus.secTf) {
+    const ok = consensus.align
+    items.push({ label: `Consensus ${consensus.secTf}`, value: ok ? 'Yes' : 'No', accent: ok ? 'text-emerald-300' : 'text-slate-400' })
+  }
 
   return (
     <section className="card p-4">
@@ -41,4 +45,3 @@ export default function MarketStats({ bars = [], saty, symbol, timeframe, stream
     </section>
   )
 }
-

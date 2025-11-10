@@ -72,6 +72,21 @@ export default function App() {
   const [focusTime, setFocusTime] = useState(null)
   const [streaming, setStreaming] = useState(false)
   const [hud, setHud] = useState('')
+  const [secBars, setSecBars] = useState([])
+  const [consensus, setConsensus] = useState(null)
+
+  function mlabel(id) {
+    const map = {
+      trendDaily: 'Trend+Daily',
+      pullbackDaily: 'Pullback+Daily',
+      intradayBreakout: 'Breakout (Intra)',
+      dailyTrendFollow: 'Daily Trend',
+      meanRevertIntraday: 'Mean Revert',
+      breakoutDailyStrong: 'Breakout Strong',
+      momentumContinuation: 'Momentum Cont',
+    }
+    return map[id] || id
+  }
 
   // Suggest backtest params based on selected preset
   const backtestPreset = useMemo(() => {
@@ -146,6 +161,24 @@ export default function App() {
     } catch {}
   }
 
+  // Load secondary timeframe for consensus (e.g., 1Min->5Min, 5Min->15Min, 15Min->1Hour)
+  function mapSecondary(tf) {
+    const t = (tf || '').toLowerCase()
+    if (t.includes('1min')) return '5Min'
+    if (t.includes('5min')) return '15Min'
+    if (t.includes('15min')) return '1Hour'
+    return null
+  }
+
+  async function loadSecondary(s = symbol, tf = timeframe) {
+    const sec = mapSecondary(tf)
+    if (!sec) { setSecBars([]); setConsensus(null); return }
+    try {
+      const res = await fetchBarsApi(s, sec, 500)
+      setSecBars(Array.isArray(res) ? res : [])
+    } catch { setSecBars([]) }
+  }
+
   useEffect(() => {
     // Load persisted settings
     try {
@@ -180,6 +213,7 @@ export default function App() {
     } catch {}
     loadBars()
     loadDaily()
+    loadSecondary()
     // Fetch account once for trade sizing
     fetch('/api/alpaca/account').then(r => r.json()).then(setAccount).catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -326,8 +360,23 @@ export default function App() {
 
   useEffect(() => {
     loadDaily(symbol)
+    loadSecondary(symbol, timeframe)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol])
+
+  useEffect(() => { loadSecondary(symbol, timeframe) /* eslint-disable-line react-hooks/exhaustive-deps */ }, [timeframe])
+
+  // Compute consensus with secondary timeframe
+  useEffect(() => {
+    const secTf = mapSecondary(timeframe)
+    if (!secTf || !secBars?.length || !bars?.length) { setConsensus(null); return }
+    try {
+      const primary = computeStates(bars)
+      const secondary = computeStates(secBars)
+      const align = (primary.pivotNow === secondary.pivotNow) && primary.pivotNow !== 'neutral'
+      setConsensus({ secTf, align, primary, secondary })
+    } catch { setConsensus(null) }
+  }, [bars, secBars, timeframe])
 
   // Streaming (beta): SSE for intraday
   useStreamingBars({
@@ -454,7 +503,7 @@ export default function App() {
         <div className="ml-auto"><HealthBadge /></div>
         <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); alert('Link copied'); } catch(_) {} }} className="ml-2 bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Link</button>
       </div>
-      <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streaming || autoRefresh} />
+      <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streaming || autoRefresh} consensus={consensus} />
       <LegendChips overlays={overlays} />
       <CandleChart
         bars={bars}
@@ -472,6 +521,7 @@ export default function App() {
           saty: () => setShowSaty(v => !v),
           squeeze: () => setShowSqueeze(v => !v),
         }}
+        presetLabel={mtfPreset !== 'manual' ? mlabel(mtfPreset) : ''}
       />
       <OverlayChips
         showEma821={showEma821} setShowEma821={setShowEma821}
