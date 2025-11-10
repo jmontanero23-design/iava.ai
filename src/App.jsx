@@ -16,6 +16,8 @@ import MarketStats from './components/MarketStats.jsx'
 import UnicornCallout from './components/UnicornCallout.jsx'
 import UnicornActionBar from './components/UnicornActionBar.jsx'
 import BacktestPanel from './components/BacktestPanel.jsx'
+import BatchBacktestPanel from './components/BatchBacktestPanel.jsx'
+import RateLimitBanner from './components/RateLimitBanner.jsx'
 import OrdersPanel from './components/OrdersPanel.jsx'
 import SatyTargets from './components/SatyTargets.jsx'
 import InfoPopover from './components/InfoPopover.jsx'
@@ -491,6 +493,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-transparent text-slate-100">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <RateLimitBanner until={rateLimitUntil} />
       <Hero />
       <div className="card p-4 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
@@ -655,6 +658,7 @@ export default function App() {
         </div>
       )}
       <BacktestPanel symbol={symbol} timeframe={timeframe} preset={backtestPreset} />
+      <BatchBacktestPanel defaultTimeframe={timeframe} />
       <UnicornCallout threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily, _consensus: consensus, _timeframe: timeframe }} />
       <UnicornActionBar threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} />
       <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />

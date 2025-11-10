@@ -17,6 +17,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
   const abortRef = React.useRef({ stop: false })
   const [requireConsensus, setRequireConsensus] = useState(false)
   const [assetClass, setAssetClass] = useState('stocks') // stocks | crypto
+  const [exporting, setExporting] = useState(false)
 
   function exportCsv() {
     try {
@@ -33,6 +34,20 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
       const a = document.createElement('a')
       a.href = URL.createObjectURL(blob)
       a.download = `scan_${timeframe}_th${threshold}_${Date.now()}.csv`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(a.href)
+    } catch {}
+  }
+
+  function exportJson() {
+    try {
+      if (!res) return
+      const blob = new Blob([JSON.stringify(res, null, 2)], { type: 'application/json' })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `scan_${timeframe}_th${threshold}_${Date.now()}.json`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -198,6 +213,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
               } catch (e) { alert('Save failed') }
             }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Save</button>
             <button onClick={exportCsv} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Export CSV</button>
+            <button onClick={exportJson} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Export JSON</button>
           </div>
           <div className="md:col-span-2 text-xs text-slate-500">
             {assetClass.toUpperCase()} • Universe {res.universe} • TF {res.timeframe} • TH ≥{res.threshold} • Daily {res.enforceDaily ? 'On' : 'Off'} • Consensus {requireConsensus ? 'On' : 'Off'} • Results L{res.longs?.length||0}/S{res.shorts?.length||0}
