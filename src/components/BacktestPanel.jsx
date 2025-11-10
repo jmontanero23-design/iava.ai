@@ -148,7 +148,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
         </h3>
         <div className="flex items-center gap-2 text-xs">
           <label className="inline-flex items-center gap-2">Asset
-            <select value={assetClass} onChange={e=>setAssetClass(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+            <select value={assetClass} onChange={e=>setAssetClass(e.target.value)} className="select">
               <option value="stocks">Stocks</option>
               <option value="crypto">Crypto</option>
             </select>
@@ -161,8 +161,8 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
           {preset ? (
             <button onClick={applyPresetParams} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Apply Preset</button>
           ) : null}
-          <label className="inline-flex items-center gap-2">Threshold <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" /></label>
-          <label className="inline-flex items-center gap-2">Horizon <input type="number" min={1} max={100} value={horizon} onChange={e => setHorizon(parseInt(e.target.value,10)||1)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" /></label>
+          <label className="inline-flex items-center gap-2">Threshold <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="input w-16" /></label>
+          <label className="inline-flex items-center gap-2">Horizon <input type="number" min={1} max={100} value={horizon} onChange={e => setHorizon(parseInt(e.target.value,10)||1)} className="input w-16" /></label>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={showCurve} onChange={e=>setShowCurve(e.target.checked)} /> Curve</label>
           <div className="inline-flex items-center gap-1">
             {[5,10,20].map(h => (
@@ -170,16 +170,16 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
             ))}
           </div>
           <label className="inline-flex items-center gap-2">Curve THs
-            <input value={curveThresholds} onChange={e=>setCurveThresholds(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-36" title="Comma-separated thresholds for expectancy curves" />
+            <input value={curveThresholds} onChange={e=>setCurveThresholds(e.target.value)} className="input w-36" title="Comma-separated thresholds for expectancy curves" />
           </label>
           <label className="inline-flex items-center gap-2">HZs
-            <input value={hzs} onChange={e=>setHzs(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-28" title="Comma-separated horizons for matrix heatmap" />
+            <input value={hzs} onChange={e=>setHzs(e.target.value)} className="input w-28" title="Comma-separated horizons for matrix heatmap" />
           </label>
           <InfoPopover title="Heatmap (HZs)">Enter multiple horizons (e.g., 5,10,20) to render a Threshold × Horizon heatmap of avg forward % returns. Helps pick robust thresholds and holding periods.</InfoPopover>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={consensus} onChange={e=>setConsensus(e.target.checked)} /> Consensus Bonus <span className="text-slate-500">(+10 if primary and secondary TFs agree)</span></label>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={regimeCurves} onChange={e=>setRegimeCurves(e.target.checked)} disabled={assetClass!=='stocks'} /> Compare Regimes</label>
           <label className="inline-flex items-center gap-2">Regime
-            <select value={dailyFilter} onChange={e => setDailyFilter(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1" disabled={assetClass!=='stocks'}>
+            <select value={dailyFilter} onChange={e => setDailyFilter(e.target.value)} className="select" disabled={assetClass!=='stocks'}>
               <option value="none">None</option>
               <option value="bull">Daily Bullish</option>
               <option value="bear">Daily Bearish</option>
@@ -253,7 +253,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
           <div className="mt-2 text-xs"><a className="underline hover:text-slate-300" href={`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&format=csv`} target="_blank" rel="noreferrer">Download CSV</a></div>
           <div className="mt-2 text-xs flex items-center gap-2 flex-wrap">
             <span className="text-slate-400 inline-flex items-center gap-1">Batch CSV <InfoPopover title="Batch Backtest">Download historical events or summary stats for multiple symbols at once. Use regimes to compare bull vs bear performance.</InfoPopover></span>
-            <input value={batchSymbols} onChange={e=>setBatchSymbols(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-64" />
+            <input value={batchSymbols} onChange={e=>setBatchSymbols(e.target.value)} className="input w-64" />
             <a className="underline hover:text-slate-300" href={`/api/backtest_batch?symbols=${encodeURIComponent(batchSymbols)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&dailyFilter=${dailyFilter}&format=csv`} target="_blank" rel="noreferrer">Events CSV</a>
             <a className="underline hover:text-slate-300" href={`/api/backtest_batch?symbols=${encodeURIComponent(batchSymbols)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&dailyFilter=${dailyFilter}&format=json`} target="_blank" rel="noreferrer">Events JSON</a>
             <label className="inline-flex items-center gap-1"><input type="checkbox" checked={includeSummaryRegimes} onChange={e=>setIncludeSummaryRegimes(e.target.checked)} />Regimes</label>

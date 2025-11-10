@@ -29,18 +29,18 @@ export default function WatchlistPanel({ onLoadSymbol }) {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Watchlists <InfoPopover title="Watchlists">Save symbols from the Scanner and quickly load them here. Stored locally in your browser.</InfoPopover></h3>
         <div className="flex items-center gap-2 text-xs">
-          <button onClick={refresh} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Refresh</button>
+          <button onClick={refresh} className="btn btn-xs">Refresh</button>
         </div>
       </div>
       <div className="mt-2 flex items-center gap-2 text-sm">
         <span className="text-slate-400">Lists:</span>
-        <select value={active} onChange={e=>setActive(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+        <select value={active} onChange={e=>setActive(e.target.value)} className="input">
           <option value="">—</option>
           {Object.keys(lists).map(n => (
             <option key={n} value={n}>{n}</option>
           ))}
         </select>
-        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Rename as…" className="bg-slate-800 border border-slate-700 rounded px-2 py-1" />
+        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Rename as…" className="input" />
         <button onClick={async()=>{
           try {
             const mod = await import('../utils/watchlists.js')

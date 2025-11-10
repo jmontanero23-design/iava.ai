@@ -72,21 +72,21 @@ export default function WatchlistNavigator({ onLoadSymbol, timeframe }) {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Watchlist Navigator <InfoPopover title="Navigator">Cycle a watchlist and load each symbol. Shortcuts: ← Prev, → Next, Space Auto/Pause.</InfoPopover></h3>
         <div className="flex items-center gap-2 text-xs">
-          <button onClick={refresh} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Refresh</button>
+          <button onClick={refresh} className="btn btn-xs">Refresh</button>
         </div>
       </div>
       <div className="mt-2 flex items-center gap-2 text-sm">
         <span className="text-slate-400">List</span>
-        <select value={name} onChange={(e)=>{ const n=e.target.value; setName(n); setSymbols(lists[n]?.symbols||[]); setIdx(0) }} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+        <select value={name} onChange={(e)=>{ const n=e.target.value; setName(n); setSymbols(lists[n]?.symbols||[]); setIdx(0) }} className="select">
           <option value="">—</option>
           {Object.keys(lists).map(n => <option key={n} value={n}>{n}</option>)}
         </select>
         <span className="text-slate-500 text-xs">{pos}</span>
         <div className="ml-auto flex items-center gap-2 text-xs">
-          <button onClick={()=>{ if (!canNav) return; setIdx(i => (i - 1 + symbols.length) % symbols.length) }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700" disabled={!canNav}>Prev</button>
-          <button onClick={()=>{ if (!canNav) return; setIdx(i => (i + 1) % symbols.length) }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700" disabled={!canNav}>Next</button>
-          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={playing} onChange={e=>setPlaying(e.target.checked)} /> Auto</label>
-          <label className="inline-flex items-center gap-1">Sec<input type="number" min={2} max={60} value={sec} onChange={e=>setSec(parseInt(e.target.value,10)||5)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" /></label>
+          <button onClick={()=>{ if (!canNav) return; setIdx(i => (i - 1 + symbols.length) % symbols.length) }} className="btn btn-xs" disabled={!canNav}>Prev</button>
+          <button onClick={()=>{ if (!canNav) return; setIdx(i => (i + 1) % symbols.length) }} className="btn btn-xs" disabled={!canNav}>Next</button>
+          <label className="inline-flex items-center gap-2"><input className="checkbox" type="checkbox" checked={playing} onChange={e=>setPlaying(e.target.checked)} /> Auto</label>
+          <label className="inline-flex items-center gap-1">Sec<input type="number" min={2} max={60} value={sec} onChange={e=>setSec(parseInt(e.target.value,10)||5)} className="input w-16" /></label>
         </div>
       </div>
     </div>

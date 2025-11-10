@@ -50,7 +50,7 @@ export default function BatchBacktestPanel({ defaultTimeframe = '5Min' }) {
         <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Batch Backtest <InfoPopover title="Batch Backtest">Download per-symbol event CSVs or summary stats for a list of symbols. Server caches daily bars; use Summary JSON/CSV for quick comparisons.</InfoPopover></h3>
         <div className="flex items-center gap-2 text-xs">
           <label className="inline-flex items-center gap-2">TF
-            <select value={timeframe} onChange={e=>setTimeframe(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+            <select value={timeframe} onChange={e=>setTimeframe(e.target.value)} className="select">
               <option value="1Min">1Min</option>
               <option value="5Min">5Min</option>
               <option value="15Min">15Min</option>
@@ -59,14 +59,14 @@ export default function BatchBacktestPanel({ defaultTimeframe = '5Min' }) {
             </select>
           </label>
           <label className="inline-flex items-center gap-2">TH
-            <input type="number" min={0} max={100} value={threshold} onChange={e=>setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
+            <input type="number" min={0} max={100} value={threshold} onChange={e=>setThreshold(parseInt(e.target.value,10)||0)} className="input w-16" />
           </label>
           <label className="inline-flex items-center gap-2">HZ
-            <input type="number" min={1} max={100} value={horizon} onChange={e=>setHorizon(parseInt(e.target.value,10)||1)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
+            <input type="number" min={1} max={100} value={horizon} onChange={e=>setHorizon(parseInt(e.target.value,10)||1)} className="input w-16" />
           </label>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={includeRegimes} onChange={e=>setIncludeRegimes(e.target.checked)} /> Regimes</label>
           <label className="inline-flex items-center gap-2">Daily
-            <select value={dailyFilter} onChange={e=>setDailyFilter(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+            <select value={dailyFilter} onChange={e=>setDailyFilter(e.target.value)} className="select">
               <option value="none">None</option>
               <option value="bull">Bull</option>
               <option value="bear">Bear</option>
@@ -90,7 +90,7 @@ export default function BatchBacktestPanel({ defaultTimeframe = '5Min' }) {
           const name = e.target.value; if (!name) return
           try { const mod = await import('../utils/watchlists.js'); const wl = mod.get(name); if (wl?.symbols?.length) setSymbols(Array.from(new Set([...(symbols?symbols.split(','):[]), ...wl.symbols])).join(',')) } catch {}
           e.target.value = ''
-        }} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+        }} className="select">
           <option value="">—</option>
           {lists.map(n => <option key={n} value={n}>{n}</option>)}
         </select>
