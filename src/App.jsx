@@ -13,8 +13,8 @@ import StatusBar from './components/StatusBar.jsx'
 import LegendChips from './components/LegendChips.jsx'
 import MarketStats from './components/MarketStats.jsx'
 import UnicornCallout from './components/UnicornCallout.jsx'
-import UnicornActionBar from './components/UnicornActionBar.jsx'
 import BacktestPanel from './components/BacktestPanel.jsx'
+import BatchBacktestPanel from './components/BatchBacktestPanel.jsx'
 import OrdersPanel from './components/OrdersPanel.jsx'
 import SatyTargets from './components/SatyTargets.jsx'
 import InfoPopover from './components/InfoPopover.jsx'
@@ -25,6 +25,11 @@ import OverlayChips from './components/OverlayChips.jsx'
 import useStreamingBars from './hooks/useStreamingBars.js'
 import ScoreOptimizer from './components/ScoreOptimizer.jsx'
 import AnalyticsDashboard from './components/AnalyticsDashboard.jsx'
+import ScannerPanel from './components/ScannerPanel.jsx'
+import WatchlistPanel from './components/WatchlistPanel.jsx'
+import WatchlistNavigator from './components/WatchlistNavigator.jsx'
+import HelpFab from './components/HelpFab.jsx'
+import RateLimitBanner from './components/RateLimitBanner.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -70,6 +75,7 @@ export default function App() {
   const [signalHistory, setSignalHistory] = useState([])
   const [focusTime, setFocusTime] = useState(null)
   const [streaming, setStreaming] = useState(false)
+  const [activeSection, setActiveSection] = useState('chart') // chart, analysis, portfolio, tools
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
@@ -297,7 +303,8 @@ export default function App() {
   })
 
   return (
-    <div className="min-h-screen bg-transparent text-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+      <RateLimitBanner />
       <div className="max-w-7xl mx-auto p-6 space-y-6">
       <Hero />
       <div className="card p-4 flex flex-wrap items-center gap-4">
@@ -415,28 +422,80 @@ export default function App() {
       />
       <SignalFeed items={signalHistory} onSelect={(item) => setFocusTime(item.time)} />
       <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {showSqueeze && <SqueezePanel bars={bars} />}
-        <SignalsPanel state={signalState} />
-      </div>
-      <BacktestPanel symbol={symbol} timeframe={timeframe} />
-      <ScoreOptimizer symbol={symbol} timeframe={timeframe} />
-      <AnalyticsDashboard />
+      {/* Unicorn Signal Callout (always visible when triggered) */}
       <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
-      {/* <UnicornActionBar threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} /> */}
-      <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
-      <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />
-      <OrdersPanel symbol={symbol} lastPrice={bars[bars.length-1]?.close} />
-      <section className="card p-4">
-        <h2 className="text-lg font-semibold mb-2">Project Structure</h2>
-        <ul className="list-disc pl-6 text-slate-300">
-          <li><code>src/components</code> – UI and frontend components</li>
-          <li><code>src/services</code> – API and backend-facing logic</li>
-          <li><code>src/utils</code> – Utilities and shared helpers</li>
-        </ul>
-      </section>
-        <BuildInfoFooter />
+
+      {/* Navigation Tabs */}
+      <div className="card p-1 flex gap-1">
+        <button
+          onClick={() => setActiveSection('chart')}
+          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-colors ${activeSection === 'chart' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+        >
+          📊 Chart & Signals
+        </button>
+        <button
+          onClick={() => setActiveSection('analysis')}
+          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-colors ${activeSection === 'analysis' ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+        >
+          🔬 Analysis
+        </button>
+        <button
+          onClick={() => setActiveSection('portfolio')}
+          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-colors ${activeSection === 'portfolio' ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+        >
+          💼 Portfolio
+        </button>
+        <button
+          onClick={() => setActiveSection('tools')}
+          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-colors ${activeSection === 'tools' ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+        >
+          🛠️ Tools
+        </button>
       </div>
+
+      {/* Chart & Signals Section */}
+      {activeSection === 'chart' && (
+        <div className="space-y-4 animate-fadeIn">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {showSqueeze && <SqueezePanel bars={bars} />}
+            <SignalsPanel state={signalState} />
+          </div>
+          <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
+          <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />
+        </div>
+      )}
+
+      {/* Analysis Section */}
+      {activeSection === 'analysis' && (
+        <div className="space-y-4 animate-fadeIn">
+          <BacktestPanel symbol={symbol} timeframe={timeframe} />
+          <BatchBacktestPanel />
+          <ScoreOptimizer symbol={symbol} timeframe={timeframe} />
+        </div>
+      )}
+
+      {/* Portfolio Section */}
+      {activeSection === 'portfolio' && (
+        <div className="space-y-4 animate-fadeIn">
+          <OrdersPanel symbol={symbol} lastPrice={bars[bars.length-1]?.close} />
+          <AnalyticsDashboard />
+        </div>
+      )}
+
+      {/* Tools Section */}
+      {activeSection === 'tools' && (
+        <div className="space-y-4 animate-fadeIn">
+          <ScannerPanel onLoadSymbol={(sym) => { setSymbol(sym); if (autoLoadChange) loadBars(sym, timeframe) }} defaultTimeframe={timeframe} />
+          <WatchlistPanel onLoadSymbol={(sym) => { setSymbol(sym); if (autoLoadChange) loadBars(sym, timeframe) }} />
+          <WatchlistNavigator onLoad={(sym, tf) => { setSymbol(sym); if (tf) setTimeframe(tf); if (autoLoadChange) loadBars(sym, tf || timeframe) }} />
+        </div>
+      )}
+
+      <BuildInfoFooter />
+      </div>
+
+      {/* Floating Help Button */}
+      <HelpFab />
     </div>
   )
 }
