@@ -24,6 +24,7 @@ import SignalFeed from './components/SignalFeed.jsx'
 import OverlayChips from './components/OverlayChips.jsx'
 import useStreamingBars from './hooks/useStreamingBars.js'
 import WatchlistPanel from './components/WatchlistPanel.jsx'
+import ScannerPanel from './components/ScannerPanel.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
