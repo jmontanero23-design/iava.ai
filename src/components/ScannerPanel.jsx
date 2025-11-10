@@ -167,7 +167,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
         </h3>
         <div className="flex items-center gap-2 text-xs">
           <label className="inline-flex items-center gap-2">TF
-            <select value={timeframe} onChange={e=>setTimeframe(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+            <select value={timeframe} onChange={e=>setTimeframe(e.target.value)} className="select">
               <option value="1Min">1Min</option>
               <option value="5Min">5Min</option>
               <option value="15Min">15Min</option>
@@ -176,37 +176,37 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
             </select>
           </label>
           <label className="inline-flex items-center gap-2">Asset
-            <select value={assetClass} onChange={e=>{ setAssetClass(e.target.value); setUniverse('manual') }} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+            <select value={assetClass} onChange={e=>{ setAssetClass(e.target.value); setUniverse('manual') }} className="select">
               <option value="stocks">Stocks</option>
               <option value="crypto">Crypto</option>
             </select>
           </label>
           <label className="inline-flex items-center gap-2">Universe
-            <select value={universe} onChange={e=>setUniverse(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+            <select value={universe} onChange={e=>setUniverse(e.target.value)} className="select">
               <option value="manual">Manual</option>
               {assetClass === 'stocks' && <option value="all">All (US active)</option>}
               {assetClass === 'crypto' && <option value="popular">Popular (crypto)</option>}
             </select>
           </label>
           <label className="inline-flex items-center gap-2">Threshold
-            <input type="number" min={0} max={100} value={threshold} onChange={e=>setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
+            <input type="number" min={0} max={100} value={threshold} onChange={e=>setThreshold(parseInt(e.target.value,10)||0)} className="input w-16" />
           </label>
           <label className="inline-flex items-center gap-2">Top
-            <input type="number" min={1} max={100} value={top} onChange={e=>setTop(Math.max(1,parseInt(e.target.value,10)||10))} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
+            <input type="number" min={1} max={100} value={top} onChange={e=>setTop(Math.max(1,parseInt(e.target.value,10)||10))} className="input w-16" />
           </label>
-          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={enforceDaily} onChange={e=>setEnforceDaily(e.target.checked)} />Daily</label>
-          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={requireConsensus} onChange={e=>setRequireConsensus(e.target.checked)} />Consensus</label>
-          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={consensusBonus} onChange={e=>setConsensusBonus(e.target.checked)} />Bonus +10 <InfoPopover title="Consensus Bonus (+10)">Adds +10 to the score when secondary timeframe trend aligns with the primary (same as the chart’s Consensus Bonus). Use with Consensus gating for stricter filtering, or alone to boost aligned names.</InfoPopover></label>
-          <button onClick={async()=>{ if (universe === 'all') await fullScanAll(); else await run(); }} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Scanning…' : 'Scan'}</button>
+          <label className="inline-flex items-center gap-2"><input className="checkbox" type="checkbox" checked={enforceDaily} onChange={e=>setEnforceDaily(e.target.checked)} />Daily</label>
+          <label className="inline-flex items-center gap-2"><input className="checkbox" type="checkbox" checked={requireConsensus} onChange={e=>setRequireConsensus(e.target.checked)} />Consensus</label>
+          <label className="inline-flex items-center gap-2"><input className="checkbox" type="checkbox" checked={consensusBonus} onChange={e=>setConsensusBonus(e.target.checked)} />Bonus +10 <InfoPopover title="Consensus Bonus (+10)">Adds +10 to the score when secondary timeframe trend aligns with the primary (same as the chart’s Consensus Bonus). Use with Consensus gating for stricter filtering, or alone to boost aligned names.</InfoPopover></label>
+          <button onClick={async()=>{ if (universe === 'all') await fullScanAll(); else await run(); }} disabled={loading} className="btn btn-xs">{loading ? 'Scanning…' : 'Scan'}</button>
           {universe === 'all' && (
-            <button onClick={()=>{ abortRef.current.stop = true; setProgress('Stopping…') }} disabled={!loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Stop</button>
+            <button onClick={()=>{ abortRef.current.stop = true; setProgress('Stopping…') }} disabled={!loading} className="btn btn-xs">Stop</button>
           )}
         </div>
       </div>
       <div className="mt-2 text-xs text-slate-400">Symbols (paste or import) {assetClass === 'crypto' ? 'e.g., BTC/USD, ETH/USD' : ''}</div>
       <textarea value={symbols} onChange={e=>setSymbols(e.target.value)} className="mt-1 w-full h-16 bg-slate-800 border border-slate-700 rounded p-2 text-sm" />
       <div className="mt-1 flex items-center gap-2 text-xs">
-        <button onClick={()=>setTop(100)} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700" title="Show up to 100 results">Top 100</button>
+        <button onClick={()=>setTop(100)} className="btn btn-xs" title="Show up to 100 results">Top 100</button>
         <input type="file" accept=".csv,.txt" onChange={async (e)=>{
           const f = e.target.files?.[0]; if (!f) return
           const txt = await f.text()
@@ -221,12 +221,12 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
           const mod = await import('../utils/watchlists.js'); const wl = mod.get(name)
           if (wl?.symbols?.length) setSymbols(Array.from(new Set([...(symbols?symbols.split(','):[]), ...wl.symbols])).join(','))
           e.target.value = ''
-        }} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+        }} className="select">
           <option value="">—</option>
           {lists.map(n => <option key={n} value={n}>{n}</option>)}
         </select>
         {assetClass === 'crypto' && universe === 'popular' && (
-          <button onClick={loadPopularCrypto} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Load popular</button>
+          <button onClick={loadPopularCrypto} className="btn btn-xs">Load popular</button>
         )}
         {progress && <span className="text-slate-400">{progress}</span>}
       </div>
@@ -237,7 +237,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
           <Section title={`Top Shorts (${res.shorts?.length || 0})`} items={res.shorts} />
           <div className="md:col-span-2 flex items-center gap-2 text-xs mt-2">
             <span className="text-slate-400">Save to watchlist</span>
-            <input value={wlName} onChange={e=>setWlName(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1" />
+            <input value={wlName} onChange={e=>setWlName(e.target.value)} className="select" />
             <button onClick={async ()=>{
               try {
                 const { save, setActive } = await import('../utils/watchlists.js')
@@ -249,15 +249,15 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
                 setActive(listName)
                 alert('Watchlist saved')
               } catch (e) { alert('Save failed') }
-            }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Save</button>
+            }} className="btn btn-xs">Save</button>
             <button onClick={async ()=>{
               try { const { save, setActive } = await import('../utils/watchlists.js'); const base=(wlName||'scanner-top'); const name=base+"-longs"; const longs = (res.longs||[]).map(x=>x.symbol); save(name, longs); setActive(name); alert('Saved longs') } catch { alert('Save failed') }
-            }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Save Longs</button>
+            }} className="btn btn-xs">Save Longs</button>
             <button onClick={async ()=>{
               try { const { save, setActive } = await import('../utils/watchlists.js'); const base=(wlName||'scanner-top'); const name=base+"-shorts"; const shorts = (res.shorts||[]).map(x=>x.symbol); save(name, shorts); setActive(name); alert('Saved shorts') } catch { alert('Save failed') }
-            }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Save Shorts</button>
-            <button onClick={exportCsv} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Export CSV</button>
-            <button onClick={exportJson} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Export JSON</button>
+            }} className="btn btn-xs">Save Shorts</button>
+            <button onClick={exportCsv} className="btn btn-xs">Export CSV</button>
+            <button onClick={exportJson} className="btn btn-xs">Export JSON</button>
           </div>
           <div className="md:col-span-2 text-xs text-slate-500">
             {assetClass.toUpperCase()} • Universe {res.universe} • TF {res.timeframe} • TH ≥{res.threshold} • Daily {res.enforceDaily ? 'On' : 'Off'} • Consensus {requireConsensus ? 'On' : 'Off'} • Bonus {consensusBonus ? '+10' : 'Off'} • Results L{res.longs?.length||0}/S{res.shorts?.length||0}
