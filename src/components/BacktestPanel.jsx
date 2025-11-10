@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import InfoPopover from './InfoPopover.jsx'
 
-export default function BacktestPanel({ symbol, timeframe }) {
+export default function BacktestPanel({ symbol, timeframe, preset }) {
   const [loading, setLoading] = useState(false)
   const [res, setRes] = useState(null)
   const [err, setErr] = useState('')
@@ -80,6 +80,9 @@ export default function BacktestPanel({ symbol, timeframe }) {
           </label>
           <button onClick={run} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Running…' : 'Run'}</button>
           <button onClick={downloadJson} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Download JSON</button>
+          {preset && (
+            <button onClick={() => { if (typeof preset.th === 'number') setThreshold(preset.th); if (typeof preset.hz === 'number') setHorizon(preset.hz); if (preset.regime) setDailyFilter(preset.regime) }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Apply Preset</button>
+          )}
         </div>
       </div>
       <div className="flex flex-wrap gap-2 text-xs mt-2">
