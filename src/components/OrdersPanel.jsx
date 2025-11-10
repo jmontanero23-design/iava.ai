@@ -133,7 +133,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
             <input type="number" min={1} value={qty} onChange={e=>setQty(Math.max(1, parseInt(e.target.value,10)||1))} className="input w-24" />
           </label>
           <label className="inline-flex flex-col">
-            <span className="text-xs text-slate-400">Class</span>
+            <span className="text-xs text-slate-400">Class <InfoPopover title="Order Class">Market sends a single market order. Bracket places an entry with attached take‑profit and stop‑loss. Use Bracket with SATY or % to predefine exits.</InfoPopover></span>
             <select value={klass} onChange={e=>setKlass(e.target.value)} className="select">
               <option value="market">Market</option>
               <option value="bracket">Bracket</option>

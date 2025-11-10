@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react'
+import InfoPopover from '../InfoPopover.jsx'
 import { createChart } from 'lightweight-charts'
 
 export default function CandleChart({ bars = [], overlays = {}, markers = [], loading = false, focusTime = null, overlayToggles = null, presetLabel = '', presetExpected = null, currentOverlay = null }) {
@@ -575,6 +576,9 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
               <button key={key} onClick={overlayToggles[key]} className={`btn btn-xs btn-toggle ${active ? 'btn-toggle-active' : ''}`} title={`Toggle ${label}`}>{label}</button>
             ) : null
           })}
+          <InfoPopover title="Overlays">
+            EMA clouds and Ribbon show trend context; Ichimoku shades the cloud regime; SATY provides ATR pivot/targets; Squeeze highlights compression.
+          </InfoPopover>
           {/* Preset adherence hints: show expected overlays that are currently off */}
           {presetExpected && currentOverlay ? (
             <div className="flex items-center gap-1 ml-2" title="Preset expects these overlays to be ON">

@@ -191,6 +191,9 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
           <button onClick={downloadCsv} className="btn btn-xs">Download CSV</button>
           <button onClick={downloadSummaryCsv} className="btn btn-xs">Summary CSV</button>
           <button onClick={downloadSummaryJson} className="btn btn-xs">Summary JSON</button>
+          <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700" title="Current parameters">
+            TH {threshold} · H {horizon} · {assetClass==='stocks' ? (dailyFilter || 'none') : 'none'}
+          </span>
           {preset && (
             <button onClick={() => { if (typeof preset.th === 'number') setThreshold(preset.th); if (typeof preset.hz === 'number') setHorizon(preset.hz); if (preset.regime) setDailyFilter(preset.regime) }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Apply Preset</button>
           )}
