@@ -3,10 +3,10 @@ import InfoPopover from './InfoPopover.jsx'
 import { placeOrder, getClock } from '../services/orders.js'
 import { logOrder } from '../utils/tradeLogger.js'
 
-export default function TradePanel({ bars = [], saty, account, defaultSide = 'buy', onClose }) {
+export default function TradePanel({ bars = [], saty, account, defaultSide = 'buy', defaultRiskPct = 1, onClose }) {
   const last = bars[bars.length - 1]
   const [side, setSide] = useState(defaultSide)
-  const [riskPct, setRiskPct] = useState(1)
+  const [riskPct, setRiskPct] = useState(defaultRiskPct || 1)
   const [qty, setQty] = useState(0)
   const [stop, setStop] = useState(null)
   const [tp, setTp] = useState(null)

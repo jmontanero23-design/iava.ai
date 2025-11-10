@@ -15,8 +15,10 @@ html, body, #root {
 }
 
 body {
-  background: radial-gradient(circle at 20% 20%, rgba(79,70,229,0.15), transparent 55%),
-              #040715;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(79,70,229,0.14), transparent 55%),
+    radial-gradient(circle at 80% 0%, rgba(6,182,212,0.10), transparent 45%),
+    #040715;
   color: var(--text);
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont;
   -webkit-font-smoothing: antialiased;
@@ -29,7 +31,7 @@ body {
 
 .card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(2,6,23,0.35);
+  box-shadow: 0 12px 24px rgba(2,6,23,0.35), inset 0 1px 0 rgba(255,255,255,0.02);
 }
 
 button,
@@ -44,3 +46,90 @@ select {
   backdrop-filter: blur(18px);
   border-radius: 18px;
 }
+
+/* Utility aesthetics */
+.text-gradient {
+  background: linear-gradient(90deg, #34d399, #22d3ee);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bg-grid::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(148,163,184,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.07) 1px, transparent 1px);
+  background-size: 40px 40px, 40px 40px;
+  mask-image: radial-gradient(circle at center, rgba(0,0,0,0.45), transparent 60%);
+}
+
+/* Chart info dock */
+.chart-info-dock {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  pointer-events: none;
+  background: rgba(2,6,23,0.72);
+  border: 1px solid rgba(51,65,85,0.8);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  color: #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  backdrop-filter: blur(6px);
+  z-index: 5;
+}
+
+.chart-hud {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  pointer-events: none;
+  background: rgba(2,6,23,0.65);
+  border: 1px solid rgba(51,65,85,0.8);
+  border-radius: 8px;
+  padding: 6px 8px;
+  color: #e2e8f0;
+  backdrop-filter: blur(6px);
+  z-index: 10;
+}
+
+.chip {
+  display: inline-block;
+  border: 1px solid rgba(71,85,105,0.8);
+  border-radius: 9999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  background: rgba(2,6,23,0.6);
+}
+.chip-strong { border-color: rgba(226,232,240,0.8); }
+.chip-up { border-color: rgba(16,185,129,0.7); color: #a7f3d0; }
+.chip-dn { border-color: rgba(239,68,68,0.7); color: #fecaca; }
+
+/* Unified controls */
+.btn {
+  @apply bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded text-slate-200;
+  padding: 0.25rem 0.5rem; /* px-2 py-1 */
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+.btn:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(79,70,229,0.45), 0 0 0 4px rgba(2,6,23,0.9); }
+.btn-xs { font-size: 0.75rem; /* text-xs */ }
+.btn-ghost {
+  background: rgba(2,6,23,0.6);
+}
+.btn-toggle { @apply border-slate-700; }
+.btn-toggle-active { @apply border-slate-500 text-slate-100; }
+
+.input, .select {
+  @apply bg-slate-800 border border-slate-700 rounded text-slate-200;
+  padding: 0.25rem 0.5rem;
+}
+.input:focus-visible, .select:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(79,70,229,0.45), 0 0 0 4px rgba(2,6,23,0.9); border-color: #6366f1; }
+.checkbox { @apply accent-indigo-500; }
+
+.panel-title { @apply text-sm font-semibold text-slate-200; }
+.hint { @apply text-xs text-slate-500; }

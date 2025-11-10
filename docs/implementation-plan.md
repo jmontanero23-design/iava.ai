@@ -95,3 +95,33 @@ This plan distills the PDF blueprint into phases, components, and concrete tasks
 - WordPress rate limits: throttle posts; queue via n8n
 - Compliance: paper trade first; clear disclosures; audit logs
 
+
+
+
+## AI Feature Integration Plan (Phased)
+
+Phase 1 — Guardrailed AI Assist (Near-term)
+- Natural-language “Explain This” for current signal: send structured state (indicators, score, daily regime) to an LLM with a constrained prompt to produce a short, non-actionable explanation. Output rendered only in the UI; never executed.
+- Auto-preset suggestion: LLM recommends a strategy preset based on symbol liquidity, timeframe, regime and Squeeze/ATR context. Only sets UI preset; requires user confirmation.
+- Parameter helper: propose threshold/horizon tweaks for Backtest; user can click “Apply”.
+
+Phase 2 — Orchestrated Actions (n8n)
+- Structured signal payloads to n8n for: watchlist maintenance, Discord/Slack posts (deferred), and summary reports. HMAC signing enabled.
+- Optional: n8n schedules periodic scans with Vercel Cron, writes results to a DB; UI reads summaries.
+
+Phase 3 — ML Scoring Augmentation (Later)
+- Add a learned component to the Unicorn score using historical labels (e.g., light GBM / logistic regression). Train offline; serve as a deterministic function on the server.
+- Add meta-features: volatility regime, session-of-day, gap/earnings proximity, to improve discriminability.
+
+Phase 4 — Generative UX (Opt-in)
+- Chat interface for: “scan 5Min >80 with daily bull consensus”; converts to query and runs scanner.
+- Risk reasoning: “why reduce size?” referencing daily mismatch/ATR extension and backtest expectancy.
+
+Guardrails
+- No live trade execution driven by AI; any AI suggestion requires explicit user confirmation.
+- Strict separation of client and server secrets; LLM calls proxied via server with redaction.
+
+Open Tasks (near-term)
+- [ ] Add “Explain” button in UnicornCallout to call /api/llm/explain (stub with mock text until key configured).
+- [ ] Add “Suggest Preset” in Presets area, using /api/llm/preset with structured state.
+- [ ] Add scan consensus mode (done), score consensus bonus toggle (next), and preset overlay chips (done).

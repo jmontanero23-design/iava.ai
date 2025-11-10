@@ -1,0 +1,118 @@
+{
+  "name": "Unicorn Signal Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "unicorn-signal",
+        "responseMode": "onReceived"
+      },
+      "id": "Webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [260, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Verify HMAC X-Signature (hex) using env N8N_SHARED_SECRET\nconst crypto = require('crypto');\nconst secret = process.env.N8N_SHARED_SECRET || '';\nif (!secret) {\n  return [{ auth: { ok: false, reason: 'missing-secret' }, payload: $json }];\n}\nconst sig = $json.headers?.['x-signature'] || $json.headers?.['X-Signature'] || $headers['x-signature'] || '';\nconst raw = $runData[0]?.json?.rawBody || $json;\nconst bodyString = typeof raw === 'string' ? raw : JSON.stringify(raw);\nconst h = crypto.createHmac('sha256', secret).update(bodyString).digest('hex');\nconst ok = (sig && typeof sig === 'string' && sig.toLowerCase() === h.toLowerCase());\nreturn [{ auth: { ok, reason: ok ? 'ok' : 'bad-signature' }, payload: $json }];"
+      },
+      "id": "Verify HMAC",
+      "name": "Verify HMAC",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{$json.auth.ok}}" }
+          ]
+        }
+      },
+      "id": "IF Auth",
+      "name": "IF Auth",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [760, 300]
+    },
+    {
+      "parameters": {
+        "statusCode": 401,
+        "responseBody": "Unauthorized"
+      },
+      "id": "Respond 401",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [980, 420]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.payload.body.score}}",
+              "operation": "largerEqual",
+              "value2": 70
+            }
+          ]
+        }
+      },
+      "id": "IF Score",
+      "name": "IF Score",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1000, 160]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "Respond 200",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [980, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "url": "={{$env.APP_BASE_URL}}/api/log",
+        "options": {},
+        "jsonParameters": true,
+        "optionsJson": {},
+        "bodyParametersJson": "={ \n  action: 'unicorn_signal',\n  score: $json.payload.body.score,\n  facts: $json.payload.body.facts,\n  symbol: $json.payload.body.context._bars[$json.payload.body.context._bars.length-1].symbol,\n  timeframe: $json.payload.body.context._timeframe\n}"
+      },
+      "id": "Audit Log",
+      "name": "Audit Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1220, 120]
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "url": "={{$env.APP_BASE_URL}}/api/alpaca/order",
+        "options": {},
+        "jsonParameters": true,
+        "bodyParametersJson": "={\n  symbol: $json.payload.body.context._bars[$json.payload.body.context._bars.length-1].symbol,\n  side: $json.payload.body.context.satyDir === 'short' ? 'sell' : 'buy',\n  qty: 1,\n  type: 'market',\n  orderClass: 'bracket',\n  takeProfit: { limit_price: $json.payload.body.context._bars[$json.payload.body.context._bars.length-1].close * 1.01 },\n  stopLoss: { stop_price: $json.payload.body.context._bars[$json.payload.body.context._bars.length-1].close * 0.995 },\n  entry: $json.payload.body.context._bars[$json.payload.body.context._bars.length-1].close\n}"
+      },
+      "id": "Paper Order",
+      "name": "Paper Order",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1220, 200]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Verify HMAC", "type": "main", "index": 0 }]] },
+    "Verify HMAC": { "main": [[{ "node": "IF Auth", "type": "main", "index": 0 }]] },
+    "IF Auth": { "main": [[{ "node": "Respond 200", "type": "main", "index": 0 }], [{ "node": "Respond 401", "type": "main", "index": 0 }]] },
+    "Respond 200": { "main": [[{ "node": "IF Score", "type": "main", "index": 0 }]] },
+    "IF Score": { "main": [[{ "node": "Audit Log", "type": "main", "index": 0 }, { "node": "Paper Order", "type": "main", "index": 0 }], []] }
+  },
+  "active": false
+}
+

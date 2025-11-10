@@ -29,6 +29,16 @@ export default async function handler(req, res) {
       if (arr.length) curveThs = Array.from(new Set(arr)).sort((a,b)=>a-b)
     }
     const dailyFilter = (urlObj.searchParams.get('dailyFilter') || 'none').toLowerCase() // none|bull|bear
+    const assetClass = (urlObj.searchParams.get('assetClass') || 'stocks').toLowerCase() // stocks|crypto
+    const regimeCurves = (urlObj.searchParams.get('regimeCurves') || '0') !== '0'
+    const consensusBonus = (urlObj.searchParams.get('consensus') || '0') !== '0'
+    // Optional multi-horizon matrix: comma-separated
+    const hzsParam = (urlObj.searchParams.get('hzs') || '').trim()
+    let horizonSet = null
+    if (hzsParam) {
+      const arr = hzsParam.split(',').map(s => parseInt(s.trim(), 10)).filter(n => Number.isFinite(n) && n >= 1 && n <= 100)
+      if (arr.length) horizonSet = Array.from(new Set(arr)).sort((a,b)=>a-b)
+    }
 
     const cacheKey = `${symbol}|${timeframe}|${limit}|${threshold}|${horizon}`
     const cached = getCache(dataCache, cacheKey, TTL)
@@ -42,20 +52,45 @@ export default async function handler(req, res) {
       res.status(200).send(cached.body)
       return
     }
-    const bars = await fetchBars({ key, secret, dataBase, symbol, timeframe, limit })
+    const bars = assetClass === 'crypto'
+      ? await fetchBarsCrypto({ key, secret, dataBaseCrypto: process.env.ALPACA_DATA_CRYPTO_URL || 'https://data.alpaca.markets/v1beta3', symbol, timeframe, limit })
+      : await fetchBars({ key, secret, dataBase, symbol, timeframe, limit })
     if (!bars.length) return res.status(200).json({ symbol, timeframe, bars: 0, scores: [], scoreAvg: 0, scorePcts: { p40: 0, p60: 0, p70: 0 } })
 
     const { computeStates } = await import('../src/utils/indicators.js')
+    // Secondary timeframe states for consensus bonus (optional)
+    let secBars = null
+    let secStates = null
+    if (consensusBonus) {
+      const secTf = mapSecondary(timeframe)
+      if (secTf) {
+        secBars = assetClass === 'crypto'
+          ? await fetchBarsCrypto({ key, secret, dataBaseCrypto: process.env.ALPACA_DATA_CRYPTO_URL || 'https://data.alpaca.markets/v1beta3', symbol, timeframe: secTf, limit })
+          : await fetchBars({ key, secret, dataBase, symbol, timeframe: secTf, limit })
+        if (secBars?.length) {
+          secStates = []
+          for (let i = 0; i < bars.length; i++) {
+            // find last sec bar time <= primary time
+            const t = bars[i].time
+            let j = -1
+            for (let k = 0; k < secBars.length; k++) { if (secBars[k].time <= t) j = k; else break }
+            if (j >= 0) secStates[i] = computeStates(secBars.slice(0, j + 1))
+            else secStates[i] = null
+          }
+        }
+      }
+    }
     const scores = []
     const start = Math.min(80, Math.floor(bars.length / 5))
     const events = []
     const curve = curveThs.map(th => ({ th, rets: [] }))
     const curveBull = curveThs.map(th => ({ th, rets: [] }))
     const curveBear = curveThs.map(th => ({ th, rets: [] }))
+    const matrix = horizonSet ? horizonSet.map(hz => ({ hz, bins: curveThs.map(th => ({ th, rets: [] })) })) : null
     // Prepare daily regime states if filtering requested
     let dailyBars = null
     let dailyStates = null
-    if (dailyFilter !== 'none') {
+    if ((dailyFilter !== 'none' || regimeCurves) && assetClass === 'stocks') {
       const dkey = `${symbol}|1Day|400`
       dailyBars = getCache(dailyCache, dkey, DAILY_TTL)
       if (!dailyBars) {
@@ -71,7 +106,7 @@ export default async function handler(req, res) {
       const slice = bars.slice(0, i + 1)
       const st = computeStates(slice)
       // Optional daily regime filter
-      if (dailyStates) {
+      if (dailyStates && dailyFilter !== 'none' && assetClass === 'stocks') {
         const it = bars[i].time
         let di = -1
         for (let j = 0; j < dailyBars.length; j++) {
@@ -87,8 +122,10 @@ export default async function handler(req, res) {
           }
         }
       }
-      scores.push(st.score)
-      if (st.score >= threshold && i + horizon < bars.length) {
+      const bonus = (consensusBonus && secStates && secStates[i]) ? ((st.pivotNow !== 'neutral' && secStates[i].pivotNow === st.pivotNow) ? 10 : 0) : 0
+      const scoreNow = st.score + bonus
+      scores.push(scoreNow)
+      if (scoreNow >= threshold && i + horizon < bars.length) {
         const entry = bars[i].close
         const exit = bars[i + horizon].close
         const fwd = (exit - entry) / entry
@@ -99,10 +136,10 @@ export default async function handler(req, res) {
         const exit = bars[i + horizon].close
         const fwd = (exit - entry) / entry
         for (const bin of curve) {
-          if (st.score >= bin.th) bin.rets.push(fwd)
+          if (scoreNow >= bin.th) bin.rets.push(fwd)
         }
         // Also populate regime curves if daily states available
-        if (dailyStates) {
+        if (dailyStates && regimeCurves && assetClass === 'stocks') {
           // find daily bar index di again (reuse logic)
           const it2 = bars[i].time
           let di2 = -1
@@ -116,6 +153,16 @@ export default async function handler(req, res) {
             if (isBull) for (const bin of curveBull) { if (st.score >= bin.th) bin.rets.push(fwd) }
             if (isBear) for (const bin of curveBear) { if (st.score >= bin.th) bin.rets.push(fwd) }
           }
+        }
+      }
+      if (matrix) {
+        for (const row of matrix) {
+          const hz = row.hz
+          if (i + hz >= bars.length) continue
+          const entry = bars[i].close
+          const exit = bars[i + hz].close
+          const fwd = (exit - entry) / entry
+          for (const bin of row.bins) if (st.score >= bin.th) bin.rets.push(fwd)
         }
       }
       if (scores.length > 400) scores.shift() // keep last 400
@@ -135,7 +182,7 @@ export default async function handler(req, res) {
       scoreAvg: Number(avg.toFixed(2)),
       scorePcts: { p40: Number(pct(scores,40).toFixed(2)), p60: Number(pct(scores,60).toFixed(2)), p70: Number(pct(scores,70).toFixed(2)) },
       recentScores: scores.slice(-120),
-      threshold, horizon, dailyFilter, events: events.length, winRate: events.length ? Number(((wins/events.length)*100).toFixed(2)) : 0, avgFwd: Number((avgFwd*100).toFixed(2)),
+      threshold, horizon, dailyFilter: assetClass==='stocks'?dailyFilter:'none', events: events.length, winRate: events.length ? Number(((wins/events.length)*100).toFixed(2)) : 0, avgFwd: Number((avgFwd*100).toFixed(2)),
       medianFwd: Number((medFwd*100).toFixed(2)),
       avgWin: Number((avgWin*100).toFixed(2)), avgLoss: Number((avgLoss*100).toFixed(2)), profitFactor: profitFactor==null?null:Number(profitFactor.toFixed(2)),
     }
@@ -145,7 +192,8 @@ export default async function handler(req, res) {
         const ev = arr.length
         const wr = ev ? (arr.filter(x=>x>0).length/ev)*100 : 0
         const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
-        return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)) }
+        const med = ev ? median(arr)*100 : 0
+        return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)), medianFwd: Number(med.toFixed(2)) }
       })
       if (dailyStates) {
         out.curveBull = curveBull.map(c => {
@@ -153,18 +201,58 @@ export default async function handler(req, res) {
           const ev = arr.length
           const wr = ev ? (arr.filter(x=>x>0).length/ev)*100 : 0
           const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
-          return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)) }
+          const med = ev ? median(arr)*100 : 0
+          return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)), medianFwd: Number(med.toFixed(2)) }
         })
         out.curveBear = curveBear.map(c => {
           const arr = c.rets
           const ev = arr.length
           const wr = ev ? (arr.filter(x=>x>0).length/ev)*100 : 0
           const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
-          return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)) }
+          const med = ev ? median(arr)*100 : 0
+          return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)), medianFwd: Number(med.toFixed(2)) }
         })
       }
+      if (matrix) {
+        out.matrix = matrix.map(row => ({
+          hz: row.hz,
+          curve: row.bins.map(b => {
+            const arr = b.rets
+            const ev = arr.length
+            const wr = ev ? (arr.filter(x=>x>0).length/ev)*100 : 0
+            const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
+            return { th: b.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)) }
+          })
+        }))
+      }
     }
-    if (format === 'csv') {
+    if (format === 'summary' || format === 'summary-json') {
+      // Build summary from curve(s)
+      if (format === 'summary-json') {
+        const summary = []
+        const pushRows = (regime, arr) => {
+          if (!Array.isArray(arr)) return
+          for (const c of arr) summary.push({ regime, threshold: c.th, events: c.events, winRate: c.winRate, avgFwd: c.avgFwd, medianFwd: c.medianFwd })
+        }
+        pushRows('all', out.curve)
+        if (regimeCurves && out.curveBull) pushRows('bull', out.curveBull)
+        if (regimeCurves && out.curveBear) pushRows('bear', out.curveBear)
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.status(200).send(JSON.stringify({ summary }))
+      } else {
+        let header = 'regime,threshold,events,winRate,avgFwd,medianFwd\n'
+        const rows = []
+        const pushRows = (regime, arr) => {
+          if (!Array.isArray(arr)) return
+          for (const c of arr) rows.push(`${regime},${c.th},${c.events},${c.winRate}%,${c.avgFwd}%,${c.medianFwd}%`)
+        }
+        pushRows('all', out.curve)
+        if (regimeCurves && out.curveBull) pushRows('bull', out.curveBull)
+        if (regimeCurves && out.curveBear) pushRows('bear', out.curveBear)
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+        res.status(200).send(header + rows.join('\n'))
+      }
+    } else if (format === 'csv') {
       const header = 'time,close,score,forwardReturn\n'
       const rows = events.map(e => `${new Date(e.time*1000).toISOString()},${e.close},${e.score.toFixed(2)},${(e.fwd*100).toFixed(2)}%`).join('\n')
       res.setHeader('Content-Type', 'text/csv; charset=utf-8')
@@ -198,6 +286,14 @@ function mapTf(tf) {
   return '1Min'
 }
 
+function mapSecondary(tf) {
+  const t = String(tf || '').toLowerCase()
+  if (t === '1m' || t === '1min') return '5Min'
+  if (t === '5m' || t === '5min') return '15Min'
+  if (t === '15m' || t === '15min') return '1Hour'
+  return null
+}
+
 function median(arr) {
   if (!arr?.length) return 0
   const copy = [...arr].sort((a,b) => a - b)
@@ -219,6 +315,26 @@ async function fetchBars({ key, secret, dataBase, symbol, timeframe, limit }) {
   let raw = []
   if (Array.isArray(j?.bars?.[symbol])) raw = j.bars[symbol]
   else if (Array.isArray(j?.bars)) raw = j.bars
+  return raw.map(b => ({
+    time: Math.floor(new Date(b.t || b.Timestamp || b.time).getTime() / 1000),
+    open: b.o ?? b.Open, high: b.h ?? b.High, low: b.l ?? b.Low, close: b.c ?? b.Close, volume: b.v ?? b.Volume,
+  }))
+}
+
+async function fetchBarsCrypto({ key, secret, dataBaseCrypto, symbol, timeframe, limit }) {
+  const qs = new URLSearchParams({ symbols: symbol, timeframe, limit: String(limit) })
+  const now = new Date()
+  const backDays = timeframe === '1Day' ? 365 * 2 : 21
+  const startDate = new Date(now.getTime() - backDays * 24 * 60 * 60 * 1000)
+  qs.set('start', startDate.toISOString())
+  const endpoint = `${dataBaseCrypto}/crypto/us/bars?${qs.toString()}`
+  const r = await fetch(endpoint, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
+  const j = await r.json()
+  if (!r.ok) throw new Error(JSON.stringify(j))
+  let raw = []
+  if (Array.isArray(j?.bars?.[symbol])) raw = j.bars[symbol]
+  else if (Array.isArray(j?.bars)) raw = j.bars
+  else if (Array.isArray(j?.data?.bars)) raw = j.data.bars
   return raw.map(b => ({
     time: Math.floor(new Date(b.t || b.Timestamp || b.time).getTime() / 1000),
     open: b.o ?? b.Open, high: b.h ?? b.High, low: b.l ?? b.Low, close: b.c ?? b.Close, volume: b.v ?? b.Volume,

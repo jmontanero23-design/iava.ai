@@ -11,6 +11,7 @@ export function readParams() {
     threshold: num(p.get('th'), undefined),
     enforceDaily: b(p.get('edf')),
     streaming: b(p.get('str')),
+    consensusBonus: b(p.get('cb')),
     ema821: b(p.get('e821')),
     ema512: b(p.get('e512')),
     ema89: b(p.get('e89')),
@@ -36,6 +37,7 @@ export function writeParams(state) {
   setN('th', state.threshold)
   setB('edf', state.enforceDaily)
   setB('str', state.streaming)
+  setB('cb', state.consensusBonus)
   setB('e821', state.showEma821)
   setB('e512', state.showEma512)
   setB('e89', state.showEma89)

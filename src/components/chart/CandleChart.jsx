@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { createChart } from 'lightweight-charts'
 
-export default function CandleChart({ bars = [], overlays = {}, markers = [], loading = false, focusTime = null }) {
+export default function CandleChart({ bars = [], overlays = {}, markers = [], loading = false, focusTime = null, overlayToggles = null, presetLabel = '', presetExpected = null, currentOverlay = null }) {
   const containerRef = useRef(null)
   const chartRef = useRef(null)
   const seriesRef = useRef(null)
@@ -14,6 +14,7 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
   const cloudUnsubRef = useRef(null)
   const dockRef = useRef(null)
   const lastFocusRef = useRef(null)
+  const squeezeCanvasRef = useRef(null)
 
   useEffect(() => {
     const container = containerRef.current
@@ -69,19 +70,22 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
     // Floating info dock (bottom-left)
     if (!dockRef.current) {
       const d = document.createElement('div')
-      d.style.position = 'absolute'
-      d.style.left = '8px'
-      d.style.bottom = '8px'
-      d.style.pointerEvents = 'none'
-      d.style.background = 'rgba(2,6,23,0.7)'
-      d.style.border = '1px solid rgba(51,65,85,0.8)'
-      d.style.borderRadius = '8px'
-      d.style.padding = '6px 8px'
-      d.style.fontSize = '11px'
-      d.style.color = '#e2e8f0'
-      d.style.boxShadow = '0 1px 2px rgba(0,0,0,0.3)'
+      d.className = 'chart-info-dock'
       dockRef.current = d
       container.appendChild(d)
+    }
+
+    // Squeeze shading canvas (vertical bands)
+    if (!squeezeCanvasRef.current) {
+      const c2 = document.createElement('canvas')
+      c2.style.position = 'absolute'
+      c2.style.left = '0'
+      c2.style.top = '0'
+      c2.style.right = '0'
+      c2.style.bottom = '0'
+      c2.style.pointerEvents = 'none'
+      squeezeCanvasRef.current = c2
+      container.appendChild(c2)
     }
 
     const handleResize = () => {
@@ -102,6 +106,9 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       const cc = cloudCanvasRef.current
       if (cc && cc.parentNode) cc.parentNode.removeChild(cc)
       cloudCanvasRef.current = null
+      const sc = squeezeCanvasRef.current
+      if (sc && sc.parentNode) sc.parentNode.removeChild(sc)
+      squeezeCanvasRef.current = null
       const dk = dockRef.current
       if (dk && dk.parentNode) dk.parentNode.removeChild(dk)
       dockRef.current = null
@@ -325,6 +332,20 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       priceLinesRef.current.saty = lines
     }
 
+    // Squeeze Bands (BB and KC)
+    if (!ref.squeeze) ref.squeeze = {}
+    if (overlays.squeezeBands) {
+      const { upperBB, lowerBB, upperKC, lowerKC } = overlays.squeezeBands
+      const mk = (key, opts) => { if (!ref.squeeze[key]) ref.squeeze[key] = chart.addLineSeries(opts); return ref.squeeze[key] }
+      const map = (arr) => bars.map((b, i) => (arr[i] == null ? null : { time: b.time, value: arr[i] })).filter(Boolean)
+      mk('bbU', { color: 'rgba(148,163,184,0.7)', lineWidth: 1, priceLineVisible: false }).setData(map(upperBB))
+      mk('bbL', { color: 'rgba(148,163,184,0.7)', lineWidth: 1, priceLineVisible: false }).setData(map(lowerBB))
+      mk('kcU', { color: 'rgba(99,102,241,0.7)', lineWidth: 1, lineStyle: 1, priceLineVisible: false }).setData(map(upperKC))
+      mk('kcL', { color: 'rgba(99,102,241,0.7)', lineWidth: 1, lineStyle: 1, priceLineVisible: false }).setData(map(lowerKC))
+    } else if (ref.squeeze) {
+      ['bbU','bbL','kcU','kcL'].forEach(k => { if (ref.squeeze[k]) ref.squeeze[k].setData([]) })
+    }
+
     // SATY shaded bands (horizontal regions across full width)
     const bandsEl = bandsRef.current
     const s = overlays.saty
@@ -452,6 +473,66 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
         }
       }
     } catch (_) {}
+    // Update top-left HUD chips (lightweight)
+    try {
+      const last = bars[bars.length - 1]
+      if (hudRef.current && last) {
+        const saty = overlays?.saty
+        const fmt = (n) => (n == null ? '—' : Number(n).toFixed(2))
+        let nearestUp, nearestDn
+        if (saty?.atr && saty?.levels) {
+          const up0236 = saty.levels.t0236.up
+          const dn0236 = saty.levels.t0236.dn
+          const up1000 = saty.levels.t1000.up
+          const dn1000 = saty.levels.t1000.dn
+          const abs = (x) => (x == null ? null : Math.abs(x))
+          nearestUp = [up0236, up1000].filter(v => v != null && v > last.close).sort((a,b) => a - b)[0]
+          nearestDn = [dn0236, dn1000].filter(v => v != null && v < last.close).sort((a,b) => abs(a-last.close) - abs(b-last.close))[0]
+        }
+        const chips = []
+        chips.push(`<span class=\"chip\">O ${fmt(last.open)}</span>`)
+        chips.push(`<span class=\"chip\">H ${fmt(last.high)}</span>`)
+        chips.push(`<span class=\"chip\">L ${fmt(last.low)}</span>`)
+        chips.push(`<span class=\"chip chip-strong\">C ${fmt(last.close)}</span>`)
+        if (saty?.atr) chips.push(`<span class=\"chip\">ATR ${fmt(saty.atr)}</span>`)
+        if (saty?.pivot != null) chips.push(`<span class=\"chip\">Pivot ${fmt(saty.pivot)}</span>`)
+        if (nearestUp != null) chips.push(`<span class=\"chip chip-up\">↑ ${fmt(nearestUp)}</span>`)
+        if (nearestDn != null) chips.push(`<span class=\"chip chip-dn\">↓ ${fmt(nearestDn)}</span>`)
+        hudRef.current.innerHTML = `<div class=\"flex gap-1 flex-wrap\">${chips.join('')}</div>`
+      }
+    } catch {}
+    // Draw Squeeze ON shading (vertical faint stripes)
+    try {
+      const c2 = squeezeCanvasRef.current
+      const sref = seriesRef.current
+      const ts = chartRef.current?.timeScale?.()
+      const onArr = overlays?.squeezeOn
+      const el = containerRef.current
+      if (c2 && sref && ts && onArr && el) {
+        c2.width = el.clientWidth
+        c2.height = el.clientHeight
+        const ctx2 = c2.getContext('2d')
+        ctx2.clearRect(0,0,c2.width,c2.height)
+        // Build segments of consecutive ON bars
+        let segStart = -1
+        for (let i = 0; i < bars.length; i++) {
+          const on = onArr[i] === 1
+          if (on && segStart === -1) segStart = i
+          if ((!on || i === bars.length - 1) && segStart !== -1) {
+            const endIdx = on ? i : i - 1
+            const x1 = ts.timeToCoordinate(bars[segStart]?.time)
+            const x2 = ts.timeToCoordinate(bars[endIdx]?.time)
+            if (x1 != null && x2 != null) {
+              const left = Math.min(x1, x2)
+              const right = Math.max(x1, x2)
+              ctx2.fillStyle = 'rgba(244,63,94,0.06)'
+              ctx2.fillRect(left, 0, Math.max(1, right - left), c2.height)
+            }
+            segStart = -1
+          }
+        }
+      }
+    } catch (_) {}
   }, [overlays, bars])
 
   // Optional focus to a specific time (center visible range around that bar)
@@ -480,6 +561,49 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
   return (
     <div className="card w-full h-[560px] overflow-hidden relative">
       <div ref={containerRef} className="w-full h-full" />
+
+      {overlayToggles ? (
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-2 bg-slate-900/70 border border-slate-700 rounded px-2 py-1 text-[11px] shadow-md backdrop-blur-sm" style={{ pointerEvents:'auto' }}>
+          {presetLabel ? (
+            <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300" title="Active strategy preset">{presetLabel}</span>
+          ) : null}
+          {['ema821','ema512','ema89','ema3450','ribbon','ichi','saty','squeeze'].map(key => {
+            const labels = { ema821: 'EMA 8/21', ema512: 'EMA 5/12', ema89: 'EMA 8/9', ema3450: 'EMA 34/50', ribbon: 'Ribbon', ichi: 'Ichimoku', saty: 'SATY', squeeze: 'Squeeze' }
+            const label = labels[key] || key
+            const active = currentOverlay && currentOverlay[key]
+            return overlayToggles[key] ? (
+              <button key={key} onClick={overlayToggles[key]} className={`btn btn-xs btn-toggle ${active ? 'btn-toggle-active' : ''}`} title={`Toggle ${label}`}>{label}</button>
+            ) : null
+          })}
+          {/* Preset adherence hints: show expected overlays that are currently off */}
+          {presetExpected && currentOverlay ? (
+            <div className="flex items-center gap-1 ml-2" title="Preset expects these overlays to be ON">
+              {Object.keys(presetExpected).filter(k => presetExpected[k] && !currentOverlay[k]).map(k => (
+                <span key={k} className="px-1.5 py-0.5 rounded-full border border-rose-600/70 text-rose-300 bg-rose-900/20">{k}</span>
+              ))}
+            </div>
+          ) : null}
+          {/* Active overlay chips */}
+          <div className="flex items-center gap-1 ml-2">
+            {(() => {
+              const chips = []
+              try {
+                if (Array.isArray(overlays?.emaClouds)) overlays.emaClouds.forEach(c => chips.push({ label: `EMA ${c.key}`, color: c.color || '#94a3b8' }))
+                if (overlays?.ribbon) chips.push({ label: 'Ribbon', color: '#94a3b8' })
+                if (overlays?.ichimoku) chips.push({ label: 'Ichi', color: '#60a5fa' })
+                if (overlays?.saty) chips.push({ label: 'SATY', color: '#14b8a6' })
+                if (overlays?.squeezeBands) chips.push({ label: 'Squeeze', color: '#f43f5e' })
+              } catch {}
+              return chips.slice(0,6).map((c,i) => (
+                <span key={i} className="px-1.5 py-0.5 rounded-full border border-slate-700" style={{ background:'rgba(2,6,23,0.6)'}} title={c.label}>
+                  <span className="inline-block w-2 h-2 rounded-full mr-1" style={{ background:c.color }}></span>{c.label}
+                </span>
+              ))
+            })()}
+          </div>
+        </div>
+      ) : null}
+
       {loading ? (
         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
           <div className="animate-spin h-6 w-6 border-2 border-slate-600 border-t-transparent rounded-full" />

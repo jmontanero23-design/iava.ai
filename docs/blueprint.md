@@ -2,6 +2,19 @@
 
 AI-Driven “Unicorn” Trading System – Research &
 Design Blueprint
+Updates (November 2025)
+- Real-time Scanner (stocks): /api/scan + UI ScannerPanel to surface top Unicorn Scores (long/short) for a given symbol universe and timeframe. Optional Daily confluence gating.
+- Watchlists: local Save/Load of Scanner results; WatchlistPanel for quick clicking into symbols.
+- TTM Squeeze: corrected computation (BB=SMA±σ; KC=EMA±ATR(TR)), robust SVG panel, BB/KC overlays, and Squeeze‑ON shading.
+- Daily Confluence UX: Strict by default, but Unicorn panel allows explicit “Proceed (Paper)” override with reasons shown (Pivot/Ichimoku states).
+- Backtest: configurable curve thresholds, horizon chips (H5/10/20), and optional regime comparison curves without filtering.
+
+Planned Next (PDF-aligned)
+- Alerts and Social (via n8n; deferred until core UI is finalized).
+- Risk controls: dynamic sizing based on ATR and daily mismatch, cooldowns, and exposure caps.
+- Multi‑asset expansion: crypto scanning via a provider with websockets (design in appendix).
+- Auth + access tiers: lightweight gating now, migrate to managed auth (Clerk/Auth0) later.
+
 Saty ATR Levels & SATY Indicator Ecosystem
 Saty ATR Levels: Developed by Saty Mahajan, this indicator plots adaptive support/resistance levels based
 on ATR (Average True Range) and key Fibonacci ratios. It uses the previous period’s close as a central
