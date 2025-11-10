@@ -78,7 +78,9 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       d.style.border = '1px solid rgba(51,65,85,0.8)'
       d.style.borderRadius = '8px'
       d.style.padding = '6px 8px'
-      d.style.fontSize = '11px'
+      d.style.fontSize = '12px'
+      d.style.fontWeight = '500'
+      d.style.letterSpacing = '0.2px'
       d.style.color = '#e2e8f0'
       d.style.boxShadow = '0 1px 2px rgba(0,0,0,0.3)'
       dockRef.current = d

@@ -24,6 +24,25 @@ export default function WatchlistNavigator({ onLoadSymbol, timeframe }) {
   }
 
   useEffect(() => { refresh() }, [])
+  // Keyboard shortcuts: ← prev, → next, space toggles Auto
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = (e.target?.tagName || '').toLowerCase()
+      if (tag === 'input' || tag === 'textarea' || e.ctrlKey || e.metaKey || e.altKey) return
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        if (symbols.length) setIdx(i => (i - 1 + symbols.length) % symbols.length)
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        if (symbols.length) setIdx(i => (i + 1) % symbols.length)
+      } else if (e.key === ' ') {
+        e.preventDefault()
+        setPlaying(p => !p)
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [symbols.length])
   useEffect(() => {
     if (playing && symbols.length) {
       clearInterval(timerRef.current)
@@ -50,7 +69,7 @@ export default function WatchlistNavigator({ onLoadSymbol, timeframe }) {
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Watchlist Navigator <InfoPopover title="Navigator">Cycle through a saved watchlist and load each symbol. Great for scanning results rapidly.</InfoPopover></h3>
+        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Watchlist Navigator <InfoPopover title="Navigator">Cycle a watchlist and load each symbol. Shortcuts: ← Prev, → Next, Space Auto/Pause.</InfoPopover></h3>
         <div className="flex items-center gap-2 text-xs">
           <button onClick={refresh} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Refresh</button>
         </div>
@@ -72,4 +91,3 @@ export default function WatchlistNavigator({ onLoadSymbol, timeframe }) {
     </div>
   )
 }
-

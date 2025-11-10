@@ -71,6 +71,7 @@ export default function App() {
   const [signalHistory, setSignalHistory] = useState([])
   const [focusTime, setFocusTime] = useState(null)
   const [streaming, setStreaming] = useState(false)
+  const [hud, setHud] = useState('')
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
@@ -425,9 +426,14 @@ export default function App() {
         {showSqueeze && <SqueezePanel bars={bars} />}
         <SignalsPanel state={signalState} />
       </div>
-      <ScannerPanel onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf || timeframe); loadBars(sym, tf || timeframe) }} defaultTimeframe={timeframe} />
-      <WatchlistNavigator onLoadSymbol={(sym, tf) => { setSymbol(sym); loadBars(sym, tf || timeframe) }} timeframe={timeframe} />
+      <ScannerPanel onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf || timeframe); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }} defaultTimeframe={timeframe} />
+      <WatchlistNavigator onLoadSymbol={(sym, tf) => { setSymbol(sym); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }} timeframe={timeframe} />
       <WatchlistPanel onLoadSymbol={(sym) => { setSymbol(sym); loadBars(sym, timeframe) }} />
+      {hud && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-3 py-1 rounded-md border border-slate-700 bg-slate-900/80 text-slate-100 text-sm shadow">
+          {hud}
+        </div>
+      )}
       <BacktestPanel symbol={symbol} timeframe={timeframe} />
       <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
       <UnicornActionBar threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} />
