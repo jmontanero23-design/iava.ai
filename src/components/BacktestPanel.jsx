@@ -185,12 +185,12 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
               <option value="bear">Daily Bearish</option>
             </select>
           </label>
-          <button onClick={run} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Running…' : 'Run'}</button>
-          <button onClick={explainBacktest} disabled={aiLoading || !res} className="bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-xs rounded px-2 py-1 border border-slate-700">{aiLoading ? 'Explaining…' : 'Explain (AI)'}</button>
-          <button onClick={downloadJson} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Download JSON</button>
-          <button onClick={downloadCsv} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Download CSV</button>
-          <button onClick={downloadSummaryCsv} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Summary CSV</button>
-          <button onClick={downloadSummaryJson} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Summary JSON</button>
+          <button onClick={run} disabled={loading} className="btn btn-xs">{loading ? 'Running…' : 'Run'}</button>
+          <button onClick={explainBacktest} disabled={aiLoading || !res} className="btn btn-xs disabled:opacity-50">{aiLoading ? 'Explaining…' : 'Explain (AI)'}</button>
+          <button onClick={downloadJson} className="btn btn-xs">Download JSON</button>
+          <button onClick={downloadCsv} className="btn btn-xs">Download CSV</button>
+          <button onClick={downloadSummaryCsv} className="btn btn-xs">Summary CSV</button>
+          <button onClick={downloadSummaryJson} className="btn btn-xs">Summary JSON</button>
           {preset && (
             <button onClick={() => { if (typeof preset.th === 'number') setThreshold(preset.th); if (typeof preset.hz === 'number') setHorizon(preset.hz); if (preset.regime) setDailyFilter(preset.regime) }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Apply Preset</button>
           )}

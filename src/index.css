@@ -81,6 +81,7 @@ select {
   color: #e2e8f0;
   box-shadow: 0 1px 2px rgba(0,0,0,0.3);
   backdrop-filter: blur(6px);
+  z-index: 5;
 }
 
 .chart-hud {
@@ -94,6 +95,7 @@ select {
   padding: 6px 8px;
   color: #e2e8f0;
   backdrop-filter: blur(6px);
+  z-index: 10;
 }
 
 .chip {
@@ -107,3 +109,25 @@ select {
 .chip-strong { border-color: rgba(226,232,240,0.8); }
 .chip-up { border-color: rgba(16,185,129,0.7); color: #a7f3d0; }
 .chip-dn { border-color: rgba(239,68,68,0.7); color: #fecaca; }
+
+/* Unified controls */
+.btn {
+  @apply bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded text-slate-200;
+  padding: 0.25rem 0.5rem; /* px-2 py-1 */
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+.btn-xs { font-size: 0.75rem; /* text-xs */ }
+.btn-ghost {
+  background: rgba(2,6,23,0.6);
+}
+.btn-toggle { @apply border-slate-700; }
+.btn-toggle-active { @apply border-slate-500 text-slate-100; }
+
+.input, .select {
+  @apply bg-slate-800 border border-slate-700 rounded text-slate-200;
+  padding: 0.25rem 0.5rem;
+}
+.checkbox { @apply accent-indigo-500; }
+
+.panel-title { @apply text-sm font-semibold text-slate-200; }
+.hint { @apply text-xs text-slate-500; }

@@ -34,7 +34,7 @@ export default function SymbolSearch({ value, onChange, onSubmit }) {
 
   return (
     <div className="relative" ref={ref}>
-      <input value={q} onChange={e => { const v = e.target.value.toUpperCase(); setQ(v); onChange?.(v); search(v); setOpen(true) }} onKeyDown={e => { if (e.key === 'Enter') submit() }} placeholder="Symbol" className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm w-[120px]" />
+      <input value={q} onChange={e => { const v = e.target.value.toUpperCase(); setQ(v); onChange?.(v); search(v); setOpen(true) }} onKeyDown={e => { if (e.key === 'Enter') submit() }} placeholder="Symbol" className="input text-sm w-[120px]" />
       {open && items.length > 0 && (
         <div className="absolute z-10 mt-1 bg-slate-900 border border-slate-700 rounded shadow w-64 max-h-64 overflow-auto">
           {items.map(it => (
@@ -48,4 +48,3 @@ export default function SymbolSearch({ value, onChange, onSubmit }) {
     </div>
   )
 }
-

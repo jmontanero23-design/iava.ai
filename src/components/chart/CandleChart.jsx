@@ -563,15 +563,16 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       <div ref={containerRef} className="w-full h-full" />
 
       {overlayToggles ? (
-        <div className="absolute top-2 right-2 flex items-center gap-2 bg-slate-900/70 border border-slate-700 rounded px-2 py-1 text-[11px] shadow-md backdrop-blur-sm" style={{ pointerEvents:'auto' }}>
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-2 bg-slate-900/70 border border-slate-700 rounded px-2 py-1 text-[11px] shadow-md backdrop-blur-sm" style={{ pointerEvents:'auto' }}>
           {presetLabel ? (
             <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300" title="Active strategy preset">{presetLabel}</span>
           ) : null}
           {['ema821','ema512','ema89','ema3450','ribbon','ichi','saty','squeeze'].map(key => {
             const labels = { ema821: 'EMA 8/21', ema512: 'EMA 5/12', ema89: 'EMA 8/9', ema3450: 'EMA 34/50', ribbon: 'Ribbon', ichi: 'Ichimoku', saty: 'SATY', squeeze: 'Squeeze' }
             const label = labels[key] || key
+            const active = currentOverlay && currentOverlay[key]
             return overlayToggles[key] ? (
-              <button key={key} onClick={overlayToggles[key]} className="px-2 py-0.5 rounded border border-slate-700 hover:border-slate-500" title={`Toggle ${label}`}>{label}</button>
+              <button key={key} onClick={overlayToggles[key]} className={`btn btn-xs btn-toggle ${active ? 'btn-toggle-active' : ''}`} title={`Toggle ${label}`}>{label}</button>
             ) : null
           })}
           {/* Preset adherence hints: show expected overlays that are currently off */}
