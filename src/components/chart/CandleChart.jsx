@@ -70,19 +70,7 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
     // Floating info dock (bottom-left)
     if (!dockRef.current) {
       const d = document.createElement('div')
-      d.style.position = 'absolute'
-      d.style.left = '8px'
-      d.style.bottom = '8px'
-      d.style.pointerEvents = 'none'
-      d.style.background = 'rgba(2,6,23,0.7)'
-      d.style.border = '1px solid rgba(51,65,85,0.8)'
-      d.style.borderRadius = '8px'
-      d.style.padding = '6px 8px'
-      d.style.fontSize = '12px'
-      d.style.fontWeight = '500'
-      d.style.letterSpacing = '0.2px'
-      d.style.color = '#e2e8f0'
-      d.style.boxShadow = '0 1px 2px rgba(0,0,0,0.3)'
+      d.className = 'chart-info-dock'
       dockRef.current = d
       container.appendChild(d)
     }
@@ -547,7 +535,7 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
       <div ref={containerRef} className="w-full h-full" />
 
       {overlayToggles ? (
-        <div className="absolute top-2 right-2 flex items-center gap-2 bg-slate-900/70 border border-slate-700 rounded px-2 py-1 text-[11px]" style={{ pointerEvents:'auto' }}>
+        <div className="absolute top-2 right-2 flex items-center gap-2 bg-slate-900/70 border border-slate-700 rounded px-2 py-1 text-[11px] shadow-md backdrop-blur-sm" style={{ pointerEvents:'auto' }}>
           {presetLabel ? (
             <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300" title="Active strategy preset">{presetLabel}</span>
           ) : null}

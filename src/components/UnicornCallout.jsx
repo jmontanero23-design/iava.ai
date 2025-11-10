@@ -84,7 +84,12 @@ export default function UnicornCallout({ state, threshold = 70 }) {
             <TradePanel bars={state._bars || []} saty={state.saty} account={state._account || {}} defaultSide={state.satyDir === 'short' ? 'sell' : 'buy'} defaultRiskPct={0.5} onClose={() => setOverrideOpen(false)} />
           </div>
         )}
-        {expErr ? <div className="mt-2 text-xs text-rose-400">{expErr}</div> : null}
+        {expErr ? (
+          <div className="mt-2 text-xs text-rose-400">
+            {expErr}
+            <span className="ml-2 text-slate-500">Check <a href="/api/health" target="_blank" rel="noreferrer" className="underline">/api/health</a> for LLM status.</span>
+          </div>
+        ) : null}
       </div>
     )
   }

@@ -499,7 +499,7 @@ export default function App() {
   })
 
   return (
-    <div className="min-h-screen bg-transparent text-slate-100">
+    <div className="min-h-screen bg-transparent text-slate-100 bg-grid">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
       {showRateBanner && <RateLimitBanner until={rateLimitUntil} />}
       <Hero />
