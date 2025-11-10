@@ -240,19 +240,21 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
             <input value={wlName} onChange={e=>setWlName(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1" />
             <button onClick={async ()=>{
               try {
-                const { save } = await import('../utils/watchlists.js')
+                const { save, setActive } = await import('../utils/watchlists.js')
                 const longs = (res.longs||[]).map(x=>x.symbol)
                 const shorts = (res.shorts||[]).map(x=>x.symbol)
                 const combined = Array.from(new Set([...longs, ...shorts]))
-                save(wlName || 'scanner-top', combined)
+                const listName = wlName || 'scanner-top'
+                save(listName, combined)
+                setActive(listName)
                 alert('Watchlist saved')
               } catch (e) { alert('Save failed') }
             }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Save</button>
             <button onClick={async ()=>{
-              try { const { save } = await import('../utils/watchlists.js'); const longs = (res.longs||[]).map(x=>x.symbol); save((wlName||'scanner-top')+"-longs", longs); alert('Saved longs') } catch { alert('Save failed') }
+              try { const { save, setActive } = await import('../utils/watchlists.js'); const base=(wlName||'scanner-top'); const name=base+"-longs"; const longs = (res.longs||[]).map(x=>x.symbol); save(name, longs); setActive(name); alert('Saved longs') } catch { alert('Save failed') }
             }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Save Longs</button>
             <button onClick={async ()=>{
-              try { const { save } = await import('../utils/watchlists.js'); const shorts = (res.shorts||[]).map(x=>x.symbol); save((wlName||'scanner-top')+"-shorts", shorts); alert('Saved shorts') } catch { alert('Save failed') }
+              try { const { save, setActive } = await import('../utils/watchlists.js'); const base=(wlName||'scanner-top'); const name=base+"-shorts"; const shorts = (res.shorts||[]).map(x=>x.symbol); save(name, shorts); setActive(name); alert('Saved shorts') } catch { alert('Save failed') }
             }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Save Shorts</button>
             <button onClick={exportCsv} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Export CSV</button>
             <button onClick={exportJson} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Export JSON</button>
