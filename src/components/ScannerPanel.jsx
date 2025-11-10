@@ -77,7 +77,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
       const ur = await fetch('/api/universe')
       const uj = await ur.json()
       if (!ur.ok) throw new Error(uj?.error || `HTTP ${ur.status}`)
-      const syms = assetClass === 'crypto' ? [] : (uj.symbols || []).slice()
+      const syms = assetClass === 'crypto' ? (uj.symbols || []).slice() : (uj.symbols || []).slice()
       if (!syms.length) throw new Error('Universe is empty')
       const chunk = (arr, n) => arr.reduce((acc, x, i) => { if (i % n === 0) acc.push([]); acc[acc.length-1].push(x); return acc }, [])
       const chunks = chunk(syms, 25)
@@ -97,6 +97,21 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
       acc.longs.sort((a,b)=>b.score-a.score)
       acc.shorts.sort((a,b)=>b.score-a.score)
       setRes({ timeframe, threshold, enforceDaily, universe: syms.length, longs: acc.longs.slice(0, top), shorts: acc.shorts.slice(0, top) })
+      setProgress('')
+    } catch (e) {
+      setErr(String(e.message || e))
+    } finally {
+      setLoading(false)
+    }
+  }
+  async function loadPopularCrypto() {
+    try {
+      setLoading(true); setErr(''); setProgress('Loading popular crypto…')
+      const ur = await fetch('/api/universe?assetClass=crypto')
+      const uj = await ur.json()
+      if (!ur.ok) throw new Error(uj?.error || `HTTP ${ur.status}`)
+      const list = (uj.symbols || []).join(',')
+      setSymbols(list)
       setProgress('')
     } catch (e) {
       setErr(String(e.message || e))
@@ -157,6 +172,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
             <select value={universe} onChange={e=>setUniverse(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
               <option value="manual">Manual</option>
               {assetClass === 'stocks' && <option value="all">All (US active)</option>}
+              {assetClass === 'crypto' && <option value="popular">Popular (crypto)</option>}
             </select>
           </label>
           <label className="inline-flex items-center gap-2">Threshold
@@ -194,6 +210,9 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
           <option value="">—</option>
           {lists.map(n => <option key={n} value={n}>{n}</option>)}
         </select>
+        {assetClass === 'crypto' && universe === 'popular' && (
+          <button onClick={loadPopularCrypto} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Load popular</button>
+        )}
         {progress && <span className="text-slate-400">{progress}</span>}
       </div>
       {err && <div className="text-xs text-rose-400 mt-2">{err}</div>}
