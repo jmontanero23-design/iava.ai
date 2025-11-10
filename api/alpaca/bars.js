@@ -20,6 +20,7 @@ const TTL_MAP = {
 }
 
 const cacheMap = getCacheMap('bars')
+const pending = new Map()
 
 export default async function handler(req, res) {
   try {
@@ -66,42 +67,70 @@ export default async function handler(req, res) {
       return
     }
 
-    const r = await fetch(endpoint, {
-      headers: {
-        'APCA-API-KEY-ID': key,
-        'APCA-API-SECRET-KEY': secret,
-      },
-    })
-    const json = await r.json()
-    if (!r.ok) {
-      res.status(r.status).json(json)
-      return
+    // De-duplicate in-flight upstream fetches by endpoint/key
+    if (pending.has(cacheKey)) {
+      try {
+        const { status, body, etag } = await pending.get(cacheKey)
+        if (etag) res.setHeader('ETag', etag)
+        res.status(status).send(body)
+        return
+      } catch (_) { /* fall through */ }
     }
-    // Map to compact bar objects the UI expects
-    let raw = []
-    if (Array.isArray(json?.bars)) {
-      raw = json.bars
-    } else if (json?.bars && Array.isArray(json.bars[symbol])) {
-      raw = json.bars[symbol]
+    const task = (async () => {
+      const r = await fetch(endpoint, {
+        headers: {
+          'APCA-API-KEY-ID': key,
+          'APCA-API-SECRET-KEY': secret,
+          'User-Agent': 'iava.ai/1.0'
+        },
+      })
+      if (r.status === 429) {
+        const retryAfter = r.headers.get('retry-after') || '5'
+        const msg = { error: 'Rate limited by data provider', retryAfter }
+        return { status: 429, body: JSON.stringify(msg) }
+      }
+      const json = await r.json()
+      if (!r.ok) {
+        return { status: r.status, body: JSON.stringify(json) }
+      }
+      // Map to compact bar objects the UI expects
+      let raw = []
+      if (Array.isArray(json?.bars)) {
+        raw = json.bars
+      } else if (json?.bars && Array.isArray(json.bars[symbol])) {
+        raw = json.bars[symbol]
+      }
+      const bars = raw.map(b => ({
+        time: Math.floor(new Date(b.t || b.Timestamp || b.time).getTime() / 1000),
+        open: b.o ?? b.Open,
+        high: b.h ?? b.High,
+        low: b.l ?? b.Low,
+        close: b.c ?? b.Close,
+        volume: b.v ?? b.Volume,
+      }))
+      const payload = { symbol, timeframe, feed, bars }
+      const body = JSON.stringify(payload)
+      const etag = `W/"${crypto.createHash('sha1').update(body).digest('hex')}"`
+      setCache(cacheMap, cacheKey, { body, etag })
+      return { status: 200, body, etag }
+    })()
+    pending.set(cacheKey, task)
+    try {
+      const { status, body, etag } = await task
+      if (etag) res.setHeader('ETag', etag)
+      if (status === 429) {
+        // Short negative cache to avoid hammering (5s default or Retry-After)
+        try {
+          const parsed = JSON.parse(body)
+          const ms = Math.min(15000, Math.max(3000, (parseInt(parsed.retryAfter,10)||5)*1000))
+          setCache(cacheMap, cacheKey, { body, etag: `W/"rl-${Date.now()}"` })
+          setTimeout(() => { /* allow eviction naturally by TTL */ }, ms)
+        } catch {}
+      }
+      res.status(status).send(body)
+    } finally {
+      pending.delete(cacheKey)
     }
-    const bars = raw.map(b => ({
-      time: Math.floor(new Date(b.t || b.Timestamp || b.time).getTime() / 1000),
-      open: b.o ?? b.Open,
-      high: b.h ?? b.High,
-      low: b.l ?? b.Low,
-      close: b.c ?? b.Close,
-      volume: b.v ?? b.Volume,
-    }))
-    const payload = { symbol, timeframe, feed, bars }
-    const body = JSON.stringify(payload)
-    const etag = `W/"${crypto.createHash('sha1').update(body).digest('hex')}"`
-    setCache(cacheMap, cacheKey, { body, etag })
-    res.setHeader('ETag', etag)
-    if (inm && inm === etag) {
-      res.status(304).end()
-      return
-    }
-    res.status(200).send(body)
   } catch (e) {
     res.status(500).json({ error: e?.message || 'Unexpected error' })
   }
