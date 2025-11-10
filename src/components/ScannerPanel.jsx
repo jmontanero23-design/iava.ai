@@ -113,7 +113,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
             <input type="number" min={0} max={100} value={threshold} onChange={e=>setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
           </label>
           <label className="inline-flex items-center gap-2">Top
-            <input type="number" min={1} max={50} value={top} onChange={e=>setTop(Math.max(1,parseInt(e.target.value,10)||10))} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
+            <input type="number" min={1} max={100} value={top} onChange={e=>setTop(Math.max(1,parseInt(e.target.value,10)||10))} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
           </label>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={enforceDaily} onChange={e=>setEnforceDaily(e.target.checked)} />Daily</label>
           <button onClick={async()=>{ if (universe === 'all') await fullScanAll(); else await run(); }} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Scanning…' : 'Scan'}</button>

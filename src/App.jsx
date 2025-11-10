@@ -73,6 +73,20 @@ export default function App() {
   const [streaming, setStreaming] = useState(false)
   const [hud, setHud] = useState('')
 
+  // Suggest backtest params based on selected preset
+  const backtestPreset = useMemo(() => {
+    const map = {
+      trendDaily: { th: 70, hz: 10, regime: 'bull' },
+      pullbackDaily: { th: 65, hz: 20, regime: 'bull' },
+      intradayBreakout: { th: 75, hz: 8, regime: 'none' },
+      dailyTrendFollow: { th: 70, hz: 20, regime: 'bull' },
+      meanRevertIntraday: { th: 55, hz: 5, regime: 'bear' },
+      breakoutDailyStrong: { th: 80, hz: 12, regime: 'bull' },
+      momentumContinuation: { th: 70, hz: 10, regime: 'none' },
+    }
+    return map[mtfPreset] || null
+  }, [mtfPreset])
+
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
     const base = { emaClouds: [] }
@@ -453,7 +467,7 @@ export default function App() {
           {hud}
         </div>
       )}
-      <BacktestPanel symbol={symbol} timeframe={timeframe} />
+      <BacktestPanel symbol={symbol} timeframe={timeframe} preset={backtestPreset} />
       <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
       <UnicornActionBar threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} />
       <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
