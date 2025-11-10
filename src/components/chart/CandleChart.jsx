@@ -539,11 +539,13 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
           {presetLabel ? (
             <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300" title="Active strategy preset">{presetLabel}</span>
           ) : null}
-          {['ema821','ema512','ema89','ema3450','ribbon','ichi','saty','squeeze'].map(key => (
-            overlayToggles[key] ? (
-              <button key={key} onClick={overlayToggles[key]} className="px-2 py-0.5 rounded border border-slate-700 hover:border-slate-500" title={`Toggle ${key}`}>{key}</button>
+          {['ema821','ema512','ema89','ema3450','ribbon','ichi','saty','squeeze'].map(key => {
+            const labels = { ema821: 'EMA 8/21', ema512: 'EMA 5/12', ema89: 'EMA 8/9', ema3450: 'EMA 34/50', ribbon: 'Ribbon', ichi: 'Ichimoku', saty: 'SATY', squeeze: 'Squeeze' }
+            const label = labels[key] || key
+            return overlayToggles[key] ? (
+              <button key={key} onClick={overlayToggles[key]} className="px-2 py-0.5 rounded border border-slate-700 hover:border-slate-500" title={`Toggle ${label}`}>{label}</button>
             ) : null
-          ))}
+          })}
           {/* Preset adherence hints: show expected overlays that are currently off */}
           {presetExpected && currentOverlay ? (
             <div className="flex items-center gap-1 ml-2" title="Preset expects these overlays to be ON">
