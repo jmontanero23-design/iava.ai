@@ -12,7 +12,7 @@ export default async function handler(req, res) {
 
     const url = new URL(req.url, 'http://localhost')
     const timeframe = mapTf(url.searchParams.get('timeframe') || '5Min')
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '400', 10), 2000)
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '500', 10), 2000)
     const top = Math.min(parseInt(url.searchParams.get('top') || '10', 10), 50)
     const threshold = Math.max(0, Math.min(100, parseFloat(url.searchParams.get('threshold') || '70')))
     const enforceDaily = (url.searchParams.get('enforceDaily') || '1') !== '0'
@@ -62,8 +62,10 @@ export default async function handler(req, res) {
       } catch (_) { /* ignore symbol errors */ }
     }))
 
-    const longs = results.filter(r => r.dir === 'long').sort((a,b) => b.score - a.score).slice(0, top)
-    const shorts = results.filter(r => r.dir === 'short').sort((a,b) => b.score - a.score).slice(0, top)
+    // Apply threshold before slicing top N to better match chart expectations
+    const filt = results.filter(r => r.score >= threshold)
+    const longs = filt.filter(r => r.dir === 'long').sort((a,b) => b.score - a.score).slice(0, top)
+    const shorts = filt.filter(r => r.dir === 'short').sort((a,b) => b.score - a.score).slice(0, top)
     const payload = { timeframe, threshold, enforceDaily, universe: symbols.length, longs, shorts }
     const body = JSON.stringify(payload)
     const etag = `W/"${crypto.createHash('sha1').update(body).digest('hex')}"`
@@ -103,7 +105,7 @@ function ttlFor(tf) {
 async function fetchBars({ key, secret, dataBase, symbol, timeframe, limit }) {
   const qs = new URLSearchParams({ symbols: symbol, timeframe, limit: String(limit), feed: process.env.ALPACA_STOCKS_FEED || 'iex', adjustment: 'raw' })
   const now = new Date()
-  const backDays = timeframe === '1Day' ? 365 : 14
+  const backDays = timeframe === '1Day' ? 365 : 7
   const startDate = new Date(now.getTime() - backDays * 24 * 60 * 60 * 1000)
   qs.set('start', startDate.toISOString())
   const endpoint = `${dataBase}/stocks/bars?${qs.toString()}`
@@ -118,4 +120,3 @@ async function fetchBars({ key, secret, dataBase, symbol, timeframe, limit }) {
     open: b.o ?? b.Open, high: b.h ?? b.High, low: b.l ?? b.Low, close: b.c ?? b.Close, volume: b.v ?? b.Volume,
   }))
 }
-
