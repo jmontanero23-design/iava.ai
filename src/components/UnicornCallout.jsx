@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import TradePanel from './TradePanel.jsx'
+import { logSignal } from '../utils/tradeLogger.js'
 
 export default function UnicornCallout({ state, threshold = 70 }) {
   if (!state || state.score == null || state.score < threshold) return null
@@ -10,6 +11,24 @@ export default function UnicornCallout({ state, threshold = 70 }) {
   if (state.sq?.fired) facts.push(`Squeeze: fired ${state.sq.dir}`)
   if (state.ichiRegime) facts.push(`Ichimoku: ${state.ichiRegime}`)
   const [open, setOpen] = useState(false)
+  const logged = useRef(false)
+
+  // Log signal once when it first appears
+  useEffect(() => {
+    if (!logged.current && state.score >= threshold) {
+      const symbol = state._bars?.[0]?.symbol || 'UNKNOWN'
+      const timeframe = '15'  // TODO: get from props
+      logSignal({
+        symbol,
+        timeframe,
+        score: Math.round(state.score),
+        components: state.components || {},
+        threshold,
+        notes: facts.join(', '),
+      }).catch(err => console.error('Failed to log signal:', err))
+      logged.current = true
+    }
+  }, [state.score, threshold])  // eslint-disable-line react-hooks/exhaustive-deps
   async function sendToN8N() {
     try {
       const payload = { type: 'unicorn_signal', at: new Date().toISOString(), score: state.score, facts, context: state }

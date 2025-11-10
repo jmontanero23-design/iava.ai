@@ -1,6 +1,8 @@
 // Basic indicator utilities for OHLCV arrays
 // Bar format: { time: string | number, open, high, low, close, volume }
 
+import { UNICORN_WEIGHTS } from './scoreConfig.js'
+
 export function sma(values, period) {
   const out = new Array(values.length).fill(null)
   let sum = 0
@@ -292,19 +294,19 @@ export function computeStates(bars) {
 
   const pivotNow = ribbon.state[i]
   const satyDir = satyTriggerDirection(bars, saty)
-  // Unicorn Score v1 heuristic
+  // Unicorn Score v1 heuristic (using configurable weights)
   let score = 0
   const components = {}
   const add = (k, v) => { components[k] = v; score += v }
-  add('pivotRibbon', pivotNow === 'bullish' ? 20 : 0)
-  add('ripster3450', rip.bias === 'bullish' ? 20 : 0)
-  add('satyTrigger', (satyDir === 'long' && pivotNow === 'bullish') ? 20 : 0)
+  add('pivotRibbon', pivotNow === 'bullish' ? UNICORN_WEIGHTS.pivotRibbon : 0)
+  add('ripster3450', rip.bias === 'bullish' ? UNICORN_WEIGHTS.ripster3450 : 0)
+  add('satyTrigger', (satyDir === 'long' && pivotNow === 'bullish') ? UNICORN_WEIGHTS.satyTrigger : 0)
   // Squeeze scoring (symmetric):
-  // - ON (compression building): +10
-  // - Fired in the direction of prevailing regime (up for bull, down for bear): +25 (decays over 5 bars)
+  // - ON (compression building): uses squeezeOn weight
+  // - Fired in the direction of prevailing regime (up for bull, down for bear): uses squeezeFired weight (decays over 5 bars)
   let squeezeScore = 0
   if (sq.on) {
-    squeezeScore = 10
+    squeezeScore = UNICORN_WEIGHTS.squeezeOn
   } else {
     const recent = sq.fired || (sq.firedBarsAgo != null && sq.firedBarsAgo <= 5)
     if (recent) {
@@ -315,14 +317,15 @@ export function computeStates(bars) {
       const aligned = (dirNow === 'up' && bullish) || (dirNow === 'down' && bearish)
       if (aligned) {
         const age = sq.fired ? 0 : (sq.firedBarsAgo || 0)
-        const base = 25
-        const decayed = Math.max(5, base - age * 5)
+        const base = UNICORN_WEIGHTS.squeezeFired
+        const minScore = 5
+        const decayed = Math.max(minScore, base - age * 5)
         squeezeScore = decayed
       }
     }
   }
   add('squeeze', squeezeScore)
-  add('ichimoku', ichiRegime === 'bullish' ? 15 : 0)
+  add('ichimoku', ichiRegime === 'bullish' ? UNICORN_WEIGHTS.ichimoku : 0)
 
   const markers = []
   // Mark 8/21 crosses

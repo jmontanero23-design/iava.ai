@@ -23,6 +23,8 @@ import { readParams, writeParams } from './utils/urlState.js'
 import SignalFeed from './components/SignalFeed.jsx'
 import OverlayChips from './components/OverlayChips.jsx'
 import useStreamingBars from './hooks/useStreamingBars.js'
+import ScoreOptimizer from './components/ScoreOptimizer.jsx'
+import AnalyticsDashboard from './components/AnalyticsDashboard.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -418,8 +420,10 @@ export default function App() {
         <SignalsPanel state={signalState} />
       </div>
       <BacktestPanel symbol={symbol} timeframe={timeframe} />
+      <ScoreOptimizer symbol={symbol} timeframe={timeframe} />
+      <AnalyticsDashboard />
       <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
-      <UnicornActionBar threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} />
+      {/* <UnicornActionBar threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} /> */}
       <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
       <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />
       <OrdersPanel symbol={symbol} lastPrice={bars[bars.length-1]?.close} />
