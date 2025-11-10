@@ -7,7 +7,7 @@ async function api(path, opts) {
   try { return { ok: r.ok, json: JSON.parse(txt) } } catch { return { ok: r.ok, text: txt } }
 }
 
-export default function OrdersPanel({ symbol: currentSymbol, lastPrice }) {
+export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) {
   const [orders, setOrders] = useState([])
   const [positions, setPositions] = useState([])
   const [loading, setLoading] = useState(false)
@@ -18,16 +18,48 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice }) {
   const [klass, setKlass] = useState('market') // market | bracket
   const [tpPct, setTpPct] = useState(1.0)
   const [slPct, setSlPct] = useState(0.5)
+  const [riskPct, setRiskPct] = useState(1.0)
+  const [useSaty, setUseSaty] = useState(false)
+  const [stopLevel, setStopLevel] = useState('t0236')
+  const [tpLevel, setTpLevel] = useState('t1000')
+  const [account, setAccount] = useState(null)
 
   useEffect(() => setSym(currentSymbol || 'AAPL'), [currentSymbol])
 
   const preview = useMemo(() => {
     const price = Number(lastPrice || 0)
     if (klass !== 'bracket' || !price) return null
+    if (useSaty && saty?.levels) {
+      const lv = saty.levels
+      const sl = side === 'buy' ? lv[stopLevel]?.dn : lv[stopLevel]?.up
+      const tp = side === 'buy' ? lv[tpLevel]?.up : lv[tpLevel]?.dn
+      return { tp, sl }
+    }
     const tp = side === 'buy' ? price * (1 + tpPct / 100) : price * (1 - tpPct / 100)
     const sl = side === 'buy' ? price * (1 - slPct / 100) : price * (1 + slPct / 100)
     return { tp, sl }
-  }, [klass, side, tpPct, slPct, lastPrice])
+  }, [klass, side, tpPct, slPct, lastPrice, useSaty, saty, stopLevel, tpLevel])
+
+  useEffect(() => { (async () => { try { const r = await fetch('/api/alpaca/account'); const j = await r.json(); if (r.ok) setAccount(j) } catch {} })() }, [])
+
+  function calcQtyFromRisk() {
+    const price = Number(lastPrice || 0)
+    const eq = parseFloat(account?.equity || '0')
+    if (!price || !eq) return
+    let slPrice
+    if (useSaty && saty?.levels) {
+      const lv = saty.levels
+      slPrice = side === 'buy' ? lv[stopLevel]?.dn : lv[stopLevel]?.up
+    } else {
+      slPrice = side === 'buy' ? price * (1 - slPct / 100) : price * (1 + slPct / 100)
+    }
+    if (slPrice == null) return
+    const perShare = side === 'buy' ? Math.max(0, price - slPrice) : Math.max(0, slPrice - price)
+    if (!(perShare > 0)) return
+    const budget = (Math.max(0, parseFloat(riskPct) || 0) / 100) * eq
+    const q = Math.floor(budget / perShare)
+    if (Number.isFinite(q) && q > 0) setQty(q)
+  }
 
   async function refresh() {
     setLoading(true)
@@ -92,23 +124,64 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice }) {
           </label>
           {klass === 'bracket' && (
             <>
-              <label className="inline-flex flex-col">
-                <span className="text-xs text-slate-400">TP %</span>
-                <input type="number" step="0.1" value={tpPct} onChange={e=>setTpPct(parseFloat(e.target.value)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24" />
+              <label className="inline-flex items-center gap-2">
+                <input type="checkbox" checked={useSaty} onChange={e=>setUseSaty(e.target.checked)} /> Use SATY stops
               </label>
-              <label className="inline-flex flex-col">
-                <span className="text-xs text-slate-400">SL %</span>
-                <input type="number" step="0.1" value={slPct} onChange={e=>setSlPct(parseFloat(e.target.value)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24" />
-              </label>
+              {!useSaty && (
+                <>
+                  <label className="inline-flex flex-col">
+                    <span className="text-xs text-slate-400">TP %</span>
+                    <input type="number" step="0.1" value={tpPct} onChange={e=>setTpPct(parseFloat(e.target.value)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24" />
+                  </label>
+                  <label className="inline-flex flex-col">
+                    <span className="text-xs text-slate-400">SL %</span>
+                    <input type="number" step="0.1" value={slPct} onChange={e=>setSlPct(parseFloat(e.target.value)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24" />
+                  </label>
+                </>
+              )}
+              {useSaty && (
+                <>
+                  <label className="inline-flex flex-col">
+                    <span className="text-xs text-slate-400">Stop Level</span>
+                    <select value={stopLevel} onChange={e=>setStopLevel(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-28">
+                      <option value="t0236">±0.236</option>
+                      <option value="t1000">±1.000</option>
+                      <option value="t1618">±1.618</option>
+                    </select>
+                  </label>
+                  <label className="inline-flex flex-col">
+                    <span className="text-xs text-slate-400">TP Level</span>
+                    <select value={tpLevel} onChange={e=>setTpLevel(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-28">
+                      <option value="t1000">±1.000</option>
+                      <option value="t0236">±0.236</option>
+                      <option value="t1618">±1.618</option>
+                    </select>
+                  </label>
+                </>
+              )}
             </>
           )}
+          <label className="inline-flex flex-col">
+            <span className="text-xs text-slate-400">Risk %</span>
+            <input type="number" step="0.1" value={riskPct} onChange={e=>setRiskPct(parseFloat(e.target.value)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-24" />
+          </label>
+          <button onClick={calcQtyFromRisk} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Calc Qty</button>
           <button onClick={async ()=>{
             setMsg('')
             const payload = { symbol: sym, side, qty, type: 'market' }
             if (klass === 'bracket' && lastPrice) {
               const price = Number(lastPrice)
-              const tp = side === 'buy' ? price * (1 + tpPct/100) : price * (1 - tpPct/100)
-              const sl = side === 'buy' ? price * (1 - slPct/100) : price * (1 + slPct/100)
+              let tp, sl
+              if (useSaty && saty?.levels) {
+                const lv = saty.levels
+                sl = side === 'buy' ? lv[stopLevel]?.dn : lv[stopLevel]?.up
+                tp = side === 'buy' ? lv[tpLevel]?.up : lv[tpLevel]?.dn
+                if (sl == null) sl = side === 'buy' ? price * (1 - slPct/100) : price * (1 + slPct/100)
+                if (tp == null) tp = side === 'buy' ? price * (1 + tpPct/100) : price * (1 - tpPct/100)
+              } else {
+                tp = side === 'buy' ? price * (1 + tpPct/100) : price * (1 - tpPct/100)
+                sl = side === 'buy' ? price * (1 - slPct/100) : price * (1 + slPct/100)
+              }
               payload.orderClass = 'bracket'
               payload.takeProfit = { limit_price: Number(tp.toFixed(2)) }
               payload.stopLoss = { stop_price: Number(sl.toFixed(2)) }

@@ -31,6 +31,13 @@ export default async function handler(req, res) {
     const dailyFilter = (urlObj.searchParams.get('dailyFilter') || 'none').toLowerCase() // none|bull|bear
     const assetClass = (urlObj.searchParams.get('assetClass') || 'stocks').toLowerCase() // stocks|crypto
     const regimeCurves = (urlObj.searchParams.get('regimeCurves') || '0') !== '0'
+    // Optional multi-horizon matrix: comma-separated
+    const hzsParam = (urlObj.searchParams.get('hzs') || '').trim()
+    let horizonSet = null
+    if (hzsParam) {
+      const arr = hzsParam.split(',').map(s => parseInt(s.trim(), 10)).filter(n => Number.isFinite(n) && n >= 1 && n <= 100)
+      if (arr.length) horizonSet = Array.from(new Set(arr)).sort((a,b)=>a-b)
+    }
 
     const cacheKey = `${symbol}|${timeframe}|${limit}|${threshold}|${horizon}`
     const cached = getCache(dataCache, cacheKey, TTL)
@@ -56,6 +63,7 @@ export default async function handler(req, res) {
     const curve = curveThs.map(th => ({ th, rets: [] }))
     const curveBull = curveThs.map(th => ({ th, rets: [] }))
     const curveBear = curveThs.map(th => ({ th, rets: [] }))
+    const matrix = horizonSet ? horizonSet.map(hz => ({ hz, bins: curveThs.map(th => ({ th, rets: [] })) })) : null
     // Prepare daily regime states if filtering requested
     let dailyBars = null
     let dailyStates = null
@@ -122,6 +130,16 @@ export default async function handler(req, res) {
           }
         }
       }
+      if (matrix) {
+        for (const row of matrix) {
+          const hz = row.hz
+          if (i + hz >= bars.length) continue
+          const entry = bars[i].close
+          const exit = bars[i + hz].close
+          const fwd = (exit - entry) / entry
+          for (const bin of row.bins) if (st.score >= bin.th) bin.rets.push(fwd)
+        }
+      }
       if (scores.length > 400) scores.shift() // keep last 400
     }
     const avg = scores.length ? scores.reduce((a,b)=>a+b,0) / scores.length : 0
@@ -166,6 +184,18 @@ export default async function handler(req, res) {
           const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
           return { th: c.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)) }
         })
+      }
+      if (matrix) {
+        out.matrix = matrix.map(row => ({
+          hz: row.hz,
+          curve: row.bins.map(b => {
+            const arr = b.rets
+            const ev = arr.length
+            const wr = ev ? (arr.filter(x=>x>0).length/ev)*100 : 0
+            const av = ev ? (arr.reduce((a,b)=>a+b,0)/ev)*100 : 0
+            return { th: b.th, events: ev, winRate: Number(wr.toFixed(2)), avgFwd: Number(av.toFixed(2)) }
+          })
+        }))
       }
     }
     if (format === 'csv') {

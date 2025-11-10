@@ -14,6 +14,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
   const [curveThresholds, setCurveThresholds] = useState('30,40,50,60,70,80,90')
   const [regimeCurves, setRegimeCurves] = useState(false)
   const [assetClass, setAssetClass] = useState('stocks')
+  const [hzs, setHzs] = useState('5,10,20')
 
   const presets = [
     { label: 'Intraday (70 / 10)', th: 70, hz: 10, regime: 'bull' },
@@ -25,7 +26,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
     try {
       setLoading(true); setErr('')
       const ths = encodeURIComponent(curveThresholds)
-      const r = await fetch(`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&curve=${showCurve ? 1 : 0}&ths=${ths}&dailyFilter=${encodeURIComponent(assetClass==='stocks'?dailyFilter:'none')}&regimeCurves=${assetClass==='stocks' && regimeCurves ? 1 : 0}&assetClass=${encodeURIComponent(assetClass)}`)
+      const r = await fetch(`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&curve=${showCurve ? 1 : 0}&ths=${ths}&hzs=${encodeURIComponent(hzs)}&dailyFilter=${encodeURIComponent(assetClass==='stocks'?dailyFilter:'none')}&regimeCurves=${assetClass==='stocks' && regimeCurves ? 1 : 0}&assetClass=${encodeURIComponent(assetClass)}`)
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
       setRes(j)
@@ -91,6 +92,9 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
           </div>
           <label className="inline-flex items-center gap-2">Curve THs
             <input value={curveThresholds} onChange={e=>setCurveThresholds(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-36" title="Comma-separated thresholds for expectancy curves" />
+          </label>
+          <label className="inline-flex items-center gap-2">HZs
+            <input value={hzs} onChange={e=>setHzs(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-28" title="Comma-separated horizons for matrix heatmap" />
           </label>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={regimeCurves} onChange={e=>setRegimeCurves(e.target.checked)} disabled={assetClass!=='stocks'} /> Compare Regimes</label>
           <label className="inline-flex items-center gap-2">Regime
@@ -166,6 +170,39 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
                     </div>
                   )
                 })}
+              </div>
+            </div>
+          ) : null}
+          {Array.isArray(res.matrix) && res.matrix.length ? (
+            <div className="mt-4">
+              <div className="text-xs text-slate-400 mb-1">Heatmap: Avg Fwd % (Threshold × Horizon)</div>
+              <div className="inline-block border border-slate-700 rounded overflow-hidden">
+                <table className="text-xs">
+                  <thead>
+                    <tr>
+                      <th className="bg-slate-900 px-2 py-1 border-r border-slate-700">TH \ HZ</th>
+                      {res.matrix.map(row => (
+                        <th key={row.hz} className="bg-slate-900 px-2 py-1 border-r border-slate-700">H{row.hz}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(res.curve || []).map((thRow, idxTh) => (
+                      <tr key={thRow.th}>
+                        <td className="px-2 py-1 border-r border-slate-800">{thRow.th}</td>
+                        {res.matrix.map(row => {
+                          const cell = row.curve[idxTh]
+                          const v = cell ? cell.avgFwd : 0
+                          const val = typeof v === 'number' ? v : 0
+                          const up = val >= 0
+                          const mag = Math.min(1, Math.abs(val) / 5) // scale to 5%
+                          const bg = up ? `rgba(16,185,129,${0.15+mag*0.35})` : `rgba(239,68,68,${0.15+mag*0.35})`
+                          return <td key={row.hz} className="px-2 py-1 border-r border-slate-800" style={{ background:bg }}>{val.toFixed(2)}%</td>
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           ) : null}
