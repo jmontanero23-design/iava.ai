@@ -17,6 +17,9 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
   const [consensus, setConsensus] = useState(false)
   const [suggestMsg, setSuggestMsg] = useState('')
   const [hzs, setHzs] = useState('5,10,20')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiErr, setAiErr] = useState('')
+  const [aiExp, setAiExp] = useState('')
 
   const presets = [
     { label: 'Intraday (70 / 10)', th: 70, hz: 10, regime: 'bull' },
@@ -32,10 +35,27 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
       setRes(j)
+      setAiExp(''); setAiErr('')
     } catch (e) {
       setErr(String(e.message || e))
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function explainBacktest() {
+    try {
+      setAiLoading(true); setAiErr(''); setAiExp('')
+      const question = 'Explain these backtest results, including why certain thresholds and horizons perform better, and give one concise takeaway.'
+      const context = { symbol, timeframe, threshold, horizon, dailyFilter, consensus, result: res }
+      const r = await fetch('/api/llm/help', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, context }) })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
+      setAiExp(j.answer || '')
+    } catch (e) {
+      setAiErr(String(e.message || e))
+    } finally {
+      setAiLoading(false)
     }
   }
 
@@ -166,6 +186,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
             </select>
           </label>
           <button onClick={run} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Running…' : 'Run'}</button>
+          <button onClick={explainBacktest} disabled={aiLoading || !res} className="bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-xs rounded px-2 py-1 border border-slate-700">{aiLoading ? 'Explaining…' : 'Explain (AI)'}</button>
           <button onClick={downloadJson} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Download JSON</button>
           <button onClick={downloadCsv} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Download CSV</button>
           <button onClick={downloadSummaryCsv} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Summary CSV</button>
@@ -211,7 +232,8 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
           </button>
         ))}
       </div>
-      {err && <div className="text-xs text-rose-400 mt-2">{err}</div>}
+          {err && <div className="text-xs text-rose-400 mt-2">{err}</div>}
+          {aiErr && <div className="text-xs text-rose-400 mt-2">{aiErr} <span className="text-slate-500">Check <a className="underline" href="/api/health" target="_blank" rel="noreferrer">/api/health</a>.</span></div>}
       {res && (
         <div className="mt-2 text-sm text-slate-200">
           <div className="grid grid-cols-2 gap-2">
@@ -247,6 +269,12 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
               })}
             </div>
           ) : null}
+          {aiExp && (
+            <div className="mt-3 p-2 rounded border border-slate-700 bg-slate-900/60">
+              <div className="text-xs text-slate-400 mb-1">AI Explanation</div>
+              <div className="text-sm text-slate-200 whitespace-pre-wrap">{aiExp}</div>
+            </div>
+          )}
           {Array.isArray(res.curve) && res.curve.length ? (
             <div className="mt-3">
               <div className="text-xs text-slate-400 mb-1">Expectancy vs Threshold</div>
