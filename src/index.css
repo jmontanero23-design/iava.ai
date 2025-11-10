@@ -116,6 +116,7 @@ select {
   padding: 0.25rem 0.5rem; /* px-2 py-1 */
   transition: background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
+.btn:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(79,70,229,0.45), 0 0 0 4px rgba(2,6,23,0.9); }
 .btn-xs { font-size: 0.75rem; /* text-xs */ }
 .btn-ghost {
   background: rgba(2,6,23,0.6);
@@ -127,6 +128,7 @@ select {
   @apply bg-slate-800 border border-slate-700 rounded text-slate-200;
   padding: 0.25rem 0.5rem;
 }
+.input:focus-visible, .select:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(79,70,229,0.45), 0 0 0 4px rgba(2,6,23,0.9); border-color: #6366f1; }
 .checkbox { @apply accent-indigo-500; }
 
 .panel-title { @apply text-sm font-semibold text-slate-200; }

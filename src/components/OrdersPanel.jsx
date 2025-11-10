@@ -223,7 +223,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
                   <div className="text-slate-200">{o.symbol} · {o.side} · {o.qty} {o.type}</div>
                   <div className="text-xs text-slate-500">id {o.id} · {o.status}</div>
                 </div>
-                <button onClick={() => cancelOrder(o.id)} className="text-xs bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 rounded px-2 py-1">Cancel</button>
+                <button onClick={() => cancelOrder(o.id)} className="btn btn-xs">Cancel</button>
               </div>
             ))}
           </div>
@@ -238,7 +238,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
                   <div className="text-slate-200">{p.symbol} · {p.side} · qty {p.qty} · avg {Number(p.avg_entry_price).toFixed(2)}</div>
                   <div className="text-xs text-slate-500">unrealized {Number(p.unrealized_pl).toFixed(2)} · {Number(p.unrealized_plpc * 100).toFixed(2)}%</div>
                 </div>
-                <button onClick={() => closePosition(p.symbol)} className="text-xs bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 rounded px-2 py-1">Close</button>
+                <button onClick={() => closePosition(p.symbol)} className="btn btn-xs">Close</button>
               </div>
             ))}
           </div>
