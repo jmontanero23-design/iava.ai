@@ -151,6 +151,9 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={enforceDaily} onChange={e=>setEnforceDaily(e.target.checked)} />Daily</label>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={requireConsensus} onChange={e=>setRequireConsensus(e.target.checked)} />Consensus</label>
           <button onClick={async()=>{ if (universe === 'all') await fullScanAll(); else await run(); }} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Scanning…' : 'Scan'}</button>
+          {universe === 'all' && (
+            <button onClick={()=>{ abortRef.current.stop = true; setProgress('Stopping…') }} disabled={!loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Stop</button>
+          )}
         </div>
       </div>
       <div className="mt-2 text-xs text-slate-400">Symbols (paste or import) {assetClass === 'crypto' ? 'e.g., BTC/USD, ETH/USD' : ''}</div>
