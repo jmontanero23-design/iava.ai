@@ -305,21 +305,30 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
       <RateLimitBanner />
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <Hero />
-      <div className="card p-4 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
+
+      {/* Controls Section */}
+      <div className="card p-5 space-y-4">
+        <div className="flex flex-wrap items-center gap-3">
           <SymbolSearch value={symbol} onChange={setSymbol} onSubmit={(sym) => loadBars(sym, timeframe)} />
-          <select value={timeframe} onChange={e => { const tf = e.target.value; setTimeframe(tf); if (autoLoadChange) loadBars(symbol, tf) }} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm">
-            <option value="1Min">1Min</option>
-            <option value="5Min">5Min</option>
-            <option value="15Min">15Min</option>
-            <option value="1Hour">1Hour</option>
-            <option value="1Day">1Day</option>
+          <select value={timeframe} onChange={e => { const tf = e.target.value; setTimeframe(tf); if (autoLoadChange) loadBars(symbol, tf) }} className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+            <option value="1Min">1 Min</option>
+            <option value="5Min">5 Min</option>
+            <option value="15Min">15 Min</option>
+            <option value="1Hour">1 Hour</option>
+            <option value="1Day">1 Day</option>
           </select>
-          <button onClick={() => loadBars()} className="bg-indigo-600 hover:bg-indigo-500 rounded px-3 py-1 text-sm">Load</button>
-          {loading && <span className="text-xs text-slate-400 ml-2">Loading…</span>}
+          <button onClick={() => loadBars()} className="bg-indigo-600 hover:bg-indigo-500 rounded px-4 py-2 text-sm font-medium transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40">
+            {loading ? 'Loading...' : 'Load Data'}
+          </button>
           {error && !loading && <span className="text-xs text-rose-400 ml-2">{error}</span>}
+          <div className="ml-auto flex items-center gap-3">
+            <HealthBadge />
+            <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); alert('Link copied'); } catch(_) {} }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-3 py-2 border border-slate-700">
+              📋 Copy Link
+            </button>
+          </div>
         </div>
         <div className="w-full mt-2">
           <Presets symbol={symbol} setSymbol={setSymbol} timeframe={timeframe} setTimeframe={setTimeframe} onLoad={(s, tf) => loadBars(s, tf)} />
@@ -405,9 +414,9 @@ export default function App() {
             <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
           </label>
         </div>
-        <div className="ml-auto"><HealthBadge /></div>
-        <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); alert('Link copied'); } catch(_) {} }} className="ml-2 bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Link</button>
       </div>
+
+      {/* Market Stats & Chart */}
       <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streaming || autoRefresh} />
       <LegendChips overlays={overlays} />
       <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} loading={loading} focusTime={focusTime} />

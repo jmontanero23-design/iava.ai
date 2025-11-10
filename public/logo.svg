@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Gradient definitions -->
+  <defs>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#10b981;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="logoGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#10b981;stop-opacity:0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Glow effect -->
+  <circle cx="100" cy="100" r="80" fill="url(#logoGlow)" opacity="0.5"/>
+
+  <!-- Neural network pattern - upward trending -->
+  <!-- Bottom layer nodes -->
+  <circle cx="60" cy="140" r="6" fill="url(#logoGrad)" opacity="0.6"/>
+  <circle cx="100" cy="140" r="6" fill="url(#logoGrad)" opacity="0.6"/>
+  <circle cx="140" cy="140" r="6" fill="url(#logoGrad)" opacity="0.6"/>
+
+  <!-- Middle layer nodes -->
+  <circle cx="80" cy="100" r="7" fill="url(#logoGrad)" opacity="0.8"/>
+  <circle cx="120" cy="100" r="7" fill="url(#logoGrad)" opacity="0.8"/>
+
+  <!-- Top node (unicorn peak) -->
+  <circle cx="100" cy="60" r="8" fill="url(#logoGrad)"/>
+
+  <!-- Connection lines (upward trending) -->
+  <line x1="60" y1="140" x2="80" y2="100" stroke="url(#logoGrad)" stroke-width="2" opacity="0.4"/>
+  <line x1="100" y1="140" x2="80" y2="100" stroke="url(#logoGrad)" stroke-width="2" opacity="0.4"/>
+  <line x1="100" y1="140" x2="120" y2="100" stroke="url(#logoGrad)" stroke-width="2" opacity="0.4"/>
+  <line x1="140" y1="140" x2="120" y2="100" stroke="url(#logoGrad)" stroke-width="2" opacity="0.4"/>
+
+  <line x1="80" y1="100" x2="100" y2="60" stroke="url(#logoGrad)" stroke-width="2.5" opacity="0.7"/>
+  <line x1="120" y1="100" x2="100" y2="60" stroke="url(#logoGrad)" stroke-width="2.5" opacity="0.7"/>
+
+  <!-- "i" letter formation with upward arrow -->
+  <path d="M 95 50 L 100 40 L 105 50 Z" fill="url(#logoGrad)"/>
+  <rect x="98" y="60" width="4" height="25" fill="url(#logoGrad)" rx="2"/>
+
+  <!-- Abstract chart line (unicorn trend) -->
+  <path d="M 40 130 Q 70 110, 100 90 T 160 70"
+        stroke="url(#logoGrad)"
+        stroke-width="3"
+        fill="none"
+        opacity="0.5"
+        stroke-linecap="round"/>
+</svg>
