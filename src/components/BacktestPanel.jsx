@@ -15,6 +15,7 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
   const [regimeCurves, setRegimeCurves] = useState(false)
   const [assetClass, setAssetClass] = useState('stocks')
   const [consensus, setConsensus] = useState(false)
+  const [suggestMsg, setSuggestMsg] = useState('')
   const [hzs, setHzs] = useState('5,10,20')
 
   const presets = [
@@ -112,6 +113,34 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
           {preset && (
             <button onClick={() => { if (typeof preset.th === 'number') setThreshold(preset.th); if (typeof preset.hz === 'number') setHorizon(preset.hz); if (preset.regime) setDailyFilter(preset.regime) }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Apply Preset</button>
           )}
+          {res ? (
+            <button onClick={() => {
+              try {
+                // Prefer matrix row matching current horizon; fall back to curve
+                let best = { th: threshold, score: -Infinity }
+                if (Array.isArray(res.matrix)) {
+                  const row = res.matrix.find(r => Number(r.hz) === Number(horizon))
+                  if (row && Array.isArray(row.curve)) {
+                    for (const c of row.curve) {
+                      const s = (Number(c.avgFwd)||0) // use avgFwd
+                      if (s > best.score) best = { th: c.th, score: s }
+                    }
+                  }
+                }
+                if (best.score === -Infinity && Array.isArray(res.curve)) {
+                  for (const c of res.curve) {
+                    const s = (Number(c.avgFwd)||0)
+                    if (s > best.score) best = { th: c.th, score: s }
+                  }
+                }
+                if (best.score > -Infinity) {
+                  setThreshold(best.th)
+                  setSuggestMsg(`Suggested TH ${best.th} (avg ${best.score.toFixed(2)}%)`)
+                  setTimeout(()=>setSuggestMsg(''), 3500)
+                }
+              } catch {}
+            }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Suggest TH</button>
+          ) : null}
         </div>
       </div>
       <div className="flex flex-wrap gap-2 text-xs mt-2">
@@ -200,13 +229,15 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
                           const up = val >= 0
                           const mag = Math.min(1, Math.abs(val) / 5) // scale to 5%
                           const bg = up ? `rgba(16,185,129,${0.15+mag*0.35})` : `rgba(239,68,68,${0.15+mag*0.35})`
-                          return <td key={row.hz} className="px-2 py-1 border-r border-slate-800" style={{ background:bg }}>{val.toFixed(2)}%</td>
+                          const tip = cell ? `H${row.hz} · TH ${thRow.th} → avg ${val.toFixed(2)}% · win ${cell.winRate}% · n=${cell.events}` : ''
+                          return <td key={row.hz} className="px-2 py-1 border-r border-slate-800" style={{ background:bg }} title={tip}>{val.toFixed(2)}%</td>
                         })}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+              {suggestMsg && <div className="text-xs text-emerald-400 mt-2">{suggestMsg}</div>}
             </div>
           ) : null}
           {Array.isArray(res.curveBull) && Array.isArray(res.curveBear) ? (
