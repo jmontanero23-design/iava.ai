@@ -74,6 +74,7 @@ export default function App() {
   const [hud, setHud] = useState('')
   const [secBars, setSecBars] = useState([])
   const [consensus, setConsensus] = useState(null)
+  const [consensusBonus, setConsensusBonus] = useState(false)
 
   function mlabel(id) {
     const map = {
@@ -189,6 +190,7 @@ export default function App() {
       if (typeof saved.autoRefresh === 'boolean') setAutoRefresh(saved.autoRefresh)
       if (typeof saved.refreshSec === 'number') setRefreshSec(saved.refreshSec)
       if (typeof saved.streaming === 'boolean') setStreaming(saved.streaming)
+      if (typeof saved.consensusBonus === 'boolean') setConsensusBonus(saved.consensusBonus)
       if (typeof saved.showIchi === 'boolean') setShowIchi(saved.showIchi)
       if (typeof saved.showRibbon === 'boolean') setShowRibbon(saved.showRibbon)
       if (typeof saved.showSaty === 'boolean') setShowSaty(saved.showSaty)
@@ -203,6 +205,7 @@ export default function App() {
       if (qp.timeframe) setTimeframe(qp.timeframe)
       if (typeof qp.threshold === 'number') setThreshold(qp.threshold)
       if (typeof qp.enforceDaily === 'boolean') setEnforceDaily(qp.enforceDaily)
+      if (typeof qp.consensusBonus === 'boolean') setConsensusBonus(qp.consensusBonus)
       if (typeof qp.streaming === 'boolean') setStreaming(qp.streaming)
       if (typeof qp.ema821 === 'boolean') setShowEma821(qp.ema821)
       if (typeof qp.ema512 === 'boolean') setShowEma512(qp.ema512)
@@ -225,15 +228,15 @@ export default function App() {
       symbol, timeframe, autoRefresh, refreshSec,
       showIchi, showRibbon, showSaty, showSqueeze,
       showEma821, showEma512, showEma89, showEma3450,
-      autoLoadChange, streaming,
+      autoLoadChange, streaming, consensusBonus,
     }
     try { localStorage.setItem('iava.settings', JSON.stringify(prefs)) } catch {}
   }, [symbol, timeframe, autoRefresh, refreshSec, showIchi, showRibbon, showSaty, showSqueeze, showEma821, showEma512, showEma89, showEma3450, autoLoadChange])
 
   // Sync key UI state to URL for deep links
   useEffect(() => {
-    writeParams({ symbol, timeframe, threshold, enforceDaily, streaming, showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty })
-  }, [symbol, timeframe, threshold, enforceDaily, streaming, showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty])
+    writeParams({ symbol, timeframe, threshold, enforceDaily, streaming, consensusBonus, showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty })
+  }, [symbol, timeframe, threshold, enforceDaily, streaming, consensusBonus, showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty])
 
   const presets = {
     manual: null,
@@ -495,6 +498,10 @@ export default function App() {
             <input type="checkbox" className="accent-indigo-500" checked={enforceDaily} onChange={e => setEnforceDaily(e.target.checked)} />
             Enforce Daily Confluence
           </label>
+          <label className="inline-flex items-center gap-2 text-sm ml-2" title="Add +10 to score when primary and secondary TFs agree (visual consensus).">
+            <input type="checkbox" className="accent-indigo-500" checked={consensusBonus} onChange={e => setConsensusBonus(e.target.checked)} />
+            Consensus Bonus
+          </label>
           <label className="inline-flex items-center gap-2 text-sm ml-2">
             <span>Threshold</span>
             <input type="range" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10))} />
@@ -537,7 +544,7 @@ export default function App() {
       <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {showSqueeze && <SqueezePanel bars={bars} />}
-        <SignalsPanel state={signalState} />
+        <SignalsPanel state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), components: { ...(signalState?.components||{}), ...(consensusBonus && consensus?.align ? { consensus: 10 } : {}) } }} />
       </div>
       <ScannerPanel onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf || timeframe); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }} defaultTimeframe={timeframe} />
       <WatchlistNavigator onLoadSymbol={(sym, tf) => { setSymbol(sym); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }} timeframe={timeframe} />
@@ -548,8 +555,8 @@ export default function App() {
         </div>
       )}
       <BacktestPanel symbol={symbol} timeframe={timeframe} preset={backtestPreset} />
-      <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily, _consensus: consensus }} />
-      <UnicornActionBar threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} />
+      <UnicornCallout threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily, _consensus: consensus }} />
+      <UnicornActionBar threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} />
       <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
       <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />
       <OrdersPanel symbol={symbol} lastPrice={bars[bars.length-1]?.close} />
