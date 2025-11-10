@@ -16,6 +16,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
   const [lists, setLists] = useState([])
   const abortRef = React.useRef({ stop: false })
   const [requireConsensus, setRequireConsensus] = useState(false)
+  const [assetClass, setAssetClass] = useState('stocks') // stocks | crypto
 
   function exportCsv() {
     try {
@@ -42,7 +43,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
   async function run() {
     try {
       setLoading(true); setErr('')
-      const qs = new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', requireConsensus: requireConsensus ? '1' : '0' })
+      const qs = new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', requireConsensus: requireConsensus ? '1' : '0', assetClass })
       const r = await fetch(`/api/scan?${qs.toString()}`)
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
@@ -61,7 +62,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
       const ur = await fetch('/api/universe')
       const uj = await ur.json()
       if (!ur.ok) throw new Error(uj?.error || `HTTP ${ur.status}`)
-      const syms = (uj.symbols || []).slice()
+      const syms = assetClass === 'crypto' ? [] : (uj.symbols || []).slice()
       if (!syms.length) throw new Error('Universe is empty')
       const chunk = (arr, n) => arr.reduce((acc, x, i) => { if (i % n === 0) acc.push([]); acc[acc.length-1].push(x); return acc }, [])
       const chunks = chunk(syms, 25)
@@ -70,7 +71,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
         if (abortRef.current.stop) break
         setProgress(`Scanning ${i+1}/${chunks.length}…`)
         const list = chunks[i].join(',')
-        const qs = new URLSearchParams({ symbols: list, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', returnAll: '1', requireConsensus: requireConsensus ? '1' : '0' })
+        const qs = new URLSearchParams({ symbols: list, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', returnAll: '1', requireConsensus: requireConsensus ? '1' : '0', assetClass })
         const r = await fetch(`/api/scan?${qs.toString()}`)
         const j = await r.json()
         if (r.ok) {
@@ -129,10 +130,16 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
               <option value="1Day">1Day</option>
             </select>
           </label>
+          <label className="inline-flex items-center gap-2">Asset
+            <select value={assetClass} onChange={e=>{ setAssetClass(e.target.value); setUniverse('manual') }} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
+              <option value="stocks">Stocks</option>
+              <option value="crypto">Crypto</option>
+            </select>
+          </label>
           <label className="inline-flex items-center gap-2">Universe
             <select value={universe} onChange={e=>setUniverse(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
               <option value="manual">Manual</option>
-              <option value="all">All (US active)</option>
+              {assetClass === 'stocks' && <option value="all">All (US active)</option>}
             </select>
           </label>
           <label className="inline-flex items-center gap-2">Threshold
@@ -146,7 +153,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
           <button onClick={async()=>{ if (universe === 'all') await fullScanAll(); else await run(); }} disabled={loading} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{loading ? 'Scanning…' : 'Scan'}</button>
         </div>
       </div>
-      <div className="mt-2 text-xs text-slate-400">Symbols (paste or import)</div>
+      <div className="mt-2 text-xs text-slate-400">Symbols (paste or import) {assetClass === 'crypto' ? 'e.g., BTC/USD, ETH/USD' : ''}</div>
       <textarea value={symbols} onChange={e=>setSymbols(e.target.value)} className="mt-1 w-full h-16 bg-slate-800 border border-slate-700 rounded p-2 text-sm" />
       <div className="mt-1 flex items-center gap-2 text-xs">
         <input type="file" accept=".csv,.txt" onChange={async (e)=>{
@@ -190,15 +197,15 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
             <button onClick={exportCsv} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Export CSV</button>
           </div>
           <div className="md:col-span-2 text-xs text-slate-500">
-            Universe {res.universe} • Timeframe {res.timeframe} • Threshold ≥{res.threshold} • Daily {res.enforceDaily ? 'On' : 'Off'} • Consensus {requireConsensus ? 'On' : 'Off'} • Results L{res.longs?.length||0}/S{res.shorts?.length||0}
+            {assetClass.toUpperCase()} • Universe {res.universe} • TF {res.timeframe} • TH ≥{res.threshold} • Daily {res.enforceDaily ? 'On' : 'Off'} • Consensus {requireConsensus ? 'On' : 'Off'} • Results L{res.longs?.length||0}/S{res.shorts?.length||0}
             {res.counts ? (
               <>
                 <span className="mx-2">•</span>
-                <span title="Symbols without a clear long/short direction">Neutral {res.counts.neutralSkipped ?? 0}</span>
-                {requireConsensus ? <span className="ml-2" title="Filtered by secondary TF misalignment">Consensus‑blocked {res.counts.consensusBlocked ?? 0}</span> : null}
-                {res.enforceDaily ? <span className="ml-2" title="Filtered by Daily confluence mismatch">Daily‑blocked {res.counts.dailyBlocked ?? 0}</span> : null}
-                <span className="ml-2" title="Below threshold after gating">Below TH {res.counts.thresholdRejected ?? 0}</span>
-                <span className="ml-2" title="Accepted before Top N slicing">Accepted L{res.counts.acceptedLongs ?? 0}/S{res.counts.acceptedShorts ?? 0}</span>
+                <span title="Symbols without a clear long/short direction">• Neutral {res.counts.neutralSkipped ?? 0}</span>
+                {requireConsensus ? <span className="ml-2" title="Filtered by secondary TF misalignment">⚠ Consensus {res.counts.consensusBlocked ?? 0}</span> : null}
+                {res.enforceDaily ? <span className="ml-2" title="Filtered by Daily confluence mismatch">⚠ Daily {res.counts.dailyBlocked ?? 0}</span> : null}
+                <span className="ml-2" title="Below threshold after gating">↓ Below TH {res.counts.thresholdRejected ?? 0}</span>
+                <span className="ml-2" title="Accepted before Top N slicing">✓ Accepted L{res.counts.acceptedLongs ?? 0}/S{res.counts.acceptedShorts ?? 0}</span>
               </>
             ) : null}
           </div>

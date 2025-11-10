@@ -8,6 +8,7 @@ export default async function handler(req, res) {
     const key = process.env.ALPACA_KEY_ID
     const secret = process.env.ALPACA_SECRET_KEY
     const dataBase = process.env.ALPACA_DATA_URL || 'https://data.alpaca.markets/v2'
+    const dataBaseCrypto = process.env.ALPACA_DATA_CRYPTO_URL || 'https://data.alpaca.markets/v1beta3'
     if (!key || !secret) return res.status(500).json({ error: 'Missing Alpaca keys' })
 
     const url = new URL(req.url, 'http://localhost')
@@ -18,11 +19,12 @@ export default async function handler(req, res) {
     const enforceDaily = (url.searchParams.get('enforceDaily') || '1') !== '0'
     const returnAll = (url.searchParams.get('returnAll') || '0') === '1'
     const requireConsensus = (url.searchParams.get('requireConsensus') || '0') === '1'
+    const assetClass = (url.searchParams.get('assetClass') || 'stocks').toLowerCase()
     const symbolsParam = (url.searchParams.get('symbols') || '').trim()
     const symbols = symbolsParam ? symbolsParam.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : getDefaultSymbols()
 
     // Cache by query (include gating flags)
-    const cacheKey = JSON.stringify({ timeframe, limit, top, threshold, enforceDaily, requireConsensus, returnAll, symbols })
+    const cacheKey = JSON.stringify({ timeframe, limit, top, threshold, enforceDaily, requireConsensus, returnAll, assetClass, symbols })
     const cached = getCache(cacheMap, cacheKey, ttlFor(timeframe))
     const inm = req.headers['if-none-match']
     if (cached) {
@@ -34,7 +36,7 @@ export default async function handler(req, res) {
 
     // Pull daily bars once per symbol if enforcing daily
     const dailyMap = {}
-    if (enforceDaily) {
+    if (enforceDaily && assetClass === 'stocks') {
       await Promise.all(symbols.map(async (sym) => {
         const d = await fetchBars({ key, secret, dataBase, symbol: sym, timeframe: '1Day', limit: 400 })
         dailyMap[sym] = d
@@ -49,7 +51,9 @@ export default async function handler(req, res) {
     let thresholdRejected = 0
     await Promise.all(symbols.map(async (sym) => {
       try {
-        const bars = await fetchBars({ key, secret, dataBase, symbol: sym, timeframe, limit })
+        const bars = assetClass === 'crypto'
+          ? await fetchBarsCrypto({ key, secret, dataBaseCrypto, symbol: sym, timeframe, limit })
+          : await fetchBars({ key, secret, dataBase, symbol: sym, timeframe, limit })
         if (!bars.length) return
         const st = computeStates(bars)
         let dir = st.satyDir || (st.pivotNow === 'bullish' ? 'long' : st.pivotNow === 'bearish' ? 'short' : null)
@@ -58,7 +62,9 @@ export default async function handler(req, res) {
         if (requireConsensus) {
           const secTf = mapSecondary(timeframe)
           if (secTf) {
-            const secBars = await fetchBars({ key, secret, dataBase, symbol: sym, timeframe: secTf, limit })
+            const secBars = assetClass === 'crypto'
+              ? await fetchBarsCrypto({ key, secret, dataBaseCrypto, symbol: sym, timeframe: secTf, limit })
+              : await fetchBars({ key, secret, dataBase, symbol: sym, timeframe: secTf, limit })
             if (!secBars.length) return
             const sec = computeStates(secBars)
             const align = (st.pivotNow === sec.pivotNow) && st.pivotNow !== 'neutral'
@@ -67,7 +73,7 @@ export default async function handler(req, res) {
           }
         }
         const scoreOut = st.score + (consensusAligned ? 10 : 0)
-        if (enforceDaily) {
+        if (enforceDaily && assetClass === 'stocks') {
           const d = dailyMap[sym]
           if (!d || !d.length) return
           const ds = computeStates(d)
@@ -92,6 +98,7 @@ export default async function handler(req, res) {
       timeframe,
       threshold,
       enforceDaily,
+      assetClass,
       universe: symbols.length,
       longs,
       shorts,
@@ -152,6 +159,27 @@ async function fetchBars({ key, secret, dataBase, symbol, timeframe, limit }) {
   let raw = []
   if (Array.isArray(j?.bars?.[symbol])) raw = j.bars[symbol]
   else if (Array.isArray(j?.bars)) raw = j.bars
+  return raw.map(b => ({
+    time: Math.floor(new Date(b.t || b.Timestamp || b.time).getTime() / 1000),
+    open: b.o ?? b.Open, high: b.h ?? b.High, low: b.l ?? b.Low, close: b.c ?? b.Close, volume: b.v ?? b.Volume,
+  }))
+}
+
+// Crypto bars (Alpaca v1beta3). Best-effort mapping similar to stocks bars
+async function fetchBarsCrypto({ key, secret, dataBaseCrypto, symbol, timeframe, limit }) {
+  const qs = new URLSearchParams({ symbols: symbol, timeframe, limit: String(limit) })
+  const now = new Date()
+  const backDays = timeframe === '1Day' ? 365 : 7
+  const startDate = new Date(now.getTime() - backDays * 24 * 60 * 60 * 1000)
+  qs.set('start', startDate.toISOString())
+  const endpoint = `${dataBaseCrypto}/crypto/us/bars?${qs.toString()}`
+  const r = await fetch(endpoint, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
+  const j = await r.json()
+  if (!r.ok) throw new Error(JSON.stringify(j))
+  let raw = []
+  if (Array.isArray(j?.bars?.[symbol])) raw = j.bars[symbol]
+  else if (Array.isArray(j?.bars)) raw = j.bars
+  else if (Array.isArray(j?.data?.bars)) raw = j.data.bars
   return raw.map(b => ({
     time: Math.floor(new Date(b.t || b.Timestamp || b.time).getTime() / 1000),
     open: b.o ?? b.Open, high: b.h ?? b.High, low: b.l ?? b.Low, close: b.c ?? b.Close, volume: b.v ?? b.Volume,

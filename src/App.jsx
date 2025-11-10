@@ -70,6 +70,7 @@ export default function App() {
   const [mtfPreset, setMtfPreset] = useState('manual')
   const [signalHistory, setSignalHistory] = useState([])
   const [focusTime, setFocusTime] = useState(null)
+  const streamingAllowed = (import.meta.env.VITE_STREAMING_ALLOWED || 'true').toString().toLowerCase() === 'true'
   const [streaming, setStreaming] = useState(false)
   const [hud, setHud] = useState('')
   const [secBars, setSecBars] = useState([])
@@ -558,10 +559,12 @@ export default function App() {
             <option value={30}>30s</option>
             <option value={60}>60s</option>
           </select>
-          <label className="inline-flex items-center gap-2 text-sm ml-2" title={timeframe==='1Day' ? 'Streaming disabled on Daily' : ''}>
-            <input type="checkbox" className="accent-cyan-500" checked={streaming} disabled={timeframe==='1Day'} onChange={e => { setStreaming(e.target.checked); if (e.target.checked) setAutoRefresh(false) }} />
-            Streaming (beta) <InfoPopover title="Streaming (beta)">Live bars via SSE. Use for intraday. Falls back to polling when off.</InfoPopover>
-          </label>
+          {streamingAllowed && (
+            <label className="inline-flex items-center gap-2 text-sm ml-2" title={timeframe==='1Day' ? 'Streaming disabled on Daily' : ''}>
+              <input type="checkbox" className="accent-cyan-500" checked={streaming} disabled={timeframe==='1Day'} onChange={e => { setStreaming(e.target.checked); if (e.target.checked) setAutoRefresh(false) }} />
+              Streaming (beta) <InfoPopover title="Streaming (beta)">Live bars via SSE. Use for intraday. Falls back to polling when off.</InfoPopover>
+            </label>
+          )}
           <label className="inline-flex items-center gap-2 text-sm ml-2">
             <input type="checkbox" className="accent-indigo-500" checked={autoLoadChange} onChange={e => setAutoLoadChange(e.target.checked)} />
             Auto-Load on Change
