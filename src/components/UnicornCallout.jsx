@@ -10,6 +10,9 @@ export default function UnicornCallout({ state, threshold = 70 }) {
   if (state.sq?.fired) facts.push(`Squeeze: fired ${state.sq.dir}`)
   if (state.ichiRegime) facts.push(`Ichimoku: ${state.ichiRegime}`)
   const [overrideOpen, setOverrideOpen] = useState(false)
+  const [expLoading, setExpLoading] = useState(false)
+  const [expErr, setExpErr] = useState('')
+  const [exp, setExp] = useState(null)
   const bonus = state._consensus?.align ? 10 : 0
   const scoreLabel = bonus ? `${Math.round(state.score)} (+${bonus} consensus)` : `${Math.round(state.score)}`
   async function sendToN8N() {
@@ -20,6 +23,19 @@ export default function UnicornCallout({ state, threshold = 70 }) {
       alert('Sent to n8n')
     } catch (e) {
       alert(`n8n error: ${e.message}`)
+    }
+  }
+  async function explain() {
+    try {
+      setExpLoading(true); setExpErr('')
+      const r = await fetch('/api/llm/explain', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state, threshold, enforceDaily: state._enforceDaily }) })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
+      setExp(j)
+    } catch (e) {
+      setExpErr(String(e.message || e))
+    } finally {
+      setExpLoading(false)
     }
   }
   // Determine intended direction from state (prefer SATY), fallback to ribbon
@@ -52,6 +68,7 @@ export default function UnicornCallout({ state, threshold = 70 }) {
             <TradePanel bars={state._bars || []} saty={state.saty} account={state._account || {}} defaultSide={state.satyDir === 'short' ? 'sell' : 'buy'} defaultRiskPct={0.5} onClose={() => setOverrideOpen(false)} />
           </div>
         )}
+        {expErr ? <div className="mt-2 text-xs text-rose-400">{expErr}</div> : null}
       </div>
     )
   }
@@ -68,6 +85,7 @@ export default function UnicornCallout({ state, threshold = 70 }) {
         <div className="flex items-center gap-3">
           <div className="text-sm font-bold text-emerald-400">Score: {scoreLabel}</div>
           <button onClick={sendToN8N} className="bg-emerald-700/30 hover:bg-emerald-700/40 text-emerald-200 text-xs rounded px-2 py-1">Send to n8n</button>
+          <button onClick={explain} disabled={expLoading} className="bg-slate-800 hover:bg-slate-700 text-emerald-200 text-xs rounded px-2 py-1 border border-slate-700">{expLoading ? 'Explaining…' : 'Explain'}</button>
           <button onClick={() => setOpen(v => !v)} className="bg-emerald-700/30 hover:bg-emerald-700/40 text-emerald-200 text-xs rounded px-2 py-1">{open ? 'Hide Trade' : 'Trade (Paper)'}</button>
         </div>
       </div>
@@ -86,6 +104,7 @@ export default function UnicornCallout({ state, threshold = 70 }) {
             })()}
           </div>
         )}
+        {expErr ? <div className="mt-2 text-xs text-rose-400">{expErr}</div> : null}
       </div>
         {open && <div className="mt-3">
         <TradePanel bars={state._bars || []} saty={state.saty} account={state._account || {}} defaultSide={state.satyDir === 'short' ? 'sell' : 'buy'} defaultRiskPct={softRiskPct} onClose={() => setOpen(false)} />

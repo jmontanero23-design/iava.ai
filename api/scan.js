@@ -17,6 +17,7 @@ export default async function handler(req, res) {
     const threshold = Math.max(0, Math.min(100, parseFloat(url.searchParams.get('threshold') || '70')))
     const enforceDaily = (url.searchParams.get('enforceDaily') || '1') !== '0'
     const returnAll = (url.searchParams.get('returnAll') || '0') === '1'
+    const requireConsensus = (url.searchParams.get('requireConsensus') || '0') === '1'
     const symbolsParam = (url.searchParams.get('symbols') || '').trim()
     const symbols = symbolsParam ? symbolsParam.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : getDefaultSymbols()
 
@@ -49,6 +50,7 @@ export default async function handler(req, res) {
         const st = computeStates(bars)
         let dir = st.satyDir || (st.pivotNow === 'bullish' ? 'long' : st.pivotNow === 'bearish' ? 'short' : null)
         if (!dir) return // skip neutral
+        let consensusAligned = false
         if (requireConsensus) {
           const secTf = mapSecondary(timeframe)
           if (secTf) {
@@ -57,8 +59,10 @@ export default async function handler(req, res) {
             const sec = computeStates(secBars)
             const align = (st.pivotNow === sec.pivotNow) && st.pivotNow !== 'neutral'
             if (!align) return
+            consensusAligned = true
           }
         }
+        const scoreOut = st.score + (consensusAligned ? 10 : 0)
         if (enforceDaily) {
           const d = dailyMap[sym]
           if (!d || !d.length) return
@@ -66,9 +70,9 @@ export default async function handler(req, res) {
           const bull = ds.pivotNow === 'bullish' && ds.ichiRegime === 'bullish'
           const bear = ds.pivotNow === 'bearish' && ds.ichiRegime === 'bearish'
           if ((dir === 'long' && !bull) || (dir === 'short' && !bear)) return
-          results.push({ symbol: sym, score: st.score, dir, last: bars[bars.length-1], daily: { pivot: ds.pivotNow, ichi: ds.ichiRegime } })
+          results.push({ symbol: sym, score: scoreOut, dir, last: bars[bars.length-1], daily: { pivot: ds.pivotNow, ichi: ds.ichiRegime } })
         } else {
-          results.push({ symbol: sym, score: st.score, dir, last: bars[bars.length-1] })
+          results.push({ symbol: sym, score: scoreOut, dir, last: bars[bars.length-1] })
         }
       } catch (_) { /* ignore symbol errors */ }
     }))
