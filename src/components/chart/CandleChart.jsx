@@ -473,6 +473,34 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
         }
       }
     } catch (_) {}
+    // Update top-left HUD chips (lightweight)
+    try {
+      const last = bars[bars.length - 1]
+      if (hudRef.current && last) {
+        const saty = overlays?.saty
+        const fmt = (n) => (n == null ? '—' : Number(n).toFixed(2))
+        let nearestUp, nearestDn
+        if (saty?.atr && saty?.levels) {
+          const up0236 = saty.levels.t0236.up
+          const dn0236 = saty.levels.t0236.dn
+          const up1000 = saty.levels.t1000.up
+          const dn1000 = saty.levels.t1000.dn
+          const abs = (x) => (x == null ? null : Math.abs(x))
+          nearestUp = [up0236, up1000].filter(v => v != null && v > last.close).sort((a,b) => a - b)[0]
+          nearestDn = [dn0236, dn1000].filter(v => v != null && v < last.close).sort((a,b) => abs(a-last.close) - abs(b-last.close))[0]
+        }
+        const chips = []
+        chips.push(`<span class=\"chip\">O ${fmt(last.open)}</span>`)
+        chips.push(`<span class=\"chip\">H ${fmt(last.high)}</span>`)
+        chips.push(`<span class=\"chip\">L ${fmt(last.low)}</span>`)
+        chips.push(`<span class=\"chip chip-strong\">C ${fmt(last.close)}</span>`)
+        if (saty?.atr) chips.push(`<span class=\"chip\">ATR ${fmt(saty.atr)}</span>`)
+        if (saty?.pivot != null) chips.push(`<span class=\"chip\">Pivot ${fmt(saty.pivot)}</span>`)
+        if (nearestUp != null) chips.push(`<span class=\"chip chip-up\">↑ ${fmt(nearestUp)}</span>`)
+        if (nearestDn != null) chips.push(`<span class=\"chip chip-dn\">↓ ${fmt(nearestDn)}</span>`)
+        hudRef.current.innerHTML = `<div class=\"flex gap-1 flex-wrap\">${chips.join('')}</div>`
+      }
+    } catch {}
     // Draw Squeeze ON shading (vertical faint stripes)
     try {
       const c2 = squeezeCanvasRef.current
