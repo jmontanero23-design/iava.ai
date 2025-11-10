@@ -35,6 +35,13 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
     }
   }
 
+  function applyPresetParams() {
+    if (!preset) return
+    if (typeof preset.th === 'number') setThreshold(preset.th)
+    if (typeof preset.hz === 'number') setHorizon(preset.hz)
+    if (preset.regime === 'bull' || preset.regime === 'bear' || preset.regime === 'none') setDailyFilter(preset.regime === 'none' ? 'none' : preset.regime)
+  }
+
   async function downloadJson() {
     try {
       const url = `/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&curve=${showCurve ? 1 : 0}&dailyFilter=${encodeURIComponent(dailyFilter)}&format=json`
@@ -59,6 +66,14 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Backtest Snapshot <InfoPopover title="Backtest">Runs a quick score-based scan: counts events where Score ≥ threshold and shows forward returns after horizon bars.</InfoPopover></h3>
         <div className="flex items-center gap-2 text-xs">
+          {preset ? (
+            <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700" title="Preset parameters">
+              TH {preset.th} · H {preset.hz} · {preset.regime || 'none'}
+            </span>
+          ) : null}
+          {preset ? (
+            <button onClick={applyPresetParams} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Apply Preset</button>
+          ) : null}
           <label className="inline-flex items-center gap-2">Threshold <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" /></label>
           <label className="inline-flex items-center gap-2">Horizon <input type="number" min={1} max={100} value={horizon} onChange={e => setHorizon(parseInt(e.target.value,10)||1)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" /></label>
           <label className="inline-flex items-center gap-2"><input type="checkbox" checked={showCurve} onChange={e=>setShowCurve(e.target.checked)} /> Curve</label>

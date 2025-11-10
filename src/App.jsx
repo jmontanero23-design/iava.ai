@@ -123,6 +123,29 @@ export default function App() {
     return base
   }, [bars, showEma821, showEma512, showEma89, showEma3450, showIchi, showSaty, showSqueeze])
 
+  // Preset overlay expectations vs current state (for gentle hints)
+  const presetExpected = useMemo(() => {
+    if (mtfPreset === 'manual') return null
+    const p = presets[mtfPreset]
+    if (!p) return null
+    return {
+      ema821: !!p.showEma821,
+      ema512: !!p.showEma512,
+      ema89: !!p.showEma89,
+      ema3450: !!p.showEma3450,
+      ribbon: !!p.showRibbon,
+      ichi: !!p.showIchi,
+    }
+  }, [mtfPreset])
+  const currentOverlay = useMemo(() => ({
+    ema821: !!showEma821,
+    ema512: !!showEma512,
+    ema89: !!showEma89,
+    ema3450: !!showEma3450,
+    ribbon: !!showRibbon,
+    ichi: !!showIchi,
+  }), [showEma821, showEma512, showEma89, showEma3450, showRibbon, showIchi])
+
   const [account, setAccount] = useState(null)
   const signalState = useMemo(() => computeStates(bars), [bars])
   const dailyState = useMemo(() => (dailyBars?.length ? computeStates(dailyBars) : null), [dailyBars])
@@ -547,6 +570,8 @@ export default function App() {
         markers={signalState.markers}
         loading={loading}
         focusTime={focusTime}
+        presetExpected={presetExpected}
+        currentOverlay={currentOverlay}
         overlayToggles={{
           ema821: () => setShowEma821(v => !v),
           ema512: () => setShowEma512(v => !v),

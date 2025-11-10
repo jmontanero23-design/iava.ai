@@ -166,7 +166,9 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
               } catch (e) { alert('Save failed') }
             }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Save</button>
           </div>
-          <div className="md:col-span-2 text-xs text-slate-500">Universe {res.universe} • Timeframe {res.timeframe} • Threshold ≥{res.threshold} • Daily {res.enforceDaily ? 'On' : 'Off'}</div>
+          <div className="md:col-span-2 text-xs text-slate-500">
+            Universe {res.universe} • Timeframe {res.timeframe} • Threshold ≥{res.threshold} • Daily {res.enforceDaily ? 'On' : 'Off'} • Consensus {requireConsensus ? 'On' : 'Off'} • Results L{res.longs?.length||0}/S{res.shorts?.length||0}
+          </div>
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { createChart } from 'lightweight-charts'
 
-export default function CandleChart({ bars = [], overlays = {}, markers = [], loading = false, focusTime = null, overlayToggles = null, presetLabel = '' }) {
+export default function CandleChart({ bars = [], overlays = {}, markers = [], loading = false, focusTime = null, overlayToggles = null, presetLabel = '', presetExpected = null, currentOverlay = null }) {
   const containerRef = useRef(null)
   const chartRef = useRef(null)
   const seriesRef = useRef(null)
@@ -556,6 +556,14 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
               <button key={key} onClick={overlayToggles[key]} className="px-2 py-0.5 rounded border border-slate-700 hover:border-slate-500" title={`Toggle ${key}`}>{key}</button>
             ) : null
           ))}
+          {/* Preset adherence hints: show expected overlays that are currently off */}
+          {presetExpected && currentOverlay ? (
+            <div className="flex items-center gap-1 ml-2" title="Preset expects these overlays to be ON">
+              {Object.keys(presetExpected).filter(k => presetExpected[k] && !currentOverlay[k]).map(k => (
+                <span key={k} className="px-1.5 py-0.5 rounded-full border border-rose-600/70 text-rose-300 bg-rose-900/20">{k}</span>
+              ))}
+            </div>
+          ) : null}
           {/* Active overlay chips */}
           <div className="flex items-center gap-1 ml-2">
             {(() => {
