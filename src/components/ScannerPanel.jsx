@@ -168,6 +168,16 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
           </div>
           <div className="md:col-span-2 text-xs text-slate-500">
             Universe {res.universe} • Timeframe {res.timeframe} • Threshold ≥{res.threshold} • Daily {res.enforceDaily ? 'On' : 'Off'} • Consensus {requireConsensus ? 'On' : 'Off'} • Results L{res.longs?.length||0}/S{res.shorts?.length||0}
+            {res.counts ? (
+              <>
+                <span className="mx-2">•</span>
+                <span title="Symbols without a clear long/short direction">Neutral {res.counts.neutralSkipped ?? 0}</span>
+                {requireConsensus ? <span className="ml-2" title="Filtered by secondary TF misalignment">Consensus‑blocked {res.counts.consensusBlocked ?? 0}</span> : null}
+                {res.enforceDaily ? <span className="ml-2" title="Filtered by Daily confluence mismatch">Daily‑blocked {res.counts.dailyBlocked ?? 0}</span> : null}
+                <span className="ml-2" title="Below threshold after gating">Below TH {res.counts.thresholdRejected ?? 0}</span>
+                <span className="ml-2" title="Accepted before Top N slicing">Accepted L{res.counts.acceptedLongs ?? 0}/S{res.counts.acceptedShorts ?? 0}</span>
+              </>
+            ) : null}
           </div>
         </div>
       )}

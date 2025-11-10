@@ -43,13 +43,17 @@ export default async function handler(req, res) {
 
     const { computeStates } = await import('../src/utils/indicators.js')
     const results = []
+    let neutralSkipped = 0
+    let consensusBlocked = 0
+    let dailyBlocked = 0
+    let thresholdRejected = 0
     await Promise.all(symbols.map(async (sym) => {
       try {
         const bars = await fetchBars({ key, secret, dataBase, symbol: sym, timeframe, limit })
         if (!bars.length) return
         const st = computeStates(bars)
         let dir = st.satyDir || (st.pivotNow === 'bullish' ? 'long' : st.pivotNow === 'bearish' ? 'short' : null)
-        if (!dir) return // skip neutral
+        if (!dir) { neutralSkipped++; return }
         let consensusAligned = false
         if (requireConsensus) {
           const secTf = mapSecondary(timeframe)
@@ -58,7 +62,7 @@ export default async function handler(req, res) {
             if (!secBars.length) return
             const sec = computeStates(secBars)
             const align = (st.pivotNow === sec.pivotNow) && st.pivotNow !== 'neutral'
-            if (!align) return
+            if (!align) { consensusBlocked++; return }
             consensusAligned = true
           }
         }
@@ -69,21 +73,37 @@ export default async function handler(req, res) {
           const ds = computeStates(d)
           const bull = ds.pivotNow === 'bullish' && ds.ichiRegime === 'bullish'
           const bear = ds.pivotNow === 'bearish' && ds.ichiRegime === 'bearish'
-          if ((dir === 'long' && !bull) || (dir === 'short' && !bear)) return
+          if ((dir === 'long' && !bull) || (dir === 'short' && !bear)) { dailyBlocked++; return }
+          if (scoreOut < threshold) { thresholdRejected++; return }
           results.push({ symbol: sym, score: scoreOut, dir, last: bars[bars.length-1], daily: { pivot: ds.pivotNow, ichi: ds.ichiRegime } })
         } else {
+          if (scoreOut < threshold) { thresholdRejected++; return }
           results.push({ symbol: sym, score: scoreOut, dir, last: bars[bars.length-1] })
         }
       } catch (_) { /* ignore symbol errors */ }
     }))
 
-    // Apply threshold before slicing top N to better match chart expectations
-    const filt = results.filter(r => r.score >= threshold)
-    const longsAll = filt.filter(r => r.dir === 'long').sort((a,b) => b.score - a.score)
-    const shortsAll = filt.filter(r => r.dir === 'short').sort((a,b) => b.score - a.score)
+    // Results are already threshold-filtered above for accurate counts
+    const longsAll = results.filter(r => r.dir === 'long').sort((a,b) => b.score - a.score)
+    const shortsAll = results.filter(r => r.dir === 'short').sort((a,b) => b.score - a.score)
     const longs = returnAll ? longsAll : longsAll.slice(0, top)
     const shorts = returnAll ? shortsAll : shortsAll.slice(0, top)
-    const payload = { timeframe, threshold, enforceDaily, universe: symbols.length, longs, shorts }
+    const payload = {
+      timeframe,
+      threshold,
+      enforceDaily,
+      universe: symbols.length,
+      longs,
+      shorts,
+      counts: {
+        neutralSkipped,
+        consensusBlocked: requireConsensus ? consensusBlocked : undefined,
+        dailyBlocked: enforceDaily ? dailyBlocked : undefined,
+        thresholdRejected,
+        acceptedLongs: longsAll.length,
+        acceptedShorts: shortsAll.length,
+      }
+    }
     const body = JSON.stringify(payload)
     const etag = `W/"${crypto.createHash('sha1').update(body).digest('hex')}"`
     setCache(cacheMap, cacheKey, { body, etag })

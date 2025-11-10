@@ -77,6 +77,24 @@ export default function App() {
   const [consensusBonus, setConsensusBonus] = useState(false)
   const [presetSuggesting, setPresetSuggesting] = useState(false)
   const [presetSuggestErr, setPresetSuggestErr] = useState('')
+  // Keyboard shortcuts (presets and nav)
+  useEffect(() => {
+    const handler = (e) => {
+      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : ''
+      const isTyping = tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable)
+      if (isTyping) return
+      // Number keys map to presets (skip manual)
+      const presetOrder = ['trendDaily','pullbackDaily','intradayBreakout','dailyTrendFollow','meanRevertIntraday','breakoutDailyStrong','momentumContinuation']
+      const n = parseInt(e.key, 10)
+      if (!isNaN(n) && n >= 1 && n <= presetOrder.length) {
+        const id = presetOrder[n - 1]
+        applyPreset(id)
+      }
+      // Quick nav: left/right arrows to move visible range by small step when chart focused (handled inside chart), here we keep for future
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   function mlabel(id) {
     const map = {
@@ -332,14 +350,14 @@ export default function App() {
   }
 
   const presetDescriptions = {
-    manual: 'Customize overlays, gating, and parameters manually.',
-    trendDaily: 'Trend-following with EMA 8/21/34 + Ichimoku; Daily confluence ON. Use for aligned trends.',
-    pullbackDaily: 'Pullbacks with EMA 5/12 and 8/9 in trend context; Daily confluence ON.',
-    intradayBreakout: 'Intraday momentum breakouts; lighter regime filter. Best on liquid names during session.',
-    dailyTrendFollow: 'Swing trend entries with Daily alignment; higher conviction, slower cadence.',
-    meanRevertIntraday: 'Counter‑trend fades on intraday extremes; use smaller risk and tighter stops.',
-    breakoutDailyStrong: 'Stronger breakout stack (EMAs + Ichimoku) with Daily confluence ON.',
-    momentumContinuation: 'Continuation after initial push; ribbon + fast EMA cloud for momentum.',
+    manual: 'Customize overlays, gating, and parameters manually. Hint: red chips on the chart show overlays a preset expects that are currently OFF.',
+    trendDaily: 'Trend-following with EMA 8/21/34 + Ichimoku; Daily confluence ON. Use for aligned trends. Hint: red chips on chart indicate expected overlays are OFF.',
+    pullbackDaily: 'Pullbacks with EMA 5/12 and 8/9 in trend context; Daily confluence ON. Hint: red chips on chart indicate expected overlays are OFF.',
+    intradayBreakout: 'Intraday momentum breakouts; lighter regime filter. Best on liquid names during session. Hint: red chips on chart indicate expected overlays are OFF.',
+    dailyTrendFollow: 'Swing trend entries with Daily alignment; higher conviction, slower cadence. Hint: red chips on chart indicate expected overlays are OFF.',
+    meanRevertIntraday: 'Counter‑trend fades on intraday extremes; use smaller risk and tighter stops. Hint: red chips on chart indicate expected overlays are OFF.',
+    breakoutDailyStrong: 'Stronger breakout stack (EMAs + Ichimoku) with Daily confluence ON. Hint: red chips on chart indicate expected overlays are OFF.',
+    momentumContinuation: 'Continuation after initial push; ribbon + fast EMA cloud for momentum. Hint: red chips on chart indicate expected overlays are OFF.',
   }
 
   function applyPreset(id) {
@@ -597,7 +615,7 @@ export default function App() {
       <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {showSqueeze && <SqueezePanel bars={bars} />}
-        <SignalsPanel state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), components: { ...(signalState?.components||{}), ...(consensusBonus && consensus?.align ? { consensus: 10 } : {}) } }} />
+        <SignalsPanel bars={bars} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), components: { ...(signalState?.components||{}), ...(consensusBonus && consensus?.align ? { consensus: 10 } : {}) } }} />
       </div>
       <ScannerPanel onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf || timeframe); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }} defaultTimeframe={timeframe} />
       <WatchlistNavigator onLoadSymbol={(sym, tf) => { setSymbol(sym); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }} timeframe={timeframe} />
