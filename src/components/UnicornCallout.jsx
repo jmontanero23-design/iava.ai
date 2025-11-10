@@ -47,7 +47,7 @@ export default function UnicornCallout({ state, threshold = 70 }) {
         </div>
         {overrideOpen && (
           <div className="mt-3">
-            <TradePanel bars={state._bars || []} saty={state.saty} account={state._account || {}} defaultSide={state.satyDir === 'short' ? 'sell' : 'buy'} onClose={() => setOverrideOpen(false)} />
+            <TradePanel bars={state._bars || []} saty={state.saty} account={state._account || {}} defaultSide={state.satyDir === 'short' ? 'sell' : 'buy'} defaultRiskPct={0.5} onClose={() => setOverrideOpen(false)} />
           </div>
         )}
       </div>
@@ -71,8 +71,8 @@ export default function UnicornCallout({ state, threshold = 70 }) {
           <div className="mt-2 text-xs text-slate-300">Why: {Object.entries(state.components).filter(([,v])=>v>0).map(([k,v]) => `${k}+${v}`).join(', ')}</div>
         )}
       </div>
-      {open && <div className="mt-3">
-        <TradePanel bars={state._bars || []} saty={state.saty} account={state._account || {}} defaultSide={state.satyDir === 'short' ? 'sell' : 'buy'} onClose={() => setOpen(false)} />
+        {open && <div className="mt-3">
+        <TradePanel bars={state._bars || []} saty={state.saty} account={state._account || {}} defaultSide={state.satyDir === 'short' ? 'sell' : 'buy'} defaultRiskPct={1} onClose={() => setOpen(false)} />
       </div>}
     </div>
   )
