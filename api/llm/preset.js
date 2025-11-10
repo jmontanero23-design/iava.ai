@@ -26,6 +26,21 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: `Unsupported LLM_PROVIDER ${provider}` })
     }
 
+    // Normalize output: ensure numeric th/hz and canonical regime values
+    try {
+      if (out && typeof out === 'object') {
+        const p = out.params || {}
+        const thRaw = Number(p.th)
+        const hzRaw = Number(p.hz)
+        const regimeRaw = (p.regime || '').toString().toLowerCase()
+        const regime = regimeRaw === 'bullish' ? 'bull' : regimeRaw === 'bearish' ? 'bear' : (regimeRaw || 'none')
+        out.params = {
+          th: Number.isFinite(thRaw) ? Math.max(0, Math.min(100, Math.round(thRaw))) : 70,
+          hz: Number.isFinite(hzRaw) ? Math.max(1, Math.min(100, Math.round(hzRaw))) : 10,
+          regime,
+        }
+      }
+    } catch {}
     res.status(200).json(out)
   } catch (e) {
     res.status(500).json({ error: e?.message || 'Unexpected error' })
