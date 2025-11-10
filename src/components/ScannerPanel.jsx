@@ -10,6 +10,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
   const [res, setRes] = useState(null)
+  const [wlName, setWlName] = useState('scanner-top')
 
   async function run() {
     try {
@@ -74,9 +75,22 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
           <Section title={`Top Longs (${res.longs?.length || 0})`} items={res.longs} />
           <Section title={`Top Shorts (${res.shorts?.length || 0})`} items={res.shorts} />
+          <div className="md:col-span-2 flex items-center gap-2 text-xs mt-2">
+            <span className="text-slate-400">Save to watchlist</span>
+            <input value={wlName} onChange={e=>setWlName(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1" />
+            <button onClick={async ()=>{
+              try {
+                const { save } = await import('../utils/watchlists.js')
+                const longs = (res.longs||[]).map(x=>x.symbol)
+                const shorts = (res.shorts||[]).map(x=>x.symbol)
+                const combined = Array.from(new Set([...longs, ...shorts]))
+                save(wlName || 'scanner-top', combined)
+                alert('Watchlist saved')
+              } catch (e) { alert('Save failed') }
+            }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Save</button>
+          </div>
         </div>
       )}
     </div>
   )
 }
-

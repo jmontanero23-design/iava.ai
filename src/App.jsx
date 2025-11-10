@@ -23,6 +23,7 @@ import { readParams, writeParams } from './utils/urlState.js'
 import SignalFeed from './components/SignalFeed.jsx'
 import OverlayChips from './components/OverlayChips.jsx'
 import useStreamingBars from './hooks/useStreamingBars.js'
+import WatchlistPanel from './components/WatchlistPanel.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -422,7 +423,8 @@ export default function App() {
         {showSqueeze && <SqueezePanel bars={bars} />}
         <SignalsPanel state={signalState} />
       </div>
-      <ScannerPanel onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf); loadBars(sym, tf) }} defaultTimeframe={timeframe} />
+      <ScannerPanel onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf || timeframe); loadBars(sym, tf || timeframe) }} defaultTimeframe={timeframe} />
+      <WatchlistPanel onLoadSymbol={(sym) => { setSymbol(sym); loadBars(sym, timeframe) }} />
       <BacktestPanel symbol={symbol} timeframe={timeframe} />
       <UnicornCallout threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
       <UnicornActionBar threshold={threshold} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} />
