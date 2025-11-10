@@ -49,12 +49,60 @@ export default async function handler(req, res) {
     let consensusBlocked = 0
     let dailyBlocked = 0
     let thresholdRejected = 0
-    await Promise.all(symbols.map(async (sym) => {
-      try {
-        const bars = assetClass === 'crypto'
-          ? await fetchBarsCrypto({ key, secret, dataBaseCrypto, symbol: sym, timeframe, limit })
-          : await fetchBars({ key, secret, dataBase, symbol: sym, timeframe, limit })
-        if (!bars.length) return
+    const maxConc = parseInt(process.env.SCAN_MAX_CONCURRENCY || '0', 10)
+    if (Number.isFinite(maxConc) && maxConc > 0) {
+      let idx = 0
+      async function worker() {
+        while (idx < symbols.length) {
+          const sym = symbols[idx++]
+          try {
+            const bars = assetClass === 'crypto'
+              ? await fetchBarsCrypto({ key, secret, dataBaseCrypto, symbol: sym, timeframe, limit })
+              : await fetchBars({ key, secret, dataBase, symbol: sym, timeframe, limit })
+            if (!bars.length) continue
+            const st = computeStates(bars)
+            let dir = st.satyDir || (st.pivotNow === 'bullish' ? 'long' : st.pivotNow === 'bearish' ? 'short' : null)
+            if (!dir) { neutralSkipped++; continue }
+            let consensusAligned = false
+            if (requireConsensus) {
+              const secTf = mapSecondary(timeframe)
+              if (secTf) {
+                const secBars = assetClass === 'crypto'
+                  ? await fetchBarsCrypto({ key, secret, dataBaseCrypto, symbol: sym, timeframe: secTf, limit })
+                  : await fetchBars({ key, secret, dataBase, symbol: sym, timeframe: secTf, limit })
+                if (!secBars.length) continue
+                const sec = computeStates(secBars)
+                const align = (st.pivotNow === sec.pivotNow) && st.pivotNow !== 'neutral'
+                if (!align) { consensusBlocked++; continue }
+                consensusAligned = true
+              }
+            }
+            const scoreOut = st.score + (consensusAligned ? 10 : 0)
+            if (enforceDaily && assetClass === 'stocks') {
+              const d = dailyMap[sym]
+              if (!d || !d.length) continue
+              const ds = computeStates(d)
+              const bull = ds.pivotNow === 'bullish' && ds.ichiRegime === 'bullish'
+              const bear = ds.pivotNow === 'bearish' && ds.ichiRegime === 'bearish'
+              if ((dir === 'long' && !bull) || (dir === 'short' && !bear)) { dailyBlocked++; continue }
+              if (scoreOut < threshold) { thresholdRejected++; continue }
+              results.push({ symbol: sym, score: scoreOut, dir, last: bars[bars.length-1], daily: { pivot: ds.pivotNow, ichi: ds.ichiRegime } })
+            } else {
+              if (scoreOut < threshold) { thresholdRejected++; continue }
+              results.push({ symbol: sym, score: scoreOut, dir, last: bars[bars.length-1] })
+            }
+          } catch (_) { /* ignore */ }
+        }
+      }
+      const workers = new Array(Math.min(maxConc, symbols.length)).fill(0).map(() => worker())
+      await Promise.all(workers)
+    } else {
+      await Promise.all(symbols.map(async (sym) => {
+        try {
+          const bars = assetClass === 'crypto'
+            ? await fetchBarsCrypto({ key, secret, dataBaseCrypto, symbol: sym, timeframe, limit })
+            : await fetchBars({ key, secret, dataBase, symbol: sym, timeframe, limit })
+          if (!bars.length) return
         const st = computeStates(bars)
         let dir = st.satyDir || (st.pivotNow === 'bullish' ? 'long' : st.pivotNow === 'bearish' ? 'short' : null)
         if (!dir) { neutralSkipped++; return }
@@ -86,8 +134,9 @@ export default async function handler(req, res) {
           if (scoreOut < threshold) { thresholdRejected++; return }
           results.push({ symbol: sym, score: scoreOut, dir, last: bars[bars.length-1] })
         }
-      } catch (_) { /* ignore symbol errors */ }
-    }))
+        } catch (_) { /* ignore symbol errors */ }
+      }))
+    }
 
     // Results are already threshold-filtered above for accurate counts
     const longsAll = results.filter(r => r.dir === 'long').sort((a,b) => b.score - a.score)

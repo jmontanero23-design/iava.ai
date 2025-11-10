@@ -517,7 +517,9 @@ export default function App() {
         <div className="text-[11px] text-slate-500 -mt-1">
           Shortcuts: 1–7 switch presets · ←/→ navigate watchlist · Space toggle Auto
         </div>
-        <span className="text-sm text-slate-400 inline-flex items-center gap-2">Overlays <InfoPopover title="Overlays">Toggle EMA Clouds (pullback/trend), Ichimoku (regime), Pivot Ribbon (8/21/34) and SATY ATR levels (targets).</InfoPopover></span>
+        <span className="text-sm text-slate-400 inline-flex items-center gap-2">Overlays <InfoPopover title="Overlays">Toggle EMA Clouds (pullback/trend), Ichimoku (regime), Pivot Ribbon (8/21/34) and SATY ATR levels (targets).</InfoPopover>
+          <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'Which overlays should I enable for this setup?', context: { overlays: { showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty, showSqueeze }, timeframe, symbol } } })) } catch {} }} className="text-xs text-slate-400 underline">Ask AI</button>
+        </span>
         <label className="inline-flex items-center gap-2 text-sm">
           Preset
           <select value={mtfPreset} onChange={e => applyPreset(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">

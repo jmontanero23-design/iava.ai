@@ -68,7 +68,9 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Backtest Snapshot <InfoPopover title="Backtest">Runs a quick score-based scan: counts events where Score ≥ threshold and shows forward returns after horizon bars.</InfoPopover></h3>
+        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Backtest Snapshot <InfoPopover title="Backtest">Runs a quick score-based scan: counts events where Score ≥ threshold and shows forward returns after horizon bars.</InfoPopover>
+          <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'How do I interpret this backtest heatmap and pick thresholds?', context: { symbol, timeframe, threshold, horizon, consensus, dailyFilter, assetClass } } })) } catch {} }} className="text-xs text-slate-400 underline ml-2">Ask AI</button>
+        </h3>
         <div className="flex items-center gap-2 text-xs">
           <label className="inline-flex items-center gap-2">Asset
             <select value={assetClass} onChange={e=>setAssetClass(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
