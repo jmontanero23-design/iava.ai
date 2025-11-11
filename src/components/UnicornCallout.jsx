@@ -129,16 +129,29 @@ export default function UnicornCallout({ state, threshold = 70 }) {
           <button onClick={() => { try { const el = document.createElement('textarea'); const why = (()=>{ try { const arr = Object.entries(state.components).filter(([,v])=>v>0).map(([k,v]) => `${k}+${v}`); if (state._consensus?.align) arr.push('consensus+10'); return `Why: ${arr.join(', ')}` } catch { return '' } })(); el.value = why; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Why copied', type: 'success' } })) } catch(_) {} }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Why</button>
         </div>
         {exp && (
-          <div className="mt-3 p-2 rounded border border-slate-700 bg-slate-900/60">
-            <div className="text-xs text-slate-400 mb-1">AI Explanation</div>
-            <div className="text-sm text-slate-200">{exp.explanation || ''}</div>
+          <div className="mt-4 p-4 rounded-lg border border-indigo-500/30 bg-gradient-to-br from-indigo-900/20 to-slate-900/40 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">🤖</span>
+              <h4 className="text-sm font-semibold text-indigo-300">AI Analysis</h4>
+              {typeof exp.confidence === 'number' && (
+                <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${exp.confidence > 0.7 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-700/50 text-slate-400 border border-slate-600/30'}`}>
+                  {Math.round(exp.confidence * 100)}% confidence
+                </span>
+              )}
+            </div>
+            <div className="text-sm text-slate-200 leading-relaxed mb-3">{exp.explanation || ''}</div>
             {Array.isArray(exp.highlights) && exp.highlights.length > 0 && (
-              <ul className="mt-2 text-xs list-disc pl-5 text-slate-300">
-                {exp.highlights.map((h, i) => <li key={i}>{h}</li>)}
-              </ul>
-            )}
-            {typeof exp.confidence === 'number' && (
-              <div className="mt-2 text-xs text-slate-400">Confidence: {Math.round(exp.confidence * 100)}%</div>
+              <div className="space-y-2">
+                <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">Key Points:</div>
+                <ul className="space-y-1.5">
+                  {exp.highlights.map((h, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-slate-300">
+                      <span className="text-indigo-400 mt-0.5">▸</span>
+                      <span className="flex-1">{h}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
         )}
