@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { computeStates } from '../utils/indicators.js'
+import { detectMarketRegime } from '../utils/regimeDetector.js'
 
 export default function MarketStats({ bars = [], saty, symbol, timeframe, streaming, consensus, threshold = 70 }) {
   const stats = useMemo(() => {
@@ -15,6 +16,17 @@ export default function MarketStats({ bars = [], saty, symbol, timeframe, stream
   }, [bars, saty])
 
   if (!stats) return null
+
+  // Market Regime Detection
+  const [showRegimeDetails, setShowRegimeDetails] = useState(false)
+  const regime = useMemo(() => {
+    try {
+      // Get ichimoku data if available (we'll pass null for now, enhance later)
+      return detectMarketRegime(bars, null, stats.atr)
+    } catch {
+      return null
+    }
+  }, [bars, stats.atr])
 
   // Build a tiny score sparkline from recent bars (last 40 points)
   const scoreData = useMemo(() => {
@@ -122,9 +134,110 @@ export default function MarketStats({ bars = [], saty, symbol, timeframe, stream
           <span className="text-xs text-slate-500">·</span>
           <span className="text-sm text-slate-400">{timeframe}</span>
         </div>
-        <div className={`px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wide font-medium flex items-center gap-1.5 ${streaming ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>
-          {streaming && <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />}
-          {streaming ? 'Live' : 'Snapshot'}
+        <div className="flex items-center gap-2">
+          {/* Market Regime Badge */}
+          {regime && (
+            <div className="relative">
+              <button
+                onClick={() => setShowRegimeDetails(!showRegimeDetails)}
+                className="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wide font-medium flex items-center gap-1.5 transition-all hover:scale-105"
+                style={(() => {
+                  const colorMap = {
+                    emerald: { bg: 'rgba(16,185,129,0.2)', border: 'rgba(16,185,129,0.4)', text: '#10b981' },
+                    rose: { bg: 'rgba(244,63,94,0.2)', border: 'rgba(244,63,94,0.4)', text: '#f43f5e' },
+                    amber: { bg: 'rgba(245,158,11,0.2)', border: 'rgba(245,158,11,0.4)', text: '#f59e0b' },
+                    orange: { bg: 'rgba(249,115,22,0.2)', border: 'rgba(249,115,22,0.4)', text: '#f97316' },
+                    cyan: { bg: 'rgba(34,211,238,0.2)', border: 'rgba(34,211,238,0.4)', text: '#22d3ee' },
+                    slate: { bg: 'rgba(148,163,184,0.2)', border: 'rgba(148,163,184,0.4)', text: '#94a3b8' }
+                  }
+                  const colors = colorMap[regime.color] || colorMap.slate
+                  return {
+                    backgroundColor: colors.bg,
+                    borderColor: colors.border,
+                    borderWidth: '1px',
+                    borderStyle: 'solid',
+                    color: colors.text
+                  }
+                })()}
+              >
+                <span>{regime.icon}</span>
+                <span>{regime.label}</span>
+              </button>
+              {showRegimeDetails && (
+                <div className="absolute top-full right-0 mt-2 w-80 p-4 bg-slate-900/95 border border-slate-700 rounded-lg shadow-2xl z-50 backdrop-blur-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-slate-200">Market Regime Analysis</h4>
+                    <button onClick={() => setShowRegimeDetails(false)} className="text-slate-400 hover:text-slate-200">×</button>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="text-xs text-slate-400 mb-1">Confidence</div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                          <div
+                            className="h-full transition-all duration-500"
+                            style={(() => {
+                              const colorMap = {
+                                emerald: '#10b981',
+                                rose: '#f43f5e',
+                                amber: '#f59e0b',
+                                orange: '#f97316',
+                                cyan: '#22d3ee',
+                                slate: '#94a3b8'
+                              }
+                              return {
+                                width: `${regime.confidence}%`,
+                                backgroundColor: colorMap[regime.color] || colorMap.slate
+                              }
+                            })()}
+                          />
+                        </div>
+                        <span className="text-xs font-medium text-slate-200">{regime.confidence}%</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-400 mb-1">Recommendation</div>
+                      <p className="text-xs text-slate-300 leading-relaxed">{regime.recommendation}</p>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-400 mb-2">Factors</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        {regime.factors.adx && (
+                          <div className="bg-slate-800/50 rounded px-2 py-1">
+                            <div className="text-slate-500">ADX</div>
+                            <div className="font-medium text-slate-200">{regime.factors.adx}</div>
+                          </div>
+                        )}
+                        {regime.factors.trendStrength && (
+                          <div className="bg-slate-800/50 rounded px-2 py-1">
+                            <div className="text-slate-500">Trend</div>
+                            <div className="font-medium text-slate-200 capitalize">{regime.factors.trendStrength}</div>
+                          </div>
+                        )}
+                        {regime.factors.volatility && (
+                          <div className="bg-slate-800/50 rounded px-2 py-1">
+                            <div className="text-slate-500">Volatility</div>
+                            <div className="font-medium text-slate-200 capitalize">{regime.factors.volatility}</div>
+                          </div>
+                        )}
+                        {regime.factors.volume && (
+                          <div className="bg-slate-800/50 rounded px-2 py-1">
+                            <div className="text-slate-500">Volume</div>
+                            <div className="font-medium text-slate-200 capitalize">{regime.factors.volume}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Live/Snapshot Badge */}
+          <div className={`px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wide font-medium flex items-center gap-1.5 ${streaming ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>
+            {streaming && <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />}
+            {streaming ? 'Live' : 'Snapshot'}
+          </div>
         </div>
       </div>
 
