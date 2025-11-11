@@ -165,9 +165,11 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
           </InfoPopover>
           <button
             onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'How should I configure the Scanner for this market?', context: { timeframe, threshold, enforceDaily, requireConsensus } } })) } catch {} }}
-            className="btn btn-xs"
+            className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-semibold rounded-lg px-3 py-1.5 text-xs transition-all duration-200 flex items-center gap-1"
+            title="NLP Scanner (AI Feature #11)"
           >
-            Ask AI
+            <span>🤖</span>
+            <span>Ask AI</span>
           </button>
         </div>
 
