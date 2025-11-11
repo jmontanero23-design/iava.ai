@@ -37,7 +37,12 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
       setRes(j)
       setAiExp(''); setAiErr('')
     } catch (e) {
-      setErr(String(e.message || e))
+      const msg = String(e.message || e)
+      if (msg.includes('429') || msg.toLowerCase().includes('rate limit') || msg.toLowerCase().includes('too many')) {
+        setErr('⚠️ Rate limit reached. The API has received too many requests. Please wait 30-60 seconds and try again. Tip: Try disabling "Consensus Bonus" to reduce API calls.')
+      } else {
+        setErr(msg)
+      }
     } finally {
       setLoading(false)
     }

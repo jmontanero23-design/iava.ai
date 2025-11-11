@@ -22,13 +22,13 @@ class RateLimiter {
       default: { maxPerMinute: 100, maxConcurrent: 2 }
     }
 
-    // Cache TTL in milliseconds
+    // Cache TTL in milliseconds - REDUCED for live trading accuracy
     this.cacheTTL = {
-      '1Min': 60 * 1000,      // 1 minute for 1-min bars
-      '5Min': 5 * 60 * 1000,  // 5 minutes for 5-min bars
-      '15Min': 10 * 60 * 1000, // 10 minutes for 15-min bars
-      '1Hour': 30 * 60 * 1000, // 30 minutes for hourly bars
-      '1Day': 60 * 60 * 1000   // 1 hour for daily bars
+      '1Min': 30 * 1000,       // 30 seconds for 1-min bars (live data)
+      '5Min': 2 * 60 * 1000,   // 2 minutes for 5-min bars
+      '15Min': 5 * 60 * 1000,  // 5 minutes for 15-min bars
+      '1Hour': 15 * 60 * 1000, // 15 minutes for hourly bars
+      '1Day': 30 * 60 * 1000   // 30 minutes for daily bars
     }
   }
 

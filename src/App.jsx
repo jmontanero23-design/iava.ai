@@ -327,6 +327,14 @@ export default function App() {
           <button onClick={() => loadBars()} className="btn btn-primary px-4 py-2 text-sm font-medium" disabled={loading}>
             {loading ? 'Loading...' : 'Load Data'}
           </button>
+          <button
+            onClick={() => { rateLimiter.clearCache(); loadBars(); }}
+            className="btn px-4 py-2 text-sm font-medium bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white"
+            disabled={loading}
+            title="Clear cache and fetch fresh data"
+          >
+            🔄 Force Refresh
+          </button>
 
           <div className="flex items-center gap-2 ml-auto">
             <HealthBadge />
