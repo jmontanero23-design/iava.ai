@@ -12,6 +12,7 @@ import AIChat from './components/AIChat.jsx'
 import NaturalLanguageScanner from './components/NaturalLanguageScanner.jsx'
 import ModelMonitoring from './components/ModelMonitoring.jsx'
 import FeatureStatusBadge from './components/FeatureStatusBadge.jsx'
+import WelcomeTour, { TourHelpButton } from './components/WelcomeTour.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -19,6 +20,7 @@ import AppChart from './AppChart.jsx'
 export default function App() {
   const [activeTab, setActiveTab] = useState('chart')
   const [selectedFeature, setSelectedFeature] = useState(null)
+  const [showTour, setShowTour] = useState(false)
 
   // Handle feature selection from dashboard
   const handleFeatureSelect = (featureId) => {
@@ -140,6 +142,13 @@ export default function App() {
 
         {activeTab !== 'chart' && <BuildInfoFooter />}
       </div>
+
+      {/* Welcome Tour for new users */}
+      <WelcomeTour forceShow={showTour} onClose={() => setShowTour(false)} />
+
+      {/* Help button to restart tour */}
+      <TourHelpButton onClick={() => setShowTour(true)} />
+
       <ToastHub />
     </div>
   )
