@@ -15,6 +15,7 @@ import FeatureStatusBadge from './components/FeatureStatusBadge.jsx'
 import WelcomeTour, { TourHelpButton } from './components/WelcomeTour.jsx'
 import SignalQualityScorerPanel from './components/SignalQualityScorerPanel.jsx'
 import RiskAdvisorPanel from './components/RiskAdvisorPanel.jsx'
+import TradeJournalAIPanel from './components/TradeJournalAIPanel.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -157,6 +158,10 @@ export default function App() {
 
         {activeTab === 'risk-advisor' && (
           <RiskAdvisorPanel />
+        )}
+
+        {activeTab === 'trade-journal' && (
+          <TradeJournalAIPanel />
         )}
 
         {activeTab !== 'chart' && <BuildInfoFooter />}
