@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import InfoPopover from './InfoPopover.jsx'
 
-export default function BacktestPanel({ symbol, timeframe, preset }) {
+export default function BacktestPanel({ symbol, timeframe, preset, chartThreshold, chartConsensusBonus }) {
   const [loading, setLoading] = useState(false)
   const [res, setRes] = useState(null)
   const [err, setErr] = useState('')
@@ -26,6 +26,14 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
     { label: 'Swing (65 / 20)', th: 65, hz: 20, regime: 'none' },
     { label: 'Mean Revert (55 / 5)', th: 55, hz: 5, regime: 'bear' },
   ]
+
+  function matchChart() {
+    try {
+      if (preset) applyPresetParams()
+      if (typeof chartThreshold === 'number') setThreshold(chartThreshold)
+      if (typeof chartConsensusBonus === 'boolean') setConsensus(chartConsensusBonus)
+    } catch {}
+  }
 
   async function run() {
     try {
@@ -155,9 +163,13 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
           </label>
           {preset ? (
             <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700" title="Preset parameters">
-              TH {preset.th} · H {preset.hz} · {preset.regime || 'none'}
+              Preset · TH {preset.th} · H {preset.hz} · {preset.regime || 'none'}
             </span>
           ) : null}
+          <button onClick={matchChart} className="btn btn-xs" title="Apply preset params and use chart’s threshold and consensus bonus">Match chart</button>
+          <span className="px-2 py-0.5 rounded-full bg-slate-900/60 border border-slate-700" title="Current parameters (live)">
+            Current · TH {threshold} · H {horizon} · {dailyFilter}
+          </span>
           {preset ? (
             <button onClick={applyPresetParams} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Apply Preset</button>
           ) : null}
@@ -191,6 +203,12 @@ export default function BacktestPanel({ symbol, timeframe, preset }) {
           <button onClick={downloadCsv} className="btn btn-xs">Download CSV</button>
           <button onClick={downloadSummaryCsv} className="btn btn-xs">Summary CSV</button>
           <button onClick={downloadSummaryJson} className="btn btn-xs">Summary JSON</button>
+          {res && (
+            <>
+              <button onClick={() => { try { const txt = JSON.stringify(res, null, 2); navigator.clipboard.writeText(txt); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Backtest results copied', type: 'success' } })) } catch {} }} className="btn btn-xs">Copy results</button>
+              <a className="btn btn-xs" href={`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&dailyFilter=${encodeURIComponent(assetClass==='stocks'?dailyFilter:'none')}&regimeCurves=${assetClass==='stocks' && regimeCurves ? 1 : 0}&assetClass=${encodeURIComponent(assetClass)}&consensus=${consensus ? 1 : 0}&format=json`} target="_blank" rel="noreferrer">Open API</a>
+            </>
+          )}
           <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700" title="Current parameters">
             TH {threshold} · H {horizon} · {assetClass==='stocks' ? (dailyFilter || 'none') : 'none'}
           </span>

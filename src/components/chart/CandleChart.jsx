@@ -499,6 +499,16 @@ export default function CandleChart({ bars = [], overlays = {}, markers = [], lo
         if (saty?.pivot != null) chips.push(`<span class=\"chip\">Pivot ${fmt(saty.pivot)}</span>`)
         if (nearestUp != null) chips.push(`<span class=\"chip chip-up\">↑ ${fmt(nearestUp)}</span>`)
         if (nearestDn != null) chips.push(`<span class=\"chip chip-dn\">↓ ${fmt(nearestDn)}</span>`)
+        // Minimal distance to next target in ATRs
+        if (saty?.atr && (nearestUp != null || nearestDn != null)) {
+          const dUp = (nearestUp != null) ? (nearestUp - last.close) : Infinity
+          const dDn = (nearestDn != null) ? (last.close - nearestDn) : Infinity
+          const d = Math.min(dUp, dDn)
+          if (Number.isFinite(d) && d !== Infinity && saty.atr > 0) {
+            const datr = Math.abs(d) / saty.atr
+            chips.push(`<span class=\"chip\">Δ ${datr.toFixed(2)} ATR</span>`)
+          }
+        }
         hudRef.current.innerHTML = `<div class=\"flex gap-1 flex-wrap\">${chips.join('')}</div>`
       }
     } catch {}

@@ -51,7 +51,7 @@ export default function WatchlistPanel({ onLoadSymbol }) {
             }
           } catch {}
         }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700 text-xs">Rename</button>
-        <button onClick={async()=>{ try { const mod = await import('../utils/watchlists.js'); if (active) { mod.setActive(active); alert('Set active') } } catch {} }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700 text-xs">Set Active</button>
+        <button onClick={async()=>{ try { const mod = await import('../utils/watchlists.js'); if (active) { mod.setActive(active); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Set active', type: 'success' } })) } } catch {} }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700 text-xs">Set Active</button>
         <button onClick={async()=>{
           try { const mod = await import('../utils/watchlists.js'); if (active) { mod.remove(active); setActive(''); setSymbols([]); refresh() } } catch {}
         }} className="bg-rose-700/30 hover:bg-rose-700/40 text-rose-200 rounded px-2 py-1 text-xs">Delete</button>

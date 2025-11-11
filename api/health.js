@@ -16,10 +16,17 @@ export default async function handler(req, res) {
   }
   const n8nConfigured = Boolean(process.env.N8N_WEBHOOK_URL)
   const n8nEnabled = (process.env.N8N_ENABLED || 'true').toLowerCase() !== 'false'
+  // Probe Alpaca account directly to avoid relying on intra-lambda fetches
   let alpacaOk = false
   try {
-    const r = await fetch(`${req.headers.origin || ''}/api/alpaca/account`)
-    alpacaOk = r.ok
+    const key = process.env.ALPACA_KEY_ID
+    const secret = process.env.ALPACA_SECRET_KEY
+    const alpEnv = process.env.ALPACA_ENV || 'paper'
+    if (key && secret) {
+      const base = alpEnv === 'live' ? 'https://api.alpaca.markets' : 'https://paper-api.alpaca.markets'
+      const r = await fetch(`${base}/v2/account`, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
+      alpacaOk = r.ok
+    }
   } catch {
     alpacaOk = false
   }

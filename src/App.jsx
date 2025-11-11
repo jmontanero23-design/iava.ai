@@ -19,6 +19,7 @@ import BacktestPanel from './components/BacktestPanel.jsx'
 import BatchBacktestPanel from './components/BatchBacktestPanel.jsx'
 import RateLimitBanner from './components/RateLimitBanner.jsx'
 import HelpFab from './components/HelpFab.jsx'
+import ToastHub from './components/ToastHub.jsx'
 import OrdersPanel from './components/OrdersPanel.jsx'
 import SatyTargets from './components/SatyTargets.jsx'
 import InfoPopover from './components/InfoPopover.jsx'
@@ -30,6 +31,7 @@ import useStreamingBars from './hooks/useStreamingBars.js'
 import WatchlistPanel from './components/WatchlistPanel.jsx'
 import WatchlistNavigator from './components/WatchlistNavigator.jsx'
 import ScannerPanel from './components/ScannerPanel.jsx'
+import CommandPalette from './components/CommandPalette.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -620,7 +622,7 @@ export default function App() {
           </label>
         </div>
         <div className="ml-auto"><HealthBadge /></div>
-        <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); alert('Link copied'); } catch(_) {} }} className="ml-2 bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Link</button>
+        <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Link copied', type: 'success' } })) } catch(_) {} }} className="ml-2 bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Link</button>
       </div>
       <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streaming || autoRefresh} consensus={consensus} threshold={threshold} />
       <LegendChips overlays={overlays} />
@@ -659,7 +661,13 @@ export default function App() {
         {showSqueeze && <SqueezePanel bars={bars} />}
         <SignalsPanel bars={bars} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), components: { ...(signalState?.components||{}), ...(consensusBonus && consensus?.align ? { consensus: 10 } : {}) } }} />
       </div>
-      <ScannerPanel onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf || timeframe); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }} defaultTimeframe={timeframe} />
+      <ScannerPanel
+        onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf || timeframe); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }}
+        defaultTimeframe={timeframe}
+        currentTimeframe={timeframe}
+        currentEnforceDaily={enforceDaily}
+        currentConsensusBonus={consensusBonus}
+      />
       <WatchlistNavigator onLoadSymbol={(sym, tf) => { setSymbol(sym); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }} timeframe={timeframe} />
       <WatchlistPanel onLoadSymbol={(sym) => { setSymbol(sym); loadBars(sym, timeframe) }} />
       {hud && (
@@ -667,7 +675,7 @@ export default function App() {
           {hud}
         </div>
       )}
-      <BacktestPanel symbol={symbol} timeframe={timeframe} preset={backtestPreset} />
+      <BacktestPanel symbol={symbol} timeframe={timeframe} preset={backtestPreset} chartThreshold={threshold} chartConsensusBonus={consensusBonus} />
       <BatchBacktestPanel defaultTimeframe={timeframe} />
       <HelpFab context={{ symbol, timeframe, enforceDaily, consensus: consensus?.align || false, overlays: { showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty, showSqueeze }, score: Math.round((signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0)), daily: dailyState ? { pivot: dailyState.pivotNow, ichi: dailyState.ichiRegime } : null }} />
       <UnicornCallout threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily, _consensus: consensus, _timeframe: timeframe }} />
@@ -675,6 +683,35 @@ export default function App() {
       <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
       <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />
       <OrdersPanel symbol={symbol} lastPrice={bars[bars.length-1]?.close} saty={overlays.saty} />
+      <ToastHub />
+      <CommandPalette
+        symbol={symbol}
+        setSymbol={(s)=>{ setSymbol(s); loadBars(s, timeframe) }}
+        loadBars={(s, tf)=>loadBars(s, tf)}
+        timeframe={timeframe}
+        setTimeframe={(tf)=>{ setTimeframe(tf); loadBars(symbol, tf) }}
+        overlayState={{
+          ema821: showEma821,
+          ema512: showEma512,
+          ema89: showEma89,
+          ema3450: showEma3450,
+          ribbon: showRibbon,
+          ichi: showIchi,
+          saty: showSaty,
+          squeeze: showSqueeze,
+        }}
+        overlayToggles={{
+          ema821: () => setShowEma821(v => !v),
+          ema512: () => setShowEma512(v => !v),
+          ema89: () => setShowEma89(v => !v),
+          ema3450: () => setShowEma3450(v => !v),
+          ribbon: () => setShowRibbon(v => !v),
+          ichi: () => setShowIchi(v => !v),
+          saty: () => setShowSaty(v => !v),
+          squeeze: () => setShowSqueeze(v => !v),
+        }}
+        applyPreset={applyPreset}
+      />
       <section className="card p-4">
         <h2 className="text-lg font-semibold mb-2">Project Structure</h2>
         <ul className="list-disc pl-6 text-slate-300">

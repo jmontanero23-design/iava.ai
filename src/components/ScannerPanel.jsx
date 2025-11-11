@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import InfoPopover from './InfoPopover.jsx'
 
-export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }) {
+export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', currentTimeframe, currentEnforceDaily, currentConsensusBonus }) {
   const [symbols, setSymbols] = useState('SPY,QQQ,AAPL,MSFT,NVDA,TSLA,AMZN,META,GOOGL,NFLX')
   const [timeframe, setTimeframe] = useState(defaultTimeframe)
   const [threshold, setThreshold] = useState(70)
@@ -19,6 +19,36 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
   const [consensusBonus, setConsensusBonus] = useState(false)
   const [assetClass, setAssetClass] = useState('stocks') // stocks | crypto
   const [exporting, setExporting] = useState(false)
+  const [autoRunOnMatch, setAutoRunOnMatch] = useState(true)
+  const [aiReady, setAiReady] = useState(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiErr, setAiErr] = useState('')
+  const [aiSummary, setAiSummary] = useState(null)
+
+  const matched = (
+    (!!currentTimeframe && timeframe === currentTimeframe) &&
+    (typeof currentEnforceDaily === 'boolean' ? enforceDaily === currentEnforceDaily : true) &&
+    (typeof currentConsensusBonus === 'boolean' ? consensusBonus === currentConsensusBonus : true)
+  )
+
+  function useChartConsensus() {
+    try {
+      setRequireConsensus(true)
+      if (typeof currentConsensusBonus === 'boolean') setConsensusBonus(currentConsensusBonus)
+      if (autoRunOnMatch) setTimeout(() => { run() }, 60)
+    } catch {}
+  }
+
+  React.useEffect(() => { (async () => { try { const r = await fetch('/api/health'); const j = await r.json(); setAiReady(Boolean(j?.api?.llm?.configured)) } catch { setAiReady(false) } })() }, [])
+
+  function matchChart() {
+    try {
+      if (currentTimeframe) setTimeframe(currentTimeframe)
+      if (typeof currentEnforceDaily === 'boolean') setEnforceDaily(currentEnforceDaily)
+      if (typeof currentConsensusBonus === 'boolean') setConsensusBonus(currentConsensusBonus)
+      if (autoRunOnMatch) setTimeout(() => { run() }, 60)
+    } catch {}
+  }
 
   function exportCsv() {
     try {
@@ -70,6 +100,13 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
       setLoading(false)
     }
   }
+
+  // Allow global trigger to run the scanner (from Command Palette)
+  React.useEffect(() => {
+    const fn = () => { if (universe === 'all') fullScanAll(); else run() }
+    window.addEventListener('iava.scan', fn)
+    return () => window.removeEventListener('iava.scan', fn)
+  }, [universe, symbols, timeframe, threshold, top, enforceDaily, requireConsensus, consensusBonus, assetClass])
 
   async function fullScanAll() {
     try {
@@ -163,6 +200,12 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
     <div className="card p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Market Scanner <InfoPopover title="Scanner">Scans a symbol list and surfaces the highest Unicorn Scores for longs/shorts.\n\nTips:\n- Enable Daily to require Daily Pivot + Ichimoku agreement.\n- Enable Consensus to require secondary timeframe alignment (Chart’s Consensus Bonus = +10).\n- Threshold applies after gating. Counts show what was filtered.</InfoPopover>
+          {matched && (
+            <span className="px-2 py-0.5 rounded-full border border-emerald-600 text-emerald-300 bg-emerald-900/20 text-[10px] inline-flex items-center gap-1">
+              matched
+              <InfoPopover title="Matched to chart">Timeframe, Daily gating, and Bonus +10 match the chart’s current settings.</InfoPopover>
+            </span>
+          )}
           <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'How should I configure the Scanner for this market?', context: { timeframe, threshold, enforceDaily, requireConsensus } } })) } catch {} }} className="text-xs text-slate-400 underline ml-2">Ask AI</button>
         </h3>
         <div className="flex items-center gap-2 text-xs">
@@ -197,6 +240,26 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
           <label className="inline-flex items-center gap-2"><input aria-label="Daily confluence" className="checkbox" type="checkbox" checked={enforceDaily} onChange={e=>setEnforceDaily(e.target.checked)} />Daily <InfoPopover title="Daily Confluence">Requires Daily Pivot + Ichimoku agreement (bullish for longs, bearish for shorts). Tightens quality at the expense of fewer candidates.</InfoPopover></label>
           <label className="inline-flex items-center gap-2"><input aria-label="Consensus alignment" className="checkbox" type="checkbox" checked={requireConsensus} onChange={e=>setRequireConsensus(e.target.checked)} />Consensus <InfoPopover title="Consensus (secondary TF)">Requires primary trend to match a secondary timeframe (e.g., 1→5, 5→15min). Filters misaligned setups; pair with Bonus +10 for chart parity.</InfoPopover></label>
           <label className="inline-flex items-center gap-2"><input className="checkbox" type="checkbox" checked={consensusBonus} onChange={e=>setConsensusBonus(e.target.checked)} />Bonus +10 <InfoPopover title="Consensus Bonus (+10)">Adds +10 to the score when secondary timeframe trend aligns with the primary (same as the chart’s Consensus Bonus). Use with Consensus gating for stricter filtering, or alone to boost aligned names.</InfoPopover></label>
+          <button onClick={matchChart} className="btn btn-xs" title="Copy timeframe, Daily, and Bonus +10 from the chart">Match chart</button>
+          <button onClick={useChartConsensus} className="btn btn-xs" title="Require secondary TF alignment (same logic the chart uses)">Use chart consensus</button>
+          <label className="inline-flex items-center gap-1">
+            <input type="checkbox" className="checkbox" checked={autoRunOnMatch} onChange={e=>setAutoRunOnMatch(e.target.checked)} />
+            Auto-run
+            <InfoPopover title="Auto-run">Automatically runs a scan right after you Match chart or Use chart consensus.</InfoPopover>
+          </label>
+          <button onClick={() => {
+            try {
+              const qs = new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', requireConsensus: requireConsensus ? '1' : '0', consensusBonus: consensusBonus ? '1' : '0', assetClass })
+              const url = `${window.location.origin}/api/scan?${qs.toString()}`
+              const ta = document.createElement('textarea')
+              ta.value = url
+              document.body.appendChild(ta)
+              ta.select()
+              document.execCommand('copy')
+              document.body.removeChild(ta)
+              window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Scan link copied', type: 'success' } }))
+            } catch {}
+          }} className="btn btn-xs" title="Copy a link that runs this scan via API">Copy scan link</button>
           <button onClick={async()=>{ if (universe === 'all') await fullScanAll(); else await run(); }} disabled={loading} className="btn btn-xs">{loading ? 'Scanning…' : 'Scan'}</button>
           {universe === 'all' && (
             <button onClick={()=>{ abortRef.current.stop = true; setProgress('Stopping…') }} disabled={!loading} className="btn btn-xs">Stop</button>
@@ -233,6 +296,34 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
       {err && <div className="text-xs text-rose-400 mt-2">{err}</div>}
       {res && (
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2 flex items-center gap-2 text-xs">
+            <button onClick={async()=>{
+              try {
+                setAiLoading(true); setAiErr(''); setAiSummary(null)
+                const r = await fetch('/api/llm/scan_summary', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ result: res }) })
+                const j = await r.json()
+                if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
+                setAiSummary(j.summary || null)
+              } catch (e) {
+                setAiErr(String(e.message || e))
+              } finally { setAiLoading(false) }
+            }} disabled={aiReady===false || aiLoading} className="btn btn-xs disabled:opacity-50">{aiLoading ? 'Summarizing…' : 'Summarize (AI)'}</button>
+            {aiErr && <span className="text-rose-400">{aiErr}</span>}
+          </div>
+          {aiSummary && (
+            <div className="md:col-span-2 text-sm p-2 rounded border border-slate-700 bg-slate-900/60">
+              <div className="text-xs text-slate-400 mb-1">AI Summary</div>
+              <ul className="list-disc pl-5 text-slate-200">
+                {(aiSummary.bullets||[]).map((b,i)=>(<li key={i}>{b}</li>))}
+              </ul>
+              {aiSummary.quick_take ? <div className="text-xs text-slate-400 mt-1">Quick take: {aiSummary.quick_take}</div> : null}
+            </div>
+          )}
+          <div className="md:col-span-2 text-xs flex items-center gap-2 mb-1">
+            <span className="text-slate-400">Results Tools</span>
+            <button onClick={() => { try { const txt = JSON.stringify(res, null, 2); navigator.clipboard.writeText(txt); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Scan results copied', type: 'success' } })) } catch {} }} className="btn btn-xs">Copy results</button>
+            <a className="btn btn-xs" href={`/api/scan?${new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', requireConsensus: requireConsensus ? '1' : '0', consensusBonus: consensusBonus ? '1' : '0', assetClass }).toString()}`} target="_blank" rel="noreferrer">Open API</a>
+          </div>
           <Section title={`Top Longs (${res.longs?.length || 0})`} items={res.longs} />
           <Section title={`Top Shorts (${res.shorts?.length || 0})`} items={res.shorts} />
           <div className="md:col-span-2 flex items-center gap-2 text-xs mt-2">
@@ -247,14 +338,14 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min' }
                 const listName = wlName || 'scanner-top'
                 save(listName, combined)
                 setActive(listName)
-                alert('Watchlist saved')
-              } catch (e) { alert('Save failed') }
+                window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Watchlist saved', type: 'success' } }))
+              } catch (e) { window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Save failed', type: 'error' } })) }
             }} className="btn btn-xs">Save</button>
             <button onClick={async ()=>{
-              try { const { save, setActive } = await import('../utils/watchlists.js'); const base=(wlName||'scanner-top'); const name=base+"-longs"; const longs = (res.longs||[]).map(x=>x.symbol); save(name, longs); setActive(name); alert('Saved longs') } catch { alert('Save failed') }
+              try { const { save, setActive } = await import('../utils/watchlists.js'); const base=(wlName||'scanner-top'); const name=base+"-longs"; const longs = (res.longs||[]).map(x=>x.symbol); save(name, longs); setActive(name); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Saved longs', type: 'success' } })) } catch { window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Save failed', type: 'error' } })) }
             }} className="btn btn-xs">Save Longs</button>
             <button onClick={async ()=>{
-              try { const { save, setActive } = await import('../utils/watchlists.js'); const base=(wlName||'scanner-top'); const name=base+"-shorts"; const shorts = (res.shorts||[]).map(x=>x.symbol); save(name, shorts); setActive(name); alert('Saved shorts') } catch { alert('Save failed') }
+              try { const { save, setActive } = await import('../utils/watchlists.js'); const base=(wlName||'scanner-top'); const name=base+"-shorts"; const shorts = (res.shorts||[]).map(x=>x.symbol); save(name, shorts); setActive(name); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Saved shorts', type: 'success' } })) } catch { window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Save failed', type: 'error' } })) }
             }} className="btn btn-xs">Save Shorts</button>
             <button onClick={exportCsv} className="btn btn-xs">Export CSV</button>
             <button onClick={exportJson} className="btn btn-xs">Export JSON</button>
