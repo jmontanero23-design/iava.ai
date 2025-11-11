@@ -9,17 +9,21 @@ export default function Hero() {
 
       <div className="relative">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="uppercase tracking-[0.35em] text-[11px] font-medium text-slate-400/80 mb-2 inline-flex items-center gap-2">
-              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-              AI SIGNAL FLIGHT DECK
-            </p>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-indigo-200 via-sky-200 to-cyan-300 bg-clip-text text-transparent leading-tight">
-              iAVA.ai
-            </h1>
-            <p className="text-lg md:text-xl text-slate-300/90 font-light mt-1 tracking-wide">
-              Intelligent Alpha Velocity Assistant
-            </p>
+          <div className="flex items-center gap-4">
+            {/* Logo */}
+            <img src="/logo.svg" alt="iAVA.ai" className="w-16 h-16 md:w-20 md:h-20" />
+            <div>
+              <p className="uppercase tracking-[0.35em] text-[11px] font-medium text-slate-400/80 mb-2 inline-flex items-center gap-2">
+                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                AI SIGNAL FLIGHT DECK
+              </p>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-indigo-200 via-sky-200 to-cyan-300 bg-clip-text text-transparent leading-tight">
+                iAVA.ai
+              </h1>
+              <p className="text-lg md:text-xl text-slate-300/90 font-light mt-1 tracking-wide">
+                Intelligent Alpha Velocity Assistant
+              </p>
+            </div>
           </div>
         </div>
 
@@ -38,8 +42,11 @@ export default function Hero() {
           <span className="px-3 py-1.5 rounded-full bg-slate-900/70 border border-cyan-500/30 text-cyan-300 hover:bg-slate-900/90 transition-all">
             🛡️ Alpaca Guardrails
           </span>
-          <span className="px-3 py-1.5 rounded-full bg-slate-900/70 border border-slate-600/30 text-slate-300 hover:bg-slate-900/90 transition-all">
-            🤖 AI-Powered
+          <span className="px-3 py-1.5 rounded-full bg-slate-900/70 border border-rose-500/30 text-rose-300 hover:bg-slate-900/90 transition-all">
+            🤖 12 AI Features
+          </span>
+          <span className="px-3 py-1.5 rounded-full bg-slate-900/70 border border-purple-500/30 text-purple-300 hover:bg-slate-900/90 transition-all">
+            📱 PWA Ready
           </span>
         </div>
       </div>
