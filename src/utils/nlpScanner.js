@@ -1069,6 +1069,887 @@ function evaluateOperator(value, operator, threshold) {
 // EXPORTS
 // ============================================================================
 
+// ============================================================================
+// TF-IDF (TERM FREQUENCY-INVERSE DOCUMENT FREQUENCY)
+// ============================================================================
+
+/**
+ * Calculate term frequency
+ */
+function calculateTF(term, document) {
+  const words = document.toLowerCase().split(/\s+/)
+  const termCount = words.filter(w => w === term.toLowerCase()).length
+  return termCount / words.length
+}
+
+/**
+ * Calculate inverse document frequency
+ */
+function calculateIDF(term, documents) {
+  const docsWithTerm = documents.filter(doc =>
+    doc.toLowerCase().includes(term.toLowerCase())
+  ).length
+
+  return Math.log((documents.length + 1) / (docsWithTerm + 1))
+}
+
+/**
+ * Calculate TF-IDF score
+ */
+export function calculateTFIDF(term, document, corpus) {
+  const tf = calculateTF(term, document)
+  const idf = calculateIDF(term, corpus)
+  return tf * idf
+}
+
+/**
+ * Extract keywords using TF-IDF
+ */
+export function extractKeywords(query, corpus = []) {
+  // Default corpus from example queries
+  if (corpus.length === 0) {
+    corpus = EXAMPLE_QUERIES.flatMap(cat => cat.queries)
+  }
+
+  const words = query.toLowerCase().split(/\s+/)
+  const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'is', 'are', 'was', 'were', 'be', 'been', 'being'])
+
+  const keywords = []
+
+  for (const word of words) {
+    if (stopWords.has(word) || word.length < 3) continue
+
+    const score = calculateTFIDF(word, query, corpus)
+    keywords.push({ word, score })
+  }
+
+  // Sort by score descending
+  return keywords.sort((a, b) => b.score - a.score)
+}
+
+// ============================================================================
+// WORD EMBEDDINGS & SEMANTIC SIMILARITY
+// ============================================================================
+
+/**
+ * Simulate word embeddings using character n-grams
+ * (Simplified version - real embeddings would use pre-trained models)
+ */
+function generateEmbedding(text, ngramSize = 3) {
+  const ngrams = new Set()
+  const normalized = text.toLowerCase()
+
+  for (let i = 0; i <= normalized.length - ngramSize; i++) {
+    ngrams.add(normalized.substring(i, i + ngramSize))
+  }
+
+  return Array.from(ngrams)
+}
+
+/**
+ * Calculate Jaccard similarity between two sets
+ */
+function jaccardSimilarity(set1, set2) {
+  const intersection = new Set([...set1].filter(x => set2.includes(x)))
+  const union = new Set([...set1, ...set2])
+
+  return union.size === 0 ? 0 : intersection.size / union.size
+}
+
+/**
+ * Calculate cosine similarity between two text vectors
+ */
+export function cosineSimilarity(text1, text2) {
+  const words1 = text1.toLowerCase().split(/\s+/)
+  const words2 = text2.toLowerCase().split(/\s+/)
+
+  // Create vocabulary
+  const vocab = new Set([...words1, ...words2])
+
+  // Create vectors
+  const vec1 = Array.from(vocab).map(word => words1.filter(w => w === word).length)
+  const vec2 = Array.from(vocab).map(word => words2.filter(w => w === word).length)
+
+  // Calculate cosine similarity
+  const dotProduct = vec1.reduce((sum, val, i) => sum + val * vec2[i], 0)
+  const mag1 = Math.sqrt(vec1.reduce((sum, val) => sum + val * val, 0))
+  const mag2 = Math.sqrt(vec2.reduce((sum, val) => sum + val * val, 0))
+
+  return mag1 === 0 || mag2 === 0 ? 0 : dotProduct / (mag1 * mag2)
+}
+
+/**
+ * Find semantically similar queries
+ */
+export function findSimilarQueries(query, candidates, threshold = 0.5) {
+  const similarities = candidates.map(candidate => ({
+    query: candidate,
+    similarity: cosineSimilarity(query, candidate)
+  }))
+
+  return similarities
+    .filter(s => s.similarity >= threshold)
+    .sort((a, b) => b.similarity - a.similarity)
+}
+
+/**
+ * Calculate semantic similarity using character n-grams
+ */
+export function semanticSimilarity(text1, text2) {
+  const embedding1 = generateEmbedding(text1)
+  const embedding2 = generateEmbedding(text2)
+
+  return jaccardSimilarity(embedding1, embedding2)
+}
+
+// ============================================================================
+// SPELL CORRECTION & TYPO HANDLING
+// ============================================================================
+
+/**
+ * Damerau-Levenshtein distance (handles transpositions)
+ */
+function damerauLevenshtein(str1, str2) {
+  const len1 = str1.length
+  const len2 = str2.length
+
+  const matrix = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(0))
+
+  for (let i = 0; i <= len1; i++) matrix[i][0] = i
+  for (let j = 0; j <= len2; j++) matrix[0][j] = j
+
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1
+
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1, // deletion
+        matrix[i][j - 1] + 1, // insertion
+        matrix[i - 1][j - 1] + cost // substitution
+      )
+
+      // Transposition
+      if (i > 1 && j > 1 && str1[i - 1] === str2[j - 2] && str1[i - 2] === str2[j - 1]) {
+        matrix[i][j] = Math.min(matrix[i][j], matrix[i - 2][j - 2] + cost)
+      }
+    }
+  }
+
+  return matrix[len1][len2]
+}
+
+/**
+ * Build vocabulary from corpus
+ */
+function buildVocabulary(corpus) {
+  const vocab = new Set()
+
+  for (const doc of corpus) {
+    const words = doc.toLowerCase().match(/\b\w+\b/g) || []
+    words.forEach(word => vocab.add(word))
+  }
+
+  return vocab
+}
+
+/**
+ * Suggest corrections for misspelled words
+ */
+export function suggestCorrection(word, vocabulary, maxDistance = 2) {
+  const lowerWord = word.toLowerCase()
+
+  // Exact match
+  if (vocabulary.has(lowerWord)) {
+    return { word, corrected: word, distance: 0, confidence: 1.0 }
+  }
+
+  // Find candidates within edit distance
+  const candidates = []
+
+  for (const candidate of vocabulary) {
+    const distance = damerauLevenshtein(lowerWord, candidate)
+
+    if (distance <= maxDistance) {
+      candidates.push({
+        word: candidate,
+        distance,
+        confidence: 1 - distance / Math.max(lowerWord.length, candidate.length)
+      })
+    }
+  }
+
+  if (candidates.length === 0) {
+    return { word, corrected: word, distance: -1, confidence: 0 }
+  }
+
+  // Sort by distance (lower is better)
+  candidates.sort((a, b) => a.distance - b.distance)
+
+  return {
+    word,
+    corrected: candidates[0].word,
+    distance: candidates[0].distance,
+    confidence: candidates[0].confidence,
+    alternatives: candidates.slice(1, 3)
+  }
+}
+
+/**
+ * Auto-correct query
+ */
+export function correctQuery(query, corpus = []) {
+  if (corpus.length === 0) {
+    corpus = EXAMPLE_QUERIES.flatMap(cat => cat.queries)
+  }
+
+  const vocabulary = buildVocabulary(corpus)
+  const words = query.split(/\s+/)
+  const corrected = []
+  const corrections = []
+
+  for (const word of words) {
+    const result = suggestCorrection(word, vocabulary)
+
+    if (result.distance > 0 && result.distance !== -1) {
+      corrections.push({
+        original: word,
+        corrected: result.corrected,
+        confidence: result.confidence
+      })
+      corrected.push(result.corrected)
+    } else {
+      corrected.push(word)
+    }
+  }
+
+  return {
+    originalQuery: query,
+    correctedQuery: corrected.join(' '),
+    corrections,
+    hasCorrected: corrections.length > 0
+  }
+}
+
+// ============================================================================
+// N-GRAM ANALYSIS
+// ============================================================================
+
+/**
+ * Extract n-grams from text
+ */
+export function extractNgrams(text, n = 2) {
+  const words = text.toLowerCase().split(/\s+/)
+  const ngrams = []
+
+  for (let i = 0; i <= words.length - n; i++) {
+    ngrams.push(words.slice(i, i + n).join(' '))
+  }
+
+  return ngrams
+}
+
+/**
+ * Count n-gram frequencies
+ */
+export function ngramFrequency(text, n = 2) {
+  const ngrams = extractNgrams(text, n)
+  const freq = {}
+
+  for (const ngram of ngrams) {
+    freq[ngram] = (freq[ngram] || 0) + 1
+  }
+
+  return freq
+}
+
+/**
+ * Find common n-grams in corpus
+ */
+export function findCommonNgrams(corpus, n = 2, topK = 10) {
+  const allFreq = {}
+
+  for (const doc of corpus) {
+    const freq = ngramFrequency(doc, n)
+    for (const [ngram, count] of Object.entries(freq)) {
+      allFreq[ngram] = (allFreq[ngram] || 0) + count
+    }
+  }
+
+  return Object.entries(allFreq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, topK)
+    .map(([ngram, count]) => ({ ngram, count }))
+}
+
+// ============================================================================
+// PART-OF-SPEECH TAGGING (SIMPLIFIED)
+// ============================================================================
+
+/**
+ * Simple POS tagger using pattern matching
+ */
+const POS_PATTERNS = {
+  VERB: /\b(find|show|get|search|filter|rank|sort|list|scan|analyze|compare|tell)\b/i,
+  NOUN: /\b(stock|stocks|symbol|indicator|price|volume|trend|market|cap)\b/i,
+  ADJ: /\b(high|low|strong|weak|bullish|bearish|oversold|overbought|above|below)\b/i,
+  NUM: /\b\d+(\.\d+)?[kKmMbB]?\b/,
+  COMP: /\b(above|below|over|under|greater|less|more|higher|lower)\b/i,
+  CONJ: /\b(and|or|but|with)\b/i,
+  PREP: /\b(with|in|on|at|by|for|from|to)\b/i
+}
+
+/**
+ * Tag parts of speech
+ */
+export function tagPOS(text) {
+  const words = text.split(/\s+/)
+  const tagged = []
+
+  for (const word of words) {
+    let tag = 'OTHER'
+
+    for (const [posTag, pattern] of Object.entries(POS_PATTERNS)) {
+      if (pattern.test(word)) {
+        tag = posTag
+        break
+      }
+    }
+
+    tagged.push({ word, tag })
+  }
+
+  return tagged
+}
+
+/**
+ * Extract phrases by POS patterns
+ */
+export function extractPhrases(text) {
+  const tagged = tagPOS(text)
+  const phrases = {
+    verbPhrases: [],
+    nounPhrases: [],
+    comparisons: []
+  }
+
+  // Extract verb phrases (VERB + NOUN)
+  for (let i = 0; i < tagged.length - 1; i++) {
+    if (tagged[i].tag === 'VERB' && tagged[i + 1].tag === 'NOUN') {
+      phrases.verbPhrases.push(`${tagged[i].word} ${tagged[i + 1].word}`)
+    }
+  }
+
+  // Extract noun phrases (ADJ + NOUN)
+  for (let i = 0; i < tagged.length - 1; i++) {
+    if (tagged[i].tag === 'ADJ' && tagged[i + 1].tag === 'NOUN') {
+      phrases.nounPhrases.push(`${tagged[i].word} ${tagged[i + 1].word}`)
+    }
+  }
+
+  // Extract comparisons (NOUN + COMP + NUM)
+  for (let i = 0; i < tagged.length - 2; i++) {
+    if (tagged[i].tag === 'NOUN' && tagged[i + 1].tag === 'COMP' && tagged[i + 2].tag === 'NUM') {
+      phrases.comparisons.push(`${tagged[i].word} ${tagged[i + 1].word} ${tagged[i + 2].word}`)
+    }
+  }
+
+  return phrases
+}
+
+// ============================================================================
+// QUERY TEMPLATES & SLOT FILLING
+// ============================================================================
+
+/**
+ * Query template definitions
+ */
+const QUERY_TEMPLATES = [
+  {
+    name: 'basic_indicator',
+    pattern: /find stocks with (?<indicator>\w+) (?<operator>above|below) (?<value>\d+)/i,
+    slots: ['indicator', 'operator', 'value']
+  },
+  {
+    name: 'trend_filter',
+    pattern: /(?<adjective>strong|weak)? (?<direction>up|down)trend(?:ing)? stocks/i,
+    slots: ['direction', 'adjective']
+  },
+  {
+    name: 'price_range',
+    pattern: /price between \$?(?<min>\d+) and \$?(?<max>\d+)/i,
+    slots: ['min', 'max']
+  },
+  {
+    name: 'volume_condition',
+    pattern: /(?<level>high|low) volume/i,
+    slots: ['level']
+  },
+  {
+    name: 'crossover',
+    pattern: /(?<ind1>\w+)-(?<period1>\d+) cross(?:ed|es)? (?<direction>above|below) (?<ind2>\w+)-(?<period2>\d+)/i,
+    slots: ['ind1', 'period1', 'direction', 'ind2', 'period2']
+  }
+]
+
+/**
+ * Match query against templates and extract slots
+ */
+export function matchTemplate(query) {
+  for (const template of QUERY_TEMPLATES) {
+    const match = query.match(template.pattern)
+
+    if (match && match.groups) {
+      return {
+        template: template.name,
+        slots: match.groups,
+        confidence: 1.0
+      }
+    }
+  }
+
+  return null
+}
+
+/**
+ * Fill template slots from query
+ */
+export function fillSlots(query, templateName) {
+  const template = QUERY_TEMPLATES.find(t => t.name === templateName)
+
+  if (!template) {
+    return null
+  }
+
+  const match = query.match(template.pattern)
+
+  if (!match || !match.groups) {
+    return null
+  }
+
+  const slots = {}
+  for (const slot of template.slots) {
+    slots[slot] = match.groups[slot] || null
+  }
+
+  return {
+    template: templateName,
+    slots,
+    complete: Object.values(slots).every(v => v !== null)
+  }
+}
+
+// ============================================================================
+// CONTEXT TRACKING & SESSION MANAGEMENT
+// ============================================================================
+
+/**
+ * Session context manager
+ */
+export class QueryContext {
+  constructor() {
+    this.sessionId = this.generateSessionId()
+    this.queries = []
+    this.entities = new Set()
+    this.preferences = {}
+    this.lastIntent = null
+    this.conversationState = 'initial'
+  }
+
+  generateSessionId() {
+    return `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+  }
+
+  addQuery(query, parsedQuery) {
+    this.queries.push({
+      query,
+      parsedQuery,
+      timestamp: Date.now()
+    })
+
+    // Update context
+    if (parsedQuery.entities) {
+      parsedQuery.entities.indicators?.forEach(ind => this.entities.add(ind.key))
+      parsedQuery.entities.symbols?.forEach(sym => this.entities.add(sym))
+    }
+
+    if (parsedQuery.intent) {
+      this.lastIntent = parsedQuery.intent
+    }
+
+    // Update conversation state
+    this.updateConversationState(parsedQuery)
+
+    // Keep only recent queries
+    if (this.queries.length > 20) {
+      this.queries = this.queries.slice(-20)
+    }
+  }
+
+  updateConversationState(parsedQuery) {
+    if (parsedQuery.intent === INTENTS.FIND || parsedQuery.intent === INTENTS.SCAN) {
+      this.conversationState = 'searching'
+    } else if (parsedQuery.intent === INTENTS.FILTER) {
+      this.conversationState = 'refining'
+    } else if (parsedQuery.intent === INTENTS.COMPARE || parsedQuery.intent === INTENTS.ANALYZE) {
+      this.conversationState = 'analyzing'
+    }
+  }
+
+  getRecentIndicators(limit = 5) {
+    return Array.from(this.entities)
+      .filter(e => INDICATOR_KNOWLEDGE[e])
+      .slice(-limit)
+  }
+
+  getContextualSuggestions() {
+    const suggestions = []
+
+    // Suggest refinements based on last intent
+    if (this.lastIntent === INTENTS.FIND) {
+      suggestions.push('Refine results with additional filters')
+      suggestions.push('Sort by specific indicator')
+    } else if (this.lastIntent === INTENTS.FILTER) {
+      suggestions.push('Add more conditions')
+      suggestions.push('Remove some filters')
+    }
+
+    // Suggest based on recent indicators
+    const recentIndicators = this.getRecentIndicators(3)
+    if (recentIndicators.length > 0) {
+      suggestions.push(`Try combining with ${recentIndicators.join(', ')}`)
+    }
+
+    return suggestions
+  }
+
+  getContextSummary() {
+    return {
+      sessionId: this.sessionId,
+      queryCount: this.queries.length,
+      entities: Array.from(this.entities),
+      lastIntent: this.lastIntent,
+      conversationState: this.conversationState,
+      preferences: this.preferences
+    }
+  }
+
+  reset() {
+    this.sessionId = this.generateSessionId()
+    this.queries = []
+    this.entities = new Set()
+    this.preferences = {}
+    this.lastIntent = null
+    this.conversationState = 'initial'
+  }
+}
+
+// ============================================================================
+// QUERY DECOMPOSITION
+// ============================================================================
+
+/**
+ * Decompose complex query into simpler subqueries
+ */
+export function decomposeQuery(query) {
+  const subqueries = []
+
+  // Split by conjunctions
+  const parts = query.split(/\b(and|with|,)\b/i)
+
+  let currentQuery = ''
+  for (const part of parts) {
+    const trimmed = part.trim()
+
+    if (['and', 'with', ','].includes(trimmed.toLowerCase())) {
+      if (currentQuery) {
+        subqueries.push(currentQuery.trim())
+        currentQuery = ''
+      }
+    } else {
+      currentQuery += ' ' + trimmed
+    }
+  }
+
+  if (currentQuery.trim()) {
+    subqueries.push(currentQuery.trim())
+  }
+
+  return subqueries.map(sq => ({
+    query: sq,
+    parsed: parseQuery(sq)
+  }))
+}
+
+/**
+ * Merge multiple filters into one
+ */
+export function mergeFilters(filters) {
+  const merged = {
+    indicators: {},
+    conditions: [],
+    timeframe: filters[0]?.timeframe || '1d'
+  }
+
+  for (const filter of filters) {
+    // Merge indicators
+    Object.assign(merged.indicators, filter.indicators)
+
+    // Merge conditions
+    if (filter.conditions) {
+      merged.conditions.push(...filter.conditions)
+    }
+
+    // Merge price
+    if (filter.price) {
+      merged.price = filter.price
+    }
+  }
+
+  return merged
+}
+
+// ============================================================================
+// BM25 RANKING ALGORITHM
+// ============================================================================
+
+/**
+ * Calculate BM25 score for document relevance
+ */
+export function calculateBM25(query, document, corpus, k1 = 1.5, b = 0.75) {
+  const queryTerms = query.toLowerCase().split(/\s+/)
+  const docTerms = document.toLowerCase().split(/\s+/)
+
+  const avgDocLength = corpus.reduce((sum, doc) =>
+    sum + doc.split(/\s+/).length, 0
+  ) / corpus.length
+
+  const docLength = docTerms.length
+
+  let score = 0
+
+  for (const term of queryTerms) {
+    const termFreq = docTerms.filter(t => t === term).length
+    const docFreq = corpus.filter(doc =>
+      doc.toLowerCase().includes(term)
+    ).length
+
+    const idf = Math.log((corpus.length - docFreq + 0.5) / (docFreq + 0.5) + 1)
+
+    const numerator = termFreq * (k1 + 1)
+    const denominator = termFreq + k1 * (1 - b + b * (docLength / avgDocLength))
+
+    score += idf * (numerator / denominator)
+  }
+
+  return score
+}
+
+/**
+ * Rank documents by BM25 relevance
+ */
+export function rankByBM25(query, documents) {
+  const scores = documents.map(doc => ({
+    document: doc,
+    score: calculateBM25(query, doc, documents)
+  }))
+
+  return scores.sort((a, b) => b.score - a.score)
+}
+
+// ============================================================================
+// SEMANTIC ROLE LABELING (SIMPLIFIED)
+// ============================================================================
+
+/**
+ * Extract semantic roles (simplified version)
+ */
+export function extractSemanticRoles(query) {
+  const roles = {
+    action: null, // What to do
+    target: null, // What to act on
+    constraint: [], // Conditions
+    modifier: [] // Qualifiers
+  }
+
+  const tagged = tagPOS(query)
+
+  // Extract action (verb)
+  const verbIdx = tagged.findIndex(t => t.tag === 'VERB')
+  if (verbIdx !== -1) {
+    roles.action = tagged[verbIdx].word
+  }
+
+  // Extract target (noun after verb)
+  if (verbIdx !== -1 && verbIdx < tagged.length - 1) {
+    const nounIdx = tagged.findIndex((t, i) => i > verbIdx && t.tag === 'NOUN')
+    if (nounIdx !== -1) {
+      roles.target = tagged[nounIdx].word
+    }
+  }
+
+  // Extract constraints (comparisons)
+  for (let i = 0; i < tagged.length - 2; i++) {
+    if (tagged[i].tag === 'NOUN' && tagged[i + 1].tag === 'COMP') {
+      roles.constraint.push({
+        entity: tagged[i].word,
+        operator: tagged[i + 1].word,
+        value: tagged[i + 2]?.word
+      })
+    }
+  }
+
+  // Extract modifiers (adjectives)
+  roles.modifier = tagged.filter(t => t.tag === 'ADJ').map(t => t.word)
+
+  return roles
+}
+
+// ============================================================================
+// QUERY EXPANSION
+// ============================================================================
+
+/**
+ * Synonym dictionary for query expansion
+ */
+const SYNONYMS = {
+  'find': ['show', 'get', 'list', 'search'],
+  'stocks': ['companies', 'equities', 'securities'],
+  'high': ['elevated', 'strong', 'increased'],
+  'low': ['weak', 'decreased', 'reduced'],
+  'above': ['over', 'greater than', 'higher than'],
+  'below': ['under', 'less than', 'lower than'],
+  'uptrend': ['bullish', 'rising', 'ascending'],
+  'downtrend': ['bearish', 'falling', 'descending']
+}
+
+/**
+ * Expand query with synonyms
+ */
+export function expandQuery(query) {
+  const words = query.toLowerCase().split(/\s+/)
+  const expansions = new Set([query])
+
+  for (const word of words) {
+    if (SYNONYMS[word]) {
+      for (const synonym of SYNONYMS[word]) {
+        const expanded = query.replace(new RegExp(`\\b${word}\\b`, 'i'), synonym)
+        expansions.add(expanded)
+      }
+    }
+  }
+
+  return Array.from(expansions)
+}
+
+/**
+ * Generate query variations
+ */
+export function generateQueryVariations(query) {
+  const variations = new Set([query])
+
+  // Add synonym expansions
+  const expanded = expandQuery(query)
+  expanded.forEach(v => variations.add(v))
+
+  // Add with/without punctuation
+  variations.add(query.replace(/[.,!?]/g, ''))
+
+  // Add with/without extra spaces
+  variations.add(query.replace(/\s+/g, ' '))
+
+  return Array.from(variations)
+}
+
+// ============================================================================
+// SENTIMENT ANALYSIS (SIMPLIFIED)
+// ============================================================================
+
+/**
+ * Sentiment lexicon
+ */
+const SENTIMENT_WORDS = {
+  positive: ['bullish', 'strong', 'high', 'above', 'rising', 'increased', 'gain', 'profit', 'up'],
+  negative: ['bearish', 'weak', 'low', 'below', 'falling', 'decreased', 'loss', 'down'],
+  neutral: ['stable', 'flat', 'unchanged', 'steady']
+}
+
+/**
+ * Analyze sentiment of query
+ */
+export function analyzeSentiment(query) {
+  const words = query.toLowerCase().split(/\s+/)
+
+  let positiveCount = 0
+  let negativeCount = 0
+  let neutralCount = 0
+
+  for (const word of words) {
+    if (SENTIMENT_WORDS.positive.includes(word)) positiveCount++
+    if (SENTIMENT_WORDS.negative.includes(word)) negativeCount++
+    if (SENTIMENT_WORDS.neutral.includes(word)) neutralCount++
+  }
+
+  const total = positiveCount + negativeCount + neutralCount
+
+  if (total === 0) {
+    return {
+      sentiment: 'neutral',
+      confidence: 0.5,
+      scores: { positive: 0, negative: 0, neutral: 0 }
+    }
+  }
+
+  const scores = {
+    positive: positiveCount / total,
+    negative: negativeCount / total,
+    neutral: neutralCount / total
+  }
+
+  let sentiment = 'neutral'
+  let confidence = 0.5
+
+  if (scores.positive > scores.negative && scores.positive > scores.neutral) {
+    sentiment = 'positive'
+    confidence = scores.positive
+  } else if (scores.negative > scores.positive && scores.negative > scores.neutral) {
+    sentiment = 'negative'
+    confidence = scores.negative
+  } else {
+    sentiment = 'neutral'
+    confidence = Math.max(scores.neutral, 0.5)
+  }
+
+  return {
+    sentiment,
+    confidence,
+    scores
+  }
+}
+
+// ============================================================================
+// ADVANCED QUERY UNDERSTANDING
+// ============================================================================
+
+/**
+ * Comprehensive query understanding
+ */
+export function understandQuery(query) {
+  return {
+    original: query,
+    corrected: correctQuery(query),
+    intent: classifyIntent(query),
+    entities: extractEntities(query),
+    keywords: extractKeywords(query),
+    phrases: extractPhrases(query),
+    semanticRoles: extractSemanticRoles(query),
+    sentiment: analyzeSentiment(query),
+    template: matchTemplate(query),
+    decomposed: decomposeQuery(query),
+    variations: generateQueryVariations(query),
+    pos: tagPOS(query)
+  }
+}
+
 export default {
   // Main functions
   parseQuery,
@@ -1097,5 +1978,31 @@ export default {
   // Constants
   INTENTS,
   INDICATOR_KNOWLEDGE,
-  OPERATORS
+  OPERATORS,
+
+  // Advanced NLP
+  calculateTFIDF,
+  extractKeywords,
+  cosineSimilarity,
+  semanticSimilarity,
+  findSimilarQueries,
+  suggestCorrection,
+  correctQuery,
+  extractNgrams,
+  ngramFrequency,
+  findCommonNgrams,
+  tagPOS,
+  extractPhrases,
+  matchTemplate,
+  fillSlots,
+  QueryContext,
+  decomposeQuery,
+  mergeFilters,
+  calculateBM25,
+  rankByBM25,
+  extractSemanticRoles,
+  expandQuery,
+  generateQueryVariations,
+  analyzeSentiment,
+  understandQuery
 }
