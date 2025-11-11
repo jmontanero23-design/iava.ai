@@ -180,15 +180,30 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
   React.useEffect(()=>{ loadSavedLists() }, [])
 
   const Section = ({ title, items }) => (
-    <div>
-      <div className="text-xs text-slate-400 mb-1">{title}</div>
-      <div className="space-y-1 max-h-64 overflow-auto pr-1">
-        {!items?.length && <div className="text-xs text-slate-500">No results</div>}
+    <div className="relative">
+      {/* Premium section header */}
+      <div className="flex items-center gap-2 mb-3">
+        <div className="h-1 w-1 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-500" />
+        <div className="text-sm font-bold text-slate-300 uppercase tracking-wider">{title}</div>
+      </div>
+      <div className="space-y-2 max-h-64 overflow-auto pr-1 styled-scrollbar">
+        {!items?.length && <div className="text-sm text-slate-500 italic p-4 text-center bg-slate-800/20 rounded-lg border border-slate-700/30">No results</div>}
         {items?.map(it => (
-          <div key={it.symbol} className="border border-slate-800 rounded px-2 py-1 flex items-center justify-between">
-            <div className="text-slate-200">{it.symbol} <span className="text-slate-500 text-xs">{Math.round(it.score)}</span></div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => onLoadSymbol?.(it.symbol, timeframe)} className="text-xs bg-slate-800 hover:bg-slate-700 rounded px-2 py-0.5 border border-slate-700">Load</button>
+          <div key={it.symbol} className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 blur-lg opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
+            <div className="relative flex items-center justify-between p-3 bg-slate-800/40 rounded-lg border border-slate-700/50 hover:border-cyan-500/40 transition-all">
+              <div className="flex items-center gap-3">
+                <span className="text-base font-bold text-slate-100">{it.symbol}</span>
+                <span className="px-2 py-0.5 rounded-md bg-gradient-to-r from-cyan-600/20 to-indigo-600/20 border border-cyan-500/30 text-cyan-300 text-xs font-semibold">{Math.round(it.score)}</span>
+              </div>
+              <button
+                onClick={() => onLoadSymbol?.(it.symbol, timeframe)}
+                className="relative group/btn px-3 py-1.5 rounded-lg text-xs font-semibold overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 group-hover/btn:from-cyan-500 group-hover/btn:to-indigo-500 transition-all" />
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 blur-lg opacity-30 group-hover/btn:opacity-50 transition-opacity" />
+                <span className="relative text-white">Load</span>
+              </button>
             </div>
           </div>
         ))}
@@ -197,9 +212,17 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
   )
 
   return (
-    <div className="card p-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Market Scanner <InfoPopover title="Scanner">Scans a symbol list and surfaces the highest Unicorn Scores for longs/shorts.\n\nTips:\n- Enable Daily to require Daily Pivot + Ichimoku agreement.\n- Enable Consensus to require secondary timeframe alignment (Chart’s Consensus Bonus = +10).\n- Threshold applies after gating. Counts show what was filtered.</InfoPopover>
+    <div className="card overflow-hidden">
+      {/* Premium Header */}
+      <div className="p-4 relative overflow-hidden border-b border-slate-700/50">
+        <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="absolute inset-0 bg-cyan-600 blur-lg opacity-50 animate-pulse" />
+              <span className="relative text-2xl filter drop-shadow-lg">🔍</span>
+            </div>
+            <h3 className="text-lg font-bold bg-gradient-to-r from-cyan-200 to-indigo-300 bg-clip-text text-transparent inline-flex items-center gap-2">Market Scanner <InfoPopover title="Scanner">Scans a symbol list and surfaces the highest Unicorn Scores for longs/shorts.\n\nTips:\n- Enable Daily to require Daily Pivot + Ichimoku agreement.\n- Enable Consensus to require secondary timeframe alignment (Chart's Consensus Bonus = +10).\n- Threshold applies after gating. Counts show what was filtered.</InfoPopover>
           {matched && (
             <span className="px-2 py-0.5 rounded-full border border-emerald-600 text-emerald-300 bg-emerald-900/20 text-[10px] inline-flex items-center gap-1">
               matched
@@ -208,6 +231,8 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
           )}
           <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'How should I configure the Scanner for this market?', context: { timeframe, threshold, enforceDaily, requireConsensus } } })) } catch {} }} className="text-xs text-slate-400 underline ml-2">Ask AI</button>
         </h3>
+          </div>
+        </div>
         <div className="flex items-center gap-2 text-xs">
           <label className="inline-flex items-center gap-2">TF
             <select value={timeframe} onChange={e=>setTimeframe(e.target.value)} className="select">
@@ -240,117 +265,282 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
           <label className="inline-flex items-center gap-2"><input aria-label="Daily confluence" className="checkbox" type="checkbox" checked={enforceDaily} onChange={e=>setEnforceDaily(e.target.checked)} />Daily <InfoPopover title="Daily Confluence">Requires Daily Pivot + Ichimoku agreement (bullish for longs, bearish for shorts). Tightens quality at the expense of fewer candidates.</InfoPopover></label>
           <label className="inline-flex items-center gap-2"><input aria-label="Consensus alignment" className="checkbox" type="checkbox" checked={requireConsensus} onChange={e=>setRequireConsensus(e.target.checked)} />Consensus <InfoPopover title="Consensus (secondary TF)">Requires primary trend to match a secondary timeframe (e.g., 1→5, 5→15min). Filters misaligned setups; pair with Bonus +10 for chart parity.</InfoPopover></label>
           <label className="inline-flex items-center gap-2"><input className="checkbox" type="checkbox" checked={consensusBonus} onChange={e=>setConsensusBonus(e.target.checked)} />Bonus +10 <InfoPopover title="Consensus Bonus (+10)">Adds +10 to the score when secondary timeframe trend aligns with the primary (same as the chart’s Consensus Bonus). Use with Consensus gating for stricter filtering, or alone to boost aligned names.</InfoPopover></label>
-          <button onClick={matchChart} className="btn btn-xs" title="Copy timeframe, Daily, and Bonus +10 from the chart">Match chart</button>
-          <button onClick={useChartConsensus} className="btn btn-xs" title="Require secondary TF alignment (same logic the chart uses)">Use chart consensus</button>
+          <button
+            onClick={matchChart}
+            className="relative group px-3 py-1 rounded-lg text-xs font-semibold overflow-hidden"
+            title="Copy timeframe, Daily, and Bonus +10 from the chart"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
+            <span className="relative text-white">Match chart</span>
+          </button>
+          <button
+            onClick={useChartConsensus}
+            className="relative group px-3 py-1 rounded-lg text-xs font-semibold overflow-hidden"
+            title="Require secondary TF alignment (same logic the chart uses)"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
+            <span className="relative text-white">Use chart consensus</span>
+          </button>
           <label className="inline-flex items-center gap-1">
             <input type="checkbox" className="checkbox" checked={autoRunOnMatch} onChange={e=>setAutoRunOnMatch(e.target.checked)} />
             Auto-run
             <InfoPopover title="Auto-run">Automatically runs a scan right after you Match chart or Use chart consensus.</InfoPopover>
           </label>
-          <button onClick={() => {
-            try {
-              const qs = new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', requireConsensus: requireConsensus ? '1' : '0', consensusBonus: consensusBonus ? '1' : '0', assetClass })
-              const url = `${window.location.origin}/api/scan?${qs.toString()}`
-              const ta = document.createElement('textarea')
-              ta.value = url
-              document.body.appendChild(ta)
-              ta.select()
-              document.execCommand('copy')
-              document.body.removeChild(ta)
-              window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Scan link copied', type: 'success' } }))
-            } catch {}
-          }} className="btn btn-xs" title="Copy a link that runs this scan via API">Copy scan link</button>
-          <button onClick={async()=>{ if (universe === 'all') await fullScanAll(); else await run(); }} disabled={loading} className="btn btn-xs">{loading ? 'Scanning…' : 'Scan'}</button>
+          <button
+            onClick={() => {
+              try {
+                const qs = new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', requireConsensus: requireConsensus ? '1' : '0', consensusBonus: consensusBonus ? '1' : '0', assetClass })
+                const url = `${window.location.origin}/api/scan?${qs.toString()}`
+                const ta = document.createElement('textarea')
+                ta.value = url
+                document.body.appendChild(ta)
+                ta.select()
+                document.execCommand('copy')
+                document.body.removeChild(ta)
+                window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Scan link copied', type: 'success' } }))
+              } catch {}
+            }}
+            className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+            title="Copy a link that runs this scan via API"
+          >
+            Copy scan link
+          </button>
+          <button
+            onClick={async()=>{ if (universe === 'all') await fullScanAll(); else await run(); }}
+            disabled={loading}
+            className="relative group px-4 py-1.5 rounded-lg text-xs font-bold overflow-hidden disabled:opacity-50"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 group-hover:from-cyan-500 group-hover:to-indigo-500 transition-all" />
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
+            <span className="relative text-white flex items-center gap-1.5">
+              {loading ? '⏳' : '🔍'}
+              {loading ? 'Scanning…' : 'Scan'}
+            </span>
+          </button>
           {universe === 'all' && (
-            <button onClick={()=>{ abortRef.current.stop = true; setProgress('Stopping…') }} disabled={!loading} className="btn btn-xs">Stop</button>
+            <button
+              onClick={()=>{ abortRef.current.stop = true; setProgress('Stopping…') }}
+              disabled={!loading}
+              className="px-3 py-1 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-all disabled:opacity-50"
+            >
+              Stop
+            </button>
           )}
         </div>
       </div>
-      <div className="mt-2 text-xs text-slate-400">Symbols (paste or import) {assetClass === 'crypto' ? 'e.g., BTC/USD, ETH/USD' : ''}</div>
-      <textarea value={symbols} onChange={e=>setSymbols(e.target.value)} className="mt-1 w-full h-16 bg-slate-800 border border-slate-700 rounded p-2 text-sm" />
-      <div className="mt-1 flex items-center gap-2 text-xs">
-        <button onClick={()=>setTop(100)} className="btn btn-xs" title="Show up to 100 results">Top 100</button>
-        <input type="file" accept=".csv,.txt" onChange={async (e)=>{
-          const f = e.target.files?.[0]; if (!f) return
-          const txt = await f.text()
-          const toks = txt.toUpperCase().split(/[^A-Z0-9_\.\-]+/).filter(Boolean)
-          const uniq = Array.from(new Set(toks)).join(',')
-          setSymbols(uniq)
-          e.target.value = ''
-        }} />
-        <span className="text-slate-400">From saved list:</span>
-        <select onChange={async (e)=>{
-          const name = e.target.value; if (!name) return
-          const mod = await import('../utils/watchlists.js'); const wl = mod.get(name)
-          if (wl?.symbols?.length) setSymbols(Array.from(new Set([...(symbols?symbols.split(','):[]), ...wl.symbols])).join(','))
-          e.target.value = ''
-        }} className="select">
-          <option value="">—</option>
-          {lists.map(n => <option key={n} value={n}>{n}</option>)}
-        </select>
-        {assetClass === 'crypto' && universe === 'popular' && (
-          <button onClick={loadPopularCrypto} className="btn btn-xs">Load popular</button>
-        )}
-        {progress && <span className="text-slate-400">{progress}</span>}
-      </div>
-      {err && <div className="text-xs text-rose-400 mt-2">{err}</div>}
-      {res && (
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2 flex items-center gap-2 text-xs">
-            <button onClick={async()=>{
-              try {
-                setAiLoading(true); setAiErr(''); setAiSummary(null)
-                const r = await fetch('/api/llm/scan_summary', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ result: res }) })
-                const j = await r.json()
-                if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
-                setAiSummary(j.summary || null)
-              } catch (e) {
-                setAiErr(String(e.message || e))
-              } finally { setAiLoading(false) }
-            }} disabled={aiReady===false || aiLoading} className="btn btn-xs disabled:opacity-50">{aiLoading ? 'Summarizing…' : 'Summarize (AI)'}</button>
-            {aiErr && <span className="text-rose-400">{aiErr}</span>}
-          </div>
-          {aiSummary && (
-            <div className="md:col-span-2 text-sm p-2 rounded border border-slate-700 bg-slate-900/60">
-              <div className="text-xs text-slate-400 mb-1">AI Summary</div>
-              <ul className="list-disc pl-5 text-slate-200">
-                {(aiSummary.bullets||[]).map((b,i)=>(<li key={i}>{b}</li>))}
-              </ul>
-              {aiSummary.quick_take ? <div className="text-xs text-slate-400 mt-1">Quick take: {aiSummary.quick_take}</div> : null}
+
+      {/* Premium Symbols Section */}
+      <div className="p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-slate-300">Symbols</span>
+          <span className="text-xs text-slate-500">{assetClass === 'crypto' ? 'e.g., BTC/USD, ETH/USD' : 'paste or import'}</span>
+        </div>
+        <textarea
+          value={symbols}
+          onChange={e=>setSymbols(e.target.value)}
+          className="w-full h-20 bg-slate-800/50 border border-slate-700/50 focus:border-cyan-500/50 rounded-lg p-3 text-sm text-slate-200 placeholder-slate-500 transition-all"
+          placeholder="Enter symbols separated by commas..."
+        />
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={()=>setTop(100)}
+            className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+            title="Show up to 100 results"
+          >
+            Top 100
+          </button>
+          <input
+            type="file"
+            accept=".csv,.txt"
+            onChange={async (e)=>{
+              const f = e.target.files?.[0]; if (!f) return
+              const txt = await f.text()
+              const toks = txt.toUpperCase().split(/[^A-Z0-9_\.\-]+/).filter(Boolean)
+              const uniq = Array.from(new Set(toks)).join(',')
+              setSymbols(uniq)
+              e.target.value = ''
+            }}
+            className="text-xs"
+          />
+          <span className="text-xs text-slate-400">From saved list:</span>
+          <select
+            onChange={async (e)=>{
+              const name = e.target.value; if (!name) return
+              const mod = await import('../utils/watchlists.js'); const wl = mod.get(name)
+              if (wl?.symbols?.length) setSymbols(Array.from(new Set([...(symbols?symbols.split(','):[]), ...wl.symbols])).join(','))
+              e.target.value = ''
+            }}
+            className="select text-xs"
+          >
+            <option value="">—</option>
+            {lists.map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+          {assetClass === 'crypto' && universe === 'popular' && (
+            <button
+              onClick={loadPopularCrypto}
+              className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+            >
+              Load popular
+            </button>
+          )}
+          {progress && (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="animate-pulse">⏳</span>
+              <span className="text-cyan-400 font-semibold">{progress}</span>
             </div>
           )}
-          <div className="md:col-span-2 text-xs flex items-center gap-2 mb-1">
-            <span className="text-slate-400">Results Tools</span>
-            <button onClick={() => { try { const txt = JSON.stringify(res, null, 2); navigator.clipboard.writeText(txt); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Scan results copied', type: 'success' } })) } catch {} }} className="btn btn-xs">Copy results</button>
-            <a className="btn btn-xs" href={`/api/scan?${new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', requireConsensus: requireConsensus ? '1' : '0', consensusBonus: consensusBonus ? '1' : '0', assetClass }).toString()}`} target="_blank" rel="noreferrer">Open API</a>
+        </div>
+      </div>
+
+      {/* Premium Error Display */}
+      {err && (
+        <div className="mx-5 mb-3 p-3 bg-rose-600/10 border border-rose-500/30 rounded-lg flex items-start gap-2">
+          <span className="text-rose-400 text-lg">⚠️</span>
+          <span className="text-sm text-rose-300 font-medium">{err}</span>
+        </div>
+      )}
+
+      {/* Premium Results Section */}
+      {res && (
+        <div className="p-5 pt-0 space-y-4">
+          {/* AI Summary Controls */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={async()=>{
+                try {
+                  setAiLoading(true); setAiErr(''); setAiSummary(null)
+                  const r = await fetch('/api/llm/scan_summary', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ result: res }) })
+                  const j = await r.json()
+                  if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
+                  setAiSummary(j.summary || null)
+                } catch (e) {
+                  setAiErr(String(e.message || e))
+                } finally { setAiLoading(false) }
+              }}
+              disabled={aiReady===false || aiLoading}
+              className="relative group px-4 py-2 rounded-lg text-xs font-semibold overflow-hidden disabled:opacity-50"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
+              <span className="relative text-white flex items-center gap-2">
+                <span>{aiLoading ? '⏳' : '🤖'}</span>
+                {aiLoading ? 'Summarizing…' : 'Summarize (AI)'}
+              </span>
+            </button>
+            {aiErr && (
+              <div className="flex items-center gap-1.5 text-xs text-rose-400">
+                <span>⚠️</span>
+                <span>{aiErr}</span>
+              </div>
+            )}
           </div>
-          <Section title={`Top Longs (${res.longs?.length || 0})`} items={res.longs} />
-          <Section title={`Top Shorts (${res.shorts?.length || 0})`} items={res.shorts} />
-          <div className="md:col-span-2 flex items-center gap-2 text-xs mt-2">
-            <span className="text-slate-400">Save to watchlist</span>
-            <input value={wlName} onChange={e=>setWlName(e.target.value)} className="select" />
-            <button onClick={async ()=>{
-              try {
-                const { save, setActive } = await import('../utils/watchlists.js')
-                const longs = (res.longs||[]).map(x=>x.symbol)
-                const shorts = (res.shorts||[]).map(x=>x.symbol)
-                const combined = Array.from(new Set([...longs, ...shorts]))
-                const listName = wlName || 'scanner-top'
-                save(listName, combined)
-                setActive(listName)
-                window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Watchlist saved', type: 'success' } }))
-              } catch (e) { window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Save failed', type: 'error' } })) }
-            }} className="btn btn-xs">Save</button>
-            <button onClick={async ()=>{
-              try { const { save, setActive } = await import('../utils/watchlists.js'); const base=(wlName||'scanner-top'); const name=base+"-longs"; const longs = (res.longs||[]).map(x=>x.symbol); save(name, longs); setActive(name); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Saved longs', type: 'success' } })) } catch { window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Save failed', type: 'error' } })) }
-            }} className="btn btn-xs">Save Longs</button>
-            <button onClick={async ()=>{
-              try { const { save, setActive } = await import('../utils/watchlists.js'); const base=(wlName||'scanner-top'); const name=base+"-shorts"; const shorts = (res.shorts||[]).map(x=>x.symbol); save(name, shorts); setActive(name); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Saved shorts', type: 'success' } })) } catch { window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Save failed', type: 'error' } })) }
-            }} className="btn btn-xs">Save Shorts</button>
-            <button onClick={exportCsv} className="btn btn-xs">Export CSV</button>
-            <button onClick={exportJson} className="btn btn-xs">Export JSON</button>
+          {/* Premium AI Summary Display */}
+          {aiSummary && (
+            <div className="relative group">
+              <div className="absolute inset-0 bg-purple-600 blur-xl opacity-0 group-hover:opacity-5 rounded-xl transition-opacity" />
+              <div className="relative p-4 bg-slate-800/40 rounded-xl border border-purple-500/30">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-lg">🤖</span>
+                  <span className="text-sm font-bold text-purple-300 uppercase tracking-wider">AI Summary</span>
+                </div>
+                <ul className="list-disc pl-5 text-slate-200 space-y-1">
+                  {(aiSummary.bullets||[]).map((b,i)=>(<li key={i} className="text-sm leading-relaxed">{b}</li>))}
+                </ul>
+                {aiSummary.quick_take && (
+                  <div className="mt-3 pt-3 border-t border-slate-700/50">
+                    <span className="text-xs text-slate-400 font-semibold">Quick Take: </span>
+                    <span className="text-xs text-slate-300">{aiSummary.quick_take}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Results Tools */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Results Tools</span>
+            <button
+              onClick={() => { try { const txt = JSON.stringify(res, null, 2); navigator.clipboard.writeText(txt); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Scan results copied', type: 'success' } })) } catch {} }}
+              className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+            >
+              Copy results
+            </button>
+            <a
+              className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+              href={`/api/scan?${new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', requireConsensus: requireConsensus ? '1' : '0', consensusBonus: consensusBonus ? '1' : '0', assetClass }).toString()}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open API
+            </a>
           </div>
-          <div className="md:col-span-2 text-xs text-slate-500">
+
+          {/* Premium Results Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Section title={`Top Longs (${res.longs?.length || 0})`} items={res.longs} />
+            <Section title={`Top Shorts (${res.shorts?.length || 0})`} items={res.shorts} />
+          </div>
+          {/* Premium Watchlist Save Section */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Save to Watchlist</span>
+            <input
+              value={wlName}
+              onChange={e=>setWlName(e.target.value)}
+              className="px-3 py-1 rounded-lg text-xs bg-slate-800/50 border border-slate-700/50 focus:border-indigo-500/50 text-slate-200 transition-all"
+              placeholder="watchlist name"
+            />
+            <button
+              onClick={async ()=>{
+                try {
+                  const { save, setActive } = await import('../utils/watchlists.js')
+                  const longs = (res.longs||[]).map(x=>x.symbol)
+                  const shorts = (res.shorts||[]).map(x=>x.symbol)
+                  const combined = Array.from(new Set([...longs, ...shorts]))
+                  const listName = wlName || 'scanner-top'
+                  save(listName, combined)
+                  setActive(listName)
+                  window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Watchlist saved', type: 'success' } }))
+                } catch (e) { window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Save failed', type: 'error' } })) }
+              }}
+              className="relative group px-3 py-1 rounded-lg text-xs font-semibold overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 group-hover:from-emerald-500 group-hover:to-teal-500 transition-all" />
+              <span className="relative text-white">Save All</span>
+            </button>
+            <button
+              onClick={async ()=>{
+                try { const { save, setActive } = await import('../utils/watchlists.js'); const base=(wlName||'scanner-top'); const name=base+"-longs"; const longs = (res.longs||[]).map(x=>x.symbol); save(name, longs); setActive(name); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Saved longs', type: 'success' } })) } catch { window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Save failed', type: 'error' } })) }
+              }}
+              className="px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-700 hover:bg-emerald-600 text-white transition-all"
+            >
+              Save Longs
+            </button>
+            <button
+              onClick={async ()=>{
+                try { const { save, setActive } = await import('../utils/watchlists.js'); const base=(wlName||'scanner-top'); const name=base+"-shorts"; const shorts = (res.shorts||[]).map(x=>x.symbol); save(name, shorts); setActive(name); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Saved shorts', type: 'success' } })) } catch { window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Save failed', type: 'error' } })) }
+              }}
+              className="px-3 py-1 rounded-lg text-xs font-semibold bg-rose-700 hover:bg-rose-600 text-white transition-all"
+            >
+              Save Shorts
+            </button>
+            <div className="h-4 w-px bg-slate-700" />
+            <button
+              onClick={exportCsv}
+              className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+            >
+              Export CSV
+            </button>
+            <button
+              onClick={exportJson}
+              className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+            >
+              Export JSON
+            </button>
+          </div>
+
+          {/* Premium Metadata Display */}
+          <div className="text-xs text-slate-500 leading-relaxed">
             {assetClass.toUpperCase()} • Universe {res.universe} • TF {res.timeframe} • TH ≥{res.threshold} • Daily {res.enforceDaily ? 'On' : 'Off'} • Consensus {requireConsensus ? 'On' : 'Off'} • Bonus {consensusBonus ? '+10' : 'Off'} • Results L{res.longs?.length||0}/S{res.shorts?.length||0}
             {res.counts ? (
               <>
