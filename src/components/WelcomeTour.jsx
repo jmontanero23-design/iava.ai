@@ -91,65 +91,90 @@ export default function WelcomeTour({ onClose, forceShow = false }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" />
+      {/* Premium Overlay */}
+      <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-md" />
 
-      {/* Tour Card */}
-      <div className="relative z-10 w-full max-w-md">
-        <div className="glass-panel p-6 space-y-4">
-          {/* Progress Bar */}
-          <div className="w-full h-1 bg-slate-700 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-indigo-600 to-cyan-500 transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+      {/* Premium Tour Card */}
+      <div className="relative z-10 w-full max-w-lg">
+        <div className="relative">
+          {/* Card glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl opacity-30 rounded-2xl" />
 
-          {/* Content */}
-          <div className="space-y-3">
-            <h3 className="text-xl font-bold text-slate-200">
-              {step.title}
-            </h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              {step.description}
-            </p>
-          </div>
+          {/* Card content */}
+          <div className="relative glass-panel overflow-hidden">
+            {/* Animated background */}
+            <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
 
-          {/* Step Indicator */}
-          <div className="flex items-center justify-center gap-1.5 pt-2">
-            {TOUR_STEPS.map((_, idx) => (
-              <div
-                key={idx}
-                className={`h-1.5 rounded-full transition-all ${
-                  idx === currentStep
-                    ? 'w-8 bg-indigo-500'
-                    : idx < currentStep
-                    ? 'w-1.5 bg-emerald-500'
-                    : 'w-1.5 bg-slate-700'
-                }`}
-              />
-            ))}
-          </div>
+            <div className="relative p-8 space-y-5">
+              {/* Premium Progress Bar */}
+              <div className="w-full h-2 bg-slate-700/50 rounded-full overflow-hidden shadow-inner">
+                <div
+                  className="h-full bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 transition-all duration-500 shadow-lg"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-between pt-2">
-            <button
-              onClick={handleSkip}
-              className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
-            >
-              {currentStep === TOUR_STEPS.length - 1 ? 'Close' : 'Skip Tour'}
-            </button>
+              {/* Content */}
+              <div className="space-y-4">
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-indigo-200 via-purple-200 to-cyan-300 bg-clip-text text-transparent">
+                  {step.title}
+                </h3>
+                <p className="text-base text-slate-300 leading-relaxed">
+                  {step.description}
+                </p>
+              </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500">
-                {currentStep + 1} / {TOUR_STEPS.length}
-              </span>
-              <button
-                onClick={handleNext}
-                className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white text-sm font-medium rounded-lg transition-all shadow-lg shadow-indigo-500/30"
-              >
-                {currentStep === TOUR_STEPS.length - 1 ? 'Get Started' : 'Next'}
-              </button>
+              {/* Premium Step Indicator */}
+              <div className="flex items-center justify-center gap-2 pt-3">
+                {TOUR_STEPS.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={`h-2 rounded-full transition-all ${
+                      idx === currentStep
+                        ? 'w-10 bg-gradient-to-r from-indigo-500 to-purple-500 shadow-lg shadow-indigo-500/50'
+                        : idx < currentStep
+                        ? 'w-2 bg-gradient-to-r from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/50'
+                        : 'w-2 bg-slate-700/50'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Premium Actions */}
+              <div className="flex items-center justify-between pt-4">
+                <button
+                  onClick={handleSkip}
+                  className="px-5 py-2.5 text-sm font-semibold text-slate-400 hover:text-slate-200 transition-colors"
+                >
+                  {currentStep === TOUR_STEPS.length - 1 ? 'Close' : 'Skip Tour'}
+                </button>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-500 font-semibold">
+                    {currentStep + 1} / {TOUR_STEPS.length}
+                  </span>
+                  <button
+                    onClick={handleNext}
+                    className="relative group px-6 py-2.5 rounded-xl text-sm font-bold overflow-hidden shadow-xl"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 group-hover:from-indigo-500 group-hover:via-purple-500 group-hover:to-cyan-500 transition-all" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-cyan-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
+                    <span className="relative text-white flex items-center gap-2">
+                      {currentStep === TOUR_STEPS.length - 1 ? (
+                        <>
+                          <span>Get Started</span>
+                          <span className="text-base">🚀</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Next</span>
+                          <span className="text-base">→</span>
+                        </>
+                      )}
+                    </span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -174,16 +199,22 @@ export default function WelcomeTour({ onClose, forceShow = false }) {
 }
 
 /**
- * Help Button - Allows users to restart tour
+ * Premium Help Button - Allows users to restart tour
  */
 export function TourHelpButton({ onClick }) {
   return (
     <button
       onClick={onClick}
-      className="fixed bottom-6 right-6 w-12 h-12 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white rounded-full shadow-lg shadow-indigo-500/30 flex items-center justify-center text-xl font-bold transition-all hover:scale-110 z-40"
+      className="fixed bottom-6 right-6 w-14 h-14 group z-40"
       title="Restart Tour"
     >
-      ?
+      {/* Button glow effect */}
+      <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-cyan-600 blur-xl opacity-50 group-hover:opacity-70 rounded-full transition-opacity" />
+
+      {/* Button content */}
+      <div className="relative w-full h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:via-purple-500 hover:to-cyan-500 rounded-full shadow-2xl flex items-center justify-center text-2xl font-bold text-white transition-all hover:scale-110">
+        ?
+      </div>
     </button>
   )
 }
