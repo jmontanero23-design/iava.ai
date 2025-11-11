@@ -2547,15 +2547,15 @@ const CURRICULUM = {
 }
 
 export function getRecommendedLessons(profile) {
-  const curriculum = CURRICULUM[profile.experienceLevel] || CURRICULUM.beginner
+  const curriculum = CURRICULUM[profile.experience] || CURRICULUM.beginner
 
   const available = curriculum.filter(lesson =>
-    !profile.completedLessons.includes(lesson.id)
+    !profile.completedLessons || !profile.completedLessons.includes(lesson.id)
   )
 
   const prioritized = available.sort((a, b) => {
-    const aRelevance = a.concepts.some(c => profile.mistakePatterns.includes(c)) ? 1 : 0
-    const bRelevance = b.concepts.some(c => profile.mistakePatterns.includes(c)) ? 1 : 0
+    const aRelevance = (profile.weaknesses && a.concepts.some(c => profile.weaknesses.includes(c))) ? 1 : 0
+    const bRelevance = (profile.weaknesses && b.concepts.some(c => profile.weaknesses.includes(c))) ? 1 : 0
     return bRelevance - aRelevance
   })
 
@@ -2571,21 +2571,52 @@ export function getLearningPath(profile) {
 
   let relevant = allLessons
 
-  if (profile.learningGoals.length > 0) {
+  if (profile.learningGoals && profile.learningGoals.length > 0) {
     relevant = allLessons.filter(lesson =>
       lesson.concepts.some(c => profile.learningGoals.includes(c))
     )
   }
 
   relevant = relevant.filter(lesson =>
-    !profile.completedLessons.includes(lesson.id)
+    !profile.completedLessons || !profile.completedLessons.includes(lesson.id)
   )
 
+  // Prioritize based on experience level
+  const experienceOrder = { 'beginner': 0, 'intermediate': 1, 'advanced': 2 }
+  const targetLevel = experienceOrder[profile.experience] || 0
+
+  relevant = relevant.sort((a, b) => {
+    // Determine lesson difficulty from curriculum location
+    const aDiff = CURRICULUM.beginner.includes(a) ? 0 : CURRICULUM.intermediate.includes(a) ? 1 : 2
+    const bDiff = CURRICULUM.beginner.includes(b) ? 0 : CURRICULUM.intermediate.includes(b) ? 1 : 2
+
+    // Prefer lessons matching experience level, then easier ones
+    const aScore = Math.abs(aDiff - targetLevel)
+    const bScore = Math.abs(bDiff - targetLevel)
+
+    return aScore - bScore
+  })
+
+  // Calculate total estimated time
+  const estimatedTimeMinutes = relevant.reduce((sum, lesson) => {
+    const minutes = parseInt(lesson.duration) || 15
+    return sum + minutes
+  }, 0)
+
+  const hours = Math.floor(estimatedTimeMinutes / 60)
+  const minutes = estimatedTimeMinutes % 60
+  const estimatedTime = hours > 0
+    ? `${hours}h ${minutes}m`
+    : `${minutes}m`
+
   return {
-    current: relevant[0] || null,
-    upcoming: relevant.slice(1, 4),
-    totalRemaining: relevant.length,
-    progress: profile.completedLessons.length / allLessons.length
+    lessons: relevant.map(lesson => ({
+      ...lesson,
+      difficulty: CURRICULUM.beginner.includes(lesson) ? 'beginner' :
+                 CURRICULUM.intermediate.includes(lesson) ? 'intermediate' : 'advanced'
+    })),
+    estimatedTime,
+    progress: (profile.completedLessons?.length || 0) / allLessons.length
   }
 }
 

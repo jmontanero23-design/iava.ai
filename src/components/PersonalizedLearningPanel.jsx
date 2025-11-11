@@ -142,11 +142,11 @@ export default function PersonalizedLearningPanel() {
       </div>
 
       {/* Learning Path */}
-      {learningPath && learningPath.lessons && learningPath.lessons.length > 0 && (
+      {learningPath?.lessons?.length > 0 && (
         <div className="card overflow-hidden">
           <div className="p-5 border-b border-slate-700/50 bg-gradient-to-r from-amber-900/20 to-orange-900/20">
             <h3 className="text-sm font-bold text-amber-200">Your Personalized Learning Path</h3>
-            <p className="text-xs text-slate-400 mt-1">{learningPath.lessons.length} lessons • {learningPath.estimatedTime} total</p>
+            <p className="text-xs text-slate-400 mt-1">{learningPath.lessons.length} lessons • {learningPath.estimatedTime || 'N/A'} total</p>
           </div>
           <div className="p-5 space-y-3">
             {learningPath.lessons.map((lesson, idx) => (

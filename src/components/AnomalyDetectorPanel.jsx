@@ -136,7 +136,7 @@ export default function AnomalyDetectorPanel() {
         <div className="p-5">
           <div className="text-xs text-slate-400 mb-2">Quick Scan:</div>
           <div className="flex flex-wrap gap-2">
-            {['SPY', 'QQQ', 'TSLA', 'NVDA', 'BTC-USD', 'GME'].map(sym => (
+            {['SPY', 'QQQ', 'TSLA', 'NVDA', 'AAPL', 'MSFT'].map(sym => (
               <button
                 key={sym}
                 onClick={() => { setSymbol(sym); setTimeout(handleScan, 100) }}

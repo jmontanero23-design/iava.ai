@@ -13,6 +13,9 @@ const GATEWAY_URL = '/api/ai/gateway'
  * @returns {Promise<Object>} AI response with usage and cost data
  */
 export async function callAI(model, messages, options = {}) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), options.timeout || 30000) // 30s default
+
   try {
     const response = await fetch(GATEWAY_URL, {
       method: 'POST',
@@ -23,10 +26,21 @@ export async function callAI(model, messages, options = {}) {
         model,
         messages,
         options
-      })
+      }),
+      signal: controller.signal
     })
 
+    clearTimeout(timeout)
+
     if (!response.ok) {
+      // Handle specific error codes
+      if (response.status === 504 || response.status === 503) {
+        throw new Error('AI service temporarily unavailable. Please check backend configuration and try again.')
+      }
+      if (response.status === 401) {
+        throw new Error('API authentication failed. Please check your API key configuration.')
+      }
+
       const error = await response.json().catch(() => ({ error: 'Unknown error' }))
       throw new Error(error.error || `Gateway error: ${response.statusText}`)
     }
@@ -35,6 +49,13 @@ export async function callAI(model, messages, options = {}) {
     return data
 
   } catch (error) {
+    clearTimeout(timeout)
+
+    if (error.name === 'AbortError') {
+      console.error('[AI Gateway Client] Request timeout after 30s')
+      throw new Error('AI request timed out. The service may be overloaded or unavailable.')
+    }
+
     console.error('[AI Gateway Client] Error:', error)
     throw error
   }
