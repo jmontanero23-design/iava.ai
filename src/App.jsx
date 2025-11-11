@@ -19,6 +19,9 @@ import TradeJournalAIPanel from './components/TradeJournalAIPanel.jsx'
 import MarketRegimeDetectorPanel from './components/MarketRegimeDetectorPanel.jsx'
 import AnomalyDetectorPanel from './components/AnomalyDetectorPanel.jsx'
 import MultiTimeframeAnalystPanel from './components/MultiTimeframeAnalystPanel.jsx'
+import SmartWatchlistBuilderPanel from './components/SmartWatchlistBuilderPanel.jsx'
+import PredictiveConfidencePanel from './components/PredictiveConfidencePanel.jsx'
+import PersonalizedLearningPanel from './components/PersonalizedLearningPanel.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -182,7 +185,19 @@ export default function App() {
         )}
       </div>
 
+        {activeTab === 'smart-watchlist' && (
+          <SmartWatchlistBuilderPanel />
+        )}
+
+
+        {activeTab === 'predictive-confidence' && (
+          <PredictiveConfidencePanel />
+        )}
       {/* Welcome Tour for new users */}
+
+        {activeTab === 'personalized-learning' && (
+          <PersonalizedLearningPanel />
+        )}
       <WelcomeTour forceShow={showTour} onClose={() => setShowTour(false)} />
 
       {/* Help button to restart tour */}
