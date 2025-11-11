@@ -111,15 +111,17 @@ export default function AIInsightsPanel({
     analyze()
   }, [signal, bars, symbol, timeframe, account])
 
-  if (!insights || !signal) {
-    return null
-  }
+  // Always show panel, even without insights
+  const hasInsights = insights && signal
 
-  const { signalType, regime, confidence, risk, anomalies, mtfAnalysis } = insights
+  const { signalType, regime, confidence, risk, anomalies, mtfAnalysis } = insights || {}
 
   // Determine overall quality color
   const qualityScore = confidence?.probability || 0
   const qualityColor = qualityScore >= 0.7 ? 'emerald' : qualityScore >= 0.5 ? 'cyan' : qualityScore >= 0.3 ? 'yellow' : 'rose'
+
+  // Get current Unicorn score if available
+  const currentScore = signal?.score || 0
 
   return (
     <div className="glass-panel p-4 space-y-3">
@@ -129,18 +131,80 @@ export default function AIInsightsPanel({
           <span className="text-2xl">🤖</span>
           <div>
             <h3 className="text-sm font-semibold text-slate-200">AI Analysis</h3>
-            <p className="text-xs text-slate-400">12 Features • Live Insights</p>
+            <p className="text-xs text-slate-400 flex items-center gap-2">
+              <span className={`w-1.5 h-1.5 rounded-full ${hasInsights ? 'bg-emerald-400 animate-pulse' : 'bg-yellow-400'}`} />
+              {hasInsights ? '12 Features Active' : 'Waiting for Signal'}
+            </p>
           </div>
         </div>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="px-3 py-1 text-xs bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-        >
-          {expanded ? 'Hide Details' : 'Show Details'}
-        </button>
+        {hasInsights && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="px-3 py-1 text-xs bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+          >
+            {expanded ? 'Hide Details' : 'Show Details'}
+          </button>
+        )}
       </div>
 
-      {/* Quick Summary */}
+      {/* Empty State - Show when no signal */}
+      {!hasInsights && (
+        <div className="py-8 text-center space-y-4">
+          <div className="text-6xl opacity-50">⏳</div>
+          <div>
+            <h4 className="text-lg font-semibold text-slate-300 mb-2">
+              Waiting for Unicorn Signal
+            </h4>
+            <p className="text-sm text-slate-400 max-w-md mx-auto mb-4">
+              {bars.length < 50
+                ? 'Load a symbol with at least 50 bars to activate AI analysis'
+                : currentScore > 0
+                ? `Current Score: ${Math.round(currentScore)}/100 (need 70+ for signal)`
+                : 'Analyzing market conditions...'}
+            </p>
+            {currentScore > 0 && currentScore < 70 && (
+              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 max-w-md mx-auto">
+                <div className="flex items-center justify-between text-xs mb-2">
+                  <span className="text-slate-400">Unicorn Score</span>
+                  <span className="text-cyan-400 font-semibold">{Math.round(currentScore)}/100</span>
+                </div>
+                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-600 to-indigo-500 transition-all duration-500"
+                    style={{ width: `${Math.min(100, currentScore)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  💡 Tip: Lower the threshold (top of page) to see more signals
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Stats - Show even without signal */}
+          <div className="grid grid-cols-3 gap-3 max-w-lg mx-auto pt-4">
+            <div className="p-3 bg-slate-800/30 rounded-lg">
+              <div className="text-xs text-slate-400 mb-1">Indicators</div>
+              <div className="text-lg font-bold text-emerald-400">4</div>
+              <div className="text-xs text-slate-500">Tracking</div>
+            </div>
+            <div className="p-3 bg-slate-800/30 rounded-lg">
+              <div className="text-xs text-slate-400 mb-1">AI Features</div>
+              <div className="text-lg font-bold text-cyan-400">12</div>
+              <div className="text-xs text-slate-500">Ready</div>
+            </div>
+            <div className="p-3 bg-slate-800/30 rounded-lg">
+              <div className="text-xs text-slate-400 mb-1">Status</div>
+              <div className="text-lg font-bold text-yellow-400">⏳</div>
+              <div className="text-xs text-slate-500">Waiting</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Summary - Only show when we have insights */}
+      {hasInsights && (
+        <>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {/* Signal Quality */}
         <div className="p-2 bg-slate-800/30 rounded-lg">
@@ -271,10 +335,15 @@ export default function AIInsightsPanel({
         </div>
       )}
 
+        </>
+      )}
+
       {/* Footer */}
       <div className="pt-2 border-t border-slate-700 flex items-center justify-between text-xs text-slate-500">
         <span>Powered by 12 AI Features</span>
-        <span>Updated {new Date(insights.timestamp).toLocaleTimeString()}</span>
+        {hasInsights && insights.timestamp && (
+          <span>Updated {new Date(insights.timestamp).toLocaleTimeString()}</span>
+        )}
       </div>
     </div>
   )
