@@ -21,14 +21,17 @@ export default function AIInsightsPanel({
 }) {
   const [insights, setInsights] = useState(null)
   const [expanded, setExpanded] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
 
   useEffect(() => {
     if (!signal || bars.length < 50) {
       setInsights(null)
+      setIsAnalyzing(false)
       return
     }
 
     async function analyze() {
+      setIsAnalyzing(true)
       try {
         // 1. Signal Quality Classification
         const signalType = classifySignal({
@@ -105,6 +108,8 @@ export default function AIInsightsPanel({
       } catch (error) {
         console.error('[AI Insights] Analysis error:', error)
         setInsights(null)
+      } finally {
+        setIsAnalyzing(false)
       }
     }
 
@@ -132,8 +137,14 @@ export default function AIInsightsPanel({
           <div>
             <h3 className="text-sm font-semibold text-slate-200">AI Analysis</h3>
             <p className="text-xs text-slate-400 flex items-center gap-2">
-              <span className={`w-1.5 h-1.5 rounded-full ${hasInsights ? 'bg-emerald-400 animate-pulse' : 'bg-yellow-400'}`} />
-              {hasInsights ? '12 Features Active' : 'Waiting for Signal'}
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                isAnalyzing ? 'bg-cyan-400 animate-pulse' :
+                hasInsights ? 'bg-emerald-400 animate-pulse' :
+                'bg-yellow-400'
+              }`} />
+              {isAnalyzing ? 'Analyzing with 12 Features...' :
+               hasInsights ? '12 Features Active' :
+               'Waiting for Signal'}
             </p>
           </div>
         </div>
@@ -150,13 +161,18 @@ export default function AIInsightsPanel({
       {/* Empty State - Show when no signal */}
       {!hasInsights && (
         <div className="py-8 text-center space-y-4">
-          <div className="text-6xl opacity-50">⏳</div>
+          {/* Icon changes based on state */}
+          <div className="text-6xl opacity-50">
+            {isAnalyzing ? '✨' : '⏳'}
+          </div>
           <div>
             <h4 className="text-lg font-semibold text-slate-300 mb-2">
-              Waiting for Unicorn Signal
+              {isAnalyzing ? 'Running AI Analysis...' : 'Waiting for Unicorn Signal'}
             </h4>
             <p className="text-sm text-slate-400 max-w-md mx-auto mb-4">
-              {bars.length < 50
+              {isAnalyzing
+                ? 'Processing 12 AI features: Signal Quality, Predictive Confidence, Market Regime, Risk Analysis...'
+                : bars.length < 50
                 ? 'Load a symbol with at least 50 bars to activate AI analysis'
                 : currentScore > 0
                 ? `Current Score: ${Math.round(currentScore)}/100 (need 70+ for signal)`
