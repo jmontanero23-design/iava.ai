@@ -17,6 +17,7 @@ import SignalQualityScorerPanel from './components/SignalQualityScorerPanel.jsx'
 import RiskAdvisorPanel from './components/RiskAdvisorPanel.jsx'
 import TradeJournalAIPanel from './components/TradeJournalAIPanel.jsx'
 import MarketRegimeDetectorPanel from './components/MarketRegimeDetectorPanel.jsx'
+import AnomalyDetectorPanel from './components/AnomalyDetectorPanel.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -167,6 +168,10 @@ export default function App() {
 
         {activeTab === 'market-regime' && (
           <MarketRegimeDetectorPanel />
+        )}
+
+        {activeTab === 'anomaly-detector' && (
+          <AnomalyDetectorPanel />
         )}
 
         {activeTab !== 'chart' && <BuildInfoFooter />}
