@@ -29,6 +29,7 @@ import WatchlistPanel from './components/WatchlistPanel.jsx'
 import WatchlistNavigator from './components/WatchlistNavigator.jsx'
 import HelpFab from './components/HelpFab.jsx'
 import RateLimitBanner from './components/RateLimitBanner.jsx'
+import PresetHelp from './components/PresetHelp.jsx'
 import { rateLimiter } from './utils/rateLimiter.js'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
@@ -338,6 +339,13 @@ export default function App() {
               <option value="dailyTrendFollow">Daily Trend Follow</option>
               <option value="meanRevertIntraday">Mean Revert Intraday</option>
             </select>
+            <PresetHelp descriptions={{
+              trendDaily: 'Best for trending markets. Uses 8-21 + 34-50 EMAs with daily confirmation for high-probability trend trades.',
+              pullbackDaily: 'Catches pullbacks in trends. Uses 5-12 + 8-9 EMAs to enter on retracements with daily bias.',
+              intradayBreakout: 'Fast breakout plays without daily filter. Uses 5-12 + 8-9 EMAs for intraday momentum.',
+              dailyTrendFollow: 'Strong trend following with daily alignment. Conservative approach using 8-21 + 34-50 EMAs.',
+              meanRevertIntraday: 'Counter-trend plays on intraday timeframes. Uses 8-9 EMA for quick mean reversion.'
+            }} />
           </div>
 
           {/* Quick Toggles */}
