@@ -3,12 +3,12 @@
  * Provides offline capabilities, caching strategies, and background sync
  *
  * Strategy:
- * - Network-first for API calls (always get latest data)
- * - Cache-first for static assets (fast loading)
- * - Stale-while-revalidate for HTML/JS/CSS (balanced approach)
+ * - Network-first for HTML & API calls (always get latest)
+ * - Cache-first for images, fonts, CSS (fast loading)
+ * - Stale-while-revalidate for JS (show cached, update in background)
  */
 
-const CACHE_VERSION = 'iava-v1.0.0'
+const CACHE_VERSION = 'iava-v1.1.0'
 const STATIC_CACHE = `${CACHE_VERSION}-static`
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`
 const API_CACHE = `${CACHE_VERSION}-api`
@@ -88,9 +88,14 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Static assets (JS, CSS, images, fonts): Cache-first
+  // HTML requests: Network-first (always get latest to ensure correct JS references)
+  if (request.destination === 'document' || url.pathname.endsWith('.html') || url.pathname === '/') {
+    event.respondWith(networkFirstStrategy(request, RUNTIME_CACHE))
+    return
+  }
+
+  // Static assets (CSS, images, fonts): Cache-first
   if (
-    request.destination === 'script' ||
     request.destination === 'style' ||
     request.destination === 'image' ||
     request.destination === 'font' ||
@@ -101,7 +106,13 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // HTML and other requests: Stale-while-revalidate
+  // JavaScript files: Stale-while-revalidate (show cached, update in background)
+  if (request.destination === 'script') {
+    event.respondWith(staleWhileRevalidateStrategy(request, STATIC_CACHE))
+    return
+  }
+
+  // Other requests: Stale-while-revalidate
   event.respondWith(staleWhileRevalidateStrategy(request, RUNTIME_CACHE))
 })
 

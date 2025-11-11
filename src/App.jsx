@@ -13,6 +13,7 @@ import NaturalLanguageScanner from './components/NaturalLanguageScanner.jsx'
 import ModelMonitoring from './components/ModelMonitoring.jsx'
 import FeatureStatusBadge from './components/FeatureStatusBadge.jsx'
 import WelcomeTour, { TourHelpButton } from './components/WelcomeTour.jsx'
+import SignalQualityScorerPanel from './components/SignalQualityScorerPanel.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -147,6 +148,10 @@ export default function App() {
 
         {activeTab === 'monitoring' && (
           <ModelMonitoring />
+        )}
+
+        {activeTab === 'signal-quality' && (
+          <SignalQualityScorerPanel />
         )}
 
         {activeTab !== 'chart' && <BuildInfoFooter />}

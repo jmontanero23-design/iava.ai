@@ -732,9 +732,9 @@ export default function App() {
       />
       <SignalFeed items={signalHistory} onSelect={(item) => setFocusTime(item.time)} />
       <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} rateLimitUntil={rateLimitUntil} />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <SignalsPanel bars={bars} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), components: { ...(signalState?.components||{}), ...(consensusBonus && consensus?.align ? { consensus: 10 } : {}) } }} symbol={symbol} onRefresh={() => loadBars()} onClear={() => setSignalHistory([])} />
         {showSqueeze && <SqueezePanel bars={bars} />}
-        <SignalsPanel bars={bars} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), components: { ...(signalState?.components||{}), ...(consensusBonus && consensus?.align ? { consensus: 10 } : {}) } }} />
       </div>
       <ScannerPanel
         onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf || timeframe); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }}
