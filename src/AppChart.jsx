@@ -506,124 +506,191 @@ export default function App() {
       <div className="max-w-7xl mx-auto p-6 space-y-6">
       {showRateBanner && <RateLimitBanner until={rateLimitUntil} />}
       <Hero />
-      <div className="card p-4 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <SymbolSearch value={symbol} onChange={setSymbol} onSubmit={(sym) => loadBars(sym, timeframe)} />
-          <select value={timeframe} onChange={e => { const tf = e.target.value; setTimeframe(tf); if (autoLoadChange) loadBars(symbol, tf) }} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm">
-            <option value="1Min">1Min</option>
-            <option value="5Min">5Min</option>
-            <option value="15Min">15Min</option>
-            <option value="1Hour">1Hour</option>
-            <option value="1Day">1Day</option>
-          </select>
-          <button onClick={() => loadBars()} className="bg-indigo-600 hover:bg-indigo-500 rounded px-3 py-1 text-sm">Load</button>
-          {loading && <span className="text-xs text-slate-400 ml-2">Loading…</span>}
-          {error && !loading && <span className="text-xs text-rose-400 ml-2">{error}</span>}
+      <div className="card overflow-hidden">
+        {/* Premium Header */}
+        <div className="p-5 relative overflow-hidden border-b border-slate-700/50">
+          <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
+
+          <div className="relative space-y-4">
+            {/* Title & Quick Load Section */}
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-indigo-600 blur-lg opacity-50 animate-pulse" />
+                  <span className="relative text-2xl filter drop-shadow-lg">📈</span>
+                </div>
+                <h3 className="text-lg font-bold bg-gradient-to-r from-indigo-200 to-purple-300 bg-clip-text text-transparent">
+                  Chart Controls
+                </h3>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <SymbolSearch value={symbol} onChange={setSymbol} onSubmit={(sym) => loadBars(sym, timeframe)} />
+                <select value={timeframe} onChange={e => { const tf = e.target.value; setTimeframe(tf); if (autoLoadChange) loadBars(symbol, tf) }} className="select bg-slate-800/50 border-slate-700/50 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-all">
+                  <option value="1Min">1Min</option>
+                  <option value="5Min">5Min</option>
+                  <option value="15Min">15Min</option>
+                  <option value="1Hour">1Hour</option>
+                  <option value="1Day">1Day</option>
+                </select>
+                <button onClick={() => loadBars()} className="relative group px-4 py-2 rounded-lg text-xs font-bold overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 group-hover:from-indigo-500 group-hover:to-purple-500 transition-all" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
+                  <span className="relative text-white">Load</span>
+                </button>
+                {loading && <span className="text-xs text-slate-400">Loading…</span>}
+                {error && !loading && <span className="text-xs text-rose-400">{error}</span>}
+              </div>
+            </div>
+
+            {/* Symbol Shortcuts Row */}
+            <div className="w-full">
+              <Presets symbol={symbol} setSymbol={setSymbol} timeframe={timeframe} setTimeframe={setTimeframe} onLoad={(s, tf) => loadBars(s, tf)} />
+            </div>
+
+            {/* Keyboard Shortcuts Hint */}
+            <div className="text-[11px] text-slate-500 flex items-center gap-2">
+              <span>⌨️</span>
+              <span>Shortcuts: 1–7 switch presets · ←/→ navigate watchlist · Space toggle Auto</span>
+            </div>
+          </div>
         </div>
-        <div className="w-full mt-2">
-          <Presets symbol={symbol} setSymbol={setSymbol} timeframe={timeframe} setTimeframe={setTimeframe} onLoad={(s, tf) => loadBars(s, tf)} />
+
+        {/* Premium Content Sections */}
+        <div className="p-5 space-y-4">
+          {/* Preset Configuration Section */}
+          <div className="p-4 bg-slate-800/30 rounded-xl border border-purple-500/20">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-base">🎯</span>
+              <div className="text-xs uppercase tracking-wider text-purple-300 font-semibold">Strategy Preset</div>
+              <InfoPopover title="Overlays">Toggle EMA Clouds (pullback/trend), Ichimoku (regime), Pivot Ribbon (8/21/34) and SATY ATR levels (targets).</InfoPopover>
+              <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'Which overlays should I enable for this setup?', context: { overlays: { showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty, showSqueeze }, timeframe, symbol } } })) } catch {} }} className="text-xs text-purple-400 hover:text-purple-300 underline transition-colors">Ask AI</button>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <select value={mtfPreset} onChange={e => applyPreset(e.target.value)} className="select bg-slate-800/50 border-slate-700/50 focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all">
+                <option value="manual">Manual</option>
+                <option value="trendDaily">Trend + Daily Confluence</option>
+                <option value="pullbackDaily">Pullback + Daily Confluence</option>
+                <option value="intradayBreakout">Intraday Breakout</option>
+                <option value="dailyTrendFollow">Daily Trend Follow</option>
+                <option value="meanRevertIntraday">Mean Revert (Intra)</option>
+                <option value="breakoutDailyStrong">Breakout (Daily, Strong)</option>
+                <option value="momentumContinuation">Momentum Continuation</option>
+              </select>
+              <InfoPopover title="Preset Guidance">{presetDescriptions[mtfPreset] || "Strategy-driven overlay & gating configuration."}</InfoPopover>
+              <PresetHelp descriptions={presetDescriptions} />
+              <button onClick={suggestPresetAI} disabled={presetSuggesting || llmReady === false} title={llmReady === false ? 'LLM not configured' : ''} className="relative group px-3 py-1.5 rounded-lg text-xs font-semibold overflow-hidden disabled:opacity-50">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
+                <span className="relative text-white">
+                  {presetSuggesting ? 'Suggesting…' : '🤖 Suggest Preset'}
+                </span>
+              </button>
+              {presetSuggestErr && <span className="text-xs text-rose-400">{presetSuggestErr}</span>}
+            </div>
+          </div>
+
+          {/* Overlays Section */}
+          <div className="p-4 bg-slate-800/30 rounded-xl border border-indigo-500/20">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-base">📊</span>
+              <div className="text-xs uppercase tracking-wider text-indigo-300 font-semibold">Technical Overlays</div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <label className="inline-flex items-center gap-2 cursor-pointer group px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-indigo-500/30 transition-all">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-indigo-500 focus:ring-2 focus:ring-indigo-500/30" checked={showEma821} onChange={e => setShowEma821(e.target.checked)} />
+                <span className="text-sm text-slate-300 group-hover:text-indigo-300 transition-colors">EMA 8/21</span>
+              </label>
+              <label className="inline-flex items-center gap-2 cursor-pointer group px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-cyan-500/30 transition-all">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-cyan-500 focus:ring-2 focus:ring-cyan-500/30" checked={showEma512} onChange={e => setShowEma512(e.target.checked)} />
+                <span className="text-sm text-slate-300 group-hover:text-cyan-300 transition-colors">EMA 5/12</span>
+              </label>
+              <label className="inline-flex items-center gap-2 cursor-pointer group px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-violet-500/30 transition-all">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-violet-500 focus:ring-2 focus:ring-violet-500/30" checked={showEma89} onChange={e => setShowEma89(e.target.checked)} />
+                <span className="text-sm text-slate-300 group-hover:text-violet-300 transition-colors">EMA 8/9</span>
+              </label>
+              <label className="inline-flex items-center gap-2 cursor-pointer group px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-emerald-500/30 transition-all">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-2 focus:ring-emerald-500/30" checked={showEma3450} onChange={e => setShowEma3450(e.target.checked)} />
+                <span className="text-sm text-slate-300 group-hover:text-emerald-300 transition-colors">EMA 34/50</span>
+              </label>
+              <label className="inline-flex items-center gap-2 cursor-pointer group px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-indigo-500/30 transition-all">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-indigo-500 focus:ring-2 focus:ring-indigo-500/30" checked={showIchi} onChange={e => setShowIchi(e.target.checked)} />
+                <span className="text-sm text-slate-300 group-hover:text-indigo-300 transition-colors">Ichimoku</span>
+              </label>
+              <label className="inline-flex items-center gap-2 cursor-pointer group px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-lime-500/30 transition-all">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-lime-500 focus:ring-2 focus:ring-lime-500/30" checked={showRibbon} onChange={e => setShowRibbon(e.target.checked)} />
+                <span className="text-sm text-slate-300 group-hover:text-lime-300 transition-colors">Pivot Ribbon</span>
+              </label>
+              <label className="inline-flex items-center gap-2 cursor-pointer group px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-indigo-500/30 transition-all">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-indigo-500 focus:ring-2 focus:ring-indigo-500/30" checked={showSaty} onChange={e => setShowSaty(e.target.checked)} />
+                <span className="text-sm text-slate-300 group-hover:text-indigo-300 transition-colors">SATY ATR Levels</span>
+              </label>
+            </div>
+            <div className="mt-3 pt-3 border-t border-slate-700/30 text-sm text-slate-400 flex items-center gap-4 flex-wrap">
+              <div>Trend: <span className="text-slate-200 font-semibold">{pivotRibbonTrend(bars.map(b => b.close))}</span></div>
+              {showSaty && overlays.saty?.atr && (
+                <>
+                  <div>ATR: <span className="text-slate-200 font-semibold">{overlays.saty.atr.toFixed(2)}</span></div>
+                  <div>Range used: <span className="text-slate-200 font-semibold">{Math.round(overlays.saty.rangeUsed * 100)}%</span></div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Settings & Automation Section */}
+          <div className="p-4 bg-slate-800/30 rounded-xl border border-cyan-500/20">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-base">⚙️</span>
+              <div className="text-xs uppercase tracking-wider text-cyan-300 font-semibold">Settings & Automation</div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <label className="inline-flex items-center gap-2 cursor-pointer group px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-indigo-500/30 transition-all">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-indigo-500 focus:ring-2 focus:ring-indigo-500/30" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />
+                <span className="text-sm text-slate-300 group-hover:text-indigo-300 transition-colors">Auto-Refresh</span>
+              </label>
+              <select value={refreshSec} onChange={e => setRefreshSec(parseInt(e.target.value,10))} className="select bg-slate-800/50 border-slate-700/50 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm">
+                <option value={5}>5s</option>
+                <option value={15}>15s</option>
+                <option value={30}>30s</option>
+                <option value={60}>60s</option>
+              </select>
+              {streamingAllowed && (
+                <label className="inline-flex items-center gap-2 cursor-pointer group px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-cyan-500/30 transition-all" title={timeframe==='1Day' ? 'Streaming disabled on Daily' : ''}>
+                  <input type="checkbox" className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-cyan-500 focus:ring-2 focus:ring-cyan-500/30" checked={streaming} disabled={timeframe==='1Day'} onChange={e => { setStreaming(e.target.checked); if (e.target.checked) setAutoRefresh(false) }} />
+                  <span className="text-sm text-slate-300 group-hover:text-cyan-300 transition-colors">Streaming (beta)</span>
+                  <InfoPopover title="Streaming (beta)">Live bars via SSE. Use for intraday. Falls back to polling when off.</InfoPopover>
+                </label>
+              )}
+              <label className="inline-flex items-center gap-2 cursor-pointer group px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-indigo-500/30 transition-all">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-indigo-500 focus:ring-2 focus:ring-indigo-500/30" checked={autoLoadChange} onChange={e => setAutoLoadChange(e.target.checked)} />
+                <span className="text-sm text-slate-300 group-hover:text-indigo-300 transition-colors">Auto-Load on Change</span>
+              </label>
+              <label className="inline-flex items-center gap-2 cursor-pointer group px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-indigo-500/30 transition-all">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-indigo-500 focus:ring-2 focus:ring-indigo-500/30" checked={enforceDaily} onChange={e => setEnforceDaily(e.target.checked)} />
+                <span className="text-sm text-slate-300 group-hover:text-indigo-300 transition-colors">Enforce Daily Confluence</span>
+                <InfoPopover title="Daily Confluence">Requires Daily Pivot + Ichimoku agreement with your direction (bull for longs, bear for shorts). Use for higher conviction; toggle off to explore setups with soft risk.</InfoPopover>
+              </label>
+              <label className="inline-flex items-center gap-2 cursor-pointer group px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-indigo-500/30 transition-all">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-indigo-500 focus:ring-2 focus:ring-indigo-500/30" checked={consensusBonus} onChange={e => setConsensusBonus(e.target.checked)} />
+                <span className="text-sm text-slate-300 group-hover:text-indigo-300 transition-colors">Consensus Bonus</span>
+                <InfoPopover title="Consensus Bonus">Adds +10 to displayed score when primary TF trend matches the secondary TF (e.g., 5→15Min). Use as a visual nudge; does not change API backtests unless you enable consensus server-side.</InfoPopover>
+              </label>
+            </div>
+            <div className="mt-3 pt-3 border-t border-slate-700/30 flex items-center gap-3">
+              <span className="text-sm text-slate-400 font-semibold">Threshold</span>
+              <InfoPopover title="Threshold">Minimum Unicorn Score to consider a setup. Raise to be more selective; lower to explore more candidates. Scanner applies threshold after gating.</InfoPopover>
+              <input type="range" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10))} className="flex-1 max-w-xs accent-indigo-500" />
+              <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="input w-16 bg-slate-800/50 border-slate-700/50 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-all" />
+            </div>
+          </div>
+
+          {/* Status Bar */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <HealthBadge />
+            <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Link copied', type: 'success' } })) } catch(_) {} }} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all">
+              🔗 Copy Link
+            </button>
+          </div>
         </div>
-        <div className="text-[11px] text-slate-500 -mt-1">
-          Shortcuts: 1–7 switch presets · ←/→ navigate watchlist · Space toggle Auto
-        </div>
-        <span className="text-sm text-slate-400 inline-flex items-center gap-2">Overlays <InfoPopover title="Overlays">Toggle EMA Clouds (pullback/trend), Ichimoku (regime), Pivot Ribbon (8/21/34) and SATY ATR levels (targets).</InfoPopover>
-          <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'Which overlays should I enable for this setup?', context: { overlays: { showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty, showSqueeze }, timeframe, symbol } } })) } catch {} }} className="text-xs text-slate-400 underline">Ask AI</button>
-        </span>
-        <label className="inline-flex items-center gap-2 text-sm">
-          Preset
-          <select value={mtfPreset} onChange={e => applyPreset(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
-            <option value="manual">Manual</option>
-            <option value="trendDaily">Trend + Daily Confluence</option>
-            <option value="pullbackDaily">Pullback + Daily Confluence</option>
-            <option value="intradayBreakout">Intraday Breakout</option>
-            <option value="dailyTrendFollow">Daily Trend Follow</option>
-            <option value="meanRevertIntraday">Mean Revert (Intra)</option>
-            <option value="breakoutDailyStrong">Breakout (Daily, Strong)</option>
-            <option value="momentumContinuation">Momentum Continuation</option>
-          </select>
-          <InfoPopover title="Preset Guidance">{presetDescriptions[mtfPreset] || "Strategy-driven overlay & gating configuration."}</InfoPopover>
-          <PresetHelp descriptions={presetDescriptions} />
-          <button onClick={suggestPresetAI} disabled={presetSuggesting || llmReady === false} title={llmReady === false ? 'LLM not configured' : ''} className="ml-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-xs rounded px-2 py-1 border border-slate-700">
-            {presetSuggesting ? 'Suggesting…' : 'Suggest Preset (AI)'}
-          </button>
-          {presetSuggestErr && <span className="text-xs text-rose-400 ml-2">{presetSuggestErr}</span>}
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-indigo-500" checked={showEma821} onChange={e => setShowEma821(e.target.checked)} />
-          <span>EMA 8/21</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-cyan-500" checked={showEma512} onChange={e => setShowEma512(e.target.checked)} />
-          <span>EMA 5/12</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-violet-500" checked={showEma89} onChange={e => setShowEma89(e.target.checked)} />
-          <span>EMA 8/9</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-emerald-500" checked={showEma3450} onChange={e => setShowEma3450(e.target.checked)} />
-          <span>EMA 34/50</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-indigo-500" checked={showIchi} onChange={e => setShowIchi(e.target.checked)} />
-          <span>Ichimoku</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-lime-500" checked={showRibbon} onChange={e => setShowRibbon(e.target.checked)} />
-          <span>Pivot Ribbon</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-indigo-500" checked={showSaty} onChange={e => setShowSaty(e.target.checked)} />
-          <span>SATY ATR Levels</span>
-        </label>
-        <div className="ml-auto text-sm text-slate-400">
-          Trend: <span className="text-slate-200">{pivotRibbonTrend(bars.map(b => b.close))}</span>
-          {showSaty && overlays.saty?.atr ? (
-            <>
-              <span className="mx-2">•</span>
-              ATR: <span className="text-slate-200">{overlays.saty.atr.toFixed(2)}</span>
-              <span className="mx-2">•</span>
-              Range used: <span className="text-slate-200">{Math.round(overlays.saty.rangeUsed * 100)}%</span>
-            </>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2 ml-4">
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input type="checkbox" className="accent-indigo-500" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />
-            Auto-Refresh
-          </label>
-          <select value={refreshSec} onChange={e => setRefreshSec(parseInt(e.target.value,10))} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm">
-            <option value={5}>5s</option>
-            <option value={15}>15s</option>
-            <option value={30}>30s</option>
-            <option value={60}>60s</option>
-          </select>
-          {streamingAllowed && (
-            <label className="inline-flex items-center gap-2 text-sm ml-2" title={timeframe==='1Day' ? 'Streaming disabled on Daily' : ''}>
-              <input type="checkbox" className="accent-cyan-500" checked={streaming} disabled={timeframe==='1Day'} onChange={e => { setStreaming(e.target.checked); if (e.target.checked) setAutoRefresh(false) }} />
-              Streaming (beta) <InfoPopover title="Streaming (beta)">Live bars via SSE. Use for intraday. Falls back to polling when off.</InfoPopover>
-            </label>
-          )}
-          <label className="inline-flex items-center gap-2 text-sm ml-2">
-            <input type="checkbox" className="accent-indigo-500" checked={autoLoadChange} onChange={e => setAutoLoadChange(e.target.checked)} />
-            Auto-Load on Change
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm ml-2">
-            <input type="checkbox" className="accent-indigo-500" checked={enforceDaily} onChange={e => setEnforceDaily(e.target.checked)} />
-            Enforce Daily Confluence <InfoPopover title="Daily Confluence">Requires Daily Pivot + Ichimoku agreement with your direction (bull for longs, bear for shorts). Use for higher conviction; toggle off to explore setups with soft risk.</InfoPopover>
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm ml-2">
-            <input type="checkbox" className="accent-indigo-500" checked={consensusBonus} onChange={e => setConsensusBonus(e.target.checked)} />
-            Consensus Bonus <InfoPopover title="Consensus Bonus">Adds +10 to displayed score when primary TF trend matches the secondary TF (e.g., 5→15Min). Use as a visual nudge; does not change API backtests unless you enable consensus server-side.</InfoPopover>
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm ml-2">
-            <span>Threshold</span> <InfoPopover title="Threshold">Minimum Unicorn Score to consider a setup. Raise to be more selective; lower to explore more candidates. Scanner applies threshold after gating.</InfoPopover>
-            <input type="range" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10))} />
-            <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
-          </label>
-        </div>
-        <div className="ml-auto"><HealthBadge /></div>
-        <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Link copied', type: 'success' } })) } catch(_) {} }} className="ml-2 bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Link</button>
       </div>
       <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streaming || autoRefresh} consensus={consensus} threshold={threshold} />
       <AIInsightsPanel
