@@ -98,51 +98,81 @@ Guidelines:
   ]
 
   return (
-    <div className="glass-panel flex flex-col h-[600px]">
-      {/* Header */}
-      <div className="p-4 border-b border-slate-700/50">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">🤖</span>
+    <div className="glass-panel flex flex-col h-[600px] overflow-hidden">
+      {/* Premium Header with animated background */}
+      <div className="p-5 border-b border-slate-700/50 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="relative flex items-center gap-3">
+          {/* Icon with glow effect */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-cyan-600 blur-xl opacity-50 animate-pulse" />
+            <span className="relative text-3xl filter drop-shadow-lg">🤖</span>
+          </div>
           <div>
-            <h3 className="text-lg font-semibold text-slate-200">AI Assistant</h3>
-            <p className="text-xs text-slate-400">Ask me anything about trading</p>
+            <h3 className="text-xl font-bold bg-gradient-to-r from-indigo-200 via-purple-200 to-cyan-300 bg-clip-text text-transparent">
+              AI Assistant
+            </h3>
+            <p className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="font-semibold">Powered by GPT-4o-mini</span>
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Messages */}
+      {/* Premium Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, idx) => (
           <div
             key={idx}
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div
-              className={`max-w-[80%] rounded-lg p-3 ${
-                msg.role === 'user'
-                  ? 'bg-indigo-600/30 border border-indigo-500/30 text-slate-200'
-                  : msg.error
-                  ? 'bg-rose-500/10 border border-rose-500/30 text-rose-300'
-                  : 'bg-slate-800/50 border border-slate-700/50 text-slate-300'
-              }`}
-            >
-              <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
-              {msg.cost && (
-                <div className="text-xs text-slate-500 mt-1">
-                  ${msg.cost.totalCost.toFixed(4)} • {msg.latency}ms
-                </div>
-              )}
+            {/* Premium message bubble with glow effect */}
+            <div className="relative group max-w-[80%]">
+              {/* Hover glow effect */}
+              <div className={`absolute inset-0 ${
+                msg.role === 'user' ? 'bg-indigo-600' :
+                msg.error ? 'bg-rose-600' : 'bg-cyan-600'
+              } blur-xl opacity-0 group-hover:opacity-10 transition-opacity rounded-2xl`} />
+
+              <div
+                className={`relative rounded-2xl p-4 shadow-lg ${
+                  msg.role === 'user'
+                    ? 'bg-gradient-to-r from-indigo-600/30 to-indigo-500/20 border border-indigo-500/40 text-slate-200'
+                    : msg.error
+                    ? 'bg-gradient-to-r from-rose-500/20 to-rose-600/10 border border-rose-500/40 text-rose-300'
+                    : 'bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm text-slate-300'
+                }`}
+              >
+                <div className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+                {msg.cost && (
+                  <div className="flex items-center gap-3 mt-2 pt-2 border-t border-slate-700/30">
+                    <div className="flex items-center gap-1 text-xs text-emerald-400">
+                      <span>💰</span>
+                      <span className="font-semibold">${msg.cost.totalCost.toFixed(4)}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-cyan-400">
+                      <span>⚡</span>
+                      <span className="font-semibold">{msg.latency}ms</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}
 
+        {/* Premium typing indicator */}
         {isTyping && (
           <div className="flex justify-start">
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 bg-slate-500 rounded-full animate-pulse" />
-                <div className="w-2 h-2 bg-slate-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                <div className="w-2 h-2 bg-slate-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+            <div className="relative group">
+              <div className="absolute inset-0 bg-cyan-600 blur-xl opacity-10 rounded-2xl" />
+              <div className="relative bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm rounded-2xl p-4 shadow-lg">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-gradient-to-r from-indigo-400 to-cyan-400 rounded-full animate-pulse" />
+                  <div className="w-2.5 h-2.5 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                  <div className="w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                </div>
               </div>
             </div>
           </div>
@@ -151,41 +181,71 @@ Guidelines:
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Suggested Questions */}
+      {/* Premium Suggested Questions */}
       {messages.length <= 1 && (
-        <div className="px-4 pb-2">
-          <div className="text-xs text-slate-400 mb-2">Suggested questions:</div>
+        <div className="px-4 pb-3">
+          <div className="flex items-center gap-2 text-xs text-slate-400 mb-2.5">
+            <span className="text-base">💡</span>
+            <span className="font-semibold uppercase tracking-wider">Suggested Questions</span>
+          </div>
           <div className="flex flex-wrap gap-2">
             {suggestedQuestions.map((q, idx) => (
               <button
                 key={idx}
                 onClick={() => setInput(q)}
-                className="px-2 py-1 text-xs bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 text-slate-300 rounded transition-colors"
+                className="relative group px-3 py-2 text-xs font-medium bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 hover:border-indigo-500/40 text-slate-300 hover:text-indigo-200 rounded-lg transition-all shadow-lg hover:shadow-indigo-500/10"
               >
-                {q}
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
+                <span className="relative">{q}</span>
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-slate-700/50">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about markets, strategies, or specific symbols..."
-            className="flex-1 px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-            disabled={isTyping}
-          />
+      {/* Premium Input Area */}
+      <form onSubmit={handleSubmit} className="p-4 border-t border-slate-700/50 bg-slate-900/30 backdrop-blur-sm">
+        <div className="flex gap-3">
+          <div className="flex-1 relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-focus-within:opacity-10 rounded-xl transition-opacity blur-xl" />
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about markets, strategies, or specific symbols..."
+              className="relative w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 focus:border-indigo-500/50 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none transition-all shadow-lg"
+              disabled={isTyping}
+            />
+          </div>
           <button
             type="submit"
             disabled={!input.trim() || isTyping}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-medium rounded-lg transition-colors"
+            className="relative group px-6 py-3 font-semibold rounded-xl transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
           >
-            Send
+            {/* Gradient background */}
+            <div className={`absolute inset-0 ${
+              !input.trim() || isTyping
+                ? 'bg-slate-700'
+                : 'bg-gradient-to-r from-indigo-600 to-purple-600 group-hover:from-indigo-500 group-hover:to-purple-500'
+            } transition-all`} />
+
+            {/* Glow effect */}
+            {input.trim() && !isTyping && (
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
+            )}
+
+            <span className="relative text-white flex items-center gap-2">
+              {isTyping ? (
+                <>
+                  <span className="animate-pulse">Thinking...</span>
+                </>
+              ) : (
+                <>
+                  <span>Send</span>
+                  <span className="text-lg">→</span>
+                </>
+              )}
+            </span>
           </button>
         </div>
       </form>
