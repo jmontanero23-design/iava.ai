@@ -281,6 +281,7 @@ export default function App() {
     if (!autoRefresh) return
     const id = setInterval(() => loadBars(symbol, timeframe), Math.max(5, refreshSec) * 1000)
     return () => clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefresh, refreshSec, symbol, timeframe])
 
   useEffect(() => {
