@@ -46,8 +46,8 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
     setQty(q > 0 ? q : 1)
   }, [stop, rec.stop, riskPct, equity, last])
 
-  useEffect(() => { if (rec.stop != null && stop == null) setStop(Number(rec.stop)) }, [rec.stop])
-  useEffect(() => { if (rec.tp != null && tp == null) setTp(Number(rec.tp)) }, [rec.tp])
+  useEffect(() => { if (rec.stop != null && stop == null) setStop(Number(rec.stop)) }, [rec.stop, stop])
+  useEffect(() => { if (rec.tp != null && tp == null) setTp(Number(rec.tp)) }, [rec.tp, tp])
 
   // Calculate partial exit levels (Blueprint: 50% at 1R, 25% at 2R, 25% at 3R)
   const partialPlan = useMemo(() => {

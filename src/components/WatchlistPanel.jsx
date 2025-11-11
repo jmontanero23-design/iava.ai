@@ -49,10 +49,8 @@ export default function WatchlistPanel({ onLoadSymbol }) {
 
   useEffect(() => {
     refresh()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  useEffect(() => {
-    refresh()
-  }, [active]) //eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-4 animate-fadeIn">
