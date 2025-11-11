@@ -151,141 +151,185 @@ export default function BacktestPanel({ symbol, timeframe, preset, chartThreshol
   return (
     <div className="card overflow-hidden">
       {/* Premium Header */}
-      <div className="p-4 relative overflow-hidden border-b border-slate-700/50">
+      <div className="p-5 relative overflow-hidden border-b border-slate-700/50">
         <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
 
-        <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Icon with glow */}
-            <div className="relative">
-              <div className="absolute inset-0 bg-cyan-600 blur-lg opacity-50 animate-pulse" />
-              <span className="relative text-2xl filter drop-shadow-lg">📈</span>
+        <div className="relative space-y-4">
+          {/* Title Row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {/* Icon with glow */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-cyan-600 blur-lg opacity-50 animate-pulse" />
+                <span className="relative text-2xl filter drop-shadow-lg">📈</span>
+              </div>
+              <h3 className="text-lg font-bold bg-gradient-to-r from-cyan-200 to-indigo-300 bg-clip-text text-transparent inline-flex items-center gap-2">
+                Backtest Snapshot
+                <InfoPopover title="Backtest">Runs a quick score-based scan: counts events where Score ≥ threshold and shows forward returns after horizon bars.</InfoPopover>
+                <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'How do I interpret this backtest heatmap and pick thresholds?', context: { symbol, timeframe, threshold, horizon, consensus, dailyFilter, assetClass } } })) } catch {} }} className="text-xs text-slate-400 underline">Ask AI</button>
+              </h3>
             </div>
-            <h3 className="text-lg font-bold bg-gradient-to-r from-cyan-200 to-indigo-300 bg-clip-text text-transparent inline-flex items-center gap-2">
-              Backtest Snapshot
-              <InfoPopover title="Backtest">Runs a quick score-based scan: counts events where Score ≥ threshold and shows forward returns after horizon bars.</InfoPopover>
-              <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'How do I interpret this backtest heatmap and pick thresholds?', context: { symbol, timeframe, threshold, horizon, consensus, dailyFilter, assetClass } } })) } catch {} }} className="text-xs text-slate-400 underline">Ask AI</button>
-            </h3>
           </div>
-        <div className="flex items-center gap-2 text-xs">
-          <label className="inline-flex items-center gap-2">Asset
-            <select value={assetClass} onChange={e=>setAssetClass(e.target.value)} className="select">
-              <option value="stocks">Stocks</option>
-              <option value="crypto">Crypto</option>
-            </select>
-          </label>
-          {preset ? (
-            <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700" title="Preset parameters">
-              Preset · TH {preset.th} · H {preset.hz} · {preset.regime || 'none'}
-            </span>
-          ) : null}
-          <button
-            onClick={matchChart}
-            className="relative group px-3 py-1 rounded-lg text-xs font-semibold overflow-hidden"
-            title="Apply preset params and use chart's threshold and consensus bonus"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
-            <span className="relative text-white">Match chart</span>
-          </button>
-          <span className="px-2 py-0.5 rounded-full bg-slate-900/60 border border-slate-700" title="Current parameters (live)">
-            Current · TH {threshold} · H {horizon} · {dailyFilter}
-          </span>
-          {preset ? (
-            <button onClick={applyPresetParams} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700">Apply Preset</button>
-          ) : null}
-          <label className="inline-flex items-center gap-2">Threshold <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="input w-16" /></label>
-          <label className="inline-flex items-center gap-2">Horizon <input type="number" min={1} max={100} value={horizon} onChange={e => setHorizon(parseInt(e.target.value,10)||1)} className="input w-16" /></label>
-          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={showCurve} onChange={e=>setShowCurve(e.target.checked)} /> Curve</label>
-          <div className="inline-flex items-center gap-1">
-            {[5,10,20].map(h => (
-              <button key={h} onClick={() => setHorizon(h)} className={`px-2 py-1 rounded border text-xs ${horizon===h ? 'bg-slate-800 border-slate-600' : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'}`}>H{h}</button>
-            ))}
-          </div>
-          <label className="inline-flex items-center gap-2">Curve THs
-            <input value={curveThresholds} onChange={e=>setCurveThresholds(e.target.value)} className="input w-36" title="Comma-separated thresholds for expectancy curves" />
-          </label>
-          <label className="inline-flex items-center gap-2">HZs
-            <input value={hzs} onChange={e=>setHzs(e.target.value)} className="input w-28" title="Comma-separated horizons for matrix heatmap" />
-          </label>
-          <InfoPopover title="Heatmap (HZs)">Enter multiple horizons (e.g., 5,10,20) to render a Threshold × Horizon heatmap of avg forward % returns. Helps pick robust thresholds and holding periods.</InfoPopover>
-          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={consensus} onChange={e=>setConsensus(e.target.checked)} /> Consensus Bonus <span className="text-slate-500">(+10 if primary and secondary TFs agree)</span></label>
-          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={regimeCurves} onChange={e=>setRegimeCurves(e.target.checked)} disabled={assetClass!=='stocks'} /> Compare Regimes</label>
-          <label className="inline-flex items-center gap-2">Regime
-            <select value={dailyFilter} onChange={e => setDailyFilter(e.target.value)} className="select" disabled={assetClass!=='stocks'}>
-              <option value="none">None</option>
-              <option value="bull">Daily Bullish</option>
-              <option value="bear">Daily Bearish</option>
-            </select>
-          </label>
-          <button
-            onClick={run}
-            disabled={loading}
-            className="relative group px-4 py-1.5 rounded-lg text-xs font-bold overflow-hidden disabled:opacity-50"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 group-hover:from-cyan-500 group-hover:to-indigo-500 transition-all" />
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
-            <span className="relative text-white flex items-center gap-1.5">
-              {loading ? '⏳' : '▶️'}
-              {loading ? 'Running…' : 'Run'}
-            </span>
-          </button>
-          <button
-            onClick={explainBacktest}
-            disabled={aiLoading || !res}
-            className="relative group px-4 py-1.5 rounded-lg text-xs font-semibold overflow-hidden disabled:opacity-50"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
-            <span className="relative text-white flex items-center gap-1.5">
-              {aiLoading ? '⏳' : '🤖'}
-              {aiLoading ? 'Explaining…' : 'Explain (AI)'}
-            </span>
-          </button>
-          <button onClick={downloadJson} className="btn btn-xs">Download JSON</button>
-          <button onClick={downloadCsv} className="btn btn-xs">Download CSV</button>
-          <button onClick={downloadSummaryCsv} className="btn btn-xs">Summary CSV</button>
-          <button onClick={downloadSummaryJson} className="btn btn-xs">Summary JSON</button>
-          {res && (
-            <>
-              <button onClick={() => { try { const txt = JSON.stringify(res, null, 2); navigator.clipboard.writeText(txt); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Backtest results copied', type: 'success' } })) } catch {} }} className="btn btn-xs">Copy results</button>
-              <a className="btn btn-xs" href={`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&dailyFilter=${encodeURIComponent(assetClass==='stocks'?dailyFilter:'none')}&regimeCurves=${assetClass==='stocks' && regimeCurves ? 1 : 0}&assetClass=${encodeURIComponent(assetClass)}&consensus=${consensus ? 1 : 0}&format=json`} target="_blank" rel="noreferrer">Open API</a>
-            </>
-          )}
-          <span className="ml-2 px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700" title="Current parameters">
-            TH {threshold} · H {horizon} · {assetClass==='stocks' ? (dailyFilter || 'none') : 'none'}
-          </span>
-          {preset && (
-            <button onClick={() => { if (typeof preset.th === 'number') setThreshold(preset.th); if (typeof preset.hz === 'number') setHorizon(preset.hz); if (preset.regime) setDailyFilter(preset.regime) }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Apply Preset</button>
-          )}
-          {res ? (
-            <button onClick={() => {
-              try {
-                // Prefer matrix row matching current horizon; fall back to curve
-                let best = { th: threshold, score: -Infinity }
-                if (Array.isArray(res.matrix)) {
-                  const row = res.matrix.find(r => Number(r.hz) === Number(horizon))
-                  if (row && Array.isArray(row.curve)) {
-                    for (const c of row.curve) {
-                      const s = (Number(c.avgFwd)||0) // use avgFwd
-                      if (s > best.score) best = { th: c.th, score: s }
+
+          {/* Controls Section - Better organized */}
+          <div className="space-y-3">
+            {/* Row 1: Asset & Preset Info */}
+            <div className="flex items-center gap-3 flex-wrap text-xs">
+              <label className="inline-flex items-center gap-2">
+                <span className="text-slate-400 font-semibold">Asset</span>
+                <select value={assetClass} onChange={e=>setAssetClass(e.target.value)} className="select">
+                  <option value="stocks">Stocks</option>
+                  <option value="crypto">Crypto</option>
+                </select>
+              </label>
+              {preset && (
+                <span className="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700" title="Preset parameters">
+                  Preset · TH {preset.th} · H {preset.hz} · {preset.regime || 'none'}
+                </span>
+              )}
+              <button
+                onClick={matchChart}
+                className="relative group px-3 py-1.5 rounded-lg text-xs font-semibold overflow-hidden"
+                title="Apply preset params and use chart's threshold and consensus bonus"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
+                <span className="relative text-white">Match chart</span>
+              </button>
+              <span className="px-3 py-1 rounded-full bg-slate-900/60 border border-slate-700" title="Current parameters (live)">
+                Current · TH {threshold} · H {horizon} · {dailyFilter}
+              </span>
+              {preset && (
+                <button onClick={applyPresetParams} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all">
+                  Apply Preset
+                </button>
+              )}
+            </div>
+
+            {/* Row 2: Core Parameters */}
+            <div className="flex items-center gap-3 flex-wrap text-xs">
+              <label className="inline-flex items-center gap-2">
+                <span className="text-slate-400 font-semibold">Threshold</span>
+                <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="input w-16" />
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <span className="text-slate-400 font-semibold">Horizon</span>
+                <input type="number" min={1} max={100} value={horizon} onChange={e => setHorizon(parseInt(e.target.value,10)||1)} className="input w-16" />
+              </label>
+              <div className="inline-flex items-center gap-1">
+                {[5,10,20].map(h => (
+                  <button key={h} onClick={() => setHorizon(h)} className={`px-2 py-1 rounded-lg text-xs font-semibold transition-all ${horizon===h ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white' : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700'}`}>
+                    H{h}
+                  </button>
+                ))}
+              </div>
+              <label className="inline-flex items-center gap-2">
+                <input type="checkbox" className="checkbox" checked={showCurve} onChange={e=>setShowCurve(e.target.checked)} />
+                <span className="text-slate-300">Curve</span>
+              </label>
+            </div>
+
+            {/* Row 3: Advanced Parameters */}
+            <div className="flex items-center gap-3 flex-wrap text-xs">
+              <label className="inline-flex items-center gap-2">
+                <span className="text-slate-400 font-semibold">Curve THs</span>
+                <input value={curveThresholds} onChange={e=>setCurveThresholds(e.target.value)} className="input w-36" title="Comma-separated thresholds for expectancy curves" />
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <span className="text-slate-400 font-semibold">HZs</span>
+                <input value={hzs} onChange={e=>setHzs(e.target.value)} className="input w-28" title="Comma-separated horizons for matrix heatmap" />
+                <InfoPopover title="Heatmap (HZs)">Enter multiple horizons (e.g., 5,10,20) to render a Threshold × Horizon heatmap of avg forward % returns. Helps pick robust thresholds and holding periods.</InfoPopover>
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <input type="checkbox" className="checkbox" checked={consensus} onChange={e=>setConsensus(e.target.checked)} />
+                <span className="text-slate-300">Consensus Bonus</span>
+                <span className="text-slate-500 text-[10px]">(+10 if TFs agree)</span>
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <input type="checkbox" className="checkbox" checked={regimeCurves} onChange={e=>setRegimeCurves(e.target.checked)} disabled={assetClass!=='stocks'} />
+                <span className="text-slate-300">Compare Regimes</span>
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <span className="text-slate-400 font-semibold">Regime</span>
+                <select value={dailyFilter} onChange={e => setDailyFilter(e.target.value)} className="select" disabled={assetClass!=='stocks'}>
+                  <option value="none">None</option>
+                  <option value="bull">Daily Bullish</option>
+                  <option value="bear">Daily Bearish</option>
+                </select>
+              </label>
+            </div>
+
+            {/* Row 4: Primary Actions */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={run}
+                disabled={loading}
+                className="relative group px-4 py-2 rounded-lg text-xs font-bold overflow-hidden disabled:opacity-50"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 group-hover:from-cyan-500 group-hover:to-indigo-500 transition-all" />
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
+                <span className="relative text-white flex items-center gap-1.5">
+                  {loading ? '⏳' : '▶️'}
+                  {loading ? 'Running…' : 'Run'}
+                </span>
+              </button>
+              <button
+                onClick={explainBacktest}
+                disabled={aiLoading || !res}
+                className="relative group px-4 py-2 rounded-lg text-xs font-semibold overflow-hidden disabled:opacity-50"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
+                <span className="relative text-white flex items-center gap-1.5">
+                  {aiLoading ? '⏳' : '🤖'}
+                  {aiLoading ? 'Explaining…' : 'Explain (AI)'}
+                </span>
+              </button>
+              {res && (
+                <button onClick={() => {
+                  try {
+                    // Prefer matrix row matching current horizon; fall back to curve
+                    let best = { th: threshold, score: -Infinity }
+                    if (Array.isArray(res.matrix)) {
+                      const row = res.matrix.find(r => Number(r.hz) === Number(horizon))
+                      if (row && Array.isArray(row.curve)) {
+                        for (const c of row.curve) {
+                          const s = (Number(c.avgFwd)||0) // use avgFwd
+                          if (s > best.score) best = { th: c.th, score: s }
+                        }
+                      }
                     }
-                  }
-                }
-                if (best.score === -Infinity && Array.isArray(res.curve)) {
-                  for (const c of res.curve) {
-                    const s = (Number(c.avgFwd)||0)
-                    if (s > best.score) best = { th: c.th, score: s }
-                  }
-                }
-                if (best.score > -Infinity) {
-                  setThreshold(best.th)
-                  setSuggestMsg(`Suggested TH ${best.th} (avg ${best.score.toFixed(2)}%)`)
-                  setTimeout(()=>setSuggestMsg(''), 3500)
-                }
-              } catch {}
-            }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Suggest TH</button>
-          ) : null}
-        </div>
+                    if (best.score === -Infinity && Array.isArray(res.curve)) {
+                      for (const c of res.curve) {
+                        const s = (Number(c.avgFwd)||0)
+                        if (s > best.score) best = { th: c.th, score: s }
+                      }
+                    }
+                    if (best.score > -Infinity) {
+                      setThreshold(best.th)
+                      setSuggestMsg(`Suggested TH ${best.th} (avg ${best.score.toFixed(2)}%)`)
+                      setTimeout(()=>setSuggestMsg(''), 3500)
+                    }
+                  } catch {}
+                }} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-700 hover:bg-emerald-600 text-white transition-all">
+                  Suggest TH
+                </button>
+              )}
+
+              <div className="h-5 w-px bg-slate-700/50" />
+
+              {/* Export Tools */}
+              <button onClick={downloadJson} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all">JSON</button>
+              <button onClick={downloadCsv} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all">CSV</button>
+              <button onClick={downloadSummaryCsv} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all">Summary CSV</button>
+              <button onClick={downloadSummaryJson} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all">Summary JSON</button>
+              {res && (
+                <>
+                  <button onClick={() => { try { const txt = JSON.stringify(res, null, 2); navigator.clipboard.writeText(txt); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Backtest results copied', type: 'success' } })) } catch {} }} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all">Copy</button>
+                  <a className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all" href={`/api/backtest?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=1000&threshold=${threshold}&horizon=${horizon}&dailyFilter=${encodeURIComponent(assetClass==='stocks'?dailyFilter:'none')}&regimeCurves=${assetClass==='stocks' && regimeCurves ? 1 : 0}&assetClass=${encodeURIComponent(assetClass)}&consensus=${consensus ? 1 : 0}&format=json`} target="_blank" rel="noreferrer">Open API</a>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

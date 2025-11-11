@@ -214,118 +214,157 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
   return (
     <div className="card overflow-hidden">
       {/* Premium Header */}
-      <div className="p-4 relative overflow-hidden border-b border-slate-700/50">
+      <div className="p-5 relative overflow-hidden border-b border-slate-700/50">
         <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="absolute inset-0 bg-cyan-600 blur-lg opacity-50 animate-pulse" />
-              <span className="relative text-2xl filter drop-shadow-lg">🔍</span>
+
+        <div className="relative space-y-4">
+          {/* Title Row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="absolute inset-0 bg-cyan-600 blur-lg opacity-50 animate-pulse" />
+                <span className="relative text-2xl filter drop-shadow-lg">🔍</span>
+              </div>
+              <h3 className="text-lg font-bold bg-gradient-to-r from-cyan-200 to-indigo-300 bg-clip-text text-transparent inline-flex items-center gap-2">
+                Market Scanner
+                <InfoPopover title="Scanner">Scans a symbol list and surfaces the highest Unicorn Scores for longs/shorts.\n\nTips:\n- Enable Daily to require Daily Pivot + Ichimoku agreement.\n- Enable Consensus to require secondary timeframe alignment (Chart's Consensus Bonus = +10).\n- Threshold applies after gating. Counts show what was filtered.</InfoPopover>
+                {matched && (
+                  <span className="px-2 py-0.5 rounded-full border border-emerald-600 text-emerald-300 bg-emerald-900/20 text-[10px] inline-flex items-center gap-1">
+                    matched
+                    <InfoPopover title="Matched to chart">Timeframe, Daily gating, and Bonus +10 match the chart's current settings.</InfoPopover>
+                  </span>
+                )}
+                <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'How should I configure the Scanner for this market?', context: { timeframe, threshold, enforceDaily, requireConsensus } } })) } catch {} }} className="text-xs text-slate-400 underline">Ask AI</button>
+              </h3>
             </div>
-            <h3 className="text-lg font-bold bg-gradient-to-r from-cyan-200 to-indigo-300 bg-clip-text text-transparent inline-flex items-center gap-2">Market Scanner <InfoPopover title="Scanner">Scans a symbol list and surfaces the highest Unicorn Scores for longs/shorts.\n\nTips:\n- Enable Daily to require Daily Pivot + Ichimoku agreement.\n- Enable Consensus to require secondary timeframe alignment (Chart's Consensus Bonus = +10).\n- Threshold applies after gating. Counts show what was filtered.</InfoPopover>
-          {matched && (
-            <span className="px-2 py-0.5 rounded-full border border-emerald-600 text-emerald-300 bg-emerald-900/20 text-[10px] inline-flex items-center gap-1">
-              matched
-              <InfoPopover title="Matched to chart">Timeframe, Daily gating, and Bonus +10 match the chart’s current settings.</InfoPopover>
-            </span>
-          )}
-          <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'How should I configure the Scanner for this market?', context: { timeframe, threshold, enforceDaily, requireConsensus } } })) } catch {} }} className="text-xs text-slate-400 underline ml-2">Ask AI</button>
-        </h3>
           </div>
-        </div>
-        <div className="flex items-center gap-2 text-xs">
-          <label className="inline-flex items-center gap-2">TF
-            <select value={timeframe} onChange={e=>setTimeframe(e.target.value)} className="select">
-              <option value="1Min">1Min</option>
-              <option value="5Min">5Min</option>
-              <option value="15Min">15Min</option>
-              <option value="1Hour">1Hour</option>
-              <option value="1Day">1Day</option>
-            </select>
-          </label>
-          <label className="inline-flex items-center gap-2">Asset
-            <select value={assetClass} onChange={e=>{ setAssetClass(e.target.value); setUniverse('manual') }} className="select">
-              <option value="stocks">Stocks</option>
-              <option value="crypto">Crypto</option>
-            </select>
-          </label>
-          <label className="inline-flex items-center gap-2">Universe
-            <select value={universe} onChange={e=>setUniverse(e.target.value)} className="select">
-              <option value="manual">Manual</option>
-              {assetClass === 'stocks' && <option value="all">All (US active)</option>}
-              {assetClass === 'crypto' && <option value="popular">Popular (crypto)</option>}
-            </select>
-          </label>
-          <label className="inline-flex items-center gap-2">Threshold
-            <input type="number" min={0} max={100} value={threshold} onChange={e=>setThreshold(parseInt(e.target.value,10)||0)} className="input w-16" />
-          </label>
-          <label className="inline-flex items-center gap-2">Top
-            <input type="number" min={1} max={100} value={top} onChange={e=>setTop(Math.max(1,parseInt(e.target.value,10)||10))} className="input w-16" />
-          </label>
-          <label className="inline-flex items-center gap-2"><input aria-label="Daily confluence" className="checkbox" type="checkbox" checked={enforceDaily} onChange={e=>setEnforceDaily(e.target.checked)} />Daily <InfoPopover title="Daily Confluence">Requires Daily Pivot + Ichimoku agreement (bullish for longs, bearish for shorts). Tightens quality at the expense of fewer candidates.</InfoPopover></label>
-          <label className="inline-flex items-center gap-2"><input aria-label="Consensus alignment" className="checkbox" type="checkbox" checked={requireConsensus} onChange={e=>setRequireConsensus(e.target.checked)} />Consensus <InfoPopover title="Consensus (secondary TF)">Requires primary trend to match a secondary timeframe (e.g., 1→5, 5→15min). Filters misaligned setups; pair with Bonus +10 for chart parity.</InfoPopover></label>
-          <label className="inline-flex items-center gap-2"><input className="checkbox" type="checkbox" checked={consensusBonus} onChange={e=>setConsensusBonus(e.target.checked)} />Bonus +10 <InfoPopover title="Consensus Bonus (+10)">Adds +10 to the score when secondary timeframe trend aligns with the primary (same as the chart’s Consensus Bonus). Use with Consensus gating for stricter filtering, or alone to boost aligned names.</InfoPopover></label>
-          <button
-            onClick={matchChart}
-            className="relative group px-3 py-1 rounded-lg text-xs font-semibold overflow-hidden"
-            title="Copy timeframe, Daily, and Bonus +10 from the chart"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
-            <span className="relative text-white">Match chart</span>
-          </button>
-          <button
-            onClick={useChartConsensus}
-            className="relative group px-3 py-1 rounded-lg text-xs font-semibold overflow-hidden"
-            title="Require secondary TF alignment (same logic the chart uses)"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
-            <span className="relative text-white">Use chart consensus</span>
-          </button>
-          <label className="inline-flex items-center gap-1">
-            <input type="checkbox" className="checkbox" checked={autoRunOnMatch} onChange={e=>setAutoRunOnMatch(e.target.checked)} />
-            Auto-run
-            <InfoPopover title="Auto-run">Automatically runs a scan right after you Match chart or Use chart consensus.</InfoPopover>
-          </label>
-          <button
-            onClick={() => {
-              try {
-                const qs = new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', requireConsensus: requireConsensus ? '1' : '0', consensusBonus: consensusBonus ? '1' : '0', assetClass })
-                const url = `${window.location.origin}/api/scan?${qs.toString()}`
-                const ta = document.createElement('textarea')
-                ta.value = url
-                document.body.appendChild(ta)
-                ta.select()
-                document.execCommand('copy')
-                document.body.removeChild(ta)
-                window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Scan link copied', type: 'success' } }))
-              } catch {}
-            }}
-            className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
-            title="Copy a link that runs this scan via API"
-          >
-            Copy scan link
-          </button>
-          <button
-            onClick={async()=>{ if (universe === 'all') await fullScanAll(); else await run(); }}
-            disabled={loading}
-            className="relative group px-4 py-1.5 rounded-lg text-xs font-bold overflow-hidden disabled:opacity-50"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 group-hover:from-cyan-500 group-hover:to-indigo-500 transition-all" />
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
-            <span className="relative text-white flex items-center gap-1.5">
-              {loading ? '⏳' : '🔍'}
-              {loading ? 'Scanning…' : 'Scan'}
-            </span>
-          </button>
-          {universe === 'all' && (
-            <button
-              onClick={()=>{ abortRef.current.stop = true; setProgress('Stopping…') }}
-              disabled={!loading}
-              className="px-3 py-1 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-all disabled:opacity-50"
-            >
-              Stop
-            </button>
-          )}
+
+          {/* Controls Section - Better organized */}
+          <div className="space-y-3">
+            {/* Row 1: Core Config */}
+            <div className="flex items-center gap-3 flex-wrap text-xs">
+              <label className="inline-flex items-center gap-2">
+                <span className="text-slate-400 font-semibold">TF</span>
+                <select value={timeframe} onChange={e=>setTimeframe(e.target.value)} className="select">
+                  <option value="1Min">1Min</option>
+                  <option value="5Min">5Min</option>
+                  <option value="15Min">15Min</option>
+                  <option value="1Hour">1Hour</option>
+                  <option value="1Day">1Day</option>
+                </select>
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <span className="text-slate-400 font-semibold">Asset</span>
+                <select value={assetClass} onChange={e=>{ setAssetClass(e.target.value); setUniverse('manual') }} className="select">
+                  <option value="stocks">Stocks</option>
+                  <option value="crypto">Crypto</option>
+                </select>
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <span className="text-slate-400 font-semibold">Universe</span>
+                <select value={universe} onChange={e=>setUniverse(e.target.value)} className="select">
+                  <option value="manual">Manual</option>
+                  {assetClass === 'stocks' && <option value="all">All (US active)</option>}
+                  {assetClass === 'crypto' && <option value="popular">Popular (crypto)</option>}
+                </select>
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <span className="text-slate-400 font-semibold">Threshold</span>
+                <input type="number" min={0} max={100} value={threshold} onChange={e=>setThreshold(parseInt(e.target.value,10)||0)} className="input w-16" />
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <span className="text-slate-400 font-semibold">Top</span>
+                <input type="number" min={1} max={100} value={top} onChange={e=>setTop(Math.max(1,parseInt(e.target.value,10)||10))} className="input w-16" />
+              </label>
+            </div>
+
+            {/* Row 2: Filters */}
+            <div className="flex items-center gap-3 flex-wrap text-xs">
+              <label className="inline-flex items-center gap-2">
+                <input aria-label="Daily confluence" className="checkbox" type="checkbox" checked={enforceDaily} onChange={e=>setEnforceDaily(e.target.checked)} />
+                <span className="text-slate-300">Daily</span>
+                <InfoPopover title="Daily Confluence">Requires Daily Pivot + Ichimoku agreement (bullish for longs, bearish for shorts). Tightens quality at the expense of fewer candidates.</InfoPopover>
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <input aria-label="Consensus alignment" className="checkbox" type="checkbox" checked={requireConsensus} onChange={e=>setRequireConsensus(e.target.checked)} />
+                <span className="text-slate-300">Consensus</span>
+                <InfoPopover title="Consensus (secondary TF)">Requires primary trend to match a secondary timeframe (e.g., 1→5, 5→15min). Filters misaligned setups; pair with Bonus +10 for chart parity.</InfoPopover>
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <input className="checkbox" type="checkbox" checked={consensusBonus} onChange={e=>setConsensusBonus(e.target.checked)} />
+                <span className="text-slate-300">Bonus +10</span>
+                <InfoPopover title="Consensus Bonus (+10)">Adds +10 to the score when secondary timeframe trend aligns with the primary (same as the chart's Consensus Bonus). Use with Consensus gating for stricter filtering, or alone to boost aligned names.</InfoPopover>
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <input type="checkbox" className="checkbox" checked={autoRunOnMatch} onChange={e=>setAutoRunOnMatch(e.target.checked)} />
+                <span className="text-slate-300">Auto-run</span>
+                <InfoPopover title="Auto-run">Automatically runs a scan right after you Match chart or Use chart consensus.</InfoPopover>
+              </label>
+            </div>
+
+            {/* Row 3: Actions */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={matchChart}
+                className="relative group px-3 py-1.5 rounded-lg text-xs font-semibold overflow-hidden"
+                title="Copy timeframe, Daily, and Bonus +10 from the chart"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
+                <span className="relative text-white">Match chart</span>
+              </button>
+              <button
+                onClick={useChartConsensus}
+                className="relative group px-3 py-1.5 rounded-lg text-xs font-semibold overflow-hidden"
+                title="Require secondary TF alignment (same logic the chart uses)"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
+                <span className="relative text-white">Use chart consensus</span>
+              </button>
+              <button
+                onClick={() => {
+                  try {
+                    const qs = new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', requireConsensus: requireConsensus ? '1' : '0', consensusBonus: consensusBonus ? '1' : '0', assetClass })
+                    const url = `${window.location.origin}/api/scan?${qs.toString()}`
+                    const ta = document.createElement('textarea')
+                    ta.value = url
+                    document.body.appendChild(ta)
+                    ta.select()
+                    document.execCommand('copy')
+                    document.body.removeChild(ta)
+                    window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Scan link copied', type: 'success' } }))
+                  } catch {}
+                }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+                title="Copy a link that runs this scan via API"
+              >
+                Copy scan link
+              </button>
+
+              <div className="h-5 w-px bg-slate-700/50" />
+
+              <button
+                onClick={async()=>{ if (universe === 'all') await fullScanAll(); else await run(); }}
+                disabled={loading}
+                className="relative group px-4 py-2 rounded-lg text-xs font-bold overflow-hidden disabled:opacity-50"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 group-hover:from-cyan-500 group-hover:to-indigo-500 transition-all" />
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
+                <span className="relative text-white flex items-center gap-1.5">
+                  {loading ? '⏳' : '🔍'}
+                  {loading ? 'Scanning…' : 'Scan'}
+                </span>
+              </button>
+              {universe === 'all' && (
+                <button
+                  onClick={()=>{ abortRef.current.stop = true; setProgress('Stopping…') }}
+                  disabled={!loading}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-all disabled:opacity-50"
+                >
+                  Stop
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -120,7 +120,7 @@ export default function SignalsPanel({ state, bars = [], symbol = '', onRefresh,
           </div>
 
           {/* Symbol & Score Display */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mt-3">
             {symbol && (
               <div className="px-3 py-1.5 bg-indigo-600/20 border border-indigo-500/30 rounded-lg">
                 <span className="text-xs text-indigo-400 font-semibold uppercase tracking-wider">{symbol}</span>
@@ -136,7 +136,7 @@ export default function SignalsPanel({ state, bars = [], symbol = '', onRefresh,
         </div>
       </div>
       {/* Premium Indicator Grid */}
-      <div className="p-5 grid grid-cols-2 gap-3">
+      <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-3">
         {rows.map((r) => (
           <div key={r.label} className="relative group">
             <div className="absolute inset-0 bg-indigo-600 blur-xl opacity-0 group-hover:opacity-5 rounded-lg transition-opacity" />

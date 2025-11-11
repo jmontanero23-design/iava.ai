@@ -158,6 +158,8 @@ export default function UnicornCallout({ state, threshold = 70 }) {
               </span>
             </button>
 
+            <div className="h-6 w-px bg-emerald-500/30 mx-1" />
+
             <button
               onClick={sendToN8N}
               disabled={n8nReady === false}
@@ -213,7 +215,7 @@ export default function UnicornCallout({ state, threshold = 70 }) {
           </div>
         )}
         {exp && (
-          <div className="mt-4 p-4 rounded-lg border border-indigo-500/30 bg-gradient-to-br from-indigo-900/20 to-slate-900/40 backdrop-blur-sm">
+          <div className="p-4 rounded-lg border border-indigo-500/30 bg-gradient-to-br from-indigo-900/20 to-slate-900/40 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-lg">🤖</span>
               <h4 className="text-sm font-semibold text-indigo-300">AI Analysis</h4>
