@@ -398,31 +398,35 @@ export default function App() {
       {/* Unicorn Signal Callout (always visible when triggered) */}
       <UnicornCallout threshold={threshold} timeframe={timeframe} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
 
-      {/* Navigation Tabs */}
+      {/* Navigation Tabs with Logo Badges */}
       <div className="card p-1 flex gap-1">
         <button
           onClick={() => setActiveSection('chart')}
-          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-all ${activeSection === 'chart' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+          className={`flex-1 px-3 py-2.5 rounded text-sm font-medium transition-all flex items-center justify-center gap-2 ${activeSection === 'chart' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
         >
-          📊 Chart & Signals
+          {activeSection === 'chart' && <span className="logo-badge"><img src="/logo.svg" alt="" /></span>}
+          <span>📊 Chart</span>
         </button>
         <button
           onClick={() => setActiveSection('analysis')}
-          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-all ${activeSection === 'analysis' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+          className={`flex-1 px-3 py-2.5 rounded text-sm font-medium transition-all flex items-center justify-center gap-2 ${activeSection === 'analysis' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
         >
-          🔬 Analysis
+          {activeSection === 'analysis' && <span className="logo-badge"><img src="/logo.svg" alt="" /></span>}
+          <span>🔬 Analysis</span>
         </button>
         <button
           onClick={() => setActiveSection('portfolio')}
-          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-all ${activeSection === 'portfolio' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+          className={`flex-1 px-3 py-2.5 rounded text-sm font-medium transition-all flex items-center justify-center gap-2 ${activeSection === 'portfolio' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
         >
-          💼 Portfolio
+          {activeSection === 'portfolio' && <span className="logo-badge"><img src="/logo.svg" alt="" /></span>}
+          <span>💼 Portfolio</span>
         </button>
         <button
           onClick={() => setActiveSection('tools')}
-          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-all ${activeSection === 'tools' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+          className={`flex-1 px-3 py-2.5 rounded text-sm font-medium transition-all flex items-center justify-center gap-2 ${activeSection === 'tools' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
         >
-          🛠️ Tools
+          {activeSection === 'tools' && <span className="logo-badge"><img src="/logo.svg" alt="" /></span>}
+          <span>🛠️ Tools</span>
         </button>
       </div>
 

@@ -11,8 +11,8 @@ export default function Hero() {
       <div className="glass-panel border-0 relative">
         <div className="p-6 md:p-8">
           <div className="flex items-center gap-4">
-            {/* Logo - ALWAYS visible */}
-            <img src="/logo.svg" alt="iAVA.ai" className="w-12 h-12 md:w-16 md:h-16 drop-shadow-2xl shrink-0" />
+            {/* Logo - ALWAYS visible with pulse animation & glow */}
+            <img src="/logo.svg" alt="iAVA.ai" className="w-12 h-12 md:w-16 md:h-16 shrink-0 animate-logo-pulse" />
 
             {/* Title & Badge */}
             <div className="flex-1 min-w-0">
