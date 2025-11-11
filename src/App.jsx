@@ -18,6 +18,7 @@ import RiskAdvisorPanel from './components/RiskAdvisorPanel.jsx'
 import TradeJournalAIPanel from './components/TradeJournalAIPanel.jsx'
 import MarketRegimeDetectorPanel from './components/MarketRegimeDetectorPanel.jsx'
 import AnomalyDetectorPanel from './components/AnomalyDetectorPanel.jsx'
+import MultiTimeframeAnalystPanel from './components/MultiTimeframeAnalystPanel.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -175,6 +176,10 @@ export default function App() {
         )}
 
         {activeTab !== 'chart' && <BuildInfoFooter />}
+
+        {activeTab === 'multi-timeframe' && (
+          <MultiTimeframeAnalystPanel />
+        )}
       </div>
 
       {/* Welcome Tour for new users */}
