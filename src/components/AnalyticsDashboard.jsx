@@ -2,17 +2,10 @@ import React, { useState, useEffect } from 'react'
 import InfoPopover from './InfoPopover.jsx'
 import { getLogs, clearLogs } from '../utils/tradeLogger.js'
 
-/**
- * Analytics Dashboard
- *
- * Displays logged signals, orders, and performance metrics.
- *
- * Blueprint: docs/implementation-plan.md (Analytics section)
- */
 export default function AnalyticsDashboard() {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(false)
-  const [filter, setFilter] = useState('all')  // 'all', 'signal', 'order', 'fill', 'pnl'
+  const [filter, setFilter] = useState('all')
   const [stats, setStats] = useState(null)
 
   async function fetchLogs() {
@@ -21,7 +14,6 @@ export default function AnalyticsDashboard() {
       const data = await getLogs({ limit: 200, type: filter === 'all' ? undefined : filter })
       setLogs(data.logs || [])
 
-      // Calculate stats
       const signals = data.logs.filter(l => l.type === 'signal')
       const orders = data.logs.filter(l => l.type === 'order')
       const pnls = data.logs.filter(l => l.type === 'pnl')
@@ -31,7 +23,6 @@ export default function AnalyticsDashboard() {
       const losers = pnls.filter(l => parseFloat(l.pnl) < 0).length
       const winRate = pnls.length ? (winners / pnls.length) * 100 : 0
 
-      // Component performance (from signals)
       const componentCounts = {}
       signals.forEach(sig => {
         if (sig.components) {
@@ -73,29 +64,42 @@ export default function AnalyticsDashboard() {
     if (success) {
       setLogs([])
       setStats(null)
-      alert('Logs cleared')
+      alert('✓ Logs cleared')
     }
   }
 
   return (
-    <div className="card p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">
-          Analytics Dashboard
+    <div className="space-y-4 animate-fadeIn">
+      {/* Header Card */}
+      <div className="card p-4">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="logo-badge">
+            <img src="/logo.svg" alt="iAVA.ai" className="w-5 h-5" />
+          </span>
+          <div className="flex-1">
+            <h3 className="text-lg font-bold bg-gradient-to-r from-slate-100 via-indigo-200 to-emerald-200 bg-clip-text text-transparent">
+              Analytics Dashboard
+            </h3>
+            <p className="text-xs text-slate-400">Track signals, orders, fills, and P/L performance</p>
+          </div>
           <InfoPopover title="Trade Analytics">
             Tracks all signals, orders, fills, and P/L.
+            <br/><br/>
+            <strong>Data Types:</strong>
             <br/>• <strong>Signals</strong>: Unicorn Score triggers
             <br/>• <strong>Orders</strong>: Trade placements
+            <br/>• <strong>Fills</strong>: Execution confirmations
             <br/>• <strong>P/L</strong>: Realized profit/loss
             <br/><br/>
             Use this data to optimize weights and refine strategy.
           </InfoPopover>
-        </h3>
-        <div className="flex items-center gap-2">
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
           <select
             value={filter}
             onChange={e => setFilter(e.target.value)}
-            className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs"
+            className="select text-sm"
           >
             <option value="all">All Types</option>
             <option value="signal">Signals</option>
@@ -103,16 +107,23 @@ export default function AnalyticsDashboard() {
             <option value="fill">Fills</option>
             <option value="pnl">P/L</option>
           </select>
+
           <button
             onClick={fetchLogs}
             disabled={loading}
-            className="bg-violet-600 hover:bg-violet-500 rounded px-3 py-1 text-xs disabled:opacity-50"
+            className="btn btn-primary px-3 py-1.5"
           >
-            {loading ? 'Loading...' : 'Refresh'}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                Loading…
+              </span>
+            ) : 'Refresh'}
           </button>
+
           <button
             onClick={handleClear}
-            className="bg-rose-600 hover:bg-rose-500 rounded px-3 py-1 text-xs"
+            className="btn btn-danger px-3 py-1.5"
           >
             Clear All
           </button>
@@ -121,90 +132,146 @@ export default function AnalyticsDashboard() {
 
       {/* Stats Summary */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <div className="bg-slate-800/50 rounded p-3 border border-slate-700">
-            <div className="text-xs text-slate-400">Total Logs</div>
-            <div className="text-xl font-bold text-slate-200">{stats.total}</div>
-          </div>
-          <div className="bg-slate-800/50 rounded p-3 border border-slate-700">
-            <div className="text-xs text-slate-400">Signals</div>
-            <div className="text-xl font-bold text-emerald-400">{stats.signals}</div>
-          </div>
-          <div className="bg-slate-800/50 rounded p-3 border border-slate-700">
-            <div className="text-xs text-slate-400">Orders</div>
-            <div className="text-xl font-bold text-cyan-400">{stats.orders}</div>
-          </div>
-          <div className="bg-slate-800/50 rounded p-3 border border-slate-700">
-            <div className="text-xs text-slate-400">P/L Count</div>
-            <div className="text-xl font-bold text-slate-200">{stats.pnls}</div>
-          </div>
-          {stats.pnls > 0 && (
-            <>
-              <div className="bg-slate-800/50 rounded p-3 border border-slate-700">
-                <div className="text-xs text-slate-400">Total P/L</div>
-                <div className={`text-xl font-bold ${parseFloat(stats.totalPnL) > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  ${stats.totalPnL}
-                </div>
+        <div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div className="stat-tile">
+              <div className="stat-icon bg-gradient-to-br from-slate-500/20 to-slate-600/20">
+                <span className="text-lg">📊</span>
               </div>
-              <div className="bg-slate-800/50 rounded p-3 border border-slate-700">
-                <div className="text-xs text-slate-400">Avg P/L</div>
-                <div className={`text-xl font-bold ${parseFloat(stats.avgPnL) > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  ${stats.avgPnL}
-                </div>
+              <div className="flex-1">
+                <div className="text-xs text-slate-400">Total Logs</div>
+                <div className="stat-value">{stats.total}</div>
               </div>
-              <div className="bg-slate-800/50 rounded p-3 border border-slate-700">
-                <div className="text-xs text-slate-400">Win Rate</div>
-                <div className="text-xl font-bold text-violet-400">{stats.winRate}%</div>
-              </div>
-              <div className="bg-slate-800/50 rounded p-3 border border-slate-700">
-                <div className="text-xs text-slate-400">W/L Ratio</div>
-                <div className="text-xl font-bold text-slate-200">{stats.winners}/{stats.losers}</div>
-              </div>
-            </>
-          )}
-        </div>
-      )}
+            </div>
 
-      {/* Component Frequency */}
-      {stats?.componentCounts && Object.keys(stats.componentCounts).length > 0 && (
-        <div className="bg-slate-800/50 rounded p-3 border border-slate-700 mb-4">
-          <div className="text-xs text-slate-400 mb-2">Component Frequency (in signals)</div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-            {Object.entries(stats.componentCounts)
-              .sort((a, b) => b[1] - a[1])
-              .map(([comp, count]) => (
-                <div key={comp} className="flex justify-between">
-                  <span className="text-slate-300">{comp}:</span>
-                  <span className="text-emerald-400 font-mono">{count}x</span>
-                </div>
-              ))}
+            <div className="stat-tile">
+              <div className="stat-icon bg-gradient-to-br from-emerald-500/20 to-emerald-600/20">
+                <span className="text-lg">🎯</span>
+              </div>
+              <div className="flex-1">
+                <div className="text-xs text-slate-400">Signals</div>
+                <div className="stat-value text-emerald-400">{stats.signals}</div>
+              </div>
+            </div>
+
+            <div className="stat-tile">
+              <div className="stat-icon bg-gradient-to-br from-cyan-500/20 to-cyan-600/20">
+                <span className="text-lg">📝</span>
+              </div>
+              <div className="flex-1">
+                <div className="text-xs text-slate-400">Orders</div>
+                <div className="stat-value text-cyan-400">{stats.orders}</div>
+              </div>
+            </div>
+
+            <div className="stat-tile">
+              <div className="stat-icon bg-gradient-to-br from-violet-500/20 to-violet-600/20">
+                <span className="text-lg">💰</span>
+              </div>
+              <div className="flex-1">
+                <div className="text-xs text-slate-400">P/L Count</div>
+                <div className="stat-value">{stats.pnls}</div>
+              </div>
+            </div>
           </div>
+
+          {/* Performance Metrics */}
+          {stats.pnls > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <div className="stat-tile">
+                <div className="stat-icon bg-gradient-to-br from-indigo-500/20 to-indigo-600/20">
+                  <span className="text-lg">Σ</span>
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-slate-400">Total P/L</div>
+                  <div className={`stat-value ${parseFloat(stats.totalPnL) > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    ${stats.totalPnL}
+                  </div>
+                </div>
+              </div>
+
+              <div className="stat-tile">
+                <div className="stat-icon bg-gradient-to-br from-amber-500/20 to-amber-600/20">
+                  <span className="text-lg">μ</span>
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-slate-400">Avg P/L</div>
+                  <div className={`stat-value ${parseFloat(stats.avgPnL) > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    ${stats.avgPnL}
+                  </div>
+                </div>
+              </div>
+
+              <div className="stat-tile">
+                <div className="stat-icon bg-gradient-to-br from-emerald-500/20 to-emerald-600/20">
+                  <span className="text-lg">%</span>
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-slate-400">Win Rate</div>
+                  <div className="stat-value text-violet-400">{stats.winRate}%</div>
+                </div>
+              </div>
+
+              <div className="stat-tile">
+                <div className="stat-icon bg-gradient-to-br from-slate-500/20 to-slate-600/20">
+                  <span className="text-lg">±</span>
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-slate-400">W/L Ratio</div>
+                  <div className="stat-value">{stats.winners}/{stats.losers}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Component Frequency */}
+          {stats.componentCounts && Object.keys(stats.componentCounts).length > 0 && (
+            <div className="card p-4 mb-4">
+              <div className="panel-header mb-3">
+                <span className="text-xs font-semibold text-slate-300">Component Frequency (in signals)</span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {Object.entries(stats.componentCounts)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([comp, count]) => (
+                    <div key={comp} className="tile p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-300">{comp}</span>
+                        <span className="text-emerald-400 font-mono font-semibold">{count}×</span>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Logs Table */}
-      <div className="bg-slate-800/50 rounded border border-slate-700 overflow-hidden">
-        <div className="overflow-x-auto max-h-96">
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto max-h-[600px]">
           {logs.length === 0 && !loading && (
-            <div className="text-center py-8 text-slate-400 text-sm">
-              No logs yet. Signals and orders will appear here.
+            <div className="text-center py-12 text-slate-400">
+              <div className="text-4xl mb-3">📊</div>
+              <div className="text-sm">No logs yet. Signals and orders will appear here.</div>
             </div>
           )}
+
           {logs.length > 0 && (
             <table className="w-full text-xs">
-              <thead className="bg-slate-900/50 sticky top-0">
-                <tr className="text-slate-400">
-                  <th className="text-left py-2 px-3">Time</th>
-                  <th className="text-left py-2 px-3">Type</th>
-                  <th className="text-left py-2 px-3">Symbol</th>
-                  <th className="text-right py-2 px-3">Score</th>
-                  <th className="text-left py-2 px-3">Side</th>
-                  <th className="text-right py-2 px-3">Qty</th>
-                  <th className="text-right py-2 px-3">Entry</th>
-                  <th className="text-right py-2 px-3">SL</th>
-                  <th className="text-right py-2 px-3">TP</th>
-                  <th className="text-right py-2 px-3">P/L</th>
-                  <th className="text-left py-2 px-3">Notes</th>
+              <thead className="bg-slate-900/80 sticky top-0 z-10 backdrop-blur-sm">
+                <tr className="text-slate-400 border-b border-slate-800">
+                  <th className="text-left py-3 px-4 font-semibold">Time</th>
+                  <th className="text-left py-3 px-4 font-semibold">Type</th>
+                  <th className="text-left py-3 px-4 font-semibold">Symbol</th>
+                  <th className="text-right py-3 px-4 font-semibold">Score</th>
+                  <th className="text-left py-3 px-4 font-semibold">Side</th>
+                  <th className="text-right py-3 px-4 font-semibold">Qty</th>
+                  <th className="text-right py-3 px-4 font-semibold">Entry</th>
+                  <th className="text-right py-3 px-4 font-semibold">SL</th>
+                  <th className="text-right py-3 px-4 font-semibold">TP</th>
+                  <th className="text-right py-3 px-4 font-semibold">P/L</th>
+                  <th className="text-left py-3 px-4 font-semibold">Notes</th>
                 </tr>
               </thead>
               <tbody>
@@ -217,32 +284,35 @@ export default function AnalyticsDashboard() {
                     decision: 'text-amber-400',
                   }
                   return (
-                    <tr key={idx} className="border-t border-slate-700/50 hover:bg-slate-700/30">
-                      <td className="py-2 px-3 text-slate-400">
+                    <tr
+                      key={idx}
+                      className="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors"
+                    >
+                      <td className="py-2.5 px-4 text-slate-400 whitespace-nowrap">
                         {new Date(log.timestamp).toLocaleTimeString()}
                       </td>
-                      <td className={`py-2 px-3 font-semibold ${typeColors[log.type] || 'text-slate-300'}`}>
+                      <td className={`py-2.5 px-4 font-semibold whitespace-nowrap ${typeColors[log.type] || 'text-slate-300'}`}>
                         {log.type}
                       </td>
-                      <td className="py-2 px-3 text-slate-200">{log.symbol || '—'}</td>
-                      <td className="py-2 px-3 text-right text-slate-300">
+                      <td className="py-2.5 px-4 text-slate-200 font-mono">{log.symbol || '—'}</td>
+                      <td className="py-2.5 px-4 text-right text-slate-300">
                         {log.score != null ? Math.round(log.score) : '—'}
                       </td>
-                      <td className="py-2 px-3 text-slate-300">{log.side || '—'}</td>
-                      <td className="py-2 px-3 text-right text-slate-300">{log.qty || '—'}</td>
-                      <td className="py-2 px-3 text-right text-slate-300">
+                      <td className="py-2.5 px-4 text-slate-300">{log.side || '—'}</td>
+                      <td className="py-2.5 px-4 text-right text-slate-300">{log.qty || '—'}</td>
+                      <td className="py-2.5 px-4 text-right text-slate-300">
                         {log.entry ? log.entry.toFixed(2) : '—'}
                       </td>
-                      <td className="py-2 px-3 text-right text-slate-300">
+                      <td className="py-2.5 px-4 text-right text-slate-300">
                         {log.sl ? log.sl.toFixed(2) : '—'}
                       </td>
-                      <td className="py-2 px-3 text-right text-slate-300">
+                      <td className="py-2.5 px-4 text-right text-slate-300">
                         {log.tp ? log.tp.toFixed(2) : '—'}
                       </td>
-                      <td className={`py-2 px-3 text-right font-semibold ${log.pnl ? (parseFloat(log.pnl) > 0 ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-500'}`}>
+                      <td className={`py-2.5 px-4 text-right font-semibold ${log.pnl ? (parseFloat(log.pnl) > 0 ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-500'}`}>
                         {log.pnl ? `$${parseFloat(log.pnl).toFixed(2)}` : '—'}
                       </td>
-                      <td className="py-2 px-3 text-slate-400 text-xs truncate max-w-xs">
+                      <td className="py-2.5 px-4 text-slate-400 text-xs truncate max-w-xs">
                         {log.notes || '—'}
                       </td>
                     </tr>
