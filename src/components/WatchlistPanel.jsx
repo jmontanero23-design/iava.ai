@@ -22,47 +22,146 @@ export default function WatchlistPanel({ onLoadSymbol }) {
   }
 
   useEffect(() => { refresh() }, [])
-  useEffect(() => { refresh() }, [active])
+  useEffect(() => { refresh() }, [active]) //eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="card p-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Watchlists <InfoPopover title="Watchlists">Save symbols from the Scanner and quickly load them here. Stored locally in your browser.</InfoPopover></h3>
-        <div className="flex items-center gap-2 text-xs">
+    <div className="space-y-4 animate-fadeIn">
+      {/* Header Card */}
+      <div className="card p-4">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="logo-badge">
+            <img src="/logo.svg" alt="iAVA.ai" className="w-5 h-5" />
+          </span>
+          <div className="flex-1">
+            <h3 className="text-lg font-bold bg-gradient-to-r from-slate-100 via-indigo-200 to-emerald-200 bg-clip-text text-transparent">
+              Watchlists
+            </h3>
+            <p className="text-xs text-slate-400">Save and manage your symbol collections</p>
+          </div>
+          <InfoPopover title="Watchlists">
+            Save symbols from the Scanner and quickly load them here.
+            <br/><br/>
+            Stored locally in your browser.
+          </InfoPopover>
           <button onClick={refresh} className="btn btn-xs">Refresh</button>
         </div>
+
+        {/* List Management */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="section">
+            <label className="block text-xs text-slate-400 mb-1">Select List</label>
+            <select value={active} onChange={e=>setActive(e.target.value)} className="select w-full">
+              <option value="">Select a watchlist…</option>
+              {Object.keys(lists).map(n => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="section">
+            <label className="block text-xs text-slate-400 mb-1">Rename As</label>
+            <div className="flex gap-2">
+              <input
+                value={name}
+                onChange={e=>setName(e.target.value)}
+                placeholder="New name..."
+                className="input flex-1"
+              />
+              <button
+                onClick={async()=>{
+                  try {
+                    const mod = await import('../utils/watchlists.js')
+                    if (active && name) {
+                      const cur = mod.get(active)
+                      if (cur) {
+                        mod.save(name, cur.symbols || [])
+                        mod.remove(active)
+                        setActive(name)
+                        setName('')
+                        refresh()
+                      }
+                    }
+                  } catch {}
+                }}
+                className="btn btn-xs"
+              >
+                Rename
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 mt-3">
+          <button
+            onClick={async()=>{
+              try {
+                const mod = await import('../utils/watchlists.js')
+                if (active) {
+                  mod.setActive(active)
+                  alert('✓ Set as active watchlist')
+                }
+              } catch {}
+            }}
+            className="btn btn-success px-3 py-1.5"
+            disabled={!active}
+          >
+            Set Active
+          </button>
+
+          <button
+            onClick={async()=>{
+              try {
+                const mod = await import('../utils/watchlists.js')
+                if (active && window.confirm(`Delete watchlist "${active}"?`)) {
+                  mod.remove(active)
+                  setActive('')
+                  setSymbols([])
+                  refresh()
+                }
+              } catch {}
+            }}
+            className="btn btn-danger px-3 py-1.5"
+            disabled={!active}
+          >
+            Delete
+          </button>
+
+          {active && (
+            <span className="text-xs text-slate-400 ml-auto">
+              Active: <span className="text-slate-300 font-semibold">{active}</span>
+            </span>
+          )}
+        </div>
       </div>
-      <div className="mt-2 flex items-center gap-2 text-sm">
-        <span className="text-slate-400">Lists:</span>
-        <select value={active} onChange={e=>setActive(e.target.value)} className="input">
-          <option value="">—</option>
-          {Object.keys(lists).map(n => (
-            <option key={n} value={n}>{n}</option>
-          ))}
-        </select>
-        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Rename as…" className="input" />
-        <button onClick={async()=>{
-          try {
-            const mod = await import('../utils/watchlists.js')
-            if (active && name) {
-              // rename by copy
-              const cur = mod.get(active)
-              if (cur) { mod.save(name, cur.symbols || []); mod.remove(active); setActive(name); setName(''); refresh() }
-            }
-          } catch {}
-        }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700 text-xs">Rename</button>
-        <button onClick={async()=>{ try { const mod = await import('../utils/watchlists.js'); if (active) { mod.setActive(active); alert('Set active') } } catch {} }} className="bg-slate-800 hover:bg-slate-700 rounded px-2 py-1 border border-slate-700 text-xs">Set Active</button>
-        <button onClick={async()=>{
-          try { const mod = await import('../utils/watchlists.js'); if (active) { mod.remove(active); setActive(''); setSymbols([]); refresh() } } catch {}
-        }} className="bg-rose-700/30 hover:bg-rose-700/40 text-rose-200 rounded px-2 py-1 text-xs">Delete</button>
-      </div>
-      <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
-        {symbols.length === 0 && <div className="text-xs text-slate-500">No symbols</div>}
-        {symbols.map(sym => (
-          <button key={sym} onClick={() => onLoadSymbol?.(sym)} className="px-2 py-1 rounded border border-slate-800 bg-slate-900/50 hover:border-slate-700 text-slate-200 text-sm">{sym}</button>
-        ))}
-        {active && (
-          <div className="col-span-full text-xs text-slate-500 mt-2">Active list: <span className="text-slate-300">{active}</span></div>
+
+      {/* Symbol Grid */}
+      <div className="card p-4">
+        <div className="panel-header mb-3">
+          <span className="text-xs font-semibold text-slate-300">
+            Symbols {symbols.length > 0 && `(${symbols.length})`}
+          </span>
+        </div>
+
+        {symbols.length === 0 && (
+          <div className="text-center py-12 text-slate-400">
+            <div className="text-4xl mb-3">📋</div>
+            <div className="text-sm">No symbols in this watchlist</div>
+            <div className="text-xs text-slate-500 mt-1">Use the Scanner to save symbols here</div>
+          </div>
+        )}
+
+        {symbols.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            {symbols.map(sym => (
+              <button
+                key={sym}
+                onClick={() => onLoadSymbol?.(sym)}
+                className="tile p-3 text-center hover:scale-105"
+              >
+                <div className="text-slate-100 font-semibold text-sm">{sym}</div>
+              </button>
+            ))}
+          </div>
         )}
       </div>
     </div>

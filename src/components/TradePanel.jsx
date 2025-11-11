@@ -152,11 +152,27 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
   }
 
   return (
-    <div className="card p-4">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Place Bracket Order (Paper) <InfoPopover title="Risk & Brackets">Size: (risk% × equity) / (entry−stop). Bracket orders place take‑profit and stop‑loss together. Tune % and levels before sending.</InfoPopover></h3>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-200 text-sm">Close</button>
-      </div>
+    <div className="space-y-4 animate-fadeIn">
+      {/* Header */}
+      <div className="card p-4">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="logo-badge">
+            <img src="/logo.svg" alt="iAVA.ai" className="w-5 h-5" />
+          </span>
+          <div className="flex-1">
+            <h3 className="text-lg font-bold bg-gradient-to-r from-slate-100 via-indigo-200 to-emerald-200 bg-clip-text text-transparent">
+              Trade Execution
+            </h3>
+            <p className="text-xs text-slate-400">Place bracket orders with partial exits (Paper Trading)</p>
+          </div>
+          <InfoPopover title="Risk & Brackets">
+            Size: (risk% × equity) / (entry−stop).
+            <br/><br/>
+            Bracket orders place take‑profit and stop‑loss together.
+            Tune % and levels before sending.
+          </InfoPopover>
+          <button onClick={onClose} className="btn btn-xs">Close</button>
+        </div>
       <div className="text-xs text-slate-400 mb-2">Market: {clock?.is_open ? <span className="text-emerald-400">Open</span> : <span className="text-amber-400">Closed</span>} · Last: <span className="text-slate-200">{last?.close?.toFixed(2)}</span> · Equity: <span className="text-slate-200">{equity}</span></div>
       <div className="grid grid-cols-2 gap-3 text-sm">
         <label className="flex items-center gap-2">Side
