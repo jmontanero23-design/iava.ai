@@ -11,6 +11,7 @@ import AIFeaturesDashboard from './components/AIFeaturesDashboard.jsx'
 import AIChat from './components/AIChat.jsx'
 import NaturalLanguageScanner from './components/NaturalLanguageScanner.jsx'
 import ModelMonitoring from './components/ModelMonitoring.jsx'
+import FeatureStatusBadge from './components/FeatureStatusBadge.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -49,7 +50,7 @@ export default function App() {
 
         {/* Tab Navigation with Logo */}
         <nav className="glass-panel p-3">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setActiveTab('chart')}
               className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 ${
@@ -105,6 +106,11 @@ export default function App() {
               <img src="/logo.svg" className="w-6 h-6" alt="" />
               <span>NLP Scanner</span>
             </button>
+
+            {/* Feature Status Badge - Always visible on right side */}
+            <div className="ml-auto">
+              <FeatureStatusBadge onClick={() => setActiveTab('ai-features')} />
+            </div>
           </div>
         </nav>
 
