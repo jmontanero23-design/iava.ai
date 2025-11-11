@@ -7,7 +7,7 @@ This plan distills the PDF blueprint into phases, components, and concrete tasks
 - Indicators: SATY ATR Levels (+ Pivot Ribbon), Ripster EMA Clouds, TTM Squeeze, Ichimoku (Tenkan/Kijun, Span A/B, Chikou).
 - Decisioning: Unicorn Score = Rarity × Quality × Regime‑fit. Start heuristic, evolve via backtests/analytics.
 - Automation: n8n workflow drives an LLM with strict JSON schema → action: order | notify | pass. Orders as paper trades (Alpaca) with bracket (SL/TP).
-- UX: Web UI (React/Vite) for charts, overlays, signals; WordPress endpoint for live feed and dashboard embed. GitHub Pages for the app (subdomain recommended).
+- UX: Web UI (React/Vite) for charts, overlays, signals; GitHub Pages for the app (subdomain recommended).
 
 ## Architecture
 - Frontend (React + Vite): charting with `lightweight-charts`, overlays, signal toggles, symbol/timeframe controls.
@@ -122,6 +122,157 @@ Guardrails
 - Strict separation of client and server secrets; LLM calls proxied via server with redaction.
 
 Open Tasks (near-term)
-- [ ] Add “Explain” button in UnicornCallout to call /api/llm/explain (stub with mock text until key configured).
-- [ ] Add “Suggest Preset” in Presets area, using /api/llm/preset with structured state.
+- [ ] Add "Explain" button in UnicornCallout to call /api/llm/explain (stub with mock text until key configured).
+- [ ] Add "Suggest Preset" in Presets area, using /api/llm/preset with structured state.
 - [ ] Add scan consensus mode (done), score consensus bonus toggle (next), and preset overlay chips (done).
+
+---
+
+## PROGRESS UPDATE — UX Enhancement Sprints (December 2025)
+
+### Completed: Sprint 1 — Critical UX Fixes ✅
+
+**Sprint 1.1: AI Insights Panel Always Visible**
+- ISSUE: Panel disappeared completely when no Unicorn signal (score < 70), users thought features were broken
+- FIX: Panel now always renders with helpful empty states
+- Added 3 contextual states:
+  1. No data: "Load a symbol with at least 50 bars"
+  2. Low score: Shows progress bar + current score (e.g., "45/100")
+  3. Signal active: Full 12-feature analysis display
+- Added visual feedback: ⏳ waiting icon, score progress bar, helpful tips
+- Status: DEPLOYED ✅
+
+**Sprint 1.2: Feature Status Badge in Navigation**
+- ISSUE: Users didn't know which AI features were active
+- FIX: Added prominent "9/12 AI Features" badge in navigation
+- Badge shows:
+  - Active count vs total (9 client-side always active)
+  - Color-coded status dot (cyan = active, amber = needs setup)
+  - Hover tooltip with breakdown (9 client-side + 3 API-required)
+  - Click navigates to AI Dashboard
+- Positioned on right side of nav bar for constant visibility
+- Status: DEPLOYED ✅
+
+**Sprint 1.3: Enhanced Loading States**
+- ISSUE: Users confused during async operations (no feedback)
+- FIX: Added comprehensive loading indicators to AIInsightsPanel
+- New `isAnalyzing` state tracks 12-feature analysis
+- Status indicator shows 3 states:
+  - Cyan pulsing: "Analyzing with 12 Features..."
+  - Emerald pulsing: "12 Features Active"
+  - Yellow: "Waiting for Signal"
+- Empty state icon changes: ✨ when analyzing, ⏳ when waiting
+- All major components verified:
+  - AI Chat: ✅ has `isTyping` with animated dots
+  - NLP Scanner: ✅ has `isProcessing` with button text
+  - Model Monitoring: ✅ has initial loading message
+  - AppChart: ✅ has loading state
+  - AI Insights Panel: ✅ NEW analyzing state
+- Status: DEPLOYED ✅
+
+**Sprint 1.4: Welcome Tour for New Users**
+- ISSUE: Zero onboarding, users confused by UI complexity
+- FIX: Created interactive 7-step tour
+- Tour features:
+  - Shows automatically on first visit (localStorage tracking)
+  - 7 guided steps: Welcome → Nav tabs → Feature badge → Controls → Unicorn concept → AI panel → Getting started
+  - Progress bar + visual step indicators
+  - Dismissible with "Skip Tour" option
+  - Backdrop blur overlay for focus
+- Added floating "?" help button (bottom-right)
+- Tour can be restarted anytime via help button
+- Status: DEPLOYED ✅
+
+**Sprint 1 Impact:**
+- Reduced user confusion about feature availability
+- Clear feedback during all async operations
+- Guided onboarding for new users
+- Always-visible AI panel prevents "broken feature" perception
+
+---
+
+### Completed: Sprint 2.1 — Hero Visual Redesign ✅
+
+**Hero Section Modernization**
+- ISSUE: Hero lacked visual impact, Unicorn concept not prominent
+- FIX: Complete visual overhaul with modern design language
+- Changes:
+  1. **Vibrant Gradients**: Upgraded from basic gradients to more vibrant indigo/purple/cyan animations
+  2. **Logo Glow Effect**: Added pulsing glow effect around logo for premium feel
+  3. **Unicorn Callout** (NEW):
+     - Prominent animated callout in top-right corner
+     - Bouncing unicorn emoji (2s animation)
+     - Gradient background with hover effect
+     - Tagline: "Rare. Powerful. AI-Validated."
+     - Emphasizes core value proposition
+  4. **Enhanced Feature Badges**:
+     - Larger, more prominent with gradient backgrounds
+     - Each badge has unique color theme + icon
+     - Hover scale animation (105%)
+     - Shadow effects for depth
+     - "Unicorn Detection" badge featured
+  5. **Indicator Pills**: Converted text mentions to styled pill badges with color-coded borders
+  6. **Responsive Layout**: Unicorn callout reflows gracefully on mobile
+- Status: DEPLOYED ✅
+
+**Sprint 2.1 Impact:**
+- Immediately communicates the "Unicorn" value proposition
+- More engaging and modern visual design
+- Better feature hierarchy and discoverability
+- Premium feel matches AI-powered capabilities
+
+---
+
+### In Progress: Sprint 2.2 — Navigation & Polish 🚧
+
+**Remaining Sprint 2 Tasks:**
+- [ ] Navigation simplification (reduce cognitive load)
+- [ ] Add tooltips for technical terms (SATY, Ripster, etc.)
+- [ ] Polish transitions and micro-interactions
+- [ ] Improve color consistency across components
+
+**Sprint 2 Target:** Modern, sleek, user-friendly interface with seamless interactions
+
+---
+
+### Upcoming: Sprint 3 — Infrastructure & Performance ⏳
+
+**Sprint 3.1: API Key Management UI**
+- Create settings panel for OpenAI/Anthropic API keys
+- In-app key validation and testing
+- Encrypted storage in Vercel environment
+- Enable all 12 AI features without manual config
+
+**Sprint 3.2: Performance Optimization**
+- Code splitting to reduce bundle size (currently 552 KB / 164 KB gzipped)
+- Lazy loading for route components
+- Tree shaking unused dependencies
+- Target: <400 KB bundle, <120 KB gzipped
+
+**Sprint 3 Target:** Production-ready performance and zero-friction API setup
+
+---
+
+### Metrics
+
+**Bundle Size:**
+- Sprint 1 Start: 540.89 KB (162.15 KB gzipped)
+- Sprint 1 End: 545.82 KB (163.28 KB gzipped) — +0.9% (welcome tour)
+- Sprint 2.1 End: 552.26 KB (164.80 KB gzipped) — +2.1% (Hero redesign)
+- Target (Sprint 3): <400 KB (<120 KB gzipped)
+
+**Components Created:**
+- FeatureStatusBadge.jsx (102 lines) — Status indicator
+- WelcomeTour.jsx (196 lines) — Onboarding tour
+- Enhanced: AIInsightsPanel.jsx — Always-visible with loading states
+- Enhanced: Hero.jsx — Modern design with Unicorn callout
+
+**Commits:**
+1. `72292c9` - UX: Feature Status Badge (Sprint 1.2)
+2. `e291d72` - UX: Enhanced loading states (Sprint 1.3)
+3. `1b73317` - UX: Welcome Tour onboarding (Sprint 1.4)
+4. `7902451` - UX: Modernized Hero with Unicorn callout (Sprint 2.1)
+
+**Lines of Code Added:**
+- Sprint 1: ~300 lines (status indicators + loading states + welcome tour)
+- Sprint 2.1: ~100 lines (Hero redesign)
