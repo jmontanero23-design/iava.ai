@@ -22,14 +22,23 @@ export default function App() {
   const [selectedFeature, setSelectedFeature] = useState(null)
   const [showTour, setShowTour] = useState(false)
 
-  // Handle feature selection from dashboard
+  // Handle feature selection from dashboard - ALL 12 features supported
   const handleFeatureSelect = (featureId) => {
     setSelectedFeature(featureId)
-    // Map feature IDs to tab names where they exist
+    // Map ALL feature IDs to their dedicated tab names
     const featureTabMap = {
       'ai_chat': 'ai-chat',
       'nlp_scanner': 'nlp-scanner',
-      // Other features stay in dashboard for now
+      'signal_quality': 'signal-quality',
+      'predictive_confidence': 'predictive-confidence',
+      'market_regime': 'market-regime',
+      'smart_watchlist': 'smart-watchlist',
+      'risk_advisor': 'risk-advisor',
+      'anomaly_detector': 'anomaly-detector',
+      'multi_timeframe': 'multi-timeframe',
+      'trade_journal': 'trade-journal',
+      'personalized_learning': 'personalized-learning',
+      'genetic_optimizer': 'genetic-optimizer'
     }
 
     if (featureTabMap[featureId]) {
