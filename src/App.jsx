@@ -313,11 +313,11 @@ export default function App() {
       <Hero />
 
       {/* Unified Control Bar */}
-      <div className="card p-4">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Primary Controls */}
+      <div className="card p-3 md:p-4">
+        {/* Row 1: Primary Controls */}
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           <SymbolSearch value={symbol} onChange={setSymbol} onSubmit={(sym) => loadBars(sym, timeframe)} />
-          <select value={timeframe} onChange={e => { const tf = e.target.value; setTimeframe(tf); if (autoLoadChange) loadBars(symbol, tf) }} className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+          <select value={timeframe} onChange={e => { const tf = e.target.value; setTimeframe(tf); if (autoLoadChange) loadBars(symbol, tf) }} className="select text-sm">
             <option value="1Min">1 Min</option>
             <option value="5Min">5 Min</option>
             <option value="15Min">15 Min</option>
@@ -328,58 +328,55 @@ export default function App() {
             {loading ? 'Loading...' : 'Load Data'}
           </button>
 
-          {/* Strategy Preset */}
-          <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-700">
-            <span className="text-xs text-slate-400">Strategy:</span>
-            <select value={mtfPreset} onChange={e => applyPreset(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+          <div className="flex items-center gap-2 ml-auto">
+            <HealthBadge />
+          </div>
+        </div>
+
+        {/* Row 2: Strategy & Options */}
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 hidden sm:inline">Strategy:</span>
+            <select value={mtfPreset} onChange={e => applyPreset(e.target.value)} className="select text-xs">
               <option value="manual">Manual</option>
               <option value="trendDaily">Trend Daily</option>
               <option value="pullbackDaily">Pullback Daily</option>
-              <option value="intradayBreakout">Intraday Breakout</option>
-              <option value="dailyTrendFollow">Daily Trend Follow</option>
-              <option value="meanRevertIntraday">Mean Revert Intraday</option>
+              <option value="intradayBreakout">Breakout</option>
+              <option value="dailyTrendFollow">Trend Follow</option>
+              <option value="meanRevertIntraday">Mean Revert</option>
             </select>
             <PresetHelp descriptions={{
-              trendDaily: 'Best for trending markets. Uses 8-21 + 34-50 EMAs with daily confirmation for high-probability trend trades.',
-              pullbackDaily: 'Catches pullbacks in trends. Uses 5-12 + 8-9 EMAs to enter on retracements with daily bias.',
-              intradayBreakout: 'Fast breakout plays without daily filter. Uses 5-12 + 8-9 EMAs for intraday momentum.',
-              dailyTrendFollow: 'Strong trend following with daily alignment. Conservative approach using 8-21 + 34-50 EMAs.',
-              meanRevertIntraday: 'Counter-trend plays on intraday timeframes. Uses 8-9 EMA for quick mean reversion.'
+              trendDaily: 'Best for trending markets. Uses 8-21 + 34-50 EMAs with daily confirmation.',
+              pullbackDaily: 'Catches pullbacks in trends with 5-12 + 8-9 EMAs.',
+              intradayBreakout: 'Fast breakout plays without daily filter.',
+              dailyTrendFollow: 'Strong trend following with daily alignment.',
+              meanRevertIntraday: 'Counter-trend plays on intraday timeframes.'
             }} />
           </div>
 
-          {/* Quick Toggles */}
-          <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-700">
-            <label className="inline-flex items-center gap-2 text-sm cursor-pointer hover:text-slate-200 transition-colors">
-              <input type="checkbox" className="accent-indigo-500" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} aria-label="Enable auto-refresh" />
-              <span className="text-slate-400">Auto-Refresh</span>
+          <label className="inline-flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" className="accent-indigo-500" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} aria-label="Auto-refresh" />
+            <span className="text-slate-400 text-xs">Auto</span>
+          </label>
+
+          {!autoRefresh && timeframe !== '1Day' && (
+            <label className="inline-flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" className="accent-cyan-500" checked={streaming} onChange={e => { setStreaming(e.target.checked); if (e.target.checked) setAutoRefresh(false) }} aria-label="Streaming" />
+              <span className="text-slate-400 text-xs">Stream</span>
             </label>
-            {!autoRefresh && timeframe !== '1Day' && (
-              <label className="inline-flex items-center gap-2 text-sm cursor-pointer hover:text-slate-200 transition-colors">
-                <input type="checkbox" className="accent-cyan-500" checked={streaming} onChange={e => { setStreaming(e.target.checked); if (e.target.checked) setAutoRefresh(false) }} aria-label="Enable streaming data" />
-                <span className="text-slate-400">Stream</span>
-              </label>
-            )}
-            <label className="inline-flex items-center gap-2 text-sm cursor-pointer hover:text-slate-200 transition-colors">
-              <input type="checkbox" className="accent-emerald-500" checked={enforceDaily} onChange={e => setEnforceDaily(e.target.checked)} aria-label="Enforce daily timeframe confluence" />
-              <span className="text-slate-400">Daily Confluence</span>
-            </label>
+          )}
+
+          <label className="inline-flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" className="accent-emerald-500" checked={enforceDaily} onChange={e => setEnforceDaily(e.target.checked)} aria-label="Daily confluence" />
+            <span className="text-slate-400 text-xs">Daily</span>
+          </label>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-slate-400">Score:</span>
+            <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="input w-14 text-xs text-center" />
           </div>
 
-          {/* Threshold */}
-          <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-700">
-            <span className="text-xs text-slate-400">Threshold:</span>
-            <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16 text-sm text-center focus:ring-2 focus:ring-indigo-500" />
-          </div>
-
-          {/* Right Side */}
-          {error && !loading && <span className="text-xs text-rose-400">{error}</span>}
-          <div className="ml-auto flex items-center gap-3">
-            <HealthBadge />
-            <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); alert('Link copied'); } catch(_) {} }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-3 py-2 border border-slate-700 transition-all">
-              📋 Share
-            </button>
-          </div>
+          {error && !loading && <span className="text-xs text-rose-400 ml-auto">{error}</span>}
         </div>
       </div>
 
