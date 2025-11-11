@@ -787,13 +787,84 @@ export default function App() {
         }}
         applyPreset={applyPreset}
       />
-      <section className="card p-4">
-        <h2 className="text-lg font-semibold mb-2">Project Structure</h2>
-        <ul className="list-disc pl-6 text-slate-300">
-          <li><code>src/components</code> – UI and frontend components</li>
-          <li><code>src/services</code> – API and backend-facing logic</li>
-          <li><code>src/utils</code> – Utilities and shared helpers</li>
-        </ul>
+      <section className="card overflow-hidden">
+        {/* Premium Header */}
+        <div className="p-5 relative overflow-hidden border-b border-slate-700/50">
+          <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-indigo-600 via-purple-500 to-blue-500 blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
+
+          <div className="relative">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="absolute inset-0 bg-indigo-600 blur-lg opacity-50 animate-pulse" />
+                <span className="relative text-2xl filter drop-shadow-lg">📁</span>
+              </div>
+              <div>
+                <h2 className="text-lg font-bold bg-gradient-to-r from-indigo-200 to-purple-300 bg-clip-text text-transparent">
+                  Project Structure
+                </h2>
+                <div className="text-xs text-slate-400 mt-1">
+                  Codebase organization & architecture
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Premium Content */}
+        <div className="p-5">
+          <div className="space-y-3">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-indigo-600 blur-xl opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
+              <div className="relative p-3 bg-slate-800/30 rounded-lg border border-indigo-500/20 hover:border-indigo-500/40 transition-all">
+                <div className="flex items-start gap-3">
+                  <span className="text-lg">🎨</span>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold text-indigo-300 mb-1">
+                      <code className="px-2 py-0.5 bg-indigo-900/30 rounded">src/components</code>
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      UI and frontend components
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative group">
+              <div className="absolute inset-0 bg-purple-600 blur-xl opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
+              <div className="relative p-3 bg-slate-800/30 rounded-lg border border-purple-500/20 hover:border-purple-500/40 transition-all">
+                <div className="flex items-start gap-3">
+                  <span className="text-lg">⚙️</span>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold text-purple-300 mb-1">
+                      <code className="px-2 py-0.5 bg-purple-900/30 rounded">src/services</code>
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      API and backend-facing logic
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative group">
+              <div className="absolute inset-0 bg-blue-600 blur-xl opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
+              <div className="relative p-3 bg-slate-800/30 rounded-lg border border-blue-500/20 hover:border-blue-500/40 transition-all">
+                <div className="flex items-start gap-3">
+                  <span className="text-lg">🔧</span>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold text-blue-300 mb-1">
+                      <code className="px-2 py-0.5 bg-blue-900/30 rounded">src/utils</code>
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      Utilities and shared helpers
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
         <BuildInfoFooter />
       </div>
