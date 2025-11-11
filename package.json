@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview --port 4173",
     "backtest": "node scripts/backtest.mjs",
-    "package:zip": "node scripts/package-zip.mjs"
+    "package:zip": "node scripts/package-zip.mjs",
+    "generate:icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
     "lightweight-charts": "^4.2.3",
@@ -17,10 +18,11 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.20",
     "archiver": "^5.3.1",
+    "autoprefixer": "^10.4.20",
     "pdf-parse": "^1.1.1",
     "postcss": "^8.4.47",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.14",
     "vite": "^5.4.9"
   }
