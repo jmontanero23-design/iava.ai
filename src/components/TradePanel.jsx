@@ -74,9 +74,6 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
 
       if (usePartials && partialPlan) {
         // Place 3 separate bracket orders for partial exits
-        // Leg 1: 50% at 1R
-        // Leg 2: 25% at 2R
-        // Leg 3: 25% at 3R
         const orders = []
         const legs = [
           { qty: partialPlan.qty1, tp: partialPlan.tp1, label: '50% at 1R' },
@@ -99,7 +96,6 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
           })
           orders.push({ ...order, label: leg.label })
 
-          // Log each leg
           logOrder({
             symbol: last?.symbol || '',
             side: side.toUpperCase(),
@@ -130,7 +126,6 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
         })
         setResult({ ok: true, order })
 
-        // Log the order
         logOrder({
           symbol: last?.symbol || '',
           side: side.toUpperCase(),
@@ -153,9 +148,9 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
 
   return (
     <div className="space-y-4 animate-fadeIn">
-      {/* Header */}
+      {/* Header Card */}
       <div className="card p-4">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-3 mb-4">
           <span className="logo-badge">
             <img src="/logo.svg" alt="iAVA.ai" className="w-5 h-5" />
           </span>
@@ -173,64 +168,262 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
           </InfoPopover>
           <button onClick={onClose} className="btn btn-xs">Close</button>
         </div>
-      <div className="text-xs text-slate-400 mb-2">Market: {clock?.is_open ? <span className="text-emerald-400">Open</span> : <span className="text-amber-400">Closed</span>} · Last: <span className="text-slate-200">{last?.close?.toFixed(2)}</span> · Equity: <span className="text-slate-200">{equity}</span></div>
-      <div className="grid grid-cols-2 gap-3 text-sm">
-        <label className="flex items-center gap-2">Side
-          <select value={side} onChange={e => setSide(e.target.value)} className="select">
-            <option value="buy">Buy</option>
-            <option value="sell">Sell</option>
-          </select>
-        </label>
-        <label className="flex items-center gap-2">Risk %
-          <input type="number" value={riskPct} onChange={e => setRiskPct(Number(e.target.value))} min={0.1} max={5} step={0.1} className="input w-24" />
-        </label>
-        <label className="flex items-center gap-2">Qty
-          <input type="number" value={qty} onChange={e => setQty(Number(e.target.value))} min={1} className="input w-24" />
-        </label>
-        <label className="flex items-center gap-2">Stop
-          <input type="number" value={stop ?? ''} onChange={e => setStop(Number(e.target.value))} step={0.01} className="input w-32" />
-        </label>
-        {!usePartials && (
-          <label className="flex items-center gap-2">Take Profit
-            <input type="number" value={tp ?? ''} onChange={e => setTp(Number(e.target.value))} step={0.01} className="input w-32" />
-          </label>
-        )}
-        <label className="flex items-center gap-2 col-span-2">
-          <input type="checkbox" checked={usePartials} onChange={e => setUsePartials(e.target.checked)} className="rounded" aria-label="Use partial exits strategy" />
-          <span className="text-xs text-slate-300">Use Partial Exits (50% at 1R, 25% at 2R, 25% at 3R)</span>
+
+        {/* Market Status */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="stat-tile">
+            <div className="stat-icon bg-gradient-to-br from-emerald-500/20 to-emerald-600/20">
+              <span className="text-sm">{clock?.is_open ? '🟢' : '🔴'}</span>
+            </div>
+            <div className="flex-1">
+              <div className="text-xs text-slate-400">Market</div>
+              <div className={`text-sm font-semibold ${clock?.is_open ? 'text-emerald-400' : 'text-amber-400'}`}>
+                {clock?.is_open ? 'Open' : 'Closed'}
+              </div>
+            </div>
+          </div>
+
+          <div className="stat-tile">
+            <div className="stat-icon bg-gradient-to-br from-indigo-500/20 to-indigo-600/20">
+              <span className="text-sm">💵</span>
+            </div>
+            <div className="flex-1">
+              <div className="text-xs text-slate-400">Last Price</div>
+              <div className="text-sm font-mono font-semibold text-slate-200">
+                ${last?.close?.toFixed(2) || '—'}
+              </div>
+            </div>
+          </div>
+
+          <div className="stat-tile">
+            <div className="stat-icon bg-gradient-to-br from-violet-500/20 to-violet-600/20">
+              <span className="text-sm">💰</span>
+            </div>
+            <div className="flex-1">
+              <div className="text-xs text-slate-400">Equity</div>
+              <div className="text-sm font-mono font-semibold text-slate-200">
+                ${equity.toFixed(0)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Order Configuration */}
+        <div className="panel-header mb-3">
+          <span className="text-xs font-semibold text-slate-300">Order Configuration</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="section">
+            <label className="block text-xs text-slate-400 mb-1">Side</label>
+            <select value={side} onChange={e => setSide(e.target.value)} className="select w-full">
+              <option value="buy">Buy (Long)</option>
+              <option value="sell">Sell (Short)</option>
+            </select>
+          </div>
+
+          <div className="section">
+            <label className="block text-xs text-slate-400 mb-1">Risk %</label>
+            <input
+              type="number"
+              value={riskPct}
+              onChange={e => setRiskPct(Number(e.target.value))}
+              min={0.1}
+              max={5}
+              step={0.1}
+              className="input w-full"
+            />
+          </div>
+
+          <div className="section">
+            <label className="block text-xs text-slate-400 mb-1">Quantity</label>
+            <input
+              type="number"
+              value={qty}
+              onChange={e => setQty(Number(e.target.value))}
+              min={1}
+              className="input w-full"
+            />
+          </div>
+
+          <div className="section">
+            <label className="block text-xs text-slate-400 mb-1">Stop Loss</label>
+            <input
+              type="number"
+              value={stop ?? ''}
+              onChange={e => setStop(Number(e.target.value))}
+              step={0.01}
+              className="input w-full"
+              placeholder="Stop price"
+            />
+          </div>
+
+          {!usePartials && (
+            <div className="section col-span-2">
+              <label className="block text-xs text-slate-400 mb-1">Take Profit</label>
+              <input
+                type="number"
+                value={tp ?? ''}
+                onChange={e => setTp(Number(e.target.value))}
+                step={0.01}
+                className="input w-full"
+                placeholder="Target price"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Partial Exits Toggle */}
+        <label className="inline-flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={usePartials}
+            onChange={e => setUsePartials(e.target.checked)}
+            className="checkbox accent-emerald-500"
+          />
+          <span className="text-sm text-slate-300">Use Partial Exits (50% at 1R, 25% at 2R, 25% at 3R)</span>
+          <InfoPopover title="Partial Exits">
+            Blueprint strategy: Scale out of positions at multiple profit levels.
+            <br/><br/>
+            <strong>Plan:</strong>
+            <br/>• 50% at 1R (1× risk)
+            <br/>• 25% at 2R (2× risk)
+            <br/>• 25% at 3R (3× risk)
+            <br/><br/>
+            Locks in profits while allowing runners.
+          </InfoPopover>
         </label>
       </div>
 
-      {/* Show partial exit plan */}
+      {/* Stunning Partial Exit Visualization */}
       {usePartials && partialPlan && (
-        <div className="mt-3 bg-slate-800/50 rounded p-3 border border-slate-700">
-          <div className="text-xs text-slate-400 mb-2">Partial Exit Plan:</div>
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            <div className="bg-slate-700/50 rounded p-2">
-              <div className="text-emerald-400 font-semibold">50% at 1R</div>
-              <div className="text-slate-300">Qty: {partialPlan.qty1}</div>
-              <div className="text-slate-300">TP: ${partialPlan.tp1.toFixed(2)}</div>
+        <div className="card p-4">
+          <div className="panel-header mb-3">
+            <span className="text-xs font-semibold text-slate-300">Partial Exit Plan</span>
+            <span className="text-xs text-slate-500 ml-2">(Risk per share: ${partialPlan.risk.toFixed(2)})</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Exit 1: 50% at 1R */}
+            <div className="tile p-4 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="stat-icon bg-gradient-to-br from-emerald-500/30 to-emerald-600/30 scale-90">
+                  <span className="text-lg">1️⃣</span>
+                </div>
+                <div>
+                  <div className="text-emerald-400 font-bold text-sm">50% at 1R</div>
+                  <div className="text-xs text-slate-400">First Exit</div>
+                </div>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Quantity:</span>
+                  <span className="text-slate-200 font-mono font-semibold">{partialPlan.qty1}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Target:</span>
+                  <span className="text-emerald-400 font-mono font-semibold">${partialPlan.tp1.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">R Multiple:</span>
+                  <span className="text-emerald-400 font-semibold">1.0R</span>
+                </div>
+              </div>
             </div>
-            <div className="bg-slate-700/50 rounded p-2">
-              <div className="text-emerald-400 font-semibold">25% at 2R</div>
-              <div className="text-slate-300">Qty: {partialPlan.qty2}</div>
-              <div className="text-slate-300">TP: ${partialPlan.tp2.toFixed(2)}</div>
+
+            {/* Exit 2: 25% at 2R */}
+            <div className="tile p-4 bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 border-cyan-500/20">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="stat-icon bg-gradient-to-br from-cyan-500/30 to-cyan-600/30 scale-90">
+                  <span className="text-lg">2️⃣</span>
+                </div>
+                <div>
+                  <div className="text-cyan-400 font-bold text-sm">25% at 2R</div>
+                  <div className="text-xs text-slate-400">Second Exit</div>
+                </div>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Quantity:</span>
+                  <span className="text-slate-200 font-mono font-semibold">{partialPlan.qty2}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Target:</span>
+                  <span className="text-cyan-400 font-mono font-semibold">${partialPlan.tp2.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">R Multiple:</span>
+                  <span className="text-cyan-400 font-semibold">2.0R</span>
+                </div>
+              </div>
             </div>
-            <div className="bg-slate-700/50 rounded p-2">
-              <div className="text-emerald-400 font-semibold">25% at 3R</div>
-              <div className="text-slate-300">Qty: {partialPlan.qty3}</div>
-              <div className="text-slate-300">TP: ${partialPlan.tp3.toFixed(2)}</div>
+
+            {/* Exit 3: 25% at 3R */}
+            <div className="tile p-4 bg-gradient-to-br from-violet-500/10 to-violet-600/5 border-violet-500/20">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="stat-icon bg-gradient-to-br from-violet-500/30 to-violet-600/30 scale-90">
+                  <span className="text-lg">3️⃣</span>
+                </div>
+                <div>
+                  <div className="text-violet-400 font-bold text-sm">25% at 3R</div>
+                  <div className="text-xs text-slate-400">Runner Exit</div>
+                </div>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Quantity:</span>
+                  <span className="text-slate-200 font-mono font-semibold">{partialPlan.qty3}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Target:</span>
+                  <span className="text-violet-400 font-mono font-semibold">${partialPlan.tp3.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">R Multiple:</span>
+                  <span className="text-violet-400 font-semibold">3.0R</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="text-xs text-slate-400 mt-2">Risk per share: ${partialPlan.risk.toFixed(2)}</div>
         </div>
       )}
 
-      <div className="mt-3 flex items-center gap-3">
-        <button onClick={submit} disabled={submitting || !qty || !stop || (!usePartials && !tp)} className="btn btn-success px-3 py-1 text-sm">{submitting ? 'Placing…' : (usePartials ? 'Place 3 Orders' : 'Place Order')}</button>
-        {result?.ok && !result.partials && <span className="text-emerald-400 text-sm">Order placed: {result.order?.id}</span>}
-        {result?.ok && result.partials && <span className="text-emerald-400 text-sm">{result.orders?.length || 0} orders placed</span>}
-        {result && !result.ok && <span className="text-rose-400 text-sm">{result.error}</span>}
+      {/* Action Buttons & Results */}
+      <div className="card p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={submit}
+            disabled={submitting || !qty || !stop || (!usePartials && !tp)}
+            className="btn btn-success px-4 py-2"
+          >
+            {submitting ? (
+              <span className="flex items-center gap-2">
+                <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                Placing…
+              </span>
+            ) : (usePartials ? 'Place 3 Orders' : 'Place Order')}
+          </button>
+
+          {result?.ok && !result.partials && (
+            <div className="flex items-center gap-2 text-sm text-emerald-400">
+              <span>✓</span>
+              <span>Order placed: {result.order?.id}</span>
+            </div>
+          )}
+
+          {result?.ok && result.partials && (
+            <div className="flex items-center gap-2 text-sm text-emerald-400">
+              <span>✓</span>
+              <span>{result.orders?.length || 0} orders placed successfully</span>
+            </div>
+          )}
+
+          {result && !result.ok && (
+            <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 flex-1">
+              <p className="text-sm text-rose-400">{result.error}</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
