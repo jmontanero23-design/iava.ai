@@ -1,8 +1,8 @@
 /**
- * AI Features Dashboard
+ * AI Features Dashboard - PREMIUM REDESIGN
  * Central hub for accessing all AI capabilities
  * PhD-Elite Quality - Top 1% Global Benchmark
- * ALL FEATURES FULLY FUNCTIONAL - NO MOCKS
+ * Matches Hero modern aesthetic
  */
 
 import { useState, useEffect } from 'react'
@@ -13,26 +13,19 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
   // Load REAL metrics from LocalStorage tracking
   useEffect(() => {
     const loadRealMetrics = () => {
-      // Get actual feature usage from LocalStorage
       const signalQualityData = JSON.parse(localStorage.getItem('iava_signal_quality') || '{"signals":[]}')
       const tradeJournalData = JSON.parse(localStorage.getItem('iava_trade_journal') || '{"trades":[]}')
       const learningData = JSON.parse(localStorage.getItem('iava_learning_progress') || '{"completed":[]}')
 
-      const totalSignals = signalQualityData.signals?.length || 0
-      const totalTrades = tradeJournalData.trades?.length || 0
-      const lessonsCompleted = learningData.completed?.length || 0
-
       setMetrics({
-        signalsTracked: totalSignals,
-        tradesLogged: totalTrades,
-        lessonsCompleted: lessonsCompleted,
+        signalsTracked: signalQualityData.signals?.length || 0,
+        tradesLogged: tradeJournalData.trades?.length || 0,
+        lessonsCompleted: learningData.completed?.length || 0,
         featuresActive: 12
       })
     }
 
     loadRealMetrics()
-
-    // Refresh every 10s
     const interval = setInterval(loadRealMetrics, 10000)
     return () => clearInterval(interval)
   }, [])
@@ -41,126 +34,123 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
     {
       id: 'signal_quality',
       name: 'Signal Quality Scorer',
-      description: 'Historical performance ratings for signal types',
-      detail: 'Tracks Unicorn, Breakout, Pullback signals with win rate, profit factor, Sharpe ratio',
+      description: 'Historical performance ratings',
+      detail: 'Win rate, profit factor, Sharpe ratio tracking for Unicorn, Breakout, and Pullback signals',
       icon: '📊',
-      color: 'emerald',
-      status: 'active',
+      gradient: 'from-emerald-600 via-emerald-500 to-teal-500',
+      glowColor: 'emerald',
       requiresAPI: false,
-      unicornIntegration: 'Core - Validates signal quality'
+      category: 'Core'
     },
     {
       id: 'predictive_confidence',
       name: 'Predictive Confidence',
-      description: 'ML probability model for trade success',
+      description: 'ML probability model',
       detail: '7-factor weighted scoring: historical, confluence, regime, R:R, volume, time, volatility',
       icon: '🎯',
-      color: 'cyan',
-      status: 'active',
+      gradient: 'from-cyan-600 via-cyan-500 to-blue-500',
+      glowColor: 'cyan',
       requiresAPI: false,
-      unicornIntegration: 'Core - Predicts win probability'
+      category: 'Core'
     },
     {
       id: 'market_regime',
       name: 'Market Regime Detector',
-      description: 'Real-time market condition classification',
-      detail: 'ADX + EMA + Ichimoku + ATR analysis for trending/ranging/volatile regimes',
+      description: 'Real-time condition classification',
+      detail: 'ADX + EMA + Ichimoku + ATR analysis for trending, ranging, and volatile regimes',
       icon: '🌡️',
-      color: 'blue',
-      status: 'active',
+      gradient: 'from-blue-600 via-blue-500 to-indigo-500',
+      glowColor: 'blue',
       requiresAPI: false,
-      unicornIntegration: 'Core - Contextualizes signals'
+      category: 'Core'
     },
     {
       id: 'smart_watchlist',
       name: 'Smart Watchlist Builder',
       description: 'AI symbol recommendations',
-      detail: 'User profile + strategy fit scoring with correlation and sector analysis',
+      detail: 'Profile-based strategy fit scoring with correlation and sector diversification',
       icon: '⭐',
-      color: 'indigo',
-      status: 'active',
+      gradient: 'from-indigo-600 via-indigo-500 to-purple-500',
+      glowColor: 'indigo',
       requiresAPI: true,
-      apiNote: 'Requires OpenAI API key for AI recommendations',
-      unicornIntegration: 'Discovery - Finds Unicorn candidates'
+      category: 'Discovery'
     },
     {
       id: 'risk_advisor',
       name: 'Risk Advisor',
-      description: 'Portfolio risk analysis and alerts',
-      detail: 'VaR, Expected Shortfall, Kelly Criterion, concentration analysis',
+      description: 'Portfolio risk analysis',
+      detail: 'VaR, Expected Shortfall, Kelly Criterion sizing, concentration alerts',
       icon: '⚖️',
-      color: 'yellow',
-      status: 'active',
+      gradient: 'from-yellow-600 via-yellow-500 to-orange-500',
+      glowColor: 'yellow',
       requiresAPI: false,
-      unicornIntegration: 'Execution - Sizes Unicorn trades'
+      category: 'Execution'
     },
     {
       id: 'anomaly_detector',
       name: 'Anomaly Detector',
-      description: 'Unusual market condition alerts',
-      detail: 'Z-score spikes, volume surges, gap detection, volatility breakouts',
+      description: 'Unusual condition alerts',
+      detail: 'Z-score price spikes, volume surges, gap detection, volatility breakouts',
       icon: '🔍',
-      color: 'orange',
-      status: 'active',
+      gradient: 'from-orange-600 via-orange-500 to-red-500',
+      glowColor: 'orange',
       requiresAPI: false,
-      unicornIntegration: 'Validation - Filters invalid signals'
+      category: 'Validation'
     },
     {
       id: 'multi_timeframe',
       name: 'Multi-Timeframe Analyst',
-      description: '3-timeframe signal synthesis',
+      description: '3-timeframe synthesis',
       detail: '5m/15m/1h EMA trends, S/R clustering, confluence scoring, entry timing',
       icon: '⏱️',
-      color: 'purple',
-      status: 'active',
+      gradient: 'from-purple-600 via-purple-500 to-pink-500',
+      glowColor: 'purple',
       requiresAPI: false,
-      unicornIntegration: 'Core - Confirms across timeframes'
+      category: 'Core'
     },
     {
       id: 'nlp_scanner',
       name: 'Natural Language Scanner',
-      description: 'Query markets in plain English',
-      detail: 'GPT-4o-mini converts queries to technical filters for rapid screening',
+      description: 'Query in plain English',
+      detail: 'GPT-4o-mini converts natural language to precise technical filters',
       icon: '💬',
-      color: 'pink',
-      status: 'active',
+      gradient: 'from-pink-600 via-pink-500 to-rose-500',
+      glowColor: 'pink',
       requiresAPI: true,
-      apiNote: 'Requires OpenAI API key for natural language processing',
-      unicornIntegration: 'Discovery - Finds Unicorn setups'
+      category: 'Discovery'
     },
     {
       id: 'trade_journal',
       name: 'Trade Journal AI',
-      description: 'Post-trade analysis and learning',
-      detail: 'Performance analytics + AI review + pattern recognition + improvement suggestions',
+      description: 'Post-trade analysis',
+      detail: 'Performance analytics, AI review, pattern recognition, improvement suggestions',
       icon: '📝',
-      color: 'teal',
-      status: 'active',
+      gradient: 'from-teal-600 via-teal-500 to-cyan-500',
+      glowColor: 'teal',
       requiresAPI: false,
-      unicornIntegration: 'Learning - Analyzes Unicorn outcomes'
+      category: 'Learning'
     },
     {
       id: 'ai_chat',
       name: 'AI Chat Assistant',
-      description: 'Conversational trading insights',
-      detail: 'Context-aware GPT-4o-mini with market data integration',
+      description: 'Conversational insights',
+      detail: 'Context-aware GPT-4o-mini with real-time market data integration',
       icon: '🤖',
-      color: 'violet',
-      status: 'active',
+      gradient: 'from-violet-600 via-violet-500 to-purple-500',
+      glowColor: 'violet',
       requiresAPI: true,
-      apiNote: 'Requires OpenAI API key for chat functionality',
-      unicornIntegration: 'Support - Explains Unicorn signals'
+      category: 'Support'
     },
     {
       id: 'personalized_learning',
       name: 'Personalized Learning',
-      description: 'Adaptive education system',
-      detail: 'Style detection, experience-based curriculum, progress tracking',
+      description: 'Adaptive education',
+      detail: 'Style detection, experience-based curriculum, progress tracking, concept mastery',
       icon: '🎓',
-      color: 'amber',
-      status: 'active',
+      gradient: 'from-amber-600 via-amber-500 to-yellow-500',
+      glowColor: 'amber',
       requiresAPI: false,
-      unicornIntegration: 'Education - Teaches Unicorn methodology'
+      category: 'Learning'
     },
     {
       id: 'genetic_optimizer',
@@ -168,26 +158,26 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
       description: 'Evolutionary strategy tuning',
       detail: 'Multi-objective optimization for Unicorn threshold and horizon parameters',
       icon: '🧬',
-      color: 'lime',
-      status: 'active',
+      gradient: 'from-lime-600 via-lime-500 to-green-500',
+      glowColor: 'lime',
       requiresAPI: false,
-      unicornIntegration: 'Core - Optimizes Unicorn scoring'
+      category: 'Core'
     }
   ]
 
-  const colorStyles = {
-    emerald: 'from-emerald-600/20 to-transparent border-emerald-500/30 hover:border-emerald-400/50',
-    cyan: 'from-cyan-600/20 to-transparent border-cyan-500/30 hover:border-cyan-400/50',
-    blue: 'from-blue-600/20 to-transparent border-blue-500/30 hover:border-blue-400/50',
-    indigo: 'from-indigo-600/20 to-transparent border-indigo-500/30 hover:border-indigo-400/50',
-    purple: 'from-purple-600/20 to-transparent border-purple-500/30 hover:border-purple-400/50',
-    pink: 'from-pink-600/20 to-transparent border-pink-500/30 hover:border-pink-400/50',
-    yellow: 'from-yellow-600/20 to-transparent border-yellow-500/30 hover:border-yellow-400/50',
-    orange: 'from-orange-600/20 to-transparent border-orange-500/30 hover:border-orange-400/50',
-    teal: 'from-teal-600/20 to-transparent border-teal-500/30 hover:border-teal-400/50',
-    violet: 'from-violet-600/20 to-transparent border-violet-500/30 hover:border-violet-400/50',
-    amber: 'from-amber-600/20 to-transparent border-amber-500/30 hover:border-amber-400/50',
-    lime: 'from-lime-600/20 to-transparent border-lime-500/30 hover:border-lime-400/50'
+  const glowStyles = {
+    emerald: 'shadow-emerald-500/20 hover:shadow-emerald-500/40',
+    cyan: 'shadow-cyan-500/20 hover:shadow-cyan-500/40',
+    blue: 'shadow-blue-500/20 hover:shadow-blue-500/40',
+    indigo: 'shadow-indigo-500/20 hover:shadow-indigo-500/40',
+    purple: 'shadow-purple-500/20 hover:shadow-purple-500/40',
+    pink: 'shadow-pink-500/20 hover:shadow-pink-500/40',
+    yellow: 'shadow-yellow-500/20 hover:shadow-yellow-500/40',
+    orange: 'shadow-orange-500/20 hover:shadow-orange-500/40',
+    teal: 'shadow-teal-500/20 hover:shadow-teal-500/40',
+    violet: 'shadow-violet-500/20 hover:shadow-violet-500/40',
+    amber: 'shadow-amber-500/20 hover:shadow-amber-500/40',
+    lime: 'shadow-lime-500/20 hover:shadow-lime-500/40'
   }
 
   const clientSideCount = features.filter(f => !f.requiresAPI).length
@@ -195,123 +185,204 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
 
   return (
     <div className="space-y-6">
-      {/* Header with Real Usage Stats */}
-      <div className="glass-panel p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-200 via-cyan-200 to-emerald-300 bg-clip-text text-transparent">
-              AI Features Dashboard
-            </h2>
-            <p className="text-slate-400 text-sm mt-1 flex items-center gap-2 flex-wrap">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                {features.length} active AI capabilities
-              </span>
-              <span className="text-slate-600">•</span>
-              <span className="text-emerald-400">
-                {clientSideCount} client-side (always available)
-              </span>
-              <span className="text-slate-600">•</span>
-              <span className="text-amber-400">
-                {apiRequiredCount} require API keys
-              </span>
-            </p>
-          </div>
-        </div>
+      {/* Premium Header */}
+      <div className="relative overflow-hidden">
+        {/* Animated background */}
+        <div className="absolute inset-0 opacity-30 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
 
-        {/* Real Usage Metrics */}
-        {metrics && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+        <div className="relative glass-panel p-6 md:p-8">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-6">
             <div>
-              <div className="text-xs text-slate-400 mb-1">Signals Tracked</div>
-              <div className="text-2xl font-bold text-emerald-400">{metrics.signalsTracked}</div>
-              <div className="text-xs text-slate-500 mt-1">Signal Quality DB</div>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-4xl">🤖</span>
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-200 via-purple-200 to-cyan-300 bg-clip-text text-transparent">
+                    AI Features Hub
+                  </h2>
+                  <p className="text-sm text-slate-400 mt-1 flex items-center gap-2 flex-wrap">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      {features.length} AI capabilities
+                    </span>
+                    <span className="text-slate-600">•</span>
+                    <span className="text-emerald-400">{clientSideCount} always available</span>
+                    <span className="text-slate-600">•</span>
+                    <span className="text-amber-400">{apiRequiredCount} API-powered</span>
+                  </p>
+                </div>
+              </div>
             </div>
-            <div>
-              <div className="text-xs text-slate-400 mb-1">Trades Logged</div>
-              <div className="text-2xl font-bold text-cyan-400">{metrics.tradesLogged}</div>
-              <div className="text-xs text-slate-500 mt-1">Trade Journal</div>
-            </div>
-            <div>
-              <div className="text-xs text-slate-400 mb-1">Lessons Completed</div>
-              <div className="text-2xl font-bold text-indigo-400">{metrics.lessonsCompleted}</div>
-              <div className="text-xs text-slate-500 mt-1">Learning System</div>
-            </div>
-            <div>
-              <div className="text-xs text-slate-400 mb-1">Features Active</div>
-              <div className="text-2xl font-bold text-slate-200">{metrics.featuresActive}</div>
-              <div className="text-xs text-slate-500 mt-1">All Systems Operational</div>
+
+            {/* Quality Badge */}
+            <div className="shrink-0">
+              <div className="relative group/badge">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 blur-lg opacity-60 group-hover/badge:opacity-80 transition-opacity" />
+                <div className="relative px-5 py-3 bg-gradient-to-r from-purple-600/30 to-indigo-600/30 border border-purple-500/50 rounded-xl backdrop-blur-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">💎</span>
+                    <div>
+                      <div className="text-xs uppercase tracking-widest text-purple-300 font-semibold mb-0.5">
+                        PhD-Elite Quality
+                      </div>
+                      <div className="text-base font-bold text-white">
+                        Top 1% Global Standard
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        )}
+
+          {/* Real Usage Metrics - Redesigned */}
+          {metrics && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl" />
+                <div className="relative p-4 bg-slate-800/50 border border-emerald-500/30 rounded-xl backdrop-blur-sm hover:border-emerald-400/50 transition-all">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">📊</span>
+                    <div className="text-xs text-emerald-400 font-semibold uppercase tracking-wider">Signals</div>
+                  </div>
+                  <div className="text-3xl font-bold text-emerald-300">{metrics.signalsTracked}</div>
+                  <div className="text-xs text-slate-500 mt-1">Quality DB</div>
+                </div>
+              </div>
+
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-600 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl" />
+                <div className="relative p-4 bg-slate-800/50 border border-cyan-500/30 rounded-xl backdrop-blur-sm hover:border-cyan-400/50 transition-all">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">📝</span>
+                    <div className="text-xs text-cyan-400 font-semibold uppercase tracking-wider">Trades</div>
+                  </div>
+                  <div className="text-3xl font-bold text-cyan-300">{metrics.tradesLogged}</div>
+                  <div className="text-xs text-slate-500 mt-1">Journal</div>
+                </div>
+              </div>
+
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl" />
+                <div className="relative p-4 bg-slate-800/50 border border-indigo-500/30 rounded-xl backdrop-blur-sm hover:border-indigo-400/50 transition-all">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">🎓</span>
+                    <div className="text-xs text-indigo-400 font-semibold uppercase tracking-wider">Lessons</div>
+                  </div>
+                  <div className="text-3xl font-bold text-indigo-300">{metrics.lessonsCompleted}</div>
+                  <div className="text-xs text-slate-500 mt-1">Learning</div>
+                </div>
+              </div>
+
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl" />
+                <div className="relative p-4 bg-slate-800/50 border border-purple-500/30 rounded-xl backdrop-blur-sm hover:border-purple-400/50 transition-all">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">✨</span>
+                    <div className="text-xs text-purple-400 font-semibold uppercase tracking-wider">Active</div>
+                  </div>
+                  <div className="text-3xl font-bold text-purple-300">{metrics.featuresActive}</div>
+                  <div className="text-xs text-slate-500 mt-1">Features</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Premium Feature Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {features.map((feature) => (
           <button
             key={feature.id}
             onClick={() => onFeatureSelect?.(feature.id)}
-            className={`group p-5 bg-gradient-to-br ${colorStyles[feature.color]} border backdrop-blur-sm rounded-xl text-left transition-all hover:scale-[1.02] hover:shadow-xl`}
+            className="group relative text-left transition-all duration-300 hover:scale-[1.02]"
           >
-            <div className="flex items-start gap-3">
-              <span className="text-4xl group-hover:scale-110 transition-transform">{feature.icon}</span>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-slate-100 mb-1 text-base">
-                  {feature.name}
-                </h3>
-                <p className="text-xs text-slate-300 leading-relaxed mb-2">
-                  {feature.description}
-                </p>
-                <p className="text-xs text-slate-400 leading-relaxed mb-3 line-clamp-2">
-                  {feature.detail}
-                </p>
+            {/* Glow effect on hover */}
+            <div className={`absolute inset-0 bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-20 rounded-2xl blur-2xl transition-all duration-300`} />
 
-                {/* Status Badges */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
-                    feature.status === 'active'
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                      : 'bg-slate-600/20 text-slate-400 border border-slate-600/30'
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      feature.status === 'active' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
-                    }`} />
-                    {feature.requiresAPI ? 'API Ready' : 'Client-Side'}
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                    🦄 {feature.unicornIntegration}
-                  </span>
+            {/* Card content */}
+            <div className={`relative p-6 bg-slate-900/50 border border-slate-700/50 group-hover:border-slate-600 rounded-2xl backdrop-blur-sm shadow-xl ${glowStyles[feature.glowColor]} transition-all duration-300`}>
+              {/* Icon with gradient background */}
+              <div className="flex items-start gap-4 mb-4">
+                <div className={`relative w-14 h-14 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                  <span className="text-3xl filter drop-shadow-lg">{feature.icon}</span>
                 </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-slate-100 text-lg mb-1 group-hover:text-white transition-colors">
+                    {feature.name}
+                  </h3>
+                  <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                    {feature.category}
+                  </p>
+                </div>
+              </div>
 
-                {/* API Notice */}
-                {feature.requiresAPI && feature.apiNote && (
-                  <div className="mt-2 text-xs text-amber-400 flex items-start gap-1">
-                    <span>⚙️</span>
-                    <span>{feature.apiNote}</span>
-                  </div>
-                )}
+              <p className="text-sm text-slate-300 leading-relaxed mb-2">
+                {feature.description}
+              </p>
+              <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                {feature.detail}
+              </p>
+
+              {/* Status badges */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${
+                  feature.requiresAPI
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                    feature.requiresAPI ? 'bg-amber-400' : 'bg-emerald-400'
+                  }`} />
+                  {feature.requiresAPI ? 'API Ready' : 'Client-Side'}
+                </span>
+
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                  🦄 Unicorn
+                </span>
+              </div>
+
+              {/* Hover arrow */}
+              <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="text-slate-400 group-hover:text-slate-200 transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </div>
               </div>
             </div>
           </button>
         ))}
       </div>
 
-      {/* PhD-Elite Quality Standard */}
-      <div className="glass-panel p-4 border-indigo-500/30">
-        <div className="flex items-start gap-3">
-          <span className="text-2xl">💎</span>
-          <div>
-            <h4 className="text-sm font-semibold text-indigo-300 mb-1">PhD-Elite Quality Standard</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              All 12 AI features are engineered to top 1% global benchmark standards, integrating advanced algorithms
-              from quantitative finance, machine learning, and behavioral analysis. Each feature enhances the Unicorn
-              trading system's rare alignment detection methodology from the Research & Design Blueprint.
-            </p>
-            <div className="mt-2 flex items-center gap-4 text-xs">
-              <span className="text-emerald-400">✓ {clientSideCount} features work offline</span>
-              <span className="text-amber-400">⚙️ {apiRequiredCount} features use AI APIs</span>
-              <span className="text-cyan-400">📊 All data stored locally</span>
+      {/* Footer info */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-indigo-600 to-purple-600 blur-2xl" />
+        <div className="relative glass-panel p-6 border-indigo-500/30">
+          <div className="flex items-start gap-4">
+            <span className="text-3xl">🦄</span>
+            <div>
+              <h4 className="text-lg font-bold bg-gradient-to-r from-purple-200 to-cyan-200 bg-clip-text text-transparent mb-2">
+                Unicorn-Optimized Intelligence
+              </h4>
+              <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                Every AI feature enhances rare signal detection. From discovery to execution to learning,
+                the entire system focuses on finding and validating high-quality Unicorn alignments.
+              </p>
+              <div className="flex flex-wrap items-center gap-4 text-xs">
+                <span className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 rounded-lg">
+                  <span className="text-base">✓</span>
+                  <span className="font-semibold">{clientSideCount} work offline</span>
+                </span>
+                <span className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 border border-amber-500/30 text-amber-300 rounded-lg">
+                  <span className="text-base">⚙️</span>
+                  <span className="font-semibold">{apiRequiredCount} use AI APIs</span>
+                </span>
+                <span className="flex items-center gap-2 px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 rounded-lg">
+                  <span className="text-base">📊</span>
+                  <span className="font-semibold">All data local</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
