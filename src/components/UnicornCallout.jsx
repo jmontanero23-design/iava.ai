@@ -100,34 +100,118 @@ export default function UnicornCallout({ state, threshold = 70 }) {
   const softNote = softRiskPct < 1.0 ? ' · risk reduced (daily mismatch)' : ''
 
   return (
-    <div className="card p-4 border-emerald-700/60" style={{ background: 'linear-gradient(180deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02))' }}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-emerald-300">Unicorn Signal{softNote}</h3>
-        <div className="flex items-center gap-3">
-          <div className="text-sm font-bold bg-gradient-to-r from-emerald-400 to-cyan-300 bg-clip-text text-transparent">Score: {scoreLabel}</div>
-          <button onClick={sendToN8N} disabled={n8nReady === false} title={n8nReady === false ? 'n8n not configured' : ''} className="bg-emerald-700/30 hover:bg-emerald-700/40 disabled:opacity-50 disabled:cursor-not-allowed text-emerald-200 text-xs rounded px-2 py-1">Send to n8n</button>
-          <button onClick={explain} disabled={expLoading || llmReady === false} title={llmReady === false ? 'LLM not configured' : ''} className="bg-slate-800 hover:bg-slate-700 text-emerald-200 text-xs rounded px-2 py-1 border border-slate-700">{expLoading ? 'Explaining…' : 'Explain'}</button>
-          <button onClick={() => setOpen(v => !v)} className="bg-emerald-700/30 hover:bg-emerald-700/40 text-emerald-200 text-xs rounded px-2 py-1">{open ? 'Hide Trade' : 'Trade (Paper)'}</button>
+    <div className="card overflow-hidden border-2 border-emerald-500/50" style={{ background: 'linear-gradient(180deg, rgba(16,185,129,0.12), rgba(16,185,129,0.03))' }}>
+      {/* Premium Unicorn Header */}
+      <div className="p-5 relative overflow-hidden border-b border-emerald-700/50">
+        <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 blur-3xl animate-pulse" style={{ animationDuration: '3s' }} />
+
+        <div className="relative">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              {/* Unicorn Icon with premium glow */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-emerald-500 blur-xl opacity-70 animate-pulse" />
+                <span className="relative text-4xl filter drop-shadow-2xl animate-bounce" style={{ animationDuration: '2s' }}>🦄</span>
+              </div>
+              <div>
+                <h3 className="text-2xl font-black bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-300 bg-clip-text text-transparent inline-flex items-center gap-2">
+                  UNICORN SIGNAL
+                </h3>
+                {softNote && <div className="text-xs text-emerald-400/70 font-semibold">{softNote}</div>}
+              </div>
+            </div>
+
+            {/* Premium Score Badge */}
+            <div className="relative group">
+              <div className="absolute inset-0 bg-emerald-500 blur-xl opacity-50 rounded-xl" />
+              <div className="relative px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl border-2 border-emerald-400/50 shadow-2xl">
+                <div className="text-2xl font-black text-white">{scoreLabel}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Premium Action Buttons */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={explain}
+              disabled={expLoading || llmReady === false}
+              title={llmReady === false ? 'LLM not configured' : ''}
+              className="relative group px-4 py-2 rounded-lg text-xs font-bold overflow-hidden disabled:opacity-50"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
+              <span className="relative text-white flex items-center gap-1.5">
+                {expLoading ? '⏳' : '🤖'}
+                {expLoading ? 'Explaining…' : 'Explain with AI'}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setOpen(v => !v)}
+              className="relative group px-4 py-2 rounded-lg text-xs font-bold overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 group-hover:from-emerald-500 group-hover:to-teal-500 transition-all" />
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
+              <span className="relative text-white flex items-center gap-1.5">
+                {open ? '📉' : '📈'}
+                {open ? 'Hide Trade Panel' : 'Trade (Paper)'}
+              </span>
+            </button>
+
+            <button
+              onClick={sendToN8N}
+              disabled={n8nReady === false}
+              title={n8nReady === false ? 'n8n not configured' : ''}
+              className="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Send to n8n
+            </button>
+          </div>
         </div>
       </div>
-      <div className="mt-2 text-sm text-slate-200">
-        <ul className="list-disc pl-5">
-          {facts.map((f, i) => <li key={i}>{f}</li>)}
-        </ul>
+
+      {/* Premium Facts Section */}
+      <div className="p-5 pt-0 space-y-4">
+        <div className="p-4 bg-slate-800/30 rounded-xl border border-emerald-500/20">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">✨</span>
+            <div className="text-sm font-bold text-emerald-300 uppercase tracking-wider">Signal Facts</div>
+          </div>
+          <ul className="space-y-2">
+            {facts.map((f, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-slate-200">
+                <span className="text-emerald-400 mt-0.5">▸</span>
+                <span className="flex-1">{f}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         {state.components && (
-          <div className="mt-2 text-xs text-slate-300">
-            {(() => {
-              try {
-                const arr = Object.entries(state.components).filter(([,v])=>v>0).map(([k,v]) => `${k}+${v}`)
-                if (state._consensus?.align) arr.push('consensus+10')
-                return `Why: ${arr.join(', ')}`
-              } catch { return null }
-            })()}
+          <div className="p-4 bg-indigo-600/10 rounded-xl border border-indigo-500/30">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">🎯</span>
+              <div className="text-sm font-bold text-indigo-300 uppercase tracking-wider">Score Breakdown</div>
+            </div>
+            <div className="text-sm text-slate-200 font-mono">
+              {(() => {
+                try {
+                  const arr = Object.entries(state.components).filter(([,v])=>v>0).map(([k,v]) => `${k}+${v}`)
+                  if (state._consensus?.align) arr.push('consensus+10')
+                  return arr.join(' · ')
+                } catch { return null }
+              })()}
+            </div>
+            <div className="mt-3">
+              <button
+                onClick={() => { try { const el = document.createElement('textarea'); const why = (()=>{ try { const arr = Object.entries(state.components).filter(([,v])=>v>0).map(([k,v]) => `${k}+${v}`); if (state._consensus?.align) arr.push('consensus+10'); return `Why: ${arr.join(', ')}` } catch { return '' } })(); el.value = why; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Why copied', type: 'success' } })) } catch(_) {} }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+              >
+                Copy Breakdown
+              </button>
+            </div>
           </div>
         )}
-        <div className="mt-2 flex items-center gap-2">
-          <button onClick={() => { try { const el = document.createElement('textarea'); const why = (()=>{ try { const arr = Object.entries(state.components).filter(([,v])=>v>0).map(([k,v]) => `${k}+${v}`); if (state._consensus?.align) arr.push('consensus+10'); return `Why: ${arr.join(', ')}` } catch { return '' } })(); el.value = why; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Why copied', type: 'success' } })) } catch(_) {} }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Why</button>
-        </div>
         {exp && (
           <div className="mt-4 p-4 rounded-lg border border-indigo-500/30 bg-gradient-to-br from-indigo-900/20 to-slate-900/40 backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-3">
@@ -155,11 +239,19 @@ export default function UnicornCallout({ state, threshold = 70 }) {
             )}
           </div>
         )}
-        {expErr ? <div className="mt-2 text-xs text-rose-400">{expErr}</div> : null}
+        {expErr ? (
+          <div className="p-3 bg-rose-600/10 border border-rose-500/30 rounded-lg flex items-start gap-2">
+            <span className="text-rose-400 text-lg">⚠️</span>
+            <span className="text-sm text-rose-300 font-medium">{expErr}</span>
+          </div>
+        ) : null}
+
+        {open && (
+          <div className="p-4 bg-slate-800/40 rounded-xl border border-slate-700/50">
+            <TradePanel bars={state._bars || []} saty={state.saty} account={state._account || {}} defaultSide={state.satyDir === 'short' ? 'sell' : 'buy'} defaultRiskPct={softRiskPct} onClose={() => setOpen(false)} />
+          </div>
+        )}
       </div>
-        {open && <div className="mt-3">
-        <TradePanel bars={state._bars || []} saty={state.saty} account={state._account || {}} defaultSide={state.satyDir === 'short' ? 'sell' : 'buy'} defaultRiskPct={softRiskPct} onClose={() => setOpen(false)} />
-      </div>}
     </div>
   )
 }
