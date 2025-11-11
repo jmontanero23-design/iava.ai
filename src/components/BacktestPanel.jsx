@@ -149,11 +149,24 @@ export default function BacktestPanel({ symbol, timeframe, preset, chartThreshol
   }
 
   return (
-    <div className="card p-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Backtest Snapshot <InfoPopover title="Backtest">Runs a quick score-based scan: counts events where Score ≥ threshold and shows forward returns after horizon bars.</InfoPopover>
-          <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'How do I interpret this backtest heatmap and pick thresholds?', context: { symbol, timeframe, threshold, horizon, consensus, dailyFilter, assetClass } } })) } catch {} }} className="text-xs text-slate-400 underline ml-2">Ask AI</button>
-        </h3>
+    <div className="card overflow-hidden">
+      {/* Premium Header */}
+      <div className="p-4 relative overflow-hidden border-b border-slate-700/50">
+        <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
+
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Icon with glow */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-cyan-600 blur-lg opacity-50 animate-pulse" />
+              <span className="relative text-2xl filter drop-shadow-lg">📈</span>
+            </div>
+            <h3 className="text-lg font-bold bg-gradient-to-r from-cyan-200 to-indigo-300 bg-clip-text text-transparent inline-flex items-center gap-2">
+              Backtest Snapshot
+              <InfoPopover title="Backtest">Runs a quick score-based scan: counts events where Score ≥ threshold and shows forward returns after horizon bars.</InfoPopover>
+              <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'How do I interpret this backtest heatmap and pick thresholds?', context: { symbol, timeframe, threshold, horizon, consensus, dailyFilter, assetClass } } })) } catch {} }} className="text-xs text-slate-400 underline">Ask AI</button>
+            </h3>
+          </div>
         <div className="flex items-center gap-2 text-xs">
           <label className="inline-flex items-center gap-2">Asset
             <select value={assetClass} onChange={e=>setAssetClass(e.target.value)} className="select">
@@ -166,7 +179,14 @@ export default function BacktestPanel({ symbol, timeframe, preset, chartThreshol
               Preset · TH {preset.th} · H {preset.hz} · {preset.regime || 'none'}
             </span>
           ) : null}
-          <button onClick={matchChart} className="btn btn-xs" title="Apply preset params and use chart’s threshold and consensus bonus">Match chart</button>
+          <button
+            onClick={matchChart}
+            className="relative group px-3 py-1 rounded-lg text-xs font-semibold overflow-hidden"
+            title="Apply preset params and use chart's threshold and consensus bonus"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
+            <span className="relative text-white">Match chart</span>
+          </button>
           <span className="px-2 py-0.5 rounded-full bg-slate-900/60 border border-slate-700" title="Current parameters (live)">
             Current · TH {threshold} · H {horizon} · {dailyFilter}
           </span>
@@ -197,8 +217,30 @@ export default function BacktestPanel({ symbol, timeframe, preset, chartThreshol
               <option value="bear">Daily Bearish</option>
             </select>
           </label>
-          <button onClick={run} disabled={loading} className="btn btn-xs">{loading ? 'Running…' : 'Run'}</button>
-          <button onClick={explainBacktest} disabled={aiLoading || !res} className="btn btn-xs disabled:opacity-50">{aiLoading ? 'Explaining…' : 'Explain (AI)'}</button>
+          <button
+            onClick={run}
+            disabled={loading}
+            className="relative group px-4 py-1.5 rounded-lg text-xs font-bold overflow-hidden disabled:opacity-50"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 group-hover:from-cyan-500 group-hover:to-indigo-500 transition-all" />
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
+            <span className="relative text-white flex items-center gap-1.5">
+              {loading ? '⏳' : '▶️'}
+              {loading ? 'Running…' : 'Run'}
+            </span>
+          </button>
+          <button
+            onClick={explainBacktest}
+            disabled={aiLoading || !res}
+            className="relative group px-4 py-1.5 rounded-lg text-xs font-semibold overflow-hidden disabled:opacity-50"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
+            <span className="relative text-white flex items-center gap-1.5">
+              {aiLoading ? '⏳' : '🤖'}
+              {aiLoading ? 'Explaining…' : 'Explain (AI)'}
+            </span>
+          </button>
           <button onClick={downloadJson} className="btn btn-xs">Download JSON</button>
           <button onClick={downloadCsv} className="btn btn-xs">Download CSV</button>
           <button onClick={downloadSummaryCsv} className="btn btn-xs">Summary CSV</button>
@@ -244,17 +286,42 @@ export default function BacktestPanel({ symbol, timeframe, preset, chartThreshol
             }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Suggest TH</button>
           ) : null}
         </div>
+        </div>
       </div>
-      <div className="flex flex-wrap gap-2 text-xs mt-2">
-        <span className="text-slate-400">Presets:</span>
+
+      {/* Premium Presets Section */}
+      <div className="p-4">
+      <div className="flex flex-wrap gap-2 text-xs">
+        <span className="text-sm font-semibold text-slate-300">Quick Presets</span>
         {presets.map(p => (
-          <button key={p.label} onClick={() => { setThreshold(p.th); setHorizon(p.hz); setDailyFilter(p.regime) }} className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded px-2 py-1">
+          <button
+            key={p.label}
+            onClick={() => { setThreshold(p.th); setHorizon(p.hz); setDailyFilter(p.regime) }}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+          >
             {p.label}
           </button>
         ))}
       </div>
-          {err && <div className="text-xs text-rose-400 mt-2">{err}</div>}
-          {aiErr && <div className="text-xs text-rose-400 mt-2">{aiErr} <span className="text-slate-500">Check <a className="underline" href="/api/health" target="_blank" rel="noreferrer">/api/health</a>.</span></div>}
+
+      {/* Premium Error Display */}
+      {err && (
+        <div className="mt-3 p-3 bg-rose-600/10 border border-rose-500/30 rounded-lg flex items-start gap-2">
+          <span className="text-rose-400 text-lg">⚠️</span>
+          <span className="text-sm text-rose-300 font-medium">{err}</span>
+        </div>
+      )}
+      {aiErr && (
+        <div className="mt-3 p-3 bg-rose-600/10 border border-rose-500/30 rounded-lg flex items-start gap-2">
+          <span className="text-rose-400 text-lg">⚠️</span>
+          <div className="flex-1">
+            <span className="text-sm text-rose-300 font-medium">{aiErr}</span>
+            <span className="text-xs text-slate-500 ml-2">Check <a className="underline hover:text-slate-400" href="/api/health" target="_blank" rel="noreferrer">/api/health</a></span>
+          </div>
+        </div>
+      )}
+
+      {/* Premium Results Section */}
       {res && (
         <div className="mt-2 text-sm text-slate-200">
           <div className="grid grid-cols-2 gap-2">
@@ -387,5 +454,7 @@ export default function BacktestPanel({ symbol, timeframe, preset, chartThreshol
           ) : null}
         </div>
       )}
+      </div>
     </div>
-  )}
+  )
+}
