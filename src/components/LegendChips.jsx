@@ -28,9 +28,17 @@ export default function LegendChips({ overlays }) {
   return (
     <div className="mt-2 flex flex-wrap gap-2">
       {chips.map((c, idx) => (
-        <span key={idx} className="text-xs px-2 py-1 rounded-full border border-slate-700 inline-flex items-center gap-1" style={{ background: 'rgba(2,6,23,0.6)' }} title={c.title}>
-          <span className="inline-block w-2 h-2 rounded-full" style={{ background: c.color }} />
-          <span className="text-slate-200">{c.label}</span>
+        <span
+          key={idx}
+          className="tile px-3 py-1.5 inline-flex items-center gap-2 border"
+          style={{ borderColor: c.color + '40' }}
+          title={c.title}
+        >
+          <span
+            className="inline-block w-2.5 h-2.5 rounded-full shadow-sm"
+            style={{ backgroundColor: c.color, boxShadow: `0 0 6px ${c.color}80` }}
+          />
+          <span className="text-xs text-slate-200 font-medium">{c.label}</span>
           {desc[c.label] ? <InfoPopover title={c.label}>{desc[c.label]}</InfoPopover> : null}
         </span>
       ))}
