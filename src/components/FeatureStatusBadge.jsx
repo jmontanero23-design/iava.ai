@@ -27,71 +27,125 @@ export default function FeatureStatusBadge({ onClick }) {
 
   return (
     <div className="relative">
+      {/* Premium Badge Button */}
       <button
         onClick={onClick}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
-        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-${statusColor}-600/20 to-transparent border border-${statusColor}-500/30 hover:border-${statusColor}-400/50 transition-all hover:scale-105`}
+        className="relative group"
       >
-        {/* Status Dot */}
-        <span className={`w-2 h-2 rounded-full bg-${statusColor}-400 ${needsSetup === 0 ? 'animate-pulse' : ''}`} />
+        {/* Background glow effect */}
+        <div className={`absolute inset-0 ${
+          needsSetup === 0 ? 'bg-emerald-600' : 'bg-cyan-600'
+        } blur-lg opacity-20 group-hover:opacity-30 rounded-xl transition-opacity`} />
 
-        {/* Count */}
-        <span className="text-sm font-semibold text-slate-200">
-          {activeCount}/{features.total}
-        </span>
+        {/* Badge content */}
+        <div className={`relative inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl border shadow-lg transition-all group-hover:scale-105 ${
+          needsSetup === 0
+            ? 'bg-gradient-to-r from-emerald-600/30 to-emerald-500/20 border-emerald-500/40 group-hover:border-emerald-400/60'
+            : 'bg-gradient-to-r from-cyan-600/30 to-cyan-500/20 border-cyan-500/40 group-hover:border-cyan-400/60'
+        }`}>
+          {/* Status Dot with pulse */}
+          <span className={`w-2.5 h-2.5 rounded-full ${
+            needsSetup === 0 ? 'bg-emerald-400 animate-pulse' : 'bg-cyan-400 animate-pulse'
+          } filter drop-shadow-lg`} />
 
-        {/* Label */}
-        <span className="text-xs text-slate-400">AI Features</span>
-
-        {/* Warning if needs setup */}
-        {needsSetup > 0 && (
-          <span className="text-xs text-amber-400">
-            ({needsSetup} need setup)
+          {/* Count - Bold */}
+          <span className="text-base font-bold text-white">
+            {activeCount}/{features.total}
           </span>
-        )}
+
+          {/* Label */}
+          <span className="text-xs text-slate-300 font-semibold uppercase tracking-wider">
+            AI Features
+          </span>
+
+          {/* Warning badge if needs setup */}
+          {needsSetup > 0 && (
+            <span className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold rounded-md">
+              {needsSetup} need setup
+            </span>
+          )}
+        </div>
       </button>
 
-      {/* Tooltip */}
+      {/* Premium Tooltip */}
       {showTooltip && (
-        <div className="absolute top-full left-0 mt-2 w-64 p-3 bg-slate-900 border border-slate-700 rounded-lg shadow-xl z-50 text-left">
-          <div className="text-xs space-y-2">
-            <div className="font-semibold text-slate-200 mb-2 flex items-center gap-2">
-              <span className="text-lg">🤖</span>
-              AI Features Status
-            </div>
+        <div className="absolute top-full right-0 mt-3 w-72 z-50">
+          <div className="relative group">
+            {/* Tooltip glow */}
+            <div className="absolute inset-0 bg-indigo-600 blur-xl opacity-20 rounded-xl" />
 
-            {/* Active Features */}
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Client-Side (Always On)</span>
-              <span className="text-emerald-400 font-semibold">{features.clientSide}</span>
-            </div>
-
-            {/* API Features */}
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">API-Powered</span>
-              <span className={apiKeysConfigured ? 'text-emerald-400' : 'text-amber-400'}>
-                {apiKeysConfigured ? features.apiRequired : `0/${features.apiRequired}`}
-              </span>
-            </div>
-
-            {!apiKeysConfigured && (
-              <div className="pt-2 mt-2 border-t border-slate-700">
-                <p className="text-amber-300 text-xs mb-1">⚠️ Setup Required:</p>
-                <ul className="text-slate-400 text-xs space-y-1 ml-3">
-                  <li>• AI Chat</li>
-                  <li>• NLP Scanner</li>
-                  <li>• Smart Watchlist</li>
-                </ul>
-                <p className="text-slate-500 text-xs mt-2">
-                  Add OpenAI API key in Vercel settings
-                </p>
+            {/* Tooltip content */}
+            <div className="relative bg-slate-900/95 border border-slate-700/50 rounded-xl shadow-2xl backdrop-blur-sm overflow-hidden">
+              {/* Header */}
+              <div className="p-4 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 border-b border-slate-700/50">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🤖</span>
+                  <span className="font-bold text-lg bg-gradient-to-r from-indigo-200 to-purple-300 bg-clip-text text-transparent">
+                    AI Features Status
+                  </span>
+                </div>
               </div>
-            )}
 
-            {/* Click hint */}
-            <div className="pt-2 mt-2 border-t border-slate-700 text-slate-500 text-xs">
-              Click to view all features →
+              {/* Body */}
+              <div className="p-4 space-y-3">
+                {/* Active Features */}
+                <div className="flex items-center justify-between p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                  <span className="text-sm text-emerald-300 font-semibold">Client-Side (Always On)</span>
+                  <span className="text-lg font-bold text-emerald-400">{features.clientSide}</span>
+                </div>
+
+                {/* API Features */}
+                <div className={`flex items-center justify-between p-3 border rounded-lg ${
+                  apiKeysConfigured
+                    ? 'bg-emerald-500/10 border-emerald-500/30'
+                    : 'bg-amber-500/10 border-amber-500/30'
+                }`}>
+                  <span className={`text-sm font-semibold ${
+                    apiKeysConfigured ? 'text-emerald-300' : 'text-amber-300'
+                  }`}>
+                    API-Powered
+                  </span>
+                  <span className={`text-lg font-bold ${
+                    apiKeysConfigured ? 'text-emerald-400' : 'text-amber-400'
+                  }`}>
+                    {apiKeysConfigured ? features.apiRequired : `0/${features.apiRequired}`}
+                  </span>
+                </div>
+
+                {!apiKeysConfigured && (
+                  <div className="pt-2 space-y-2">
+                    <div className="flex items-center gap-2 text-amber-300 text-sm font-semibold">
+                      <span>⚠️</span>
+                      <span>Setup Required:</span>
+                    </div>
+                    <ul className="space-y-1.5 ml-1">
+                      <li className="flex items-center gap-2 text-xs text-slate-400">
+                        <span className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
+                        <span>AI Chat</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-xs text-slate-400">
+                        <span className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
+                        <span>NLP Scanner</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-xs text-slate-400">
+                        <span className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
+                        <span>Smart Watchlist</span>
+                      </li>
+                    </ul>
+                    <p className="text-slate-500 text-xs pt-2 italic">
+                      Add OpenAI API key in Vercel settings
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="px-4 py-3 bg-slate-800/50 border-t border-slate-700/50 text-slate-400 text-xs flex items-center justify-center gap-2">
+                <span>Click to view all features</span>
+                <span className="text-indigo-400">→</span>
+              </div>
             </div>
           </div>
         </div>
