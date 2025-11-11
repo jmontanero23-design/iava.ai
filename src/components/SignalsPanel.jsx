@@ -146,6 +146,88 @@ export default function SignalsPanel({ state, bars = [] }) {
         </button>
       </div>
 
+      {/* Multi-Timeframe Analyst (AI Feature #6) */}
+      {state._daily && (
+        <div className="card p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="logo-badge">
+              <img src="/logo.svg" alt="iAVA.ai" className="w-5 h-5" />
+            </span>
+            <div className="flex-1">
+              <h4 className="text-sm font-bold text-cyan-300">📊 Multi-Timeframe Analyst</h4>
+              <p className="text-xs text-slate-400">Consensus across timeframes (AI Feature #6)</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {/* Current Timeframe */}
+            <div className="tile p-3 bg-gradient-to-br from-indigo-500/10 to-indigo-600/5 border-indigo-500/20">
+              <div className="text-xs text-indigo-400 font-semibold mb-2">Current Timeframe</div>
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Pivot:</span>
+                  <span className={`font-semibold ${state.pivotNow === 'bullish' ? 'text-emerald-400' : state.pivotNow === 'bearish' ? 'text-rose-400' : 'text-slate-400'}`}>
+                    {state.pivotNow || 'neutral'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Ichimoku:</span>
+                  <span className={`font-semibold ${state.ichiRegime === 'bullish' ? 'text-emerald-400' : state.ichiRegime === 'bearish' ? 'text-rose-400' : 'text-slate-400'}`}>
+                    {state.ichiRegime || 'neutral'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Daily Timeframe */}
+            <div className="tile p-3 bg-gradient-to-br from-violet-500/10 to-violet-600/5 border-violet-500/20">
+              <div className="text-xs text-violet-400 font-semibold mb-2">Daily Timeframe</div>
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Pivot:</span>
+                  <span className={`font-semibold ${state._daily.pivotNow === 'bullish' ? 'text-emerald-400' : state._daily.pivotNow === 'bearish' ? 'text-rose-400' : 'text-slate-400'}`}>
+                    {state._daily.pivotNow || 'neutral'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Ichimoku:</span>
+                  <span className={`font-semibold ${state._daily.ichiRegime === 'bullish' ? 'text-emerald-400' : state._daily.ichiRegime === 'bearish' ? 'text-rose-400' : 'text-slate-400'}`}>
+                    {state._daily.ichiRegime || 'neutral'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Consensus Indicator */}
+          {(() => {
+            const currentBullish = state.pivotNow === 'bullish' && state.ichiRegime === 'bullish'
+            const currentBearish = state.pivotNow === 'bearish' && state.ichiRegime === 'bearish'
+            const dailyBullish = state._daily.pivotNow === 'bullish' && state._daily.ichiRegime === 'bullish'
+            const dailyBearish = state._daily.pivotNow === 'bearish' && state._daily.ichiRegime === 'bearish'
+
+            const fullConsensus = (currentBullish && dailyBullish) || (currentBearish && dailyBearish)
+            const direction = currentBullish && dailyBullish ? 'Bullish' : currentBearish && dailyBearish ? 'Bearish' : 'Mixed'
+
+            return (
+              <div className={`mt-3 p-3 rounded-lg border ${fullConsensus ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border-emerald-500/40' : 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-amber-500/40'}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-slate-400">Consensus Status</div>
+                    <div className={`text-sm font-bold ${fullConsensus ? 'text-emerald-300' : 'text-amber-300'}`}>
+                      {fullConsensus ? `✓ ${direction} Alignment` : '⚠️ No Clear Consensus'}
+                    </div>
+                  </div>
+                  {fullConsensus && (
+                    <div className="text-2xl">{direction === 'Bullish' ? '📈' : '📉'}</div>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+        </div>
+      )}
+
       {/* Signal States Grid */}
       <div className="card p-4">
         <div className="panel-header mb-3">
