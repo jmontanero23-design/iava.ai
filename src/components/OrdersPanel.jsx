@@ -93,15 +93,57 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
   useEffect(() => { refresh() }, [])
 
   return (
-    <div className="card p-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-200 inline-flex items-center gap-2">Orders & Positions <InfoPopover title="Trading Ops">Place orders and manage open orders/positions. Bracket orders set both take‑profit and stop‑loss. Use Risk % + Calc Qty for consistent sizing. Guardrails may reject orders (market closed, risk/exposure, cooldown, daily loss cap).</InfoPopover></h3>
-        <div className="flex items-center gap-2">
-          <button onClick={refresh} disabled={loading} className="btn btn-xs">{loading ? 'Refreshing…' : 'Refresh'}</button>
-          <button onClick={async()=>{ const r = await api('/api/alpaca/orders_cancel_all', { method:'POST' }); setMsg(r.ok ? 'Cancel all sent' : (r.json?.message || r.text || 'Cancel all error')); refresh() }} className="btn btn-xs" title="Cancel all open orders">Cancel All</button>
-          <button onClick={async()=>{ const r = await api('/api/alpaca/positions_close_all', { method:'POST' }); setMsg(r.ok ? 'Close all sent' : (r.json?.message || r.text || 'Close all error')); refresh() }} className="btn btn-xs" title="Close all open positions">Close All</button>
+    <div className="card overflow-hidden">
+      {/* Premium Header */}
+      <div className="p-4 relative overflow-hidden border-b border-slate-700/50">
+        <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
+
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Icon with glow */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-emerald-600 blur-lg opacity-50 animate-pulse" />
+              <span className="relative text-2xl filter drop-shadow-lg">💼</span>
+            </div>
+            <h3 className="text-lg font-bold bg-gradient-to-r from-emerald-200 to-cyan-300 bg-clip-text text-transparent inline-flex items-center gap-2">
+              Orders & Positions
+              <InfoPopover title="Trading Ops">Place orders and manage open orders/positions. Bracket orders set both take‑profit and stop‑loss. Use Risk % + Calc Qty for consistent sizing. Guardrails may reject orders (market closed, risk/exposure, cooldown, daily loss cap).</InfoPopover>
+            </h3>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={refresh}
+              disabled={loading}
+              className="relative group px-3 py-1.5 rounded-lg text-xs font-semibold overflow-hidden disabled:opacity-50"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 group-hover:from-emerald-500 group-hover:to-teal-500 transition-all" />
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
+              <span className="relative text-white flex items-center gap-1.5">
+                {loading ? '⏳' : '🔄'}
+                {loading ? 'Refreshing…' : 'Refresh'}
+              </span>
+            </button>
+            <button
+              onClick={async()=>{ const r = await api('/api/alpaca/orders_cancel_all', { method:'POST' }); setMsg(r.ok ? 'Cancel all sent' : (r.json?.message || r.text || 'Cancel all error')); refresh() }}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-700 hover:bg-rose-600 text-white transition-all"
+              title="Cancel all open orders"
+            >
+              Cancel All
+            </button>
+            <button
+              onClick={async()=>{ const r = await api('/api/alpaca/positions_close_all', { method:'POST' }); setMsg(r.ok ? 'Close all sent' : (r.json?.message || r.text || 'Close all error')); refresh() }}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-700 hover:bg-rose-600 text-white transition-all"
+              title="Close all open positions"
+            >
+              Close All
+            </button>
+          </div>
         </div>
       </div>
+
+      <div className="p-4">
       {rules ? (
         <div className="mt-2 text-xs text-slate-400">
           <span className="mr-2">Rules:</span>
@@ -206,7 +248,11 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
             }
             const r = await api('/api/alpaca/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
             if (r.ok) { setMsg('Order sent'); refresh() } else { setMsg(r.json?.error || r.json?.message || r.text || 'Order error') }
-          }} className="bg-indigo-600 hover:bg-indigo-500 text-xs rounded px-3 py-1">Place</button>
+          }} className="relative group px-4 py-2 rounded-lg text-xs font-bold overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 group-hover:from-indigo-500 group-hover:to-purple-500 transition-all" />
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
+            <span className="relative text-white">Place Order</span>
+          </button>
           {klass === 'bracket' && preview && (
             <div className="text-xs text-slate-400 ml-2">Preview: TP {preview.tp.toFixed(2)} · SL {preview.sl.toFixed(2)}</div>
           )}
@@ -243,6 +289,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
             ))}
           </div>
         </div>
+      </div>
       </div>
     </div>
   )
