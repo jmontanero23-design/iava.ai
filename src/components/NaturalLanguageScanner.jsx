@@ -55,80 +55,136 @@ export default function NaturalLanguageScanner({ onFiltersGenerated }) {
   }
 
   return (
-    <div className="glass-panel p-6">
-      <div className="mb-4">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-2xl">🔍</span>
-          <h3 className="text-lg font-semibold text-slate-200">
-            Natural Language Scanner
-          </h3>
+    <div className="glass-panel overflow-hidden">
+      {/* Premium Header */}
+      <div className="p-6 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="relative">
+          <div className="flex items-center gap-3 mb-2">
+            {/* Icon with glow effect */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 blur-xl opacity-50 animate-pulse" />
+              <span className="relative text-3xl filter drop-shadow-lg">🔍</span>
+            </div>
+            <h3 className="text-xl font-bold bg-gradient-to-r from-cyan-200 via-indigo-200 to-purple-300 bg-clip-text text-transparent">
+              Natural Language Scanner
+            </h3>
+          </div>
+          <p className="text-sm text-slate-400 ml-12 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+            <span className="font-semibold">Describe what you're looking for in plain English</span>
+          </p>
         </div>
-        <p className="text-sm text-slate-400">
-          Describe what you're looking for in plain English
-        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="mb-4">
-        <div className="relative">
+      {/* Premium Search Form */}
+      <form onSubmit={handleSubmit} className="px-6 pb-4">
+        <div className="relative group">
+          {/* Input glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 opacity-0 group-focus-within:opacity-10 rounded-xl transition-opacity blur-xl" />
+
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="e.g., Find bullish momentum stocks with high volume..."
-            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 pr-24"
+            className="relative w-full px-5 py-4 bg-slate-800/50 border border-slate-700/50 focus:border-cyan-500/50 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none transition-all shadow-lg pr-32"
             disabled={isProcessing}
           />
+
+          {/* Premium button */}
           <button
             type="submit"
             disabled={isProcessing || !query.trim()}
-            className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium rounded transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 px-5 py-2.5 rounded-lg font-semibold transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group/btn"
           >
-            {isProcessing ? 'Processing...' : 'Scan'}
+            <div className={`absolute inset-0 ${
+              isProcessing || !query.trim()
+                ? 'bg-slate-700'
+                : 'bg-gradient-to-r from-cyan-600 to-indigo-600 group-hover/btn:from-cyan-500 group-hover/btn:to-indigo-500'
+            } transition-all`} />
+
+            {query.trim() && !isProcessing && (
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 blur-lg opacity-30 group-hover/btn:opacity-50 transition-opacity" />
+            )}
+
+            <span className="relative text-white text-sm flex items-center gap-2">
+              {isProcessing ? (
+                <>
+                  <span className="animate-pulse">Processing...</span>
+                </>
+              ) : (
+                <>
+                  <span>Scan</span>
+                  <span className="text-base">🔍</span>
+                </>
+              )}
+            </span>
           </button>
         </div>
       </form>
 
+      {/* Premium Error State */}
       {error && (
-        <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-300 text-sm">
-          {error}
+        <div className="mx-6 mb-4 relative group">
+          <div className="absolute inset-0 bg-rose-600 blur-xl opacity-10 rounded-xl" />
+          <div className="relative p-4 bg-gradient-to-r from-rose-500/20 to-rose-600/10 border border-rose-500/40 rounded-xl shadow-lg">
+            <div className="flex items-start gap-3">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <div className="text-sm font-semibold text-rose-300 mb-1">Error</div>
+                <div className="text-sm text-rose-200/80">{error}</div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* Premium Success State */}
       {lastResult && !error && (
-        <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
-          <div className="text-sm font-medium text-emerald-300 mb-2">
-            ✓ Filters Generated
-          </div>
-          <div className="space-y-2 text-sm text-slate-300">
-            {Object.entries(lastResult).map(([key, value]) => {
-              if (key === 'error' || value === undefined) return null
-              return (
-                <div key={key} className="flex items-center justify-between">
-                  <span className="text-slate-400 capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}:
-                  </span>
-                  <span className="font-mono">
-                    {typeof value === 'object' ? JSON.stringify(value) : value}
-                  </span>
-                </div>
-              )
-            })}
+        <div className="mx-6 mb-4 relative group">
+          <div className="absolute inset-0 bg-emerald-600 blur-xl opacity-10 rounded-xl" />
+          <div className="relative p-4 bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 border border-emerald-500/40 rounded-xl shadow-lg backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xl">✓</span>
+              <div className="text-sm font-bold text-emerald-300 uppercase tracking-wider">
+                Filters Generated
+              </div>
+            </div>
+            <div className="space-y-2.5">
+              {Object.entries(lastResult).map(([key, value]) => {
+                if (key === 'error' || value === undefined) return null
+                return (
+                  <div key={key} className="flex items-center justify-between py-2 px-3 bg-slate-800/30 rounded-lg border border-slate-700/30">
+                    <span className="text-sm text-emerald-400/80 capitalize font-medium">
+                      {key.replace(/([A-Z])/g, ' $1').trim()}:
+                    </span>
+                    <span className="text-sm font-mono text-slate-200 font-semibold">
+                      {typeof value === 'object' ? JSON.stringify(value) : value}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
       )}
 
-      <div>
-        <div className="text-xs font-medium text-slate-400 mb-2">
-          Example queries:
+      {/* Premium Example Queries */}
+      <div className="px-6 pb-6">
+        <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
+          <span className="text-base">💡</span>
+          <span className="font-semibold uppercase tracking-wider">Example Queries</span>
         </div>
         <div className="flex flex-wrap gap-2">
           {exampleQueries.map((example, idx) => (
             <button
               key={idx}
               onClick={() => handleExampleClick(example)}
-              className="px-3 py-1.5 text-xs bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 hover:border-slate-600 text-slate-300 rounded-md transition-colors"
+              className="relative group px-3 py-2 text-xs font-medium bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 hover:border-cyan-500/40 text-slate-300 hover:text-cyan-200 rounded-lg transition-all shadow-lg hover:shadow-cyan-500/10"
             >
-              {example}
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
+              <span className="relative">{example}</span>
             </button>
           ))}
         </div>
