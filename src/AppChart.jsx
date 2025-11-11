@@ -32,6 +32,7 @@ import WatchlistPanel from './components/WatchlistPanel.jsx'
 import WatchlistNavigator from './components/WatchlistNavigator.jsx'
 import ScannerPanel from './components/ScannerPanel.jsx'
 import CommandPalette from './components/CommandPalette.jsx'
+import AIInsightsPanel from './components/AIInsightsPanel.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -625,6 +626,13 @@ export default function App() {
         <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Link copied', type: 'success' } })) } catch(_) {} }} className="ml-2 bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Link</button>
       </div>
       <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streaming || autoRefresh} consensus={consensus} threshold={threshold} />
+      <AIInsightsPanel
+        signal={signalState}
+        bars={bars}
+        symbol={symbol}
+        timeframe={timeframe}
+        account={account}
+      />
       <LegendChips overlays={overlays} />
       <CandleChart
         bars={bars}
