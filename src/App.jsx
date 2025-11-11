@@ -1,24 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Hero from './components/Hero.jsx'
 import CandleChart from './components/chart/CandleChart.jsx'
-import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend, computeStates, pivotRibbon, ttmBands, ttmSqueeze } from './utils/indicators.js'
+import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend, computeStates, pivotRibbon } from './utils/indicators.js'
 import SqueezePanel from './components/chart/SqueezePanel.jsx'
 import SignalsPanel from './components/SignalsPanel.jsx'
 import SatyPanel from './components/SatyPanel.jsx'
 import { fetchBars as fetchBarsApi } from './services/alpaca.js'
 import HealthBadge from './components/HealthBadge.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
-import Presets from './components/Presets.jsx'
-import PresetHelp from './components/PresetHelp.jsx'
 import StatusBar from './components/StatusBar.jsx'
 import LegendChips from './components/LegendChips.jsx'
 import MarketStats from './components/MarketStats.jsx'
 import UnicornCallout from './components/UnicornCallout.jsx'
-import UnicornActionBar from './components/UnicornActionBar.jsx'
 import BacktestPanel from './components/BacktestPanel.jsx'
 import BatchBacktestPanel from './components/BatchBacktestPanel.jsx'
-import RateLimitBanner from './components/RateLimitBanner.jsx'
-import HelpFab from './components/HelpFab.jsx'
 import OrdersPanel from './components/OrdersPanel.jsx'
 import SatyTargets from './components/SatyTargets.jsx'
 import InfoPopover from './components/InfoPopover.jsx'
@@ -27,9 +22,14 @@ import { readParams, writeParams } from './utils/urlState.js'
 import SignalFeed from './components/SignalFeed.jsx'
 import OverlayChips from './components/OverlayChips.jsx'
 import useStreamingBars from './hooks/useStreamingBars.js'
+import ScoreOptimizer from './components/ScoreOptimizer.jsx'
+import AnalyticsDashboard from './components/AnalyticsDashboard.jsx'
+import ScannerPanel from './components/ScannerPanel.jsx'
 import WatchlistPanel from './components/WatchlistPanel.jsx'
 import WatchlistNavigator from './components/WatchlistNavigator.jsx'
-import ScannerPanel from './components/ScannerPanel.jsx'
+import HelpFab from './components/HelpFab.jsx'
+import RateLimitBanner from './components/RateLimitBanner.jsx'
+import { rateLimiter } from './utils/rateLimiter.js'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -74,62 +74,9 @@ export default function App() {
   const [mtfPreset, setMtfPreset] = useState('manual')
   const [signalHistory, setSignalHistory] = useState([])
   const [focusTime, setFocusTime] = useState(null)
-  const streamingAllowed = (import.meta.env.VITE_STREAMING_ALLOWED || 'true').toString().toLowerCase() === 'true'
   const [streaming, setStreaming] = useState(false)
-  const [hud, setHud] = useState('')
-  const [secBars, setSecBars] = useState([])
-  const [consensus, setConsensus] = useState(null)
-  const [consensusBonus, setConsensusBonus] = useState(false)
-  const [presetSuggesting, setPresetSuggesting] = useState(false)
-  const [presetSuggestErr, setPresetSuggestErr] = useState('')
-  const [llmReady, setLlmReady] = useState(null)
+  const [activeSection, setActiveSection] = useState('chart') // chart, analysis, portfolio, tools
   const [rateLimitUntil, setRateLimitUntil] = useState(0)
-  const showRateBanner = (import.meta.env.VITE_SHOW_RATE_BANNER || 'false').toString().toLowerCase() === 'true'
-  // Keyboard shortcuts (presets and nav)
-  useEffect(() => {
-    const handler = (e) => {
-      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : ''
-      const isTyping = tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable)
-      if (isTyping) return
-      // Number keys map to presets (skip manual)
-      const presetOrder = ['trendDaily','pullbackDaily','intradayBreakout','dailyTrendFollow','meanRevertIntraday','breakoutDailyStrong','momentumContinuation']
-      const n = parseInt(e.key, 10)
-      if (!isNaN(n) && n >= 1 && n <= presetOrder.length) {
-        const id = presetOrder[n - 1]
-        applyPreset(id)
-      }
-      // Quick nav: left/right arrows to move visible range by small step when chart focused (handled inside chart), here we keep for future
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [])
-
-  function mlabel(id) {
-    const map = {
-      trendDaily: 'Trend+Daily',
-      pullbackDaily: 'Pullback+Daily',
-      intradayBreakout: 'Breakout (Intra)',
-      dailyTrendFollow: 'Daily Trend',
-      meanRevertIntraday: 'Mean Revert',
-      breakoutDailyStrong: 'Breakout Strong',
-      momentumContinuation: 'Momentum Cont',
-    }
-    return map[id] || id
-  }
-
-  // Suggest backtest params based on selected preset
-  const backtestPreset = useMemo(() => {
-    const map = {
-      trendDaily: { th: 70, hz: 10, regime: 'bull' },
-      pullbackDaily: { th: 65, hz: 20, regime: 'bull' },
-      intradayBreakout: { th: 75, hz: 8, regime: 'none' },
-      dailyTrendFollow: { th: 70, hz: 20, regime: 'bull' },
-      meanRevertIntraday: { th: 55, hz: 5, regime: 'bear' },
-      breakoutDailyStrong: { th: 80, hz: 12, regime: 'bull' },
-      momentumContinuation: { th: 70, hz: 10, regime: 'none' },
-    }
-    return map[mtfPreset] || null
-  }, [mtfPreset])
 
   const overlays = useMemo(() => {
     const close = bars.map(b => b.close)
@@ -141,15 +88,106 @@ export default function App() {
     if (showIchi) base.ichimoku = ichimoku(bars)
     if (showRibbon) base.ribbon = pivotRibbon(close)
     if (showSaty) base.saty = satyAtrLevels(bars, 14)
-    // Provide squeeze bands + ON map for visual confirmation (shares toggle with panel)
-    if (showSqueeze) {
-      base.squeezeBands = ttmBands(bars, 20, 2, 1.5)
-      base.squeezeOn = ttmSqueeze(bars.map(b=>b.close), bars.map(b=>b.high), bars.map(b=>b.low), 20, 2, 1.5)
-    }
     return base
-  }, [bars, showEma821, showEma512, showEma89, showEma3450, showIchi, showSaty, showSqueeze])
+  }, [bars, showEma821, showEma512, showEma89, showEma3450, showIchi, showSaty])
 
-  // Preset configs (used by hints, applyPreset, and AI suggestions)
+  const [account, setAccount] = useState(null)
+  const signalState = useMemo(() => computeStates(bars), [bars])
+  const dailyState = useMemo(() => (dailyBars?.length ? computeStates(dailyBars) : null), [dailyBars])
+
+  const stale = useMemo(() => {
+    if (!bars?.length) return true
+    const last = bars[bars.length - 1]?.time
+    if (!last) return true
+    const now = Math.floor(Date.now()/1000)
+    const dt = now - last
+    const tf = timeframe.toLowerCase()
+    const maxAge = tf.includes('1min') ? 180 : tf.includes('5min') ? 600 : tf.includes('15min') ? 1800 : tf.includes('1hour') ? 7200 : 172800
+    return dt > maxAge
+  }, [bars, timeframe])
+
+  async function loadBars(s = symbol, tf = timeframe) {
+    try {
+      const myId = ++loadReq.current
+      setLoading(true)
+      setError('')
+      setRateLimitUntil(rateLimiter.rateLimitUntil)
+      const res = await fetchBarsApi(s, tf, 500)
+      if (myId !== loadReq.current) return
+      if (Array.isArray(res) && res.length) { setBars(res); setUsingSample(false) }
+      else throw new Error('No data returned')
+    } catch (e) {
+      setError(e?.message || 'Failed to load data; showing sample')
+      setRateLimitUntil(rateLimiter.rateLimitUntil)
+      setBars(generateSampleOHLC())
+      setUsingSample(true)
+    } finally {
+      setLoading(false)
+      setUpdatedAt(Date.now())
+    }
+  }
+
+  async function loadDaily(s = symbol) {
+    try {
+      const res = await fetchBarsApi(s, '1Day', 400)
+      if (Array.isArray(res) && res.length) setDailyBars(res)
+    } catch {}
+  }
+
+  useEffect(() => {
+    // Load persisted settings
+    try {
+      const saved = JSON.parse(localStorage.getItem('iava.settings') || '{}')
+      const qp = readParams()
+      if (saved.symbol) setSymbol(saved.symbol)
+      if (saved.timeframe) setTimeframe(saved.timeframe)
+      if (typeof saved.autoRefresh === 'boolean') setAutoRefresh(saved.autoRefresh)
+      if (typeof saved.refreshSec === 'number') setRefreshSec(saved.refreshSec)
+      if (typeof saved.showIchi === 'boolean') setShowIchi(saved.showIchi)
+      if (typeof saved.showRibbon === 'boolean') setShowRibbon(saved.showRibbon)
+      if (typeof saved.showSaty === 'boolean') setShowSaty(saved.showSaty)
+      if (typeof saved.showSqueeze === 'boolean') setShowSqueeze(saved.showSqueeze)
+      if (typeof saved.showEma821 === 'boolean') setShowEma821(saved.showEma821)
+      if (typeof saved.showEma512 === 'boolean') setShowEma512(saved.showEma512)
+      if (typeof saved.showEma89 === 'boolean') setShowEma89(saved.showEma89)
+      if (typeof saved.showEma3450 === 'boolean') setShowEma3450(saved.showEma3450)
+      if (typeof saved.autoLoadChange === 'boolean') setAutoLoadChange(saved.autoLoadChange)
+      // Override with URL params if present
+      if (qp.symbol) setSymbol(qp.symbol)
+      if (qp.timeframe) setTimeframe(qp.timeframe)
+      if (typeof qp.threshold === 'number') setThreshold(qp.threshold)
+      if (typeof qp.enforceDaily === 'boolean') setEnforceDaily(qp.enforceDaily)
+      if (typeof qp.streaming === 'boolean') setStreaming(qp.streaming)
+      if (typeof qp.ema821 === 'boolean') setShowEma821(qp.ema821)
+      if (typeof qp.ema512 === 'boolean') setShowEma512(qp.ema512)
+      if (typeof qp.ema89 === 'boolean') setShowEma89(qp.ema89)
+      if (typeof qp.ema3450 === 'boolean') setShowEma3450(qp.ema3450)
+      if (typeof qp.ichi === 'boolean') setShowIchi(qp.ichi)
+      if (typeof qp.ribbon === 'boolean') setShowRibbon(qp.ribbon)
+      if (typeof qp.saty === 'boolean') setShowSaty(qp.saty)
+    } catch {}
+    loadBars()
+    loadDaily()
+    // Fetch account once for trade sizing
+    fetch('/api/alpaca/account').then(r => r.json()).then(setAccount).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+  const prefs = {
+      symbol, timeframe, autoRefresh, refreshSec,
+      showIchi, showRibbon, showSaty, showSqueeze,
+      showEma821, showEma512, showEma89, showEma3450,
+      autoLoadChange,
+    }
+    try { localStorage.setItem('iava.settings', JSON.stringify(prefs)) } catch {}
+  }, [symbol, timeframe, autoRefresh, refreshSec, showIchi, showRibbon, showSaty, showSqueeze, showEma821, showEma512, showEma89, showEma3450, autoLoadChange])
+
+  // Sync key UI state to URL for deep links
+  useEffect(() => {
+    writeParams({ symbol, timeframe, threshold, enforceDaily, streaming, showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty })
+  }, [symbol, timeframe, threshold, enforceDaily, streaming, showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty])
+
   const presets = {
     manual: null,
     trendDaily: {
@@ -197,188 +235,7 @@ export default function App() {
       showIchi: false,
       enforceDaily: false,
     },
-    breakoutDailyStrong: {
-      showEma821: true,
-      showEma512: true,
-      showEma89: false,
-      showEma3450: true,
-      showRibbon: true,
-      showIchi: true,
-      enforceDaily: true,
-    },
-    momentumContinuation: {
-      showEma821: true,
-      showEma512: false,
-      showEma89: true,
-      showEma3450: false,
-      showRibbon: true,
-      showIchi: false,
-      enforceDaily: false,
-    },
   }
-
-  const presetDescriptions = {
-    manual: 'Customize overlays, gating, and parameters manually. Hint: red chips on the chart show overlays a preset expects that are currently OFF.',
-    trendDaily: 'Trend-following with EMA 8/21/34 + Ichimoku; Daily confluence ON. Use for aligned trends. Hint: red chips on chart indicate expected overlays are OFF.',
-    pullbackDaily: 'Pullbacks with EMA 5/12 and 8/9 in trend context; Daily confluence ON. Hint: red chips on chart indicate expected overlays are OFF.',
-    intradayBreakout: 'Intraday momentum breakouts; lighter regime filter. Best on liquid names during session. Hint: red chips on chart indicate expected overlays are OFF.',
-    dailyTrendFollow: 'Swing trend entries with Daily alignment; higher conviction, slower cadence. Hint: red chips on chart indicate expected overlays are OFF.',
-    meanRevertIntraday: 'Counter‑trend fades on intraday extremes; use smaller risk and tighter stops. Hint: red chips on chart indicate expected overlays are OFF.',
-    breakoutDailyStrong: 'Stronger breakout stack (EMAs + Ichimoku) with Daily confluence ON. Hint: red chips on chart indicate expected overlays are OFF.',
-    momentumContinuation: 'Continuation after initial push; ribbon + fast EMA cloud for momentum. Hint: red chips on chart indicate expected overlays are OFF.',
-  }
-
-  // Preset overlay expectations vs current state (for gentle hints)
-  const presetExpected = useMemo(() => {
-    if (mtfPreset === 'manual') return null
-    const p = presets[mtfPreset]
-    if (!p) return null
-    return {
-      ema821: !!p.showEma821,
-      ema512: !!p.showEma512,
-      ema89: !!p.showEma89,
-      ema3450: !!p.showEma3450,
-      ribbon: !!p.showRibbon,
-      ichi: !!p.showIchi,
-    }
-  }, [mtfPreset])
-  const currentOverlay = useMemo(() => ({
-    ema821: !!showEma821,
-    ema512: !!showEma512,
-    ema89: !!showEma89,
-    ema3450: !!showEma3450,
-    ribbon: !!showRibbon,
-    ichi: !!showIchi,
-  }), [showEma821, showEma512, showEma89, showEma3450, showRibbon, showIchi])
-
-  const [account, setAccount] = useState(null)
-  const signalState = useMemo(() => computeStates(bars), [bars])
-  const dailyState = useMemo(() => (dailyBars?.length ? computeStates(dailyBars) : null), [dailyBars])
-
-  const stale = useMemo(() => {
-    if (!bars?.length) return true
-    const last = bars[bars.length - 1]?.time
-    if (!last) return true
-    const now = Math.floor(Date.now()/1000)
-    const dt = now - last
-    const tf = timeframe.toLowerCase()
-    const maxAge = tf.includes('1min') ? 180 : tf.includes('5min') ? 600 : tf.includes('15min') ? 1800 : tf.includes('1hour') ? 7200 : 172800
-    return dt > maxAge
-  }, [bars, timeframe])
-
-  async function loadBars(s = symbol, tf = timeframe) {
-    try {
-      const myId = ++loadReq.current
-      setLoading(true)
-      setError('')
-      const res = await fetchBarsApi(s, tf, 500)
-      if (myId !== loadReq.current) return
-      if (Array.isArray(res) && res.length) { setBars(res); setUsingSample(false) }
-      else throw new Error('No data returned')
-    } catch (e) {
-      if (e && e.code === 'RATE_LIMIT') {
-        if (showRateBanner) {
-          const secs = Math.max(3, parseInt(e.retryAfter || '0', 10) || 5)
-          setRateLimitUntil(Date.now() + secs * 1000)
-          setError('Rate limit hit. Using current data…')
-        } else {
-          setError('')
-        }
-      } else {
-        setError(e?.message || 'Failed to load data; using sample if empty')
-      }
-      // Only fall back to sample if we have nothing to show yet; otherwise keep current bars
-      setBars(prev => (Array.isArray(prev) && prev.length) ? prev : generateSampleOHLC())
-      setUsingSample(prev => (Array.isArray(bars) && bars.length) ? prev : true)
-    } finally {
-      setLoading(false)
-      setUpdatedAt(Date.now())
-    }
-  }
-
-  async function loadDaily(s = symbol) {
-    try {
-      const res = await fetchBarsApi(s, '1Day', 400)
-      if (Array.isArray(res) && res.length) setDailyBars(res)
-    } catch {}
-  }
-
-  // Load secondary timeframe for consensus (e.g., 1Min->5Min, 5Min->15Min, 15Min->1Hour)
-  function mapSecondary(tf) {
-    const t = (tf || '').toLowerCase()
-    if (t.includes('1min')) return '5Min'
-    if (t.includes('5min')) return '15Min'
-    if (t.includes('15min')) return '1Hour'
-    return null
-  }
-
-  async function loadSecondary(s = symbol, tf = timeframe) {
-    const sec = mapSecondary(tf)
-    if (!sec) { setSecBars([]); setConsensus(null); return }
-    try {
-      const res = await fetchBarsApi(s, sec, 500)
-      setSecBars(Array.isArray(res) ? res : [])
-    } catch { setSecBars([]) }
-  }
-
-  useEffect(() => {
-    // Load persisted settings
-    try {
-      const saved = JSON.parse(localStorage.getItem('iava.settings') || '{}')
-      const qp = readParams()
-      if (saved.symbol) setSymbol(saved.symbol)
-      if (saved.timeframe) setTimeframe(saved.timeframe)
-      if (typeof saved.autoRefresh === 'boolean') setAutoRefresh(saved.autoRefresh)
-      if (typeof saved.refreshSec === 'number') setRefreshSec(saved.refreshSec)
-      if (typeof saved.streaming === 'boolean') setStreaming(saved.streaming)
-      if (typeof saved.consensusBonus === 'boolean') setConsensusBonus(saved.consensusBonus)
-      if (typeof saved.showIchi === 'boolean') setShowIchi(saved.showIchi)
-      if (typeof saved.showRibbon === 'boolean') setShowRibbon(saved.showRibbon)
-      if (typeof saved.showSaty === 'boolean') setShowSaty(saved.showSaty)
-      if (typeof saved.showSqueeze === 'boolean') setShowSqueeze(saved.showSqueeze)
-      if (typeof saved.showEma821 === 'boolean') setShowEma821(saved.showEma821)
-      if (typeof saved.showEma512 === 'boolean') setShowEma512(saved.showEma512)
-      if (typeof saved.showEma89 === 'boolean') setShowEma89(saved.showEma89)
-      if (typeof saved.showEma3450 === 'boolean') setShowEma3450(saved.showEma3450)
-      if (typeof saved.autoLoadChange === 'boolean') setAutoLoadChange(saved.autoLoadChange)
-      // Override with URL params if present
-      if (qp.symbol) setSymbol(qp.symbol)
-      if (qp.timeframe) setTimeframe(qp.timeframe)
-      if (typeof qp.threshold === 'number') setThreshold(qp.threshold)
-      if (typeof qp.enforceDaily === 'boolean') setEnforceDaily(qp.enforceDaily)
-      if (typeof qp.consensusBonus === 'boolean') setConsensusBonus(qp.consensusBonus)
-      if (typeof qp.streaming === 'boolean') setStreaming(qp.streaming)
-      if (typeof qp.ema821 === 'boolean') setShowEma821(qp.ema821)
-      if (typeof qp.ema512 === 'boolean') setShowEma512(qp.ema512)
-      if (typeof qp.ema89 === 'boolean') setShowEma89(qp.ema89)
-      if (typeof qp.ema3450 === 'boolean') setShowEma3450(qp.ema3450)
-      if (typeof qp.ichi === 'boolean') setShowIchi(qp.ichi)
-      if (typeof qp.ribbon === 'boolean') setShowRibbon(qp.ribbon)
-      if (typeof qp.saty === 'boolean') setShowSaty(qp.saty)
-    } catch {}
-    loadBars()
-    loadDaily()
-    if (consensusBonus) loadSecondary()
-    // Fetch account once for trade sizing
-    fetch('/api/alpaca/account').then(r => r.json()).then(setAccount).catch(() => {})
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
-  const prefs = {
-      symbol, timeframe, autoRefresh, refreshSec,
-      showIchi, showRibbon, showSaty, showSqueeze,
-      showEma821, showEma512, showEma89, showEma3450,
-      autoLoadChange, streaming, consensusBonus,
-    }
-    try { localStorage.setItem('iava.settings', JSON.stringify(prefs)) } catch {}
-  }, [symbol, timeframe, autoRefresh, refreshSec, showIchi, showRibbon, showSaty, showSqueeze, showEma821, showEma512, showEma89, showEma3450, autoLoadChange])
-
-  // Sync key UI state to URL for deep links
-  useEffect(() => {
-    writeParams({ symbol, timeframe, threshold, enforceDaily, streaming, consensusBonus, showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty })
-  }, [symbol, timeframe, threshold, enforceDaily, streaming, consensusBonus, showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty])
-
 
   function applyPreset(id) {
     setMtfPreset(id)
@@ -391,41 +248,6 @@ export default function App() {
     if (typeof preset.showRibbon === 'boolean') setShowRibbon(preset.showRibbon)
     if (typeof preset.showIchi === 'boolean') setShowIchi(preset.showIchi)
     if (typeof preset.enforceDaily === 'boolean') setEnforceDaily(preset.enforceDaily)
-  }
-
-  // Detect LLM availability for Suggest Preset (AI) enable/disable
-  useEffect(() => {
-    let mounted = true
-    ;(async () => {
-      try {
-        const r = await fetch('/api/health')
-        const j = await r.json()
-        if (mounted) setLlmReady(Boolean(j?.api?.llm?.configured))
-      } catch { if (mounted) setLlmReady(false) }
-    })()
-    return () => { mounted = false }
-  }, [])
-
-  async function suggestPresetAI() {
-    try {
-      setPresetSuggesting(true); setPresetSuggestErr('')
-      const statePayload = { ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _timeframe: timeframe }
-      const allowed = Object.keys(presets).filter(k => k !== 'manual')
-      const r = await fetch('/api/llm/preset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state: statePayload, presets: allowed }) })
-      const j = await r.json()
-      if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
-      const label = mlabel(j.presetId || '')
-      const reason = j.reason || 'AI suggestion'
-      const apply = window.confirm(`AI suggests: ${label}\nReason: ${reason}\nApply this preset and parameters?`)
-      if (apply && j.presetId && presets[j.presetId]) {
-        applyPreset(j.presetId)
-        if (j.params && typeof j.params.th === 'number') setThreshold(Math.max(0, Math.min(100, Math.round(j.params.th))))
-      }
-    } catch (e) {
-      setPresetSuggestErr(String(e.message || e))
-    } finally {
-      setPresetSuggesting(false)
-    }
   }
 
   // Build signal timeline: append on new last bar, include top contributors
@@ -462,23 +284,8 @@ export default function App() {
 
   useEffect(() => {
     loadDaily(symbol)
-    loadSecondary(symbol, timeframe)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol])
-
-  useEffect(() => { if (consensusBonus) loadSecondary(symbol, timeframe); else { setSecBars([]); setConsensus(null) } /* eslint-disable-line react-hooks/exhaustive-deps */ }, [timeframe, consensusBonus])
-
-  // Compute consensus with secondary timeframe
-  useEffect(() => {
-    const secTf = mapSecondary(timeframe)
-    if (!secTf || !secBars?.length || !bars?.length) { setConsensus(null); return }
-    try {
-      const primary = computeStates(bars)
-      const secondary = computeStates(secBars)
-      const align = (primary.pivotNow === secondary.pivotNow) && primary.pivotNow !== 'neutral'
-      setConsensus({ secTf, align, primary, secondary })
-    } catch { setConsensus(null) }
-  }, [bars, secBars, timeframe])
 
   // Streaming (beta): SSE for intraday
   useStreamingBars({
@@ -499,151 +306,79 @@ export default function App() {
   })
 
   return (
-    <div className="min-h-screen bg-transparent text-slate-100 bg-grid">
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-      {showRateBanner && <RateLimitBanner until={rateLimitUntil} />}
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+      <RateLimitBanner until={rateLimitUntil} />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <Hero />
-      <div className="card p-4 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
+
+      {/* Unified Control Bar */}
+      <div className="card p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Primary Controls */}
           <SymbolSearch value={symbol} onChange={setSymbol} onSubmit={(sym) => loadBars(sym, timeframe)} />
-          <select value={timeframe} onChange={e => { const tf = e.target.value; setTimeframe(tf); if (autoLoadChange) loadBars(symbol, tf) }} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm">
-            <option value="1Min">1Min</option>
-            <option value="5Min">5Min</option>
-            <option value="15Min">15Min</option>
-            <option value="1Hour">1Hour</option>
-            <option value="1Day">1Day</option>
+          <select value={timeframe} onChange={e => { const tf = e.target.value; setTimeframe(tf); if (autoLoadChange) loadBars(symbol, tf) }} className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+            <option value="1Min">1 Min</option>
+            <option value="5Min">5 Min</option>
+            <option value="15Min">15 Min</option>
+            <option value="1Hour">1 Hour</option>
+            <option value="1Day">1 Day</option>
           </select>
-          <button onClick={() => loadBars()} className="bg-indigo-600 hover:bg-indigo-500 rounded px-3 py-1 text-sm">Load</button>
-          {loading && <span className="text-xs text-slate-400 ml-2">Loading…</span>}
-          {error && !loading && <span className="text-xs text-rose-400 ml-2">{error}</span>}
-        </div>
-        <div className="w-full mt-2">
-          <Presets symbol={symbol} setSymbol={setSymbol} timeframe={timeframe} setTimeframe={setTimeframe} onLoad={(s, tf) => loadBars(s, tf)} />
-        </div>
-        <div className="text-[11px] text-slate-500 -mt-1">
-          Shortcuts: 1–7 switch presets · ←/→ navigate watchlist · Space toggle Auto
-        </div>
-        <span className="text-sm text-slate-400 inline-flex items-center gap-2">Overlays <InfoPopover title="Overlays">Toggle EMA Clouds (pullback/trend), Ichimoku (regime), Pivot Ribbon (8/21/34) and SATY ATR levels (targets).</InfoPopover>
-          <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'Which overlays should I enable for this setup?', context: { overlays: { showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty, showSqueeze }, timeframe, symbol } } })) } catch {} }} className="text-xs text-slate-400 underline">Ask AI</button>
-        </span>
-        <label className="inline-flex items-center gap-2 text-sm">
-          Preset
-          <select value={mtfPreset} onChange={e => applyPreset(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1">
-            <option value="manual">Manual</option>
-            <option value="trendDaily">Trend + Daily Confluence</option>
-            <option value="pullbackDaily">Pullback + Daily Confluence</option>
-            <option value="intradayBreakout">Intraday Breakout</option>
-            <option value="dailyTrendFollow">Daily Trend Follow</option>
-            <option value="meanRevertIntraday">Mean Revert (Intra)</option>
-            <option value="breakoutDailyStrong">Breakout (Daily, Strong)</option>
-            <option value="momentumContinuation">Momentum Continuation</option>
-          </select>
-          <InfoPopover title="Preset Guidance">{presetDescriptions[mtfPreset] || "Strategy-driven overlay & gating configuration."}</InfoPopover>
-          <PresetHelp descriptions={presetDescriptions} />
-          <button onClick={suggestPresetAI} disabled={presetSuggesting || llmReady === false} title={llmReady === false ? 'LLM not configured' : ''} className="ml-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-xs rounded px-2 py-1 border border-slate-700">
-            {presetSuggesting ? 'Suggesting…' : 'Suggest Preset (AI)'}
+          <button onClick={() => loadBars()} className="btn btn-primary px-4 py-2 text-sm font-medium" disabled={loading}>
+            {loading ? 'Loading...' : 'Load Data'}
           </button>
-          {presetSuggestErr && <span className="text-xs text-rose-400 ml-2">{presetSuggestErr}</span>}
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-indigo-500" checked={showEma821} onChange={e => setShowEma821(e.target.checked)} />
-          <span>EMA 8/21</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-cyan-500" checked={showEma512} onChange={e => setShowEma512(e.target.checked)} />
-          <span>EMA 5/12</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-violet-500" checked={showEma89} onChange={e => setShowEma89(e.target.checked)} />
-          <span>EMA 8/9</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-emerald-500" checked={showEma3450} onChange={e => setShowEma3450(e.target.checked)} />
-          <span>EMA 34/50</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-indigo-500" checked={showIchi} onChange={e => setShowIchi(e.target.checked)} />
-          <span>Ichimoku</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-lime-500" checked={showRibbon} onChange={e => setShowRibbon(e.target.checked)} />
-          <span>Pivot Ribbon</span>
-        </label>
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" className="accent-indigo-500" checked={showSaty} onChange={e => setShowSaty(e.target.checked)} />
-          <span>SATY ATR Levels</span>
-        </label>
-        <div className="ml-auto text-sm text-slate-400">
-          Trend: <span className="text-slate-200">{pivotRibbonTrend(bars.map(b => b.close))}</span>
-          {showSaty && overlays.saty?.atr ? (
-            <>
-              <span className="mx-2">•</span>
-              ATR: <span className="text-slate-200">{overlays.saty.atr.toFixed(2)}</span>
-              <span className="mx-2">•</span>
-              Range used: <span className="text-slate-200">{Math.round(overlays.saty.rangeUsed * 100)}%</span>
-            </>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2 ml-4">
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input type="checkbox" className="accent-indigo-500" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />
-            Auto-Refresh
-          </label>
-          <select value={refreshSec} onChange={e => setRefreshSec(parseInt(e.target.value,10))} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm">
-            <option value={5}>5s</option>
-            <option value={15}>15s</option>
-            <option value={30}>30s</option>
-            <option value={60}>60s</option>
-          </select>
-          {streamingAllowed && (
-            <label className="inline-flex items-center gap-2 text-sm ml-2" title={timeframe==='1Day' ? 'Streaming disabled on Daily' : ''}>
-              <input type="checkbox" className="accent-cyan-500" checked={streaming} disabled={timeframe==='1Day'} onChange={e => { setStreaming(e.target.checked); if (e.target.checked) setAutoRefresh(false) }} />
-              Streaming (beta) <InfoPopover title="Streaming (beta)">Live bars via SSE. Use for intraday. Falls back to polling when off.</InfoPopover>
+
+          {/* Strategy Preset */}
+          <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-700">
+            <span className="text-xs text-slate-400">Strategy:</span>
+            <select value={mtfPreset} onChange={e => applyPreset(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+              <option value="manual">Manual</option>
+              <option value="trendDaily">Trend Daily</option>
+              <option value="pullbackDaily">Pullback Daily</option>
+              <option value="intradayBreakout">Intraday Breakout</option>
+              <option value="dailyTrendFollow">Daily Trend Follow</option>
+              <option value="meanRevertIntraday">Mean Revert Intraday</option>
+            </select>
+          </div>
+
+          {/* Quick Toggles */}
+          <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-700">
+            <label className="inline-flex items-center gap-2 text-sm cursor-pointer hover:text-slate-200 transition-colors">
+              <input type="checkbox" className="accent-indigo-500" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} aria-label="Enable auto-refresh" />
+              <span className="text-slate-400">Auto-Refresh</span>
             </label>
-          )}
-          <label className="inline-flex items-center gap-2 text-sm ml-2">
-            <input type="checkbox" className="accent-indigo-500" checked={autoLoadChange} onChange={e => setAutoLoadChange(e.target.checked)} />
-            Auto-Load on Change
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm ml-2">
-            <input type="checkbox" className="accent-indigo-500" checked={enforceDaily} onChange={e => setEnforceDaily(e.target.checked)} />
-            Enforce Daily Confluence <InfoPopover title="Daily Confluence">Requires Daily Pivot + Ichimoku agreement with your direction (bull for longs, bear for shorts). Use for higher conviction; toggle off to explore setups with soft risk.</InfoPopover>
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm ml-2">
-            <input type="checkbox" className="accent-indigo-500" checked={consensusBonus} onChange={e => setConsensusBonus(e.target.checked)} />
-            Consensus Bonus <InfoPopover title="Consensus Bonus">Adds +10 to displayed score when primary TF trend matches the secondary TF (e.g., 5→15Min). Use as a visual nudge; does not change API backtests unless you enable consensus server-side.</InfoPopover>
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm ml-2">
-            <span>Threshold</span> <InfoPopover title="Threshold">Minimum Unicorn Score to consider a setup. Raise to be more selective; lower to explore more candidates. Scanner applies threshold after gating.</InfoPopover>
-            <input type="range" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10))} />
-            <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16" />
-          </label>
+            {!autoRefresh && timeframe !== '1Day' && (
+              <label className="inline-flex items-center gap-2 text-sm cursor-pointer hover:text-slate-200 transition-colors">
+                <input type="checkbox" className="accent-cyan-500" checked={streaming} onChange={e => { setStreaming(e.target.checked); if (e.target.checked) setAutoRefresh(false) }} aria-label="Enable streaming data" />
+                <span className="text-slate-400">Stream</span>
+              </label>
+            )}
+            <label className="inline-flex items-center gap-2 text-sm cursor-pointer hover:text-slate-200 transition-colors">
+              <input type="checkbox" className="accent-emerald-500" checked={enforceDaily} onChange={e => setEnforceDaily(e.target.checked)} aria-label="Enforce daily timeframe confluence" />
+              <span className="text-slate-400">Daily Confluence</span>
+            </label>
+          </div>
+
+          {/* Threshold */}
+          <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-700">
+            <span className="text-xs text-slate-400">Threshold:</span>
+            <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="bg-slate-800 border border-slate-700 rounded px-2 py-1 w-16 text-sm text-center focus:ring-2 focus:ring-indigo-500" />
+          </div>
+
+          {/* Right Side */}
+          {error && !loading && <span className="text-xs text-rose-400">{error}</span>}
+          <div className="ml-auto flex items-center gap-3">
+            <HealthBadge />
+            <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); alert('Link copied'); } catch(_) {} }} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-3 py-2 border border-slate-700 transition-all">
+              📋 Share
+            </button>
+          </div>
         </div>
-        <div className="ml-auto"><HealthBadge /></div>
-        <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); alert('Link copied'); } catch(_) {} }} className="ml-2 bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">Copy Link</button>
       </div>
-      <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streaming || autoRefresh} consensus={consensus} threshold={threshold} />
+
+      {/* Market Stats & Chart */}
+      <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streaming || autoRefresh} />
       <LegendChips overlays={overlays} />
-      <CandleChart
-        bars={bars}
-        overlays={overlays}
-        markers={signalState.markers}
-        loading={loading}
-        focusTime={focusTime}
-        presetExpected={presetExpected}
-        currentOverlay={currentOverlay}
-        overlayToggles={{
-          ema821: () => setShowEma821(v => !v),
-          ema512: () => setShowEma512(v => !v),
-          ema89: () => setShowEma89(v => !v),
-          ema3450: () => setShowEma3450(v => !v),
-          ribbon: () => setShowRibbon(v => !v),
-          ichi: () => setShowIchi(v => !v),
-          saty: () => setShowSaty(v => !v),
-          squeeze: () => setShowSqueeze(v => !v),
-        }}
-        presetLabel={mtfPreset !== 'manual' ? mlabel(mtfPreset) : ''}
-      />
+      <CandleChart bars={bars} overlays={overlays} markers={signalState.markers} loading={loading} focusTime={focusTime} />
       <OverlayChips
         showEma821={showEma821} setShowEma821={setShowEma821}
         showEma512={showEma512} setShowEma512={setShowEma512}
@@ -655,36 +390,80 @@ export default function App() {
       />
       <SignalFeed items={signalHistory} onSelect={(item) => setFocusTime(item.time)} />
       <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} rateLimitUntil={rateLimitUntil} />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {showSqueeze && <SqueezePanel bars={bars} />}
-        <SignalsPanel bars={bars} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), components: { ...(signalState?.components||{}), ...(consensusBonus && consensus?.align ? { consensus: 10 } : {}) } }} />
+      {/* Unicorn Signal Callout (always visible when triggered) */}
+      <UnicornCallout threshold={threshold} timeframe={timeframe} state={{ ...signalState, _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily }} />
+
+      {/* Navigation Tabs */}
+      <div className="card p-1 flex gap-1">
+        <button
+          onClick={() => setActiveSection('chart')}
+          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-all ${activeSection === 'chart' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+        >
+          📊 Chart & Signals
+        </button>
+        <button
+          onClick={() => setActiveSection('analysis')}
+          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-all ${activeSection === 'analysis' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+        >
+          🔬 Analysis
+        </button>
+        <button
+          onClick={() => setActiveSection('portfolio')}
+          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-all ${activeSection === 'portfolio' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+        >
+          💼 Portfolio
+        </button>
+        <button
+          onClick={() => setActiveSection('tools')}
+          className={`flex-1 px-4 py-2 rounded text-sm font-medium transition-all ${activeSection === 'tools' ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+        >
+          🛠️ Tools
+        </button>
       </div>
-      <ScannerPanel onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf || timeframe); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }} defaultTimeframe={timeframe} />
-      <WatchlistNavigator onLoadSymbol={(sym, tf) => { setSymbol(sym); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }} timeframe={timeframe} />
-      <WatchlistPanel onLoadSymbol={(sym) => { setSymbol(sym); loadBars(sym, timeframe) }} />
-      {hud && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-3 py-1 rounded-md border border-slate-700 bg-slate-900/80 text-slate-100 text-sm shadow">
-          {hud}
+
+      {/* Chart & Signals Section */}
+      {activeSection === 'chart' && (
+        <div className="space-y-4 animate-fadeIn">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {showSqueeze && <SqueezePanel bars={bars} />}
+            <SignalsPanel state={signalState} />
+          </div>
+          <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
+          <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />
         </div>
       )}
-      <BacktestPanel symbol={symbol} timeframe={timeframe} preset={backtestPreset} />
-      <BatchBacktestPanel defaultTimeframe={timeframe} />
-      <HelpFab context={{ symbol, timeframe, enforceDaily, consensus: consensus?.align || false, overlays: { showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty, showSqueeze }, score: Math.round((signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0)), daily: dailyState ? { pivot: dailyState.pivotNow, ichi: dailyState.ichiRegime } : null }} />
-      <UnicornCallout threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily, _consensus: consensus, _timeframe: timeframe }} />
-      <UnicornActionBar threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} />
-      <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
-      <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />
-      <OrdersPanel symbol={symbol} lastPrice={bars[bars.length-1]?.close} saty={overlays.saty} />
-      <section className="card p-4">
-        <h2 className="text-lg font-semibold mb-2">Project Structure</h2>
-        <ul className="list-disc pl-6 text-slate-300">
-          <li><code>src/components</code> – UI and frontend components</li>
-          <li><code>src/services</code> – API and backend-facing logic</li>
-          <li><code>src/utils</code> – Utilities and shared helpers</li>
-        </ul>
-      </section>
-        <BuildInfoFooter />
+
+      {/* Analysis Section */}
+      {activeSection === 'analysis' && (
+        <div className="space-y-4 animate-fadeIn">
+          <BacktestPanel symbol={symbol} timeframe={timeframe} />
+          <BatchBacktestPanel />
+          <ScoreOptimizer symbol={symbol} timeframe={timeframe} />
+        </div>
+      )}
+
+      {/* Portfolio Section */}
+      {activeSection === 'portfolio' && (
+        <div className="space-y-4 animate-fadeIn">
+          <OrdersPanel symbol={symbol} lastPrice={bars[bars.length-1]?.close} />
+          <AnalyticsDashboard />
+        </div>
+      )}
+
+      {/* Tools Section */}
+      {activeSection === 'tools' && (
+        <div className="space-y-4 animate-fadeIn">
+          <ScannerPanel onLoadSymbol={(sym) => { setSymbol(sym); if (autoLoadChange) loadBars(sym, timeframe) }} defaultTimeframe={timeframe} />
+          <WatchlistPanel onLoadSymbol={(sym) => { setSymbol(sym); if (autoLoadChange) loadBars(sym, timeframe) }} />
+          <WatchlistNavigator onLoad={(sym, tf) => { setSymbol(sym); if (tf) setTimeframe(tf); if (autoLoadChange) loadBars(sym, tf || timeframe) }} />
+        </div>
+      )}
+
+      <BuildInfoFooter />
       </div>
+
+      {/* Floating Help Button */}
+      <HelpFab />
     </div>
   )
 }
