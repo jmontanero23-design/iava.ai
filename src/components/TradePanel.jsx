@@ -208,6 +208,42 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
           </div>
         </div>
 
+        {/* AI Risk Advisor (AI Feature #4) */}
+        {last && stop && (
+          <div className="mb-4 p-3 bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">🛡️</span>
+              <div>
+                <div className="text-sm font-bold text-amber-300">AI Risk Advisor</div>
+                <div className="text-xs text-slate-400">Position sizing recommendation</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Risk Per Trade:</span>
+                <span className="text-amber-300 font-semibold">{riskPct}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Risk Amount:</span>
+                <span className="text-amber-300 font-semibold">${(equity * (riskPct / 100)).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Distance to Stop:</span>
+                <span className="text-amber-300 font-semibold">${Math.abs(last.close - stop).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Recommended Qty:</span>
+                <span className="text-amber-300 font-semibold">{qty} shares</span>
+              </div>
+            </div>
+            <div className="mt-2 text-xs text-slate-300 bg-slate-800/50 rounded p-2">
+              💡 <strong>Smart sizing:</strong> Risk {riskPct}% of ${equity.toFixed(0)} = $
+              {(equity * (riskPct / 100)).toFixed(2)}. With ${Math.abs(last.close - stop).toFixed(2)} stop distance,
+              buy {qty} shares to risk exactly {riskPct}%.
+            </div>
+          </div>
+        )}
+
         {/* Order Configuration */}
         <div className="panel-header mb-3">
           <span className="text-xs font-semibold text-slate-300">Order Configuration</span>
