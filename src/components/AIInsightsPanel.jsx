@@ -121,8 +121,11 @@ export default function AIInsightsPanel({
 
   const { signalType, regime, confidence, risk, anomalies, mtfAnalysis } = insights || {}
 
-  // Determine overall quality color
-  const qualityScore = confidence?.probability || 0
+  // Determine overall quality color - ensure valid number
+  const rawQualityScore = confidence?.probability
+  const qualityScore = (typeof rawQualityScore === 'number' && !isNaN(rawQualityScore) && isFinite(rawQualityScore))
+    ? Math.max(0, Math.min(1, rawQualityScore))
+    : 0
   const qualityColor = qualityScore >= 0.7 ? 'emerald' : qualityScore >= 0.5 ? 'cyan' : qualityScore >= 0.3 ? 'yellow' : 'rose'
 
   // Get current Unicorn score if available
@@ -259,7 +262,7 @@ export default function AIInsightsPanel({
               <div className={`text-xs text-${qualityColor}-400 font-semibold uppercase tracking-wider`}>Probability</div>
             </div>
             <div className={`text-sm font-bold text-${qualityColor}-300`}>
-              {(qualityScore * 100).toFixed(0)}%
+              {Math.round(qualityScore * 100)}%
             </div>
           </div>
         </div>
@@ -342,7 +345,9 @@ export default function AIInsightsPanel({
                           style={{ width: `${value * 100}%` }}
                         />
                       </div>
-                      <span className="text-slate-300 w-8 text-right">{(value * 100).toFixed(0)}%</span>
+                      <span className="text-slate-300 w-8 text-right">
+                        {typeof value === 'number' && !isNaN(value) ? Math.round(value * 100) : 0}%
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -358,7 +363,11 @@ export default function AIInsightsPanel({
               </div>
               <div className="text-xs text-slate-400 space-y-1">
                 <div>Type: <span className="text-slate-200">{regime.regime}</span></div>
-                <div>Confidence: <span className="text-slate-200">{(regime.confidence * 100).toFixed(0)}%</span></div>
+                <div>Confidence: <span className="text-slate-200">
+                  {typeof regime.confidence === 'number' && !isNaN(regime.confidence)
+                    ? Math.round(Math.max(0, Math.min(100, regime.confidence * 100)))
+                    : 0}%
+                </span></div>
                 {regime.recommendation && (
                   <div>Rec: <span className="text-slate-200">{regime.recommendation}</span></div>
                 )}
@@ -378,7 +387,9 @@ export default function AIInsightsPanel({
                   mtfAnalysis.alignment > 0.5 ? 'text-cyan-400' :
                   'text-yellow-400'
                 }`}>
-                  {(mtfAnalysis.alignment * 100).toFixed(0)}%
+                  {typeof mtfAnalysis.alignment === 'number' && !isNaN(mtfAnalysis.alignment)
+                    ? Math.round(mtfAnalysis.alignment * 100)
+                    : 0}%
                 </span>
               </div>
             </div>

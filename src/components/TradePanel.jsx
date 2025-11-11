@@ -250,6 +250,12 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
                 type="number"
                 value={stop ?? ''}
                 onChange={e => setStop(Number(e.target.value))}
+                onBlur={e => {
+                  const val = parseFloat(e.target.value)
+                  if (!isNaN(val) && isFinite(val)) {
+                    setStop(Math.round(val * 100) / 100)
+                  }
+                }}
                 step={0.01}
                 className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30 transition-all"
               />
@@ -261,6 +267,12 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
                   type="number"
                   value={tp ?? ''}
                   onChange={e => setTp(Number(e.target.value))}
+                  onBlur={e => {
+                    const val = parseFloat(e.target.value)
+                    if (!isNaN(val) && isFinite(val)) {
+                      setTp(Math.round(val * 100) / 100)
+                    }
+                  }}
                   step={0.01}
                   className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
                 />
