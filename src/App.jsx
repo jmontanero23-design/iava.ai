@@ -17,6 +17,30 @@ import AppChart from './AppChart.jsx'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('chart')
+  const [selectedFeature, setSelectedFeature] = useState(null)
+
+  // Handle feature selection from dashboard
+  const handleFeatureSelect = (featureId) => {
+    setSelectedFeature(featureId)
+    // Map feature IDs to tab names where they exist
+    const featureTabMap = {
+      'ai_chat': 'ai-chat',
+      'nlp_scanner': 'nlp-scanner',
+      // Other features stay in dashboard for now
+    }
+
+    if (featureTabMap[featureId]) {
+      setActiveTab(featureTabMap[featureId])
+    } else {
+      // Show feature in dashboard context
+      window.dispatchEvent(new CustomEvent('iava.toast', {
+        detail: {
+          text: `${featureId.replace(/_/g, ' ').toUpperCase()} - Feature active! Check trading chart.`,
+          type: 'success'
+        }
+      }))
+    }
+  }
 
   return (
     <div className="min-h-screen bg-transparent text-slate-100 bg-grid">
@@ -68,7 +92,18 @@ export default function App() {
               }`}
             >
               <img src="/logo.svg" className="w-6 h-6" alt="" />
-              <span>Model Monitoring</span>
+              <span>System Health</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('nlp-scanner')}
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 ${
+                activeTab === 'nlp-scanner'
+                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30'
+                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
+              }`}
+            >
+              <img src="/logo.svg" className="w-6 h-6" alt="" />
+              <span>NLP Scanner</span>
             </button>
           </div>
         </nav>
@@ -79,15 +114,7 @@ export default function App() {
         )}
 
         {activeTab === 'ai-features' && (
-          <AIFeaturesDashboard onFeatureSelect={(id) => {
-            console.log('Selected feature:', id)
-            window.dispatchEvent(new CustomEvent('iava.toast', {
-              detail: {
-                text: `${id} - Feature coming soon!`,
-                type: 'info'
-              }
-            }))
-          }} />
+          <AIFeaturesDashboard onFeatureSelect={handleFeatureSelect} />
         )}
 
         {activeTab === 'ai-chat' && (
@@ -95,6 +122,10 @@ export default function App() {
             status: 'ready',
             features: 12
           }} />
+        )}
+
+        {activeTab === 'nlp-scanner' && (
+          <NaturalLanguageScanner />
         )}
 
         {activeTab === 'monitoring' && (
