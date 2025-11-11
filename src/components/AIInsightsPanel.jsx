@@ -129,34 +129,50 @@ export default function AIInsightsPanel({
   const currentScore = signal?.score || 0
 
   return (
-    <div className="glass-panel p-4 space-y-3">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">🤖</span>
-          <div>
-            <h3 className="text-sm font-semibold text-slate-200">AI Analysis</h3>
-            <p className="text-xs text-slate-400 flex items-center gap-2">
-              <span className={`w-1.5 h-1.5 rounded-full ${
-                isAnalyzing ? 'bg-cyan-400 animate-pulse' :
-                hasInsights ? 'bg-emerald-400 animate-pulse' :
-                'bg-yellow-400'
-              }`} />
-              {isAnalyzing ? 'Analyzing with 12 Features...' :
-               hasInsights ? '12 Features Active' :
-               'Waiting for Signal'}
-            </p>
+    <div className="relative overflow-hidden">
+      {/* Premium animated background */}
+      <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
+
+      <div className="relative glass-panel p-5 space-y-4">
+        {/* Premium Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Icon with dynamic glow */}
+            <div className="relative">
+              <div className={`absolute inset-0 ${
+                isAnalyzing ? 'bg-cyan-500' :
+                hasInsights ? 'bg-emerald-500' :
+                'bg-yellow-500'
+              } blur-xl opacity-50 animate-pulse rounded-full`} />
+              <span className="relative text-3xl filter drop-shadow-lg">🤖</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold bg-gradient-to-r from-indigo-200 via-purple-200 to-cyan-300 bg-clip-text text-transparent">
+                AI Analysis
+              </h3>
+              <p className="text-xs text-slate-400 flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full animate-pulse ${
+                  isAnalyzing ? 'bg-cyan-400' :
+                  hasInsights ? 'bg-emerald-400' :
+                  'bg-yellow-400'
+                }`} />
+                <span className="font-semibold">
+                  {isAnalyzing ? 'Analyzing with 12 Features...' :
+                   hasInsights ? '12 Features Active' :
+                   'Waiting for Signal'}
+                </span>
+              </p>
+            </div>
           </div>
+          {hasInsights && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="px-4 py-2 text-xs font-semibold bg-gradient-to-r from-indigo-600/30 to-purple-600/30 hover:from-indigo-600/40 hover:to-purple-600/40 border border-indigo-500/30 hover:border-indigo-400/50 text-indigo-200 rounded-lg transition-all shadow-lg shadow-indigo-500/10"
+            >
+              {expanded ? '▲ Hide' : '▼ Show'} Details
+            </button>
+          )}
         </div>
-        {hasInsights && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="px-3 py-1 text-xs bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-          >
-            {expanded ? 'Hide Details' : 'Show Details'}
-          </button>
-        )}
-      </div>
 
       {/* Empty State - Show when no signal */}
       {!hasInsights && (
@@ -218,55 +234,88 @@ export default function AIInsightsPanel({
         </div>
       )}
 
-      {/* Quick Summary - Only show when we have insights */}
+      {/* Quick Summary - Premium Cards */}
       {hasInsights && (
         <>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {/* Signal Quality */}
-        <div className="p-2 bg-slate-800/30 rounded-lg">
-          <div className="text-xs text-slate-400 mb-0.5">Signal Type</div>
-          <div className="text-sm font-bold text-emerald-400 uppercase">{signalType}</div>
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl" />
+          <div className="relative p-3 bg-slate-800/50 border border-emerald-500/30 rounded-xl backdrop-blur-sm hover:border-emerald-400/50 transition-all">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">📊</span>
+              <div className="text-xs text-emerald-400 font-semibold uppercase tracking-wider">Signal</div>
+            </div>
+            <div className="text-sm font-bold text-emerald-300 uppercase">{signalType}</div>
+          </div>
         </div>
 
         {/* Predictive Confidence */}
-        <div className="p-2 bg-slate-800/30 rounded-lg">
-          <div className="text-xs text-slate-400 mb-0.5">Win Probability</div>
-          <div className={`text-sm font-bold text-${qualityColor}-400`}>
-            {(qualityScore * 100).toFixed(0)}%
+        <div className="relative group">
+          <div className={`absolute inset-0 bg-gradient-to-r from-${qualityColor}-600 to-${qualityColor}-400 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl`} />
+          <div className={`relative p-3 bg-slate-800/50 border border-${qualityColor}-500/30 rounded-xl backdrop-blur-sm hover:border-${qualityColor}-400/50 transition-all`}>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">🎯</span>
+              <div className={`text-xs text-${qualityColor}-400 font-semibold uppercase tracking-wider`}>Probability</div>
+            </div>
+            <div className={`text-sm font-bold text-${qualityColor}-300`}>
+              {(qualityScore * 100).toFixed(0)}%
+            </div>
           </div>
         </div>
 
         {/* Market Regime */}
-        <div className="p-2 bg-slate-800/30 rounded-lg">
-          <div className="text-xs text-slate-400 mb-0.5">Regime</div>
-          <div className="text-sm font-bold text-cyan-400 capitalize">
-            {regime?.regime?.replace(/_/g, ' ') || 'Unknown'}
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-600 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl" />
+          <div className="relative p-3 bg-slate-800/50 border border-cyan-500/30 rounded-xl backdrop-blur-sm hover:border-cyan-400/50 transition-all">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">🌡️</span>
+              <div className="text-xs text-cyan-400 font-semibold uppercase tracking-wider">Regime</div>
+            </div>
+            <div className="text-sm font-bold text-cyan-300 capitalize">
+              {regime?.regime?.replace(/_/g, ' ') || 'Unknown'}
+            </div>
           </div>
         </div>
 
         {/* Risk Rating */}
-        <div className="p-2 bg-slate-800/30 rounded-lg">
-          <div className="text-xs text-slate-400 mb-0.5">Risk Level</div>
-          <div className={`text-sm font-bold ${
-            risk?.positionSize ? 'text-emerald-400' : 'text-yellow-400'
-          }`}>
-            {risk?.positionSize ? 'Sized' : 'Pending'}
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl" />
+          <div className="relative p-3 bg-slate-800/50 border border-indigo-500/30 rounded-xl backdrop-blur-sm hover:border-indigo-400/50 transition-all">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">⚖️</span>
+              <div className="text-xs text-indigo-400 font-semibold uppercase tracking-wider">Risk</div>
+            </div>
+            <div className={`text-sm font-bold ${risk?.positionSize ? 'text-emerald-300' : 'text-yellow-300'}`}>
+              {risk?.positionSize ? 'Sized' : 'Pending'}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Anomaly Warnings */}
+      {/* Anomaly Warnings - Premium */}
       {anomalies && anomalies.length > 0 && (
-        <div className="p-2 bg-rose-500/10 border border-rose-500/30 rounded-lg">
-          <div className="flex items-start gap-2">
-            <span className="text-rose-400 text-sm">⚠️</span>
-            <div className="flex-1">
-              <div className="text-xs font-semibold text-rose-300 mb-1">
-                {anomalies.length} Anomal{anomalies.length === 1 ? 'y' : 'ies'} Detected
-              </div>
-              <div className="text-xs text-rose-200">
-                {anomalies.slice(0, 2).map(a => a.type).join(', ')}
-                {anomalies.length > 2 && ` +${anomalies.length - 2} more`}
+        <div className="relative">
+          <div className="absolute inset-0 bg-rose-600 blur-xl opacity-10" />
+          <div className="relative p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl">
+            <div className="flex items-start gap-3">
+              <span className="text-rose-400 text-xl">⚠️</span>
+              <div className="flex-1">
+                <div className="text-sm font-bold text-rose-300 mb-1">
+                  {anomalies.length} Anomal{anomalies.length === 1 ? 'y' : 'ies'} Detected
+                </div>
+                <div className="text-xs text-rose-200 flex flex-wrap gap-2">
+                  {anomalies.slice(0, 2).map((a, i) => (
+                    <span key={i} className="px-2 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded">
+                      {a.type}
+                    </span>
+                  ))}
+                  {anomalies.length > 2 && (
+                    <span className="px-2 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded">
+                      +{anomalies.length - 2} more
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -355,11 +404,17 @@ export default function AIInsightsPanel({
       )}
 
       {/* Footer */}
-      <div className="pt-2 border-t border-slate-700 flex items-center justify-between text-xs text-slate-500">
-        <span>Powered by 12 AI Features</span>
-        {hasInsights && insights.timestamp && (
-          <span>Updated {new Date(insights.timestamp).toLocaleTimeString()}</span>
-        )}
+        <div className="pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs">
+          <span className="text-slate-500 flex items-center gap-2">
+            <span className="text-purple-400">💎</span>
+            Powered by 12 AI Features
+          </span>
+          {hasInsights && insights.timestamp && (
+            <span className="text-slate-500">
+              Updated {new Date(insights.timestamp).toLocaleTimeString()}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )
