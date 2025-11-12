@@ -8,7 +8,7 @@
  * - Stale-while-revalidate for JS (show cached, update in background)
  */
 
-const CACHE_VERSION = 'iava-v1.1.0'
+const CACHE_VERSION = 'iava-v1.1.1'
 const STATIC_CACHE = `${CACHE_VERSION}-static`
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`
 const API_CACHE = `${CACHE_VERSION}-api`
@@ -76,9 +76,15 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // API requests: Network-first with fallback to cache
+  // API requests: Network-first with fallback to cache (GET only)
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(networkFirstStrategy(request, API_CACHE))
+    // Only cache GET requests - POST/PUT/DELETE cannot be cached
+    if (request.method === 'GET') {
+      event.respondWith(networkFirstStrategy(request, API_CACHE))
+    } else {
+      // POST/PUT/DELETE: Network-only, no caching
+      event.respondWith(fetch(request))
+    }
     return
   }
 
@@ -125,8 +131,8 @@ async function networkFirstStrategy(request, cacheName) {
   try {
     const response = await fetch(request)
 
-    // Only cache successful responses
-    if (response.ok) {
+    // Only cache successful GET/HEAD requests (Cache API doesn't support POST)
+    if (response.ok && (request.method === 'GET' || request.method === 'HEAD')) {
       const cache = await caches.open(cacheName)
       cache.put(request, response.clone())
     }
@@ -191,9 +197,16 @@ async function staleWhileRevalidateStrategy(request, cacheName) {
   const cachedResponse = await caches.match(request)
 
   const fetchPromise = fetch(request).then((response) => {
+    // Clone the response BEFORE any async operations
+    const responseToCache = response.clone()
+
     if (response.ok) {
-      const cache = caches.open(cacheName)
-      cache.then((c) => c.put(request, response.clone()))
+      // Update cache in background (don't await)
+      caches.open(cacheName).then((cache) => {
+        cache.put(request, responseToCache).catch(err => {
+          console.log('[SW] Failed to cache:', err.message)
+        })
+      })
     }
     return response
   }).catch(() => {
