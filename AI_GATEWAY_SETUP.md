@@ -30,7 +30,7 @@ export async function POST(request) {
     const startTime = Date.now()
 
     const completion = await openai.createChatCompletion({
-      model: model || 'gpt-4o-mini',
+      model: model || 'gpt-5',
       messages,
       temperature: options?.temperature || 0.7,
       max_tokens: options?.max_tokens || 500,
@@ -44,7 +44,7 @@ export async function POST(request) {
       cost: calculateCost(completion.data.usage, model),
       latency,
       cached: false,
-      model: model || 'gpt-4o-mini'
+      model: model || 'gpt-5'
     })
 
   } catch (error) {
@@ -67,12 +67,14 @@ export async function GET() {
 
 function calculateCost(usage, model) {
   const rates = {
-    'gpt-4o-mini': { prompt: 0.00015 / 1000, completion: 0.0006 / 1000 },
+    'gpt-5': { prompt: 0.01 / 1000, completion: 0.03 / 1000 },
+    'gpt-4.1': { prompt: 0.005 / 1000, completion: 0.015 / 1000 },
     'gpt-4o': { prompt: 0.005 / 1000, completion: 0.015 / 1000 },
+    'gpt-4o-mini': { prompt: 0.00015 / 1000, completion: 0.0006 / 1000 },
     'gpt-3.5-turbo': { prompt: 0.0005 / 1000, completion: 0.0015 / 1000 }
   }
 
-  const rate = rates[model] || rates['gpt-4o-mini']
+  const rate = rates[model] || rates['gpt-5']
 
   return (usage.prompt_tokens * rate.prompt) +
          (usage.completion_tokens * rate.completion)
@@ -119,7 +121,7 @@ export async function POST(req: Request) {
   const { messages, model, options } = await req.json()
 
   const result = await streamText({
-    model: openai(model || 'gpt-4o-mini'),
+    model: openai(model || 'gpt-5'),
     messages,
     temperature: options?.temperature || 0.7,
     maxTokens: options?.max_tokens || 500,
@@ -133,7 +135,7 @@ export async function POST(req: Request) {
     usage: result.usage,
     cost: calculateCost(result.usage, model),
     latency: result.latency,
-    model: model || 'gpt-4o-mini'
+    model: model || 'gpt-5'
   })
 }
 ```
@@ -169,7 +171,7 @@ app.post('/api/ai/gateway', async (req, res) => {
     const startTime = Date.now()
 
     const completion = await openai.chat.completions.create({
-      model: model || 'gpt-4o-mini',
+      model: model || 'gpt-5',
       messages,
       temperature: options?.temperature || 0.7,
       max_tokens: options?.max_tokens || 500
@@ -181,7 +183,7 @@ app.post('/api/ai/gateway', async (req, res) => {
       cost: calculateCost(completion.usage, model),
       latency: Date.now() - startTime,
       cached: false,
-      model: model || 'gpt-4o-mini'
+      model: model || 'gpt-5'
     })
 
   } catch (error) {
@@ -282,19 +284,21 @@ Instead of:
 
 ## Cost Estimation
 
-**Average Costs per Request:**
+**Average Costs per Request (GPT-5):**
 
 | Feature | Model | Tokens | Cost/Request |
 |---------|-------|--------|--------------|
-| AI Chat | gpt-4o-mini | ~300 | $0.00018 |
-| Signal Analysis | gpt-4o-mini | ~200 | $0.00012 |
-| Watchlist Suggestions | gpt-4o-mini | ~400 | $0.00024 |
-| NLP Scanner | gpt-4o-mini | ~150 | $0.00009 |
+| AI Chat | gpt-5 | ~300 | $0.005 |
+| Signal Analysis | gpt-5 | ~200 | $0.003 |
+| Watchlist Suggestions | gpt-5 | ~400 | $0.007 |
+| NLP Scanner | gpt-5 | ~150 | $0.0025 |
 
 **Monthly Estimates:**
-- Light usage (10 requests/day): ~$0.50/month
-- Medium usage (50 requests/day): ~$2.50/month
-- Heavy usage (200 requests/day): ~$10/month
+- Light usage (10 requests/day): ~$1.50/month
+- Medium usage (50 requests/day): ~$7.50/month
+- Heavy usage (200 requests/day): ~$30/month
+
+*Note: GPT-5 is more expensive but provides significantly better quality outputs. You can reduce costs by using gpt-4o-mini for simpler tasks.*
 
 ---
 

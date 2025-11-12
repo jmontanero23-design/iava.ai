@@ -41,8 +41,8 @@ ALPACA_PAPER=true
 
 # LLM Configuration
 LLM_PROVIDER=openai
-LLM_MODEL_EXPLAIN=gpt-4o-mini
-LLM_MODEL_TUNE=gpt-4o-mini
+LLM_MODEL_EXPLAIN=gpt-5
+LLM_MODEL_TUNE=gpt-5
 ```
 
 **Optional**:

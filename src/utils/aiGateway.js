@@ -7,7 +7,7 @@ const GATEWAY_URL = '/api/ai/gateway'
 
 /**
  * Call AI model through the gateway
- * @param {string} model - Model name (e.g., 'gpt-4o', 'claude-3-haiku')
+ * @param {string} model - Model name (e.g., 'gpt-5', 'claude-sonnet-4-5')
  * @param {Array} messages - Chat messages in OpenAI format
  * @param {Object} options - Additional options
  * @returns {Promise<Object>} AI response with usage and cost data
@@ -204,12 +204,12 @@ Provide a brief analysis (2-3 sentences) of what this regime means for traders a
     }
   ]
 
-  const result = await callAI('gpt-4o-mini', messages, {
+  const result = await callAI('gpt-5', messages, {
     temperature: 0.4,
     max_tokens: 300,
     cache: true,
     cacheTTL: 180,
-    fallback: 'gpt-5'
+    fallback: 'gpt-4o'
   })
 
   return {

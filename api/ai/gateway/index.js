@@ -1,6 +1,6 @@
 /**
  * AI Gateway - Vercel Serverless Function
- * Handles AI requests with OpenAI GPT-4o-mini
+ * Handles AI requests with OpenAI GPT-5 (latest model)
  */
 
 export default async function handler(req, res) {
@@ -54,7 +54,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: model || 'gpt-4o-mini',
+        model: model || 'gpt-5',
         messages,
         temperature: options?.temperature ?? 0.7,
         max_tokens: options?.max_tokens ?? 500,
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
     const latency = Date.now() - startTime
 
     // Calculate cost
-    const cost = calculateCost(data.usage, model || 'gpt-4o-mini')
+    const cost = calculateCost(data.usage, model || 'gpt-5')
 
     // Return formatted response
     return res.status(200).json({
@@ -100,15 +100,27 @@ export default async function handler(req, res) {
  * Calculate API cost based on token usage
  */
 function calculateCost(usage, model) {
-  // Pricing as of 2024 (per 1K tokens)
+  // Pricing as of 2025 (per 1K tokens)
   const pricing = {
-    'gpt-4o-mini': {
-      prompt: 0.00015,
-      completion: 0.0006
+    'gpt-5': {
+      prompt: 0.01,
+      completion: 0.03
+    },
+    'gpt-4.1': {
+      prompt: 0.005,
+      completion: 0.015
+    },
+    'gpt-4.1-mini': {
+      prompt: 0.0002,
+      completion: 0.0008
     },
     'gpt-4o': {
       prompt: 0.005,
       completion: 0.015
+    },
+    'gpt-4o-mini': {
+      prompt: 0.00015,
+      completion: 0.0006
     },
     'gpt-4-turbo': {
       prompt: 0.01,
@@ -120,7 +132,7 @@ function calculateCost(usage, model) {
     }
   }
 
-  const rates = pricing[model] || pricing['gpt-4o-mini']
+  const rates = pricing[model] || pricing['gpt-5']
 
   const promptCost = (usage.prompt_tokens / 1000) * rates.prompt
   const completionCost = (usage.completion_tokens / 1000) * rates.completion
