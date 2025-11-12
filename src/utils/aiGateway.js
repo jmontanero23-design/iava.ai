@@ -160,7 +160,8 @@ Return JSON:
     }
   ]
 
-  const result = await callAI('gpt-5-nano', messages, {
+  // Use GPT-5 for complex multi-signal comparison and ranking
+  const result = await callAI('gpt-5', messages, {
     temperature: 0.2,
     max_tokens: 1000,
     json: true,
@@ -251,7 +252,8 @@ Only include filters explicitly mentioned in the query.`
     }
   ]
 
-  const result = await callAI('gpt-5-nano', messages, {
+  // Use GPT-5 for complex natural language understanding
+  const result = await callAI('gpt-5', messages, {
     temperature: 0.1,
     max_tokens: 300,
     json: true,
