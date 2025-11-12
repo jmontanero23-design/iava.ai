@@ -29,20 +29,25 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('[AI Gateway] Request received:', { hasBody: !!req.body, method: req.method })
     const { model, messages, options } = req.body
+    console.log('[AI Gateway] Parsed:', { model, messageCount: messages?.length, options })
 
     // Validate request
     if (!messages || !Array.isArray(messages)) {
+      console.error('[AI Gateway] Invalid messages format')
       return res.status(400).json({ error: 'Invalid messages format' })
     }
 
     // Check for API key
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {
+      console.error('[AI Gateway] No API key found')
       return res.status(500).json({
         error: 'OpenAI API key not configured. Set OPENAI_API_KEY in environment variables.'
       })
     }
+    console.log('[AI Gateway] API key found, length:', apiKey.length)
 
     const startTime = Date.now()
     const selectedModel = model || 'gpt-4o'
@@ -68,6 +73,8 @@ export default async function handler(req, res) {
     }
 
     // Call OpenAI API
+    console.log('[AI Gateway] Calling OpenAI with:', selectedModel, 'tokens:', payload.max_tokens || payload.max_completion_tokens)
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -76,6 +83,8 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify(payload)
     })
+
+    console.log('[AI Gateway] OpenAI responded:', response.status, response.ok)
 
     if (!response.ok) {
       const error = await response.json()
@@ -87,6 +96,7 @@ export default async function handler(req, res) {
 
     const data = await response.json()
     const latency = Date.now() - startTime
+    console.log('[AI Gateway] Success! Latency:', latency, 'ms')
 
     // Calculate cost
     const cost = calculateCost(data.usage, model || 'gpt-4o')
