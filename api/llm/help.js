@@ -21,10 +21,10 @@ Do not give financial advice; provide usage guidance and interpretations only.`
     let out
     if (provider === 'openai') {
       if (!openaiKey) return res.status(500).json({ error: 'OPENAI_API_KEY missing' })
-      out = await callOpenAI({ apiKey: openaiKey, model: process.env.LLM_MODEL_EXPLAIN || 'gpt-4o-mini', system, prompt })
+      out = await callOpenAI({ apiKey: openaiKey, model: process.env.LLM_MODEL_EXPLAIN || 'gpt-5', system, prompt })
     } else if (provider === 'anthropic') {
       if (!anthropicKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY missing' })
-      out = await callAnthropic({ apiKey: anthropicKey, model: process.env.LLM_MODEL_EXPLAIN || 'claude-3-5-sonnet-20240620', system, prompt })
+      out = await callAnthropic({ apiKey: anthropicKey, model: process.env.LLM_MODEL_EXPLAIN || 'claude-sonnet-4-5', system, prompt })
     } else {
       return res.status(400).json({ error: `Unsupported LLM_PROVIDER ${provider}` })
     }

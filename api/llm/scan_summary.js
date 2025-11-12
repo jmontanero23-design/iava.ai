@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     if (!result || typeof result !== 'object') return res.status(400).json({ error: 'Missing scan result' })
 
     const prompt = buildScanSummaryPrompt(result)
-    const model = process.env.LLM_MODEL_EXPLAIN || 'gpt-4o-mini'
+    const model = process.env.LLM_MODEL_EXPLAIN || 'gpt-5'
 
     let out
     if (provider === 'openai') {
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       out = await callOpenAI({ apiKey: openaiKey, model, prompt })
     } else if (provider === 'anthropic') {
       if (!anthropicKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY missing' })
-      out = await callAnthropic({ apiKey: anthropicKey, model: process.env.LLM_MODEL_EXPLAIN || 'claude-3-5-sonnet-20240620', prompt })
+      out = await callAnthropic({ apiKey: anthropicKey, model: process.env.LLM_MODEL_EXPLAIN || 'claude-sonnet-4-5', prompt })
     } else {
       return res.status(400).json({ error: `Unsupported LLM_PROVIDER ${provider}` })
     }

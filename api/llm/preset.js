@@ -16,11 +16,11 @@ export default async function handler(req, res) {
     let out
     if (provider === 'openai') {
       if (!openaiKey) return res.status(500).json({ error: 'OPENAI_API_KEY missing' })
-      const model = process.env.LLM_MODEL_PRESET || 'gpt-4o-mini'
+      const model = process.env.LLM_MODEL_PRESET || 'gpt-5'
       out = await callOpenAI({ apiKey: openaiKey, model, system: SYSTEM_PRESET, prompt, response_format: { type: 'json_object' } })
     } else if (provider === 'anthropic') {
       if (!anthropicKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY missing' })
-      const model = process.env.LLM_MODEL_PRESET || 'claude-3-5-sonnet-20240620'
+      const model = process.env.LLM_MODEL_PRESET || 'claude-sonnet-4-5'
       out = await callAnthropic({ apiKey: anthropicKey, model, system: SYSTEM_PRESET, prompt })
     } else {
       return res.status(400).json({ error: `Unsupported LLM_PROVIDER ${provider}` })
