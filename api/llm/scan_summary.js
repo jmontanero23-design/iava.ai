@@ -50,10 +50,26 @@ function buildScanSummaryPrompt(r) {
 async function callOpenAI({ apiKey, model, prompt }) {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), 12000)
+
+  // GPT-5 only supports default parameters
+  const isGPT5 = model.startsWith('gpt-5') || model.startsWith('gpt-4.1')
+
+  const payload = {
+    model,
+    messages: [{ role: 'user', content: prompt }],
+    response_format: { type: 'json_object' },
+    max_completion_tokens: 300
+  }
+
+  // Only set temperature for non-GPT-5 models
+  if (!isGPT5) {
+    payload.temperature = 0.2
+  }
+
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.2, response_format: { type: 'json_object' }, max_completion_tokens: 300 }),
+    body: JSON.stringify(payload),
     signal: ctrl.signal,
   })
   const j = await r.json()

@@ -59,12 +59,20 @@ async function callOpenAI({ apiKey, model, system, prompt, response_format }) {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), 15000)
   const makeReq = async (withJsonMode) => {
+    // GPT-5 only supports default parameters
+    const isGPT5 = model.startsWith('gpt-5') || model.startsWith('gpt-4.1')
+
     const payload = {
       model,
       messages: [ { role: 'system', content: system }, { role: 'user', content: prompt } ],
-      temperature: 0.2,
       max_completion_tokens: 300,
     }
+
+    // Only set temperature for non-GPT-5 models
+    if (!isGPT5) {
+      payload.temperature = 0.2
+    }
+
     if (withJsonMode && response_format) payload.response_format = response_format
     const r = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',

@@ -45,6 +45,25 @@ export default async function handler(req, res) {
     }
 
     const startTime = Date.now()
+    const selectedModel = model || 'gpt-5'
+
+    // GPT-5 only supports default parameter values - can't customize temperature, top_p, etc.
+    // Other models (gpt-4o, gpt-4o-mini, gpt-3.5-turbo) support custom parameters
+    const isGPT5 = selectedModel.startsWith('gpt-5') || selectedModel.startsWith('gpt-4.1')
+
+    const payload = {
+      model: selectedModel,
+      messages,
+      max_completion_tokens: options?.max_tokens ?? 500
+    }
+
+    // Only add optional parameters for models that support them
+    if (!isGPT5) {
+      payload.temperature = options?.temperature ?? 0.7
+      payload.top_p = options?.top_p ?? 1
+      payload.frequency_penalty = options?.frequency_penalty ?? 0
+      payload.presence_penalty = options?.presence_penalty ?? 0
+    }
 
     // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -53,15 +72,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify({
-        model: model || 'gpt-5',
-        messages,
-        temperature: options?.temperature ?? 0.7,
-        max_completion_tokens: options?.max_tokens ?? 500,
-        top_p: options?.top_p ?? 1,
-        frequency_penalty: options?.frequency_penalty ?? 0,
-        presence_penalty: options?.presence_penalty ?? 0
-      })
+      body: JSON.stringify(payload)
     })
 
     if (!response.ok) {

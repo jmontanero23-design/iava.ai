@@ -202,19 +202,28 @@ async function callOpenAI(model, messages, options = {}) {
     throw new Error('VERCEL_AI_GATEWAY_KEY or OPENAI_API_KEY not configured')
   }
 
+  // GPT-5 only supports default parameters
+  const isGPT5 = model.startsWith('gpt-5') || model.startsWith('gpt-4.1')
+
+  const payload = {
+    model,
+    messages,
+    max_completion_tokens: options.max_tokens ?? 1000,
+    response_format: options.json ? { type: 'json_object' } : undefined
+  }
+
+  // Only set temperature for non-GPT-5 models
+  if (!isGPT5) {
+    payload.temperature = options.temperature ?? 0.7
+  }
+
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: options.temperature ?? 0.7,
-      max_tokens: options.max_tokens ?? 1000,
-      response_format: options.json ? { type: 'json_object' } : undefined
-    })
+    body: JSON.stringify(payload)
   })
 
   if (!response.ok) {
