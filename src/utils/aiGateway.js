@@ -110,12 +110,12 @@ Provide a brief explanation covering:
     }
   ]
 
-  const result = await callAI('gpt-4o', messages, {
+  const result = await callAI('gpt-5', messages, {
     temperature: 0.3,
     max_tokens: 500,
     cache: true,
     cacheTTL: 60,
-    fallback: 'claude-sonnet-4-5'
+    fallback: 'gpt-4o'
   })
 
   return {
@@ -160,7 +160,7 @@ Return JSON:
     }
   ]
 
-  const result = await callAI('gpt-4o', messages, {
+  const result = await callAI('gpt-5', messages, {
     temperature: 0.2,
     max_tokens: 1000,
     json: true,
@@ -209,7 +209,7 @@ Provide a brief analysis (2-3 sentences) of what this regime means for traders a
     max_tokens: 300,
     cache: true,
     cacheTTL: 180,
-    fallback: 'gpt-4o'
+    fallback: 'gpt-5'
   })
 
   return {
@@ -251,7 +251,7 @@ Only include filters explicitly mentioned in the query.`
     }
   ]
 
-  const result = await callAI('gpt-4o', messages, {
+  const result = await callAI('gpt-5', messages, {
     temperature: 0.1,
     max_tokens: 300,
     json: true,
@@ -299,7 +299,7 @@ Avoid symbols already in watchlist.`
     }
   ]
 
-  const result = await callAI('gpt-4o', messages, {
+  const result = await callAI('gpt-5', messages, {
     temperature: 0.5,
     max_tokens: 800,
     json: true,

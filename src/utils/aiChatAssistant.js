@@ -497,7 +497,7 @@ Provide a helpful response following the guidelines in your system prompt. Keep 
 
   try {
     const response = await callAIGateway({
-      model: 'gpt-4o',
+      model: 'gpt-5',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt }
@@ -679,7 +679,7 @@ export async function sendMessage(message, session = null) {
   // Add assistant message
   const assistantMsg = session.addMessage(assistantContent, MESSAGE_TYPES.ASSISTANT, {
     intent,
-    model: 'gpt-4o'
+    model: 'gpt-5'
   })
 
   // Assess risk
