@@ -179,9 +179,9 @@ function getProvider(model) {
 // ============================================================================
 
 async function callOpenAI(model, messages, options = {}) {
-  const apiKey = process.env.OPENAI_API_KEY
+  const apiKey = process.env.VERCEL_AI_GATEWAY_KEY || process.env.OPENAI_API_KEY
   if (!apiKey) {
-    throw new Error('OPENAI_API_KEY not configured')
+    throw new Error('VERCEL_AI_GATEWAY_KEY or OPENAI_API_KEY not configured')
   }
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
