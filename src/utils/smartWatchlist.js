@@ -242,7 +242,7 @@ Recommend the top ${count} symbols with brief reasoning for each (2-3 sentences)
   ]
 
   try {
-    const result = await callAI('gpt-4o', messages, {
+    const result = await callAI('gpt-5-nano', messages, {
       temperature: 0.4,
       max_tokens: 800,
       json: true,

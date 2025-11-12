@@ -1,7 +1,10 @@
 /**
- * AI Gateway - Vercel Serverless Function
- * Handles AI requests with OpenAI GPT-5 (latest model)
+ * AI Gateway - Vercel AI SDK
+ * Clean, simple gateway using official Vercel AI SDK
  */
+
+import { openai } from '@ai-sdk/openai'
+import { generateText } from 'ai'
 
 export default async function handler(req, res) {
   // CORS headers
@@ -19,7 +22,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       status: 'ok',
       timestamp: Date.now(),
-      message: 'AI Gateway is running'
+      message: 'AI Gateway is running with Vercel AI SDK'
     })
   }
 
@@ -29,90 +32,57 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('[AI Gateway] Request received:', { hasBody: !!req.body, method: req.method })
     const { model, messages, options } = req.body
-    console.log('[AI Gateway] Parsed:', { model, messageCount: messages?.length, options })
 
     // Validate request
     if (!messages || !Array.isArray(messages)) {
-      console.error('[AI Gateway] Invalid messages format')
       return res.status(400).json({ error: 'Invalid messages format' })
     }
 
     // Check for API key
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {
-      console.error('[AI Gateway] No API key found')
       return res.status(500).json({
-        error: 'OpenAI API key not configured. Set OPENAI_API_KEY in environment variables.'
+        error: 'OpenAI API key not configured'
       })
     }
-    console.log('[AI Gateway] API key found, length:', apiKey.length)
 
     const startTime = Date.now()
-    const selectedModel = model || 'gpt-4o'
+    const selectedModel = model || 'gpt-5-nano'
 
-    // Standard models (gpt-4o, gpt-4o-mini, gpt-3.5) use max_tokens
-    // Reasoning models (gpt-5, gpt-4.1, o1) use max_completion_tokens
-    const isReasoningModel = selectedModel.startsWith('gpt-5') || selectedModel.startsWith('gpt-4.1') || selectedModel.startsWith('o1')
+    console.log('[AI Gateway SDK] Calling:', selectedModel, 'messages:', messages.length)
 
-    const payload = {
-      model: selectedModel,
-      messages
-    }
-
-    // Set token limit based on model type
-    if (isReasoningModel) {
-      payload.max_completion_tokens = options?.max_tokens ?? 500
-    } else {
-      payload.max_tokens = options?.max_tokens ?? 500
-      payload.temperature = options?.temperature ?? 0.7
-      payload.top_p = options?.top_p ?? 1
-      payload.frequency_penalty = options?.frequency_penalty ?? 0
-      payload.presence_penalty = options?.presence_penalty ?? 0
-    }
-
-    // Call OpenAI API
-    console.log('[AI Gateway] Calling OpenAI with:', selectedModel, 'tokens:', payload.max_tokens || payload.max_completion_tokens)
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(payload)
+    // Use Vercel AI SDK
+    const result = await generateText({
+      model: openai(selectedModel),
+      messages,
+      maxTokens: options?.max_tokens || 500,
+      temperature: options?.temperature !== undefined ? options.temperature : 0.7,
     })
 
-    console.log('[AI Gateway] OpenAI responded:', response.status, response.ok)
-
-    if (!response.ok) {
-      const error = await response.json()
-      console.error('[AI Gateway] OpenAI error:', error)
-      return res.status(response.status).json({
-        error: error.error?.message || 'OpenAI API error'
-      })
-    }
-
-    const data = await response.json()
     const latency = Date.now() - startTime
-    console.log('[AI Gateway] Success! Latency:', latency, 'ms')
+
+    console.log('[AI Gateway SDK] Success! Latency:', latency, 'ms')
 
     // Calculate cost
-    const cost = calculateCost(data.usage, model || 'gpt-4o')
+    const cost = calculateCost(result.usage, selectedModel)
 
     // Return formatted response
     return res.status(200).json({
-      content: data.choices[0]?.message?.content || '',
-      usage: data.usage,
+      content: result.text,
+      usage: {
+        prompt_tokens: result.usage.promptTokens,
+        completion_tokens: result.usage.completionTokens,
+        total_tokens: result.usage.totalTokens
+      },
       cost,
       latency,
       cached: false,
-      model: data.model
+      model: selectedModel
     })
 
   } catch (error) {
-    console.error('[AI Gateway] Error:', error)
+    console.error('[AI Gateway SDK] Error:', error)
     return res.status(500).json({
       error: error.message || 'Internal server error'
     })
@@ -120,45 +90,26 @@ export default async function handler(req, res) {
 }
 
 /**
- * Calculate API cost based on token usage
+ * Calculate cost based on model pricing
  */
 function calculateCost(usage, model) {
-  // Pricing as of 2025 (per 1K tokens)
+  // Pricing per 1M tokens (updated 2025)
   const pricing = {
-    'gpt-5': {
-      prompt: 0.01,
-      completion: 0.03
-    },
-    'gpt-4.1': {
-      prompt: 0.005,
-      completion: 0.015
-    },
-    'gpt-4.1-mini': {
-      prompt: 0.0002,
-      completion: 0.0008
-    },
-    'gpt-4o': {
-      prompt: 0.005,
-      completion: 0.015
-    },
-    'gpt-4o-mini': {
-      prompt: 0.00015,
-      completion: 0.0006
-    },
-    'gpt-4-turbo': {
-      prompt: 0.01,
-      completion: 0.03
-    },
-    'gpt-3.5-turbo': {
-      prompt: 0.0005,
-      completion: 0.0015
-    }
+    'gpt-5-nano': { input: 0.05, output: 0.40 },
+    'gpt-5-mini': { input: 0.25, output: 2.00 },
+    'gpt-5': { input: 1.25, output: 10.00 },
+    'gpt-4.1-nano': { input: 0.10, output: 0.40 },
+    'gpt-4.1-mini': { input: 0.40, output: 1.60 },
+    'gpt-4.1': { input: 2.00, output: 8.00 },
+    'gpt-4o': { input: 2.50, output: 10.00 },
+    'gpt-4o-mini': { input: 0.15, output: 0.60 },
+    'gpt-3.5-turbo': { input: 0.50, output: 1.50 }
   }
 
-  const rates = pricing[model] || pricing['gpt-5']
+  const rates = pricing[model] || pricing['gpt-5-nano']
 
-  const promptCost = (usage.prompt_tokens / 1000) * rates.prompt
-  const completionCost = (usage.completion_tokens / 1000) * rates.completion
+  const promptCost = (usage.promptTokens / 1000000) * rates.input
+  const completionCost = (usage.completionTokens / 1000000) * rates.output
 
   return parseFloat((promptCost + completionCost).toFixed(6))
 }

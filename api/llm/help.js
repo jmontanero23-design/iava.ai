@@ -21,7 +21,7 @@ Do not give financial advice; provide usage guidance and interpretations only.`
     let out
     if (provider === 'openai') {
       if (!openaiKey) return res.status(500).json({ error: 'OPENAI_API_KEY missing' })
-      out = await callOpenAI({ apiKey: openaiKey, model: process.env.LLM_MODEL_EXPLAIN || 'gpt-4o', system, prompt })
+      out = await callOpenAI({ apiKey: openaiKey, model: process.env.LLM_MODEL_EXPLAIN || 'gpt-5-nano', system, prompt })
     } else if (provider === 'anthropic') {
       if (!anthropicKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY missing' })
       out = await callAnthropic({ apiKey: anthropicKey, model: process.env.LLM_MODEL_EXPLAIN || 'claude-sonnet-4-5', system, prompt })

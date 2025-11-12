@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     if (!backtest || typeof backtest !== 'object') return res.status(400).json({ error: 'Missing backtest' })
 
     const prompt = buildTunePrompt(backtest, preference)
-    const model = process.env.LLM_MODEL_TUNE || process.env.LLM_MODEL_EXPLAIN || 'gpt-4o'
+    const model = process.env.LLM_MODEL_TUNE || process.env.LLM_MODEL_EXPLAIN || 'gpt-5-nano'
 
     let out
     if (provider === 'openai') {

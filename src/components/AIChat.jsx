@@ -61,7 +61,7 @@ Guidelines:
         { role: 'user', content: input.trim() }
       ]
 
-      const result = await callAI('gpt-4o', aiMessages, {
+      const result = await callAI('gpt-5-nano', aiMessages, {
         temperature: 0.7,
         max_tokens: 200,
         cache: false

@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     if (!result || typeof result !== 'object') return res.status(400).json({ error: 'Missing scan result' })
 
     const prompt = buildScanSummaryPrompt(result)
-    const model = process.env.LLM_MODEL_EXPLAIN || 'gpt-4o'
+    const model = process.env.LLM_MODEL_EXPLAIN || 'gpt-5-nano'
 
     let out
     if (provider === 'openai') {
