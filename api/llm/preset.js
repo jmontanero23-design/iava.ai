@@ -80,7 +80,7 @@ async function callOpenAI({ apiKey, model, system, prompt, response_format }) {
       model,
       messages: [ { role: 'system', content: system }, { role: 'user', content: prompt } ],
       temperature: 0.2,
-      max_tokens: 300,
+      max_completion_tokens: 300,
     }
     if (withJsonMode && response_format) payload.response_format = response_format
     const r = await fetch('https://api.openai.com/v1/chat/completions', {

@@ -57,7 +57,7 @@ export default async function handler(req, res) {
         model: model || 'gpt-5',
         messages,
         temperature: options?.temperature ?? 0.7,
-        max_tokens: options?.max_tokens ?? 500,
+        max_completion_tokens: options?.max_tokens ?? 500,
         top_p: options?.top_p ?? 1,
         frequency_penalty: options?.frequency_penalty ?? 0,
         presence_penalty: options?.presence_penalty ?? 0

@@ -62,7 +62,7 @@ async function callOpenAI({ apiKey, model, prompt }) {
   const t = setTimeout(() => ctrl.abort(), 15000)
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST', headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.2, response_format: { type: 'json_object' }, max_tokens: 300 }),
+    body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.2, response_format: { type: 'json_object' }, max_completion_tokens: 300 }),
     signal: ctrl.signal,
   })
   const j = await r.json()
