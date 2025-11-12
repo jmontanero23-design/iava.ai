@@ -127,14 +127,22 @@ class RateLimiter {
 // ============================================================================
 
 const MODEL_COSTS = {
-  // OpenAI pricing (per 1M tokens)
+  // OpenAI 2025 pricing (per 1M tokens)
+  'gpt-5': { input: 10, output: 30 },
+  'gpt-4.1': { input: 5, output: 15 },
+  'gpt-4.1-mini': { input: 0.20, output: 0.80 },
   'gpt-4': { input: 30, output: 60 },
   'gpt-4-turbo': { input: 10, output: 30 },
   'gpt-4o': { input: 5, output: 15 },
   'gpt-4o-mini': { input: 0.15, output: 0.6 },
   'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
 
-  // Anthropic pricing (per 1M tokens)
+  // Anthropic 2025 pricing (per 1M tokens)
+  'claude-sonnet-4-5': { input: 3, output: 15 },
+  'claude-haiku-4-5': { input: 1, output: 5 },
+  'claude-opus-4-1': { input: 15, output: 75 },
+  'claude-sonnet-4': { input: 3, output: 15 },
+  'claude-opus-4': { input: 15, output: 75 },
   'claude-3-opus': { input: 15, output: 75 },
   'claude-3-sonnet': { input: 3, output: 15 },
   'claude-3-haiku': { input: 0.25, output: 1.25 },
@@ -159,11 +167,21 @@ function estimateCost(model, inputTokens, outputTokens) {
 // ============================================================================
 
 const MODEL_PROVIDERS = {
+  // OpenAI models
+  'gpt-5': 'openai',
+  'gpt-4.1': 'openai',
+  'gpt-4.1-mini': 'openai',
   'gpt-4': 'openai',
   'gpt-4-turbo': 'openai',
   'gpt-4o': 'openai',
   'gpt-4o-mini': 'openai',
   'gpt-3.5-turbo': 'openai',
+  // Anthropic models
+  'claude-sonnet-4-5': 'anthropic',
+  'claude-haiku-4-5': 'anthropic',
+  'claude-opus-4-1': 'anthropic',
+  'claude-sonnet-4': 'anthropic',
+  'claude-opus-4': 'anthropic',
   'claude-3-opus': 'anthropic',
   'claude-3-sonnet': 'anthropic',
   'claude-3-haiku': 'anthropic',
@@ -191,7 +209,7 @@ async function callOpenAI(model, messages, options = {}) {
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model,
+      model: model === 'claude-sonnet-4-5' ? 'gpt-4o' : model, // Map Claude to OpenAI for compatibility
       messages,
       temperature: options.temperature ?? 0.7,
       max_tokens: options.max_tokens ?? 1000,
@@ -237,6 +255,16 @@ async function callAnthropic(model, messages, options = {}) {
       content: m.content
     }))
 
+  // Map model names to Anthropic API format
+  const modelMap = {
+    'claude-sonnet-4-5': 'claude-sonnet-4.5-20250929',
+    'claude-haiku-4-5': 'claude-haiku-4.5-20251015',
+    'claude-opus-4-1': 'claude-opus-4.1-20250805',
+    'claude-sonnet-4': 'claude-sonnet-4-20250522',
+    'claude-opus-4': 'claude-opus-4-20250522'
+  }
+  const anthropicModel = modelMap[model] || model
+
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -245,7 +273,7 @@ async function callAnthropic(model, messages, options = {}) {
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model,
+      model: anthropicModel,
       messages: anthropicMessages,
       system: systemMessage || undefined,
       temperature: options.temperature ?? 0.7,
