@@ -3,10 +3,11 @@ import { optimizeWithGA } from '../utils/geneticOptimizer.js'
 
 export default function GeneticOptimizerPanel() {
   const [config, setConfig] = useState({
+    symbol: 'SPY',
     populationSize: 20,
     generations: 30,
     mutationRate: 0.15,
-    parameters: ['threshold', 'horizon', 'atrMultiplier', 'stopLoss', 'takeProfit']
+    parameters: ['threshold', 'horizon']
   })
 
   const [optimizing, setOptimizing] = useState(false)
@@ -46,19 +47,40 @@ export default function GeneticOptimizerPanel() {
     setResults(null)
 
     try {
-      // Mock evaluation function (in production, this would backtest strategies)
+      // Real backtesting evaluation function using /api/backtest
       const evaluateFunction = async (params) => {
-        // Simulate backtesting with random results
-        await new Promise(resolve => setTimeout(resolve, 50))
+        const symbol = config.symbol || 'SPY'
+        const timeframe = '5Min'
+        const limit = 1000
 
+        // Build query params from genetic algorithm parameters
+        const queryParams = new URLSearchParams({
+          symbol,
+          timeframe,
+          limit: limit.toString(),
+          threshold: params.threshold?.toString() || '70',
+          horizon: params.horizon?.toString() || '20',
+          format: 'json'
+        })
+
+        // Call real backtest API
+        const response = await fetch(`/api/backtest?${queryParams}`)
+
+        if (!response.ok) {
+          throw new Error(`Backtest failed: ${response.statusText}`)
+        }
+
+        const data = await response.json()
+
+        // Extract performance metrics from backtest results
         return {
-          avgReturn: Math.random() * 0.2 - 0.05,
-          winRate: 0.4 + Math.random() * 0.3,
-          profitFactor: 1 + Math.random() * 2,
-          maxDrawdown: Math.random() * 0.3,
-          sharpeRatio: Math.random() * 2,
-          volatility: 0.01 + Math.random() * 0.05,
-          trades: Math.floor(Math.random() * 100) + 50
+          avgReturn: data.avgReturn || 0,
+          winRate: data.winRate || 0,
+          profitFactor: data.profitFactor || 1,
+          maxDrawdown: data.maxDrawdown || 0,
+          sharpeRatio: data.sharpeRatio || 0,
+          volatility: data.volatility || 0.02,
+          trades: data.totalSignals || 0
         }
       }
 
@@ -132,7 +154,19 @@ export default function GeneticOptimizerPanel() {
 
         {/* Configuration */}
         <div className="p-5 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs text-slate-400 mb-2">Symbol</label>
+              <input
+                type="text"
+                placeholder="SPY"
+                value={config.symbol}
+                onChange={e => setConfig({ ...config, symbol: e.target.value.toUpperCase() })}
+                disabled={optimizing}
+                className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all uppercase"
+              />
+            </div>
+
             <div>
               <label className="block text-xs text-slate-400 mb-2">Population Size</label>
               <input
@@ -345,8 +379,8 @@ export default function GeneticOptimizerPanel() {
           <p>
             <strong className="text-slate-300">Elite Preservation:</strong> Best solutions from each generation are preserved, ensuring convergence to optimal parameters.
           </p>
-          <p className="text-xs text-amber-400">
-            ⚠️ Note: Current version uses mock evaluation. In production, connect this to your backtesting engine for real strategy optimization.
+          <p className="text-xs text-emerald-400">
+            ✓ Real Backtesting: Each parameter set is evaluated using actual historical data via the /api/backtest endpoint. Results are based on real strategy performance.
           </p>
         </div>
       </div>
