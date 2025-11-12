@@ -271,7 +271,7 @@ Be concise but insightful (3-4 sentences total).`
   ]
 
   try {
-    const result = await callAI('gpt-4o-mini', messages, {
+    const result = await callAI('gpt-4o', messages, {
       temperature: 0.6,
       max_tokens: 400,
       cache: false // Don't cache reviews - each trade is unique
@@ -362,7 +362,7 @@ Return JSON only:
   ]
 
   try {
-    const result = await callAI('gpt-4o-mini', messages, {
+    const result = await callAI('gpt-4o', messages, {
       temperature: 0.4,
       max_tokens: 500,
       json: true,
