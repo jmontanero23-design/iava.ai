@@ -209,7 +209,7 @@ async function callOpenAI(model, messages, options = {}) {
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: model === 'claude-sonnet-4-5' ? 'gpt-4o' : model, // Map Claude to OpenAI for compatibility
+      model,
       messages,
       temperature: options.temperature ?? 0.7,
       max_tokens: options.max_tokens ?? 1000,
