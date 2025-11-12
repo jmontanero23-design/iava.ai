@@ -271,7 +271,8 @@ Be concise but insightful (3-4 sentences total).`
   ]
 
   try {
-    const result = await callAI('gpt-5-nano', messages, {
+    // Use GPT-5 for deep trade analysis and psychological insights
+    const result = await callAI('gpt-5', messages, {
       temperature: 0.6,
       max_tokens: 400,
       cache: false // Don't cache reviews - each trade is unique
@@ -362,7 +363,8 @@ Return JSON only:
   ]
 
   try {
-    const result = await callAI('gpt-5-nano', messages, {
+    // Use GPT-5 for pattern recognition across trading history
+    const result = await callAI('gpt-5', messages, {
       temperature: 0.4,
       max_tokens: 500,
       json: true,

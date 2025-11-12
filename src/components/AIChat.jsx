@@ -61,7 +61,8 @@ Guidelines:
         { role: 'user', content: input.trim() }
       ]
 
-      const result = await callAI('gpt-5-nano', aiMessages, {
+      // Use GPT-5 for complex conversational reasoning
+      const result = await callAI('gpt-5', aiMessages, {
         temperature: 0.7,
         max_tokens: 200,
         cache: false

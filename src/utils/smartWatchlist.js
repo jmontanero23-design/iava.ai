@@ -242,7 +242,8 @@ Recommend the top ${count} symbols with brief reasoning for each (2-3 sentences)
   ]
 
   try {
-    const result = await callAI('gpt-5-nano', messages, {
+    // Use GPT-5 for intelligent stock recommendations
+    const result = await callAI('gpt-5', messages, {
       temperature: 0.4,
       max_tokens: 800,
       json: true,
