@@ -14,7 +14,7 @@ const GATEWAY_URL = '/api/ai/gateway'
  */
 export async function callAI(model, messages, options = {}) {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), options.timeout || 30000) // 30s default
+  const timeout = setTimeout(() => controller.abort(), options.timeout || 90000) // 90s default for reasoning models
 
   try {
     const response = await fetch(GATEWAY_URL, {
@@ -52,8 +52,8 @@ export async function callAI(model, messages, options = {}) {
     clearTimeout(timeout)
 
     if (error.name === 'AbortError') {
-      console.error('[AI Gateway Client] Request timeout after 30s')
-      throw new Error('AI request timed out. The service may be overloaded or unavailable.')
+      console.error('[AI Gateway Client] Request timeout after 90s')
+      throw new Error('AI request timed out. Reasoning models may take longer - try again.')
     }
 
     console.error('[AI Gateway Client] Error:', error)
