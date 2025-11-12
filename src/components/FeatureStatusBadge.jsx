@@ -4,10 +4,12 @@
  * Helps users understand system status at a glance
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function FeatureStatusBadge({ onClick }) {
   const [showTooltip, setShowTooltip] = useState(false)
+  const [apiKeysConfigured, setApiKeysConfigured] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
 
   // Count features by status
   const features = {
@@ -16,14 +18,55 @@ export default function FeatureStatusBadge({ onClick }) {
     total: 12
   }
 
-  // Check if API keys are configured (we can't check directly, but we can infer from failed calls)
-  // For now, assume they're NOT configured (user would see errors if they try to use them)
-  const apiKeysConfigured = false
+  // Check if AI Gateway is available on mount
+  useEffect(() => {
+    const checkAPIHealth = async () => {
+      try {
+        const response = await fetch('/api/ai/gateway', {
+          method: 'GET',
+          signal: AbortSignal.timeout(3000) // 3 second timeout
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          // If we get a 200 OK with proper structure, API is available
+          setApiKeysConfigured(data.status === 'ok')
+        } else {
+          setApiKeysConfigured(false)
+        }
+      } catch (error) {
+        // Network error or timeout = API not configured
+        console.warn('[FeatureStatus] AI Gateway unavailable:', error.message)
+        setApiKeysConfigured(false)
+      } finally {
+        setIsChecking(false)
+      }
+    }
+
+    checkAPIHealth()
+  }, [])
 
   const activeCount = features.clientSide + (apiKeysConfigured ? features.apiRequired : 0)
   const needsSetup = apiKeysConfigured ? 0 : features.apiRequired
 
   const statusColor = needsSetup === 0 ? 'emerald' : needsSetup <= 3 ? 'cyan' : 'yellow'
+
+  // Show loading state while checking
+  if (isChecking) {
+    return (
+      <div className="relative">
+        <div className="relative inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl border bg-slate-800/50 border-slate-600/40 shadow-lg">
+          <span className="w-2.5 h-2.5 rounded-full bg-slate-400 animate-pulse filter drop-shadow-lg" />
+          <span className="text-base font-bold text-slate-400">
+            {features.clientSide}/{features.total}
+          </span>
+          <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+            Checking...
+          </span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="relative">
@@ -36,18 +79,18 @@ export default function FeatureStatusBadge({ onClick }) {
       >
         {/* Background glow effect */}
         <div className={`absolute inset-0 ${
-          needsSetup === 0 ? 'bg-emerald-600' : 'bg-cyan-600'
+          needsSetup === 0 ? 'bg-emerald-600' : 'bg-amber-600'
         } blur-lg opacity-20 group-hover:opacity-30 rounded-xl transition-opacity`} />
 
         {/* Badge content */}
         <div className={`relative inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl border shadow-lg transition-all group-hover:scale-105 ${
           needsSetup === 0
             ? 'bg-gradient-to-r from-emerald-600/30 to-emerald-500/20 border-emerald-500/40 group-hover:border-emerald-400/60'
-            : 'bg-gradient-to-r from-cyan-600/30 to-cyan-500/20 border-cyan-500/40 group-hover:border-cyan-400/60'
+            : 'bg-gradient-to-r from-amber-600/30 to-amber-500/20 border-amber-500/40 group-hover:border-amber-400/60'
         }`}>
           {/* Status Dot with pulse */}
           <span className={`w-2.5 h-2.5 rounded-full ${
-            needsSetup === 0 ? 'bg-emerald-400 animate-pulse' : 'bg-cyan-400 animate-pulse'
+            needsSetup === 0 ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400 animate-pulse'
           } filter drop-shadow-lg`} />
 
           {/* Count - Bold */}
@@ -118,7 +161,7 @@ export default function FeatureStatusBadge({ onClick }) {
                   <div className="pt-2 space-y-2">
                     <div className="flex items-center gap-2 text-amber-300 text-sm font-semibold">
                       <span>⚠️</span>
-                      <span>Setup Required:</span>
+                      <span>3 Features Need API Key:</span>
                     </div>
                     <ul className="space-y-1.5 ml-1">
                       <li className="flex items-center gap-2 text-xs text-slate-400">
@@ -134,8 +177,34 @@ export default function FeatureStatusBadge({ onClick }) {
                         <span>Smart Watchlist</span>
                       </li>
                     </ul>
-                    <p className="text-slate-500 text-xs pt-2 italic">
-                      Add OpenAI API key in Vercel settings
+                    <div className="pt-3 space-y-2 border-t border-slate-700/50">
+                      <p className="text-amber-300 text-xs font-semibold">Quick Setup:</p>
+                      <ol className="space-y-1 text-xs text-slate-400 ml-1">
+                        <li className="flex gap-2">
+                          <span className="text-amber-400 font-bold">1.</span>
+                          <span>Get key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" className="text-indigo-400 hover:text-indigo-300 underline">OpenAI</a></span>
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="text-amber-400 font-bold">2.</span>
+                          <span>Add OPENAI_API_KEY to Vercel</span>
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="text-amber-400 font-bold">3.</span>
+                          <span>Redeploy your app</span>
+                        </li>
+                      </ol>
+                    </div>
+                  </div>
+                )}
+
+                {apiKeysConfigured && (
+                  <div className="pt-2 border-t border-slate-700/50">
+                    <div className="flex items-center gap-2 text-emerald-300 text-sm">
+                      <span>✅</span>
+                      <span className="font-semibold">All Features Active</span>
+                    </div>
+                    <p className="text-slate-400 text-xs mt-2">
+                      Using GPT-5 for world-class AI insights
                     </p>
                   </div>
                 )}
