@@ -202,18 +202,20 @@ async function callOpenAI(model, messages, options = {}) {
     throw new Error('VERCEL_AI_GATEWAY_KEY or OPENAI_API_KEY not configured')
   }
 
-  // GPT-5 only supports default parameters
-  const isGPT5 = model.startsWith('gpt-5') || model.startsWith('gpt-4.1')
+  // Reasoning models (gpt-5, gpt-4.1, o1) use different parameters
+  const isReasoningModel = model.startsWith('gpt-5') || model.startsWith('gpt-4.1') || model.startsWith('o1')
 
   const payload = {
     model,
     messages,
-    max_completion_tokens: options.max_tokens ?? 1000,
     response_format: options.json ? { type: 'json_object' } : undefined
   }
 
-  // Only set temperature for non-GPT-5 models
-  if (!isGPT5) {
+  // Set token limit and parameters based on model type
+  if (isReasoningModel) {
+    payload.max_completion_tokens = options.max_tokens ?? 1000
+  } else {
+    payload.max_tokens = options.max_tokens ?? 1000
     payload.temperature = options.temperature ?? 0.7
   }
 

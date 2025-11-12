@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     if (!backtest || typeof backtest !== 'object') return res.status(400).json({ error: 'Missing backtest' })
 
     const prompt = buildTunePrompt(backtest, preference)
-    const model = process.env.LLM_MODEL_TUNE || process.env.LLM_MODEL_EXPLAIN || 'gpt-5'
+    const model = process.env.LLM_MODEL_TUNE || process.env.LLM_MODEL_EXPLAIN || 'gpt-4o'
 
     let out
     if (provider === 'openai') {
@@ -61,18 +61,20 @@ async function callOpenAI({ apiKey, model, prompt }) {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), 15000)
 
-  // GPT-5 only supports default parameters
-  const isGPT5 = model.startsWith('gpt-5') || model.startsWith('gpt-4.1')
+  // Reasoning models use different parameters
+  const isReasoningModel = model.startsWith('gpt-5') || model.startsWith('gpt-4.1') || model.startsWith('o1')
 
   const payload = {
     model,
     messages: [{ role: 'user', content: prompt }],
-    response_format: { type: 'json_object' },
-    max_completion_tokens: 300
+    response_format: { type: 'json_object' }
   }
 
-  // Only set temperature for non-GPT-5 models
-  if (!isGPT5) {
+  // Set token limit and temperature based on model type
+  if (isReasoningModel) {
+    payload.max_completion_tokens = 300
+  } else {
+    payload.max_tokens = 300
     payload.temperature = 0.2
   }
 

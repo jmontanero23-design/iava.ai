@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     let out
     if (provider === 'openai') {
       if (!openaiKey) return res.status(500).json({ error: 'OPENAI_API_KEY missing' })
-      const model = process.env.LLM_MODEL_EXPLAIN || 'gpt-5'
+      const model = process.env.LLM_MODEL_EXPLAIN || 'gpt-4o'
       out = await callOpenAI({ apiKey: openaiKey, model, system: SYSTEM_EXPLAIN, prompt, response_format: { type: 'json_object' } })
     } else if (provider === 'anthropic') {
       if (!anthropicKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY missing' })
@@ -59,17 +59,19 @@ async function callOpenAI({ apiKey, model, system, prompt, response_format }) {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), 15000)
   const makeReq = async (withJsonMode) => {
-    // GPT-5 only supports default parameters
-    const isGPT5 = model.startsWith('gpt-5') || model.startsWith('gpt-4.1')
+    // Reasoning models use different parameters
+    const isReasoningModel = model.startsWith('gpt-5') || model.startsWith('gpt-4.1') || model.startsWith('o1')
 
     const payload = {
       model,
-      messages: [ { role: 'system', content: system }, { role: 'user', content: prompt } ],
-      max_completion_tokens: 300,
+      messages: [ { role: 'system', content: system }, { role: 'user', content: prompt } ]
     }
 
-    // Only set temperature for non-GPT-5 models
-    if (!isGPT5) {
+    // Set token limit and temperature based on model type
+    if (isReasoningModel) {
+      payload.max_completion_tokens = 300
+    } else {
+      payload.max_tokens = 300
       payload.temperature = 0.2
     }
 

@@ -45,20 +45,22 @@ export default async function handler(req, res) {
     }
 
     const startTime = Date.now()
-    const selectedModel = model || 'gpt-5'
+    const selectedModel = model || 'gpt-4o'
 
-    // GPT-5 only supports default parameter values - can't customize temperature, top_p, etc.
-    // Other models (gpt-4o, gpt-4o-mini, gpt-3.5-turbo) support custom parameters
-    const isGPT5 = selectedModel.startsWith('gpt-5') || selectedModel.startsWith('gpt-4.1')
+    // Standard models (gpt-4o, gpt-4o-mini, gpt-3.5) use max_tokens
+    // Reasoning models (gpt-5, gpt-4.1, o1) use max_completion_tokens
+    const isReasoningModel = selectedModel.startsWith('gpt-5') || selectedModel.startsWith('gpt-4.1') || selectedModel.startsWith('o1')
 
     const payload = {
       model: selectedModel,
-      messages,
-      max_completion_tokens: options?.max_tokens ?? 500
+      messages
     }
 
-    // Only add optional parameters for models that support them
-    if (!isGPT5) {
+    // Set token limit based on model type
+    if (isReasoningModel) {
+      payload.max_completion_tokens = options?.max_tokens ?? 500
+    } else {
+      payload.max_tokens = options?.max_tokens ?? 500
       payload.temperature = options?.temperature ?? 0.7
       payload.top_p = options?.top_p ?? 1
       payload.frequency_penalty = options?.frequency_penalty ?? 0
@@ -87,7 +89,7 @@ export default async function handler(req, res) {
     const latency = Date.now() - startTime
 
     // Calculate cost
-    const cost = calculateCost(data.usage, model || 'gpt-5')
+    const cost = calculateCost(data.usage, model || 'gpt-4o')
 
     // Return formatted response
     return res.status(200).json({

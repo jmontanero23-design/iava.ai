@@ -21,7 +21,7 @@ Do not give financial advice; provide usage guidance and interpretations only.`
     let out
     if (provider === 'openai') {
       if (!openaiKey) return res.status(500).json({ error: 'OPENAI_API_KEY missing' })
-      out = await callOpenAI({ apiKey: openaiKey, model: process.env.LLM_MODEL_EXPLAIN || 'gpt-5', system, prompt })
+      out = await callOpenAI({ apiKey: openaiKey, model: process.env.LLM_MODEL_EXPLAIN || 'gpt-4o', system, prompt })
     } else if (provider === 'anthropic') {
       if (!anthropicKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY missing' })
       out = await callAnthropic({ apiKey: anthropicKey, model: process.env.LLM_MODEL_EXPLAIN || 'claude-sonnet-4-5', system, prompt })
@@ -39,17 +39,19 @@ async function callOpenAI({ apiKey, model, system, prompt }) {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), 15000)
 
-  // GPT-5 only supports default parameters
-  const isGPT5 = model.startsWith('gpt-5') || model.startsWith('gpt-4.1')
+  // Reasoning models use different parameters
+  const isReasoningModel = model.startsWith('gpt-5') || model.startsWith('gpt-4.1') || model.startsWith('o1')
 
   const payload = {
     model,
-    messages: [ { role: 'system', content: system }, { role: 'user', content: prompt } ],
-    max_completion_tokens: 350
+    messages: [ { role: 'system', content: system }, { role: 'user', content: prompt } ]
   }
 
-  // Only set temperature for non-GPT-5 models
-  if (!isGPT5) {
+  // Set token limit and temperature based on model type
+  if (isReasoningModel) {
+    payload.max_completion_tokens = 350
+  } else {
+    payload.max_tokens = 350
     payload.temperature = 0.2
   }
 
