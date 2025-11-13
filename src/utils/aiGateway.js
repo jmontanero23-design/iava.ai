@@ -13,6 +13,8 @@ const GATEWAY_URL = '/api/ai/gateway'
  * @returns {Promise<Object>} AI response with usage and cost data
  */
 export async function callAI(model, messages, options = {}) {
+  console.log('[AI Gateway] Calling with model:', model, 'messages:', messages.length)
+
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), options.timeout || 90000) // 90s default for reasoning models
 
@@ -30,6 +32,8 @@ export async function callAI(model, messages, options = {}) {
       signal: controller.signal
     })
 
+    console.log('[AI Gateway] Response status:', response.status, response.ok)
+
     clearTimeout(timeout)
 
     if (!response.ok) {
@@ -46,6 +50,7 @@ export async function callAI(model, messages, options = {}) {
     }
 
     const data = await response.json()
+    console.log('[AI Gateway] Success! Got response:', { model, contentLength: data.content?.length, cost: data.cost })
     return data
 
   } catch (error) {
