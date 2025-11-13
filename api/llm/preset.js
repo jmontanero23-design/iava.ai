@@ -89,7 +89,9 @@ async function callOpenAI({ apiKey, model, system, prompt, response_format }) {
     // New models: max_completion_tokens, no temperature customization
     // Old models: max_tokens, temperature allowed
     if (isNewModel) {
-      payload.max_completion_tokens = 300
+      // GPT-5 models are reasoning models that use tokens for internal thinking
+      // Need 2000+ tokens to allow for reasoning + output
+      payload.max_completion_tokens = 2000
       // No temperature - new models only support default
     } else {
       payload.max_tokens = 300
