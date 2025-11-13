@@ -37,7 +37,9 @@ Do not give financial advice; provide usage guidance and interpretations only.`
 async function callOpenAI({ apiKey, model, system, prompt }) {
   // Simple text answer; robust to models without JSON mode
   const ctrl = new AbortController()
-  const t = setTimeout(() => ctrl.abort(), 15000)
+  // Reasoning models (gpt-5) need more time to think - use 60s timeout
+  const isReasoningModel = model.includes('gpt-5') || model.includes('o1') || model.includes('o3') || model.includes('o4')
+  const t = setTimeout(() => ctrl.abort(), isReasoningModel ? 60000 : 15000)
 
   // ALL gpt-5 and gpt-4.1 models use new API (max_completion_tokens, no temperature)
   // Old models (gpt-4o, gpt-3.5) use old API (max_tokens, temperature)
