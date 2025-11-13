@@ -39,8 +39,8 @@ async function callOpenAI({ apiKey, model, system, prompt }) {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), 15000)
 
-  // Reasoning models use different parameters
-  const isReasoningModel = model.startsWith('gpt-5') || model.startsWith('gpt-4.1') || model.startsWith('o1')
+  // Only full GPT-5 (not mini/nano) is a reasoning model
+  const isReasoningModel = model === 'gpt-5' || model.startsWith('gpt-4.1') || model.startsWith('o1')
 
   const payload = {
     model,
