@@ -165,8 +165,8 @@ Return JSON:
     }
   ]
 
-  // Use GPT-5 for complex multi-signal comparison and ranking
-  const result = await callAI('gpt-5', messages, {
+  // Use GPT-5-mini for fast signal ranking (GPT-5 too slow)
+  const result = await callAI('gpt-5-mini', messages, {
     temperature: 0.2,
     max_tokens: 1000,
     json: true,
@@ -257,8 +257,8 @@ Only include filters explicitly mentioned in the query.`
     }
   ]
 
-  // Use GPT-5 for complex natural language understanding
-  const result = await callAI('gpt-5', messages, {
+  // Use GPT-5-mini for fast NLP parsing (GPT-5 reasoning is overkill and slow)
+  const result = await callAI('gpt-5-mini', messages, {
     temperature: 0.1,
     max_tokens: 300,
     json: true,

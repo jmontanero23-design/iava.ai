@@ -61,8 +61,8 @@ Guidelines:
         { role: 'user', content: input.trim() }
       ]
 
-      // Use GPT-5 for complex conversational reasoning
-      const result = await callAI('gpt-5', aiMessages, {
+      // Use GPT-5-mini for fast conversational responses (GPT-5 times out)
+      const result = await callAI('gpt-5-mini', aiMessages, {
         temperature: 0.7,
         max_tokens: 200,
         cache: false
@@ -115,7 +115,7 @@ Guidelines:
             </h3>
             <p className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-semibold">Powered by GPT-5</span>
+              <span className="font-semibold">Powered by GPT-5-mini</span>
             </p>
           </div>
         </div>
