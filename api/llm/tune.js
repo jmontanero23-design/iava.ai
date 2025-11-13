@@ -62,12 +62,9 @@ async function callOpenAI({ apiKey, model, prompt }) {
   const t = setTimeout(() => ctrl.abort(), 15000)
 
   // Reasoning models use different parameters
-  // New OpenAI models (2025+) use max_completion_tokens
-  // Old models (gpt-4o, gpt-3.5) use max_tokens
+  // ALL gpt-5 and gpt-4.1 models use new API (max_completion_tokens, no temperature)
+  // Old models (gpt-4o, gpt-3.5) use old API (max_tokens, temperature)
   const isNewModel = model.includes('gpt-5') || model.includes('gpt-4.1') || model.includes('o1') || model.includes('o3') || model.includes('o4')
-
-  // Only reasoning models (gpt-5, o1, etc) skip temperature
-  const isReasoningModel = model === 'gpt-5' || model.startsWith('o1') || model.startsWith('o3')
 
   const payload = {
     model,
@@ -75,15 +72,13 @@ async function callOpenAI({ apiKey, model, prompt }) {
     response_format: { type: 'json_object' },
   }
 
-  // Set token limit parameter based on API version
+  // New models: max_completion_tokens, no temperature customization
+  // Old models: max_tokens, temperature allowed
   if (isNewModel) {
     payload.max_completion_tokens = 300
+    // No temperature - new models only support default
   } else {
     payload.max_tokens = 300
-  }
-
-  // Set temperature (reasoning models use default)
-  if (!isReasoningModel) {
     payload.temperature = 0.2
   }
     response_format: { type: 'json_object' }
