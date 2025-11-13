@@ -75,38 +75,29 @@ Pick the best preset id and propose params {th,hz,regime}. No advice.`
 async function callOpenAI({ apiKey, model, system, prompt, response_format }) {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), 15000)
-  const makeReq = async (withJsonMode) => {
-    // Reasoning models use different parameters
+
   // ALL gpt-5 and gpt-4.1 models use new API (max_completion_tokens, no temperature)
   // Old models (gpt-4o, gpt-3.5) use old API (max_tokens, temperature)
   const isNewModel = model.includes('gpt-5') || model.includes('gpt-4.1') || model.includes('o1') || model.includes('o3') || model.includes('o4')
 
-  const payload = {
-    model,
-    messages,
-    response_format: { type: 'json_object' },
-  }
-
-  // New models: max_completion_tokens, no temperature customization
-  // Old models: max_tokens, temperature allowed
-  if (isNewModel) {
-    payload.max_completion_tokens = 300
-    // No temperature - new models only support default
-  } else {
-    payload.max_tokens = 300
-    payload.temperature = 0.2
-  }
+  const makeReq = async (withJsonMode) => {
+    const payload = {
+      model,
+      messages: [{ role: 'system', content: system }, { role: 'user', content: prompt }],
     }
 
-    // Set token limit and temperature based on model type
-    if (isReasoningModel) {
+    // New models: max_completion_tokens, no temperature customization
+    // Old models: max_tokens, temperature allowed
+    if (isNewModel) {
       payload.max_completion_tokens = 300
+      // No temperature - new models only support default
     } else {
       payload.max_tokens = 300
       payload.temperature = 0.2
     }
 
     if (withJsonMode && response_format) payload.response_format = response_format
+
     const r = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
@@ -116,6 +107,7 @@ async function callOpenAI({ apiKey, model, system, prompt, response_format }) {
     const j = await r.json()
     return { ok: r.ok, status: r.status, body: j }
   }
+
   let first = await makeReq(Boolean(response_format))
   if (!first.ok) {
     const second = await makeReq(false)
