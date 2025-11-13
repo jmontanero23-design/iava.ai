@@ -4,7 +4,6 @@
  */
 
 import { openai } from '@ai-sdk/openai'
-import { anthropic } from '@ai-sdk/anthropic'
 import { generateText } from 'ai'
 
 export default async function handler(req, res) {
