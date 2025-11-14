@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Hero from './components/Hero.jsx'
 import CandleChart from './components/chart/CandleChart.jsx'
 import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend, computeStates, pivotRibbon, ttmBands, ttmSqueeze } from './utils/indicators.js'
+import { useMarketData } from './contexts/MarketDataContext.jsx'
 import SqueezePanel from './components/chart/SqueezePanel.jsx'
 import SignalsPanel from './components/SignalsPanel.jsx'
 import SatyPanel from './components/SatyPanel.jsx'
@@ -52,6 +53,7 @@ function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*360
 }
 
 export default function App() {
+  const { updateMarketData } = useMarketData()
   const [symbol, setSymbol] = useState('AAPL')
   const [timeframe, setTimeframe] = useState('1Min')
   const [bars, setBars] = useState(() => generateSampleOHLC())
@@ -257,6 +259,26 @@ export default function App() {
   const [account, setAccount] = useState(null)
   const signalState = useMemo(() => computeStates(bars), [bars])
   const dailyState = useMemo(() => (dailyBars?.length ? computeStates(dailyBars) : null), [dailyBars])
+
+  // Publish market data to context for AI Chat and other features
+  useEffect(() => {
+    const currentPrice = bars?.length ? bars[bars.length - 1]?.close : null
+    updateMarketData({
+      symbol,
+      timeframe,
+      currentPrice,
+      bars,
+      signalState,
+      dailyState,
+      overlays,
+      threshold,
+      enforceDaily,
+      consensusBonus,
+      consensus,
+      account,
+      usingSample
+    })
+  }, [symbol, timeframe, bars, signalState, dailyState, overlays, threshold, enforceDaily, consensusBonus, consensus, account, usingSample, updateMarketData])
 
   const stale = useMemo(() => {
     if (!bars?.length) return true

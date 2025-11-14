@@ -6,8 +6,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { callAI } from '../utils/aiGateway.js'
 import { generateTradingSystemPrompt, buildMarketContext, formatContextForAI } from '../utils/aiContext.js'
+import { useMarketData } from '../contexts/MarketDataContext.jsx'
 
-export default function AIChat({ marketContext = {}, currentSymbol = 'SPY', currentState = {} }) {
+export default function AIChat() {
+  const { marketData } = useMarketData()
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -42,11 +44,39 @@ export default function AIChat({ marketContext = {}, currentSymbol = 'SPY', curr
     setIsTyping(true)
 
     try {
-      // Build world-class trading context
+      // Debug: Log market data to verify connection
+      console.log('AI Chat Market Data:', {
+        symbol: marketData.symbol,
+        hasRealData,
+        scoreAvailable: !!marketData.signalState?.score,
+        barsCount: marketData.bars?.length || 0,
+        currentPrice: marketData.currentPrice
+      })
+
+      // Build world-class trading context from actual market data
       const enrichedContext = await buildMarketContext({
-        symbol: currentSymbol,
-        indicators: currentState,
-        ...marketContext
+        symbol: marketData.symbol || 'SPY',
+        currentPrice: marketData.currentPrice,
+        bars: marketData.bars || [],
+        indicators: {
+          score: marketData.signalState?.score,
+          emaCloudNow: marketData.signalState?.emaCloudNow,
+          pivotNow: marketData.signalState?.pivotNow,
+          ichiRegime: marketData.signalState?.ichiRegime,
+          satyLevels: marketData.overlays?.saty ? {
+            support: marketData.overlays.saty.levels?.[0],
+            resistance: marketData.overlays.saty.levels?.[2]
+          } : null,
+          components: marketData.signalState?.components
+        },
+        regime: marketData.dailyState ? {
+          type: (marketData.dailyState.pivotNow === 'bullish' && marketData.dailyState.ichiRegime === 'bullish') ? 'bull' :
+                (marketData.dailyState.pivotNow === 'bearish' && marketData.dailyState.ichiRegime === 'bearish') ? 'bear' : 'neutral',
+          strength: 'moderate'
+        } : null,
+        timeframe: marketData.timeframe,
+        enforceDaily: marketData.enforceDaily,
+        consensus: marketData.consensus
       })
 
       // Generate PhD-level system prompt
@@ -93,11 +123,15 @@ export default function AIChat({ marketContext = {}, currentSymbol = 'SPY', curr
     }
   }
 
+  // Dynamic suggested questions based on current symbol
+  const currentSymbol = marketData.symbol || 'SPY'
+  const hasRealData = !marketData.usingSample && marketData.bars?.length > 0
+
   const suggestedQuestions = [
-    "What's the current market regime?",
-    "Analyze SPY technical setup",
-    "What stocks are showing momentum?",
-    "Explain the importance of volume"
+    `Should I buy ${currentSymbol}?`,
+    `What's the current market regime for ${currentSymbol}?`,
+    `Analyze ${currentSymbol} technical setup`,
+    "What's the Unicorn Score telling me?"
   ]
 
   return (
@@ -116,8 +150,12 @@ export default function AIChat({ marketContext = {}, currentSymbol = 'SPY', curr
               AI Assistant
             </h3>
             <p className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-semibold">Powered by GPT-5 Reasoning • PhD-Level Analysis</span>
+              <span className={`w-2 h-2 rounded-full ${hasRealData ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
+              <span className="font-semibold">
+                {hasRealData
+                  ? `Live Data: ${currentSymbol} • ${marketData.timeframe}`
+                  : 'Sample Data • Load chart for live analysis'}
+              </span>
             </p>
           </div>
         </div>

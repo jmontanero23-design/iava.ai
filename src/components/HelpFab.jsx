@@ -14,11 +14,14 @@ export default function HelpFab({ context = {} }) {
     function onHelp(ev) {
       try {
         const detail = ev.detail || {}
+        console.log('[HelpFab] Help event received:', { question: detail.question?.substring(0, 50), hasContext: Boolean(detail.context) })
         if (typeof detail.question === 'string') setQ(detail.question)
         if (detail.context) setEventCtx(detail.context)
         setAns('')
         setOpen(true)
-      } catch {}
+      } catch (err) {
+        console.error('[HelpFab] Error handling help event:', err)
+      }
     }
     window.addEventListener('iava.help', onHelp)
     return () => window.removeEventListener('iava.help', onHelp)
@@ -28,11 +31,14 @@ export default function HelpFab({ context = {} }) {
     try {
       setLoading(true); setAns('')
       const merged = { ...(context||{}), ...(eventCtx||{}) }
+      console.log('[HelpFab] Sending question to API:', q.substring(0, 50) + '...')
       const r = await fetch('/api/llm/help', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q, context: merged }) })
       const j = await r.json()
+      console.log('[HelpFab] API response:', { ok: r.ok, status: r.status, hasAnswer: Boolean(j.answer) })
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
       setAns(j.answer || '')
     } catch (e) {
+      console.error('[HelpFab] Error:', e)
       setAns(`${String(e.message || e)}\n\nTip: open /api/health to check AI status.`)
     } finally {
       setLoading(false)
@@ -44,7 +50,7 @@ export default function HelpFab({ context = {} }) {
       {/* Premium FAB Button */}
       <button
         onClick={() => setOpen(v => !v)}
-        className="fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full overflow-hidden shadow-2xl group"
+        className="fixed bottom-4 right-4 z-[60] w-12 h-12 rounded-full overflow-hidden shadow-2xl group"
       >
         {/* Gradient Background */}
         <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
@@ -58,7 +64,7 @@ export default function HelpFab({ context = {} }) {
 
       {/* Premium Help Panel */}
       {open && (
-        <div className="fixed bottom-20 right-4 z-50 w-96 max-w-[calc(100vw-2rem)]">
+        <div className="fixed bottom-20 right-4 z-[60] w-96 max-w-[calc(100vw-2rem)]">
           <div className="bg-slate-900/95 backdrop-blur-xl border-2 border-purple-500/30 rounded-xl shadow-2xl overflow-hidden">
             {/* Gradient Border Glow */}
             <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-indigo-500 to-pink-500 opacity-20 blur-xl" />

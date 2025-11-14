@@ -7,6 +7,7 @@ import { useState } from 'react'
 import Hero from './components/Hero.jsx'
 import ToastHub from './components/ToastHub.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
+import { MarketDataProvider } from './contexts/MarketDataContext.jsx'
 import AIFeaturesDashboard from './components/AIFeaturesDashboard.jsx'
 import AIChat from './components/AIChat.jsx'
 import NaturalLanguageScanner from './components/NaturalLanguageScanner.jsx'
@@ -65,9 +66,10 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-slate-100 bg-grid">
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        <Hero />
+    <MarketDataProvider>
+      <div className="min-h-screen bg-transparent text-slate-100 bg-grid">
+        <div className="max-w-7xl mx-auto p-6 space-y-6">
+          <Hero />
 
         {/* Tab Navigation with Logo */}
         <nav className="glass-panel p-3">
@@ -145,10 +147,7 @@ export default function App() {
         )}
 
         {activeTab === 'ai-chat' && (
-          <AIChat marketContext={{
-            status: 'ready',
-            features: 12
-          }} />
+          <AIChat />
         )}
 
         {activeTab === 'nlp-scanner' && (
@@ -200,15 +199,16 @@ export default function App() {
         )}
 
         {activeTab !== 'chart' && <BuildInfoFooter />}
+        </div>
+
+        {/* Welcome Tour for new users */}
+        <WelcomeTour forceShow={showTour} onClose={() => setShowTour(false)} />
+
+        {/* Help button to restart tour */}
+        <TourHelpButton onClick={() => setShowTour(true)} />
+
+        <ToastHub />
       </div>
-
-      {/* Welcome Tour for new users */}
-      <WelcomeTour forceShow={showTour} onClose={() => setShowTour(false)} />
-
-      {/* Help button to restart tour */}
-      <TourHelpButton onClick={() => setShowTour(true)} />
-
-      <ToastHub />
-    </div>
+    </MarketDataProvider>
   )
 }
