@@ -5,8 +5,9 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { callAI } from '../utils/aiGateway.js'
+import { generateTradingSystemPrompt, buildMarketContext, formatContextForAI } from '../utils/aiContext.js'
 
-export default function AIChat({ marketContext = {} }) {
+export default function AIChat({ marketContext = {}, currentSymbol = 'SPY', currentState = {} }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -41,30 +42,31 @@ export default function AIChat({ marketContext = {} }) {
     setIsTyping(true)
 
     try {
-      // Build context-aware system prompt
-      const systemPrompt = `You are an expert trading assistant for iAVA.ai. Provide concise, actionable trading insights.
+      // Build world-class trading context
+      const enrichedContext = await buildMarketContext({
+        symbol: currentSymbol,
+        indicators: currentState,
+        ...marketContext
+      })
 
-Current Market Context:
-${JSON.stringify(marketContext, null, 2)}
+      // Generate PhD-level system prompt
+      const systemPrompt = generateTradingSystemPrompt()
 
-Guidelines:
-- Be concise (2-3 sentences max)
-- Focus on actionable insights
-- Cite specific technical levels when relevant
-- Acknowledge risk and uncertainty
-- No financial advice disclaimers (user understands risks)`
+      // Format context for AI
+      const contextText = formatContextForAI(enrichedContext)
 
       const chatHistory = messages.slice(-6) // Last 3 exchanges for context
       const aiMessages = [
         { role: 'system', content: systemPrompt },
+        { role: 'system', content: `CURRENT MARKET DATA:\n\n${contextText}` },
         ...chatHistory.map(m => ({ role: m.role, content: m.content })),
         { role: 'user', content: input.trim() }
       ]
 
-      // Use GPT-5-mini for fast conversational responses (GPT-5 times out)
-      const result = await callAI('gpt-5-mini', aiMessages, {
+      // Use GPT-5 for deep reasoning (worth the wait for world-class insights)
+      const result = await callAI('gpt-5', aiMessages, {
         temperature: 0.7,
-        max_tokens: 200,
+        max_tokens: 300,
         cache: false
       })
 
@@ -115,7 +117,7 @@ Guidelines:
             </h3>
             <p className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-semibold">Powered by GPT-5-mini</span>
+              <span className="font-semibold">Powered by GPT-5 Reasoning • PhD-Level Analysis</span>
             </p>
           </div>
         </div>

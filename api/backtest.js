@@ -272,7 +272,13 @@ export default async function handler(req, res) {
       res.status(200).send(body)
     }
   } catch (e) {
-    res.status(500).json({ error: e?.message || 'Unexpected error' })
+    // If Alpaca is rate limiting, return 429 instead of 500
+    if (e.message && (e.message.includes('rate') || e.message.includes('429'))) {
+      return res.status(429).json({ error: 'Alpaca API rate limit exceeded. Please wait and try again.', details: e.message })
+    }
+    // Log error for debugging
+    console.error('[Backtest Error]', e.message || e)
+    res.status(500).json({ error: e?.message || 'Backtest calculation failed' })
   }
 }
 
