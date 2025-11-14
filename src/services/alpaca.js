@@ -2,7 +2,8 @@ import { rateLimitedFetch } from '../utils/rateLimiter.js'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
-export async function fetchBars(symbol = 'AAPL', timeframe = '1Min', limit = 500) {
+// Original fetchBars function (used internally by request queue)
+export async function fetchBarsInternal(symbol = 'AAPL', timeframe = '1Min', limit = 500) {
   const qs = new URLSearchParams({ symbol, timeframe, limit: String(limit) })
   const url = `${API_BASE}/api/alpaca/bars?${qs.toString()}`
 
@@ -19,6 +20,10 @@ export async function fetchBars(symbol = 'AAPL', timeframe = '1Min', limit = 500
     _stale: json.stale
   }))
 }
+
+// Export the original function for backward compatibility
+// This will be wrapped by components that need queue management
+export const fetchBars = fetchBarsInternal
 
 export async function fetchAccount() {
   const r = await fetch(`${API_BASE}/api/alpaca/account`)

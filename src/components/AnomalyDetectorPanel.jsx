@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { scanForAnomalies, getAnomalyAlertLevel } from '../utils/anomalyDetector.js'
-import { fetchBars } from '../services/alpaca.js'
+import { fetchBars, PRIORITY } from '../services/alpacaQueue.js'
 
 export default function AnomalyDetectorPanel() {
   const [symbol, setSymbol] = useState('SPY')
@@ -15,8 +15,8 @@ export default function AnomalyDetectorPanel() {
     setScanResult(null)
 
     try {
-      // Fetch bars
-      const bars = await fetchBars(symbol, timeframe, 500)
+      // Fetch bars with panel analysis priority
+      const bars = await fetchBars(symbol, timeframe, 500, PRIORITY.PANEL_ANALYSIS)
 
       if (!Array.isArray(bars) || bars.length === 0) {
         throw new Error('No data available for this symbol/timeframe')

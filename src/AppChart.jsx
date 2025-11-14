@@ -6,7 +6,7 @@ import { useMarketData } from './contexts/MarketDataContext.jsx'
 import SqueezePanel from './components/chart/SqueezePanel.jsx'
 import SignalsPanel from './components/SignalsPanel.jsx'
 import SatyPanel from './components/SatyPanel.jsx'
-import { fetchBars as fetchBarsApi } from './services/alpaca.js'
+import { fetchBars as fetchBarsApi, PRIORITY } from './services/alpacaQueue.js'
 import HealthBadge from './components/HealthBadge.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
 import Presets from './components/Presets.jsx'
@@ -34,6 +34,7 @@ import WatchlistNavigator from './components/WatchlistNavigator.jsx'
 import ScannerPanel from './components/ScannerPanel.jsx'
 import CommandPalette from './components/CommandPalette.jsx'
 import AIInsightsPanel from './components/AIInsightsPanel.jsx'
+import QueueMonitor from './components/QueueMonitor.jsx'
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -82,6 +83,7 @@ export default function App() {
   const streamingAllowed = (import.meta.env.VITE_STREAMING_ALLOWED || 'true').toString().toLowerCase() === 'true'
   const [streaming, setStreaming] = useState(false)
   const [hud, setHud] = useState('')
+  const symbolDebounceTimer = useRef(null)
   const [secBars, setSecBars] = useState([])
   const [consensus, setConsensus] = useState(null)
   const [consensusBonus, setConsensusBonus] = useState(false)
@@ -296,7 +298,8 @@ export default function App() {
       const myId = ++loadReq.current
       setLoading(true)
       setError('')
-      const res = await fetchBarsApi(s, tf, 500)
+      // Primary chart data gets highest priority
+      const res = await fetchBarsApi(s, tf, 500, PRIORITY.CHART_PRIMARY)
       if (myId !== loadReq.current) return
       if (Array.isArray(res) && res.length) { setBars(res); setUsingSample(false) }
       else throw new Error('No data returned')
@@ -323,7 +326,8 @@ export default function App() {
 
   async function loadDaily(s = symbol) {
     try {
-      const res = await fetchBarsApi(s, '1Day', 400)
+      // Daily bars get secondary priority since they're supplementary
+      const res = await fetchBarsApi(s, '1Day', 400, PRIORITY.CHART_SECONDARY)
       if (Array.isArray(res) && res.length) setDailyBars(res)
     } catch {}
   }
@@ -341,7 +345,8 @@ export default function App() {
     const sec = mapSecondary(tf)
     if (!sec) { setSecBars([]); setConsensus(null); return }
     try {
-      const res = await fetchBarsApi(s, sec, 500)
+      // Secondary timeframe for consensus gets secondary priority
+      const res = await fetchBarsApi(s, sec, 500, PRIORITY.CHART_SECONDARY)
       setSecBars(Array.isArray(res) ? res : [])
     } catch { setSecBars([]) }
   }
@@ -486,8 +491,21 @@ export default function App() {
   }, [autoRefresh, refreshSec, symbol, timeframe])
 
   useEffect(() => {
-    loadDaily(symbol)
-    loadSecondary(symbol, timeframe)
+    // Debounce symbol changes to prevent rapid-fire requests
+    if (symbolDebounceTimer.current) {
+      clearTimeout(symbolDebounceTimer.current)
+    }
+
+    symbolDebounceTimer.current = setTimeout(() => {
+      loadDaily(symbol)
+      loadSecondary(symbol, timeframe)
+    }, 300) // Wait 300ms after last change before fetching
+
+    return () => {
+      if (symbolDebounceTimer.current) {
+        clearTimeout(symbolDebounceTimer.current)
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol])
 
@@ -810,6 +828,9 @@ export default function App() {
         applyPreset={applyPreset}
       />
       <BuildInfoFooter />
+      <QueueMonitor />
+      <ToastHub />
+      <HelpFab />
       </div>
     </div>
   )

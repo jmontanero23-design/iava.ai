@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { analyzeTimeframe, analyzeMultiTimeframe, getEntryTiming } from '../utils/multiTimeframeAnalyst.js'
-import { fetchBars } from '../services/alpaca.js'
+import { fetchBarsSequential, PRIORITY } from '../services/alpacaQueue.js'
 
 export default function MultiTimeframeAnalystPanel() {
   const [symbol, setSymbol] = useState('SPY')
@@ -14,11 +14,12 @@ export default function MultiTimeframeAnalystPanel() {
     setAnalysis(null)
 
     try {
-      // Fetch bars for all 3 timeframes
-      const [shortBars, mediumBars, longBars] = await Promise.all([
-        fetchBars(symbol, '5Min', 500),
-        fetchBars(symbol, '15Min', 500),
-        fetchBars(symbol, '1Hour', 500)
+      // Fetch bars for all 3 timeframes SEQUENTIALLY to avoid rate limiting
+      // Using PANEL_ANALYSIS priority since this is an analysis panel
+      const [shortBars, mediumBars, longBars] = await fetchBarsSequential([
+        { symbol, timeframe: '5Min', limit: 500, priority: PRIORITY.PANEL_ANALYSIS },
+        { symbol, timeframe: '15Min', limit: 500, priority: PRIORITY.PANEL_ANALYSIS },
+        { symbol, timeframe: '1Hour', limit: 500, priority: PRIORITY.PANEL_ANALYSIS }
       ])
 
       if (!shortBars?.length || !mediumBars?.length || !longBars?.length) {
