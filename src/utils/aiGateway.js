@@ -234,40 +234,80 @@ export async function parseNaturalQuery(query) {
   const messages = [
     {
       role: 'system',
-      content: 'You are a trading query parser. Convert natural language to structured filter criteria. Return JSON only.'
+      content: `You are an expert trading query parser for iAVA.ai - a confluence-based technical analysis platform.
+
+**Your job:** Convert natural language queries into structured filter criteria that work with iAVA's indicator system.
+
+**iAVA Indicators You Understand:**
+1. **Unicorn Score (0-100)** - Master confluence score combining all indicators
+   - 70+ = High quality setups
+   - 60-70 = Good setups
+   - 40-60 = Moderate
+   - <40 = Low quality
+
+2. **EMA Cloud (8/21)** - Fast trend indicator
+   - Bullish = EMA 8 > 21
+   - Bearish = EMA 8 < 21
+
+3. **Pivot Ribbon** - Trend strength indicator
+   - Bullish/Bearish/Neutral
+
+4. **Ichimoku Cloud** - Trend/momentum system
+   - Bullish regime = price above cloud
+   - Bearish regime = price below cloud
+
+5. **SATY** - ATR-based support/resistance
+6. **TTM Squeeze** - Volatility compression
+7. **Daily Regime Filter** - Higher timeframe context
+
+**Natural Language Mappings:**
+- "bullish momentum" → Unicorn Score 70+, EMA bullish, Pivot bullish
+- "high quality setups" → Unicorn Score 80+
+- "breaking out" → Unicorn Score 70+, EMA bullish
+- "oversold" → Look for reversals, score may be low but turning up
+- "strong confluence" → Unicorn Score 80+
+- "pullback in uptrend" → Daily bullish, but current score <50
+
+Return JSON only. Be intelligent about translating trading language to iAVA filters.`
     },
     {
       role: 'user',
-      content: `Convert this query to structured filters:
+      content: `Convert this trading query to iAVA filter criteria:
 
 "${query}"
 
-Return JSON with available filters:
+Available filters:
 {
+  "unicornScore": { "min": 0-100, "max": 0-100 },
   "priceRange": { "min": number, "max": number },
   "volumeMin": number,
   "atrMin": number,
-  "adxMin": number,
-  "trend": "bullish" | "bearish" | "neutral",
-  "marketCap": "small" | "mid" | "large",
-  "sector": "string"
+  "emaCloud": "bullish" | "bearish" | null,
+  "pivotRibbon": "bullish" | "bearish" | "neutral" | null,
+  "ichiRegime": "bullish" | "bearish" | null,
+  "dailyRegime": "bull" | "bear" | "neutral" | null,
+  "marketCap": "small" | "mid" | "large" | null,
+  "sector": "string" | null,
+  "interpretation": "brief explanation of what you're filtering for"
 }
 
-Only include filters explicitly mentioned in the query.`
+Only include filters that are explicitly or implicitly mentioned in the query. Be smart about trading terminology.`
     }
   ]
 
-  // Use GPT-5-mini for fast NLP parsing (GPT-5 reasoning is overkill and slow)
+  // Use GPT-5-mini for fast NLP parsing
   const result = await callAI('gpt-5-mini', messages, {
     temperature: 0.1,
-    max_tokens: 300,
+    max_tokens: 400,
     json: true,
     cache: true,
     cacheTTL: 300
   })
 
   try {
-    return JSON.parse(result.content)
+    const parsed = JSON.parse(result.content)
+    console.log('[NLP Scanner] Parsed query:', parsed)
+    return parsed
   } catch {
     return { error: 'Failed to parse query' }
   }
