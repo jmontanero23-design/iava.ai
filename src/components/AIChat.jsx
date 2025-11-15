@@ -235,80 +235,133 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
     }
   }
 
-  // Find similar setups using existing scanner API - EXPANDED UNIVERSE
+  // Find similar setups - FULL MARKET SCAN (ALL tradeable stocks)
   const findSimilarSetups = async () => {
     try {
       setIsTyping(true)
 
-      // Get current market data for context
+      // Add progress message
+      const progressMsg = {
+        role: 'assistant',
+        content: '🔍 Scanning the entire market (all tradeable US stocks)...',
+        timestamp: Date.now()
+      }
+      setMessages(prev => [...prev, progressMsg])
+
       const currentTimeframe = marketData.timeframe || '5Min'
 
-      // MUCH LARGER stock universe - top 100+ liquid stocks
-      const fullUniverse = 'SPY,QQQ,IWM,DIA,AAPL,MSFT,NVDA,TSLA,AMZN,META,GOOGL,NFLX,AMD,CRM,INTC,CSCO,ADBE,PYPL,DIS,BA,GS,JPM,V,MA,COST,WMT,HD,PG,JNJ,UNH,CVX,XOM,AVGO,LLY,ABBV,MRK,PFE,TMO,DHR,ABT,NKE,MCD,SBUX,KO,PEP,PM,MO,T,VZ,CMCSA,NFLX,DIS,TMUS,CAT,DE,MMM,HON,UNP,UPS,FDX,RTX,LMT,GD,NOC,F,GM,TSLA,NIO,LCID,RIVN,COIN,SQ,SHOP,UBER,LYFT,ABNB,DASH,SNOW,PLTR,RBLX,SOFI,HOOD,AFRM,DKNG,PENN,MGM,WYNN,LVS,CCL,RCL,NCLH,AAL,UAL,DAL,LUV,JBLU,ALK,ZM,DOCU,NET,DDOG,CRWD,ZS,OKTA,PANW,FTNT,CHPT,BLNK,ENVX,QS,PLUG,FCEL,BE,CLNE,RUN,ENPH,SEDG,SPWR,MAXN,NOVA,CSIQ,JKS,DQ,ICLN,TAN,QCLN'
+      // Step 1: Fetch ENTIRE universe of tradeable stocks from Alpaca
+      const universeResponse = await fetch('/api/universe?assetClass=stocks')
+      if (!universeResponse.ok) throw new Error('Failed to fetch stock universe')
+      const universeData = await universeResponse.json()
+      const allSymbols = universeData.symbols || []
 
-      // Lower threshold to actually find setups (60 instead of 70)
-      const params = new URLSearchParams({
-        symbols: fullUniverse,
-        timeframe: currentTimeframe,
-        threshold: '60', // Lowered to find more results
-        top: '20', // Get top 20 so we can show top 10 longs + 10 shorts
-        enforceDaily: '0',
-        requireConsensus: '0',
-        consensusBonus: '0',
-        assetClass: 'stocks'
-      })
+      if (!allSymbols.length) throw new Error('No stocks available to scan')
 
-      const response = await fetch(`/api/scan?${params.toString()}`)
-      if (!response.ok) throw new Error('Scanner API failed')
+      // Step 2: Scan in batches (like ScannerPanel does) - 25 stocks at a time
+      const chunk = (arr, n) => arr.reduce((acc, x, i) => {
+        if (i % n === 0) acc.push([])
+        acc[acc.length-1].push(x)
+        return acc
+      }, [])
 
-      const data = await response.json()
+      const chunks = chunk(allSymbols, 25)
+      const accumulated = { longs: [], shorts: [] }
+      let totalScanned = 0
 
-      // Format results for display - TOP 10 EACH
-      const longs = (data.longs || []).slice(0, 10)
-      const shorts = (data.shorts || []).slice(0, 10)
+      for (let i = 0; i < chunks.length; i++) {
+        const batch = chunks[i].join(',')
+        const params = new URLSearchParams({
+          symbols: batch,
+          timeframe: currentTimeframe,
+          threshold: '60',
+          top: '100',
+          enforceDaily: '0',
+          requireConsensus: '0',
+          consensusBonus: '0',
+          assetClass: 'stocks',
+          returnAll: '1'
+        })
 
-      let resultText = `🔍 **Market Scan Results** (${fullUniverse.split(',').length}+ stocks scanned)\n\n`
+        const response = await fetch(`/api/scan?${params.toString()}`)
+        if (response.ok) {
+          const data = await response.json()
+          accumulated.longs.push(...(data.longs || []))
+          accumulated.shorts.push(...(data.shorts || []))
+          totalScanned += chunks[i].length
 
-      if (longs.length > 0) {
-        resultText += `**🟢 TOP ${longs.length} LONG SETUPS**\n`
-        longs.forEach((setup, i) => {
+          // Update progress every 10 batches
+          if (i % 10 === 0 || i === chunks.length - 1) {
+            setMessages(prev => {
+              const updated = [...prev]
+              updated[updated.length - 1] = {
+                ...updated[updated.length - 1],
+                content: `🔍 Scanning... ${totalScanned}/${allSymbols.length} stocks (${Math.round((totalScanned/allSymbols.length)*100)}%) • Found: ${accumulated.longs.length}L/${accumulated.shorts.length}S`
+              }
+              return updated
+            })
+          }
+        }
+      }
+
+      // Step 3: Sort and get top 10 of each
+      accumulated.longs.sort((a,b) => b.score - a.score)
+      accumulated.shorts.sort((a,b) => b.score - a.score)
+      const topLongs = accumulated.longs.slice(0, 10)
+      const topShorts = accumulated.shorts.slice(0, 10)
+
+      // Step 4: Format results
+      let resultText = `🔍 **FULL MARKET SCAN COMPLETE**\n`
+      resultText += `Scanned: ${allSymbols.length.toLocaleString()} stocks | Threshold: 60+\n\n`
+
+      if (topLongs.length > 0) {
+        resultText += `**🟢 TOP ${topLongs.length} LONG SETUPS**\n`
+        topLongs.forEach((setup, i) => {
           resultText += `${i + 1}. **${setup.symbol}** - $${setup.last?.close?.toFixed(2)}\n`
-          resultText += `   • Unicorn: ${Math.round(setup.score)}/100 | ${setup.emaCloudNow || 'N/A'} EMA | ${setup.pivotNow || 'N/A'} Pivot\n`
+          resultText += `   • Unicorn: ${Math.round(setup.score)}/100\n`
         })
       }
 
-      if (shorts.length > 0) {
-        resultText += `\n**🔴 TOP ${shorts.length} SHORT SETUPS**\n`
-        shorts.forEach((setup, i) => {
+      if (topShorts.length > 0) {
+        resultText += `\n**🔴 TOP ${topShorts.length} SHORT SETUPS**\n`
+        topShorts.forEach((setup, i) => {
           resultText += `${i + 1}. **${setup.symbol}** - $${setup.last?.close?.toFixed(2)}\n`
-          resultText += `   • Unicorn: ${Math.round(setup.score)}/100 | ${setup.emaCloudNow || 'N/A'} EMA | ${setup.pivotNow || 'N/A'} Pivot\n`
+          resultText += `   • Unicorn: ${Math.round(setup.score)}/100\n`
         })
       }
 
-      if (longs.length === 0 && shorts.length === 0) {
-        resultText += `No setups found with Unicorn Score 60+ across ${fullUniverse.split(',').length} stocks.\n`
-        resultText += `Market is extremely choppy - wait for better conditions or lower threshold to 50.`
+      if (topLongs.length === 0 && topShorts.length === 0) {
+        resultText += `\nNo setups found with Unicorn Score 60+ across the entire market.\n`
+        resultText += `Market is extremely choppy - wait for better conditions.`
       } else {
-        resultText += `\n💡 These are LIVE scans with real Unicorn Scores. Load any symbol for exact entries/stops.`
+        resultText += `\n💡 Total qualifying setups: ${accumulated.longs.length} longs, ${accumulated.shorts.length} shorts`
+        resultText += `\n📊 Load any symbol on the chart for exact entries/stops/targets.`
       }
 
-      const scannerMessage = {
-        role: 'assistant',
-        content: resultText,
-        timestamp: Date.now(),
-        scanResults: { longs, shorts }
-      }
-      setMessages(prev => [...prev, scannerMessage])
+      // Replace progress message with final results
+      setMessages(prev => {
+        const updated = [...prev]
+        updated[updated.length - 1] = {
+          role: 'assistant',
+          content: resultText,
+          timestamp: Date.now(),
+          scanResults: { longs: topLongs, shorts: topShorts, totalScanned: allSymbols.length }
+        }
+        return updated
+      })
 
     } catch (error) {
       console.error('[AI Chat] Scanner error:', error)
-      const errorMessage = {
-        role: 'assistant',
-        content: '❌ Scanner temporarily unavailable. Use the Scanner panel at the bottom of the page for manual scanning.',
-        timestamp: Date.now(),
-        error: true
-      }
-      setMessages(prev => [...prev, errorMessage])
+      setMessages(prev => {
+        const updated = [...prev]
+        updated[updated.length - 1] = {
+          role: 'assistant',
+          content: `❌ Market scan failed: ${error.message}\n\nUse the Scanner panel for manual scanning.`,
+          timestamp: Date.now(),
+          error: true
+        }
+        return updated
+      })
     } finally {
       setIsTyping(false)
     }
