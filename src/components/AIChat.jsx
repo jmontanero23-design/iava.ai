@@ -176,6 +176,64 @@ export default function AIChat() {
     alert(`Trade setup loaded! Check your order panel.\n\nSymbol: ${setup.symbol}\nSide: ${setup.side}\nEntry: $${setup.entry || 'market'}\nStop: $${setup.stopLoss || 'N/A'}\nTarget: $${setup.target || 'N/A'}`)
   }
 
+  // Run backtest for current setup
+  const runBacktestAnalysis = async (messageContent) => {
+    try {
+      setIsTyping(true)
+
+      // Extract symbol from message or use current
+      const symbolMatch = messageContent.match(/\b([A-Z]{1,5})\b/)
+      const symbol = symbolMatch ? symbolMatch[1] : marketData.symbol || 'SPY'
+      const timeframe = marketData.timeframe || '15Min'
+
+      // Call backtest API
+      const response = await fetch(`/api/backtest?symbol=${symbol}&timeframe=${timeframe}&threshold=70&horizon=10&curve=1`)
+      const data = await response.json()
+
+      // Format backtest results for AI
+      const backtestSummary = `
+🔬 **BACKTEST RESULTS for ${symbol} (${timeframe})**
+
+📊 Performance Metrics:
+• Score Average: ${data.scoreAvg}/100
+• Events Found: ${data.events}
+• Win Rate: ${data.winRate}%
+• Avg Forward Return: ${data.avgFwd}%
+• Median Return: ${data.medianFwd}%
+• Profit Factor: ${data.profitFactor || 'N/A'}
+
+📈 Threshold Analysis:
+${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.winRate}% WR, +${c.avgFwd}% avg`).join('\n') || 'No data'}
+
+💡 **Verdict:** ${
+          data.winRate > 60 ? '✅ STRONG EDGE - High probability setup!' :
+          data.winRate > 50 ? '⚠️ MODERATE - Use with confirmation' :
+          '❌ WEAK - Avoid or wait for better setup'
+        }`
+
+      // Add backtest results to chat
+      const backtestMessage = {
+        role: 'assistant',
+        content: backtestSummary,
+        timestamp: Date.now(),
+        isBacktest: true
+      }
+
+      setMessages(prev => [...prev, backtestMessage])
+
+    } catch (error) {
+      const errorMessage = {
+        role: 'assistant',
+        content: `⚠️ Backtest failed: ${error.message}`,
+        timestamp: Date.now(),
+        error: true
+      }
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
+      setIsTyping(false)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if ((!input.trim() && uploadedFiles.length === 0) || isTyping) return
@@ -473,15 +531,25 @@ export default function AIChat() {
                                 <button
                                   key={qIdx}
                                   onClick={() => {
-                                    setInput(q)
-                                    // Auto-submit after a short delay to let user see it
-                                    setTimeout(() => {
-                                      const form = document.querySelector('form')
-                                      form?.requestSubmit()
-                                    }, 300)
+                                    // Special handling for backtest request
+                                    if (q.toLowerCase().includes('backtest')) {
+                                      runBacktestAnalysis(msg.content)
+                                    } else {
+                                      setInput(q)
+                                      // Auto-submit after a short delay to let user see it
+                                      setTimeout(() => {
+                                        const form = document.querySelector('form')
+                                        form?.requestSubmit()
+                                      }, 300)
+                                    }
                                   }}
-                                  className="px-2.5 py-1 text-xs bg-slate-700/50 hover:bg-indigo-600/30 border border-slate-600/50 hover:border-indigo-500/40 rounded-lg text-slate-300 hover:text-indigo-200 transition-all"
+                                  className={`px-2.5 py-1 text-xs ${
+                                    q.toLowerCase().includes('backtest')
+                                      ? 'bg-emerald-600/20 hover:bg-emerald-600/30 border-emerald-500/40 hover:border-emerald-400/50 text-emerald-300'
+                                      : 'bg-slate-700/50 hover:bg-indigo-600/30 border-slate-600/50 hover:border-indigo-500/40 text-slate-300 hover:text-indigo-200'
+                                  } border rounded-lg transition-all`}
                                 >
+                                  {q.toLowerCase().includes('backtest') && '🔬 '}
                                   {q}
                                 </button>
                               ))}
