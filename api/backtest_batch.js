@@ -4,10 +4,7 @@ const dailyCache = getCacheMap('dailyBars')
 
 export default async function handler(req, res) {
   try {
-    const key = process.env.ALPACA_KEY_ID
-    const secret = process.env.ALPACA_SECRET_KEY
-    const dataBase = process.env.ALPACA_DATA_URL || 'https://data.alpaca.markets/v2'
-    if (!key || !secret) return res.status(500).json({ error: 'Missing Alpaca keys' })
+    // Using Yahoo Finance for stock data (no API keys needed)
 
     const url = new URL(req.url, 'http://localhost')
     const symbols = (url.searchParams.get('symbols') || 'AAPL').split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
@@ -29,14 +26,14 @@ export default async function handler(req, res) {
     const ths = [30,40,50,60,70,80,90]
     const sumRows = [] // {symbol, regime, th, events, winRate, avgFwd, medianFwd}
     for (const symbol of symbols) {
-      const bars = await fetchBars({ key, secret, dataBase, symbol, timeframe, limit })
+      const bars = await fetchBars({ symbol, timeframe, limit })
       if (!bars.length) continue
       let dailyBars = null, dailyStates = null
       if (dailyFilter !== 'none') {
         const dkey = `${symbol}|1Day|400`
         dailyBars = getCache(dailyCache, dkey, 60 * 60 * 1000)
         if (!dailyBars) {
-          dailyBars = await fetchBars({ key, secret, dataBase, symbol, timeframe: '1Day', limit: 400 })
+          dailyBars = await fetchBars({ symbol, timeframe: '1Day', limit: 400 })
           setCache(dailyCache, dkey, dailyBars)
         }
         dailyStates = []
@@ -138,23 +135,79 @@ function mapTf(tf) {
   return '1Min'
 }
 
-async function fetchBars({ key, secret, dataBase, symbol, timeframe, limit }) {
-  const qs = new URLSearchParams({ symbols: symbol, timeframe, limit: String(limit), feed: 'iex', adjustment: 'raw' })
-  const now = new Date()
-  const backDays = timeframe === '1Day' ? 365 * 2 : 21
-  const startDate = new Date(now.getTime() - backDays * 24 * 60 * 60 * 1000)
-  qs.set('start', startDate.toISOString())
-  const endpoint = `${dataBase}/stocks/bars?${qs.toString()}`
-  const r = await fetch(endpoint, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
-  const j = await r.json()
-  if (!r.ok) throw new Error(JSON.stringify(j))
-  let raw = []
-  if (Array.isArray(j?.bars?.[symbol])) raw = j.bars[symbol]
-  else if (Array.isArray(j?.bars)) raw = j.bars
-  return raw.map(b => ({
-    time: Math.floor(new Date(b.t || b.Timestamp || b.time).getTime() / 1000),
-    open: b.o ?? b.Open, high: b.h ?? b.High, low: b.l ?? b.Low, close: b.c ?? b.Close, volume: b.v ?? b.Volume,
-  }))
+async function fetchBars({ symbol, timeframe, limit }) {
+  // Use Yahoo Finance instead of Alpaca (free, unlimited)
+  const interval = mapTimeframeToYahoo(timeframe)
+  const range = getRangeForTimeframe(timeframe, limit)
+
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`
+
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error(`Yahoo Finance API error: ${response.status}`)
+  }
+
+  const data = await response.json()
+  const result = data.chart.result[0]
+
+  if (!result || !result.timestamp) {
+    throw new Error('Invalid Yahoo Finance response')
+  }
+
+  const timestamps = result.timestamp
+  const quote = result.indicators.quote[0]
+
+  const bars = []
+  for (let i = 0; i < timestamps.length; i++) {
+    if (!quote.open[i] || !quote.close[i]) continue
+
+    bars.push({
+      time: timestamps[i], // Yahoo gives seconds, which is what we need
+      open: quote.open[i],
+      high: quote.high[i],
+      low: quote.low[i],
+      close: quote.close[i],
+      volume: quote.volume[i] || 0
+    })
+  }
+
+  return bars.slice(-limit)
+}
+
+function mapTimeframeToYahoo(timeframe) {
+  const map = {
+    '1Min': '1m',
+    '5Min': '5m',
+    '15Min': '15m',
+    '30Min': '30m',
+    '1Hour': '1h',
+    '4Hour': '1h',
+    '1Day': '1d'
+  }
+  return map[timeframe] || '1m'
+}
+
+function getRangeForTimeframe(timeframe, limit) {
+  if (timeframe.includes('Min') || timeframe.includes('Hour')) {
+    if (timeframe === '1Min') return '1d'
+    if (timeframe === '5Min') return '5d'
+    if (timeframe === '15Min') return '1mo'
+    if (timeframe === '1Hour') return '3mo'
+    return '1mo'
+  }
+
+  if (timeframe === '1Day') {
+    if (limit <= 100) return '3mo'
+    if (limit <= 250) return '1y'
+    return '2y'
+  }
+
+  return '1mo'
 }
 
 function median(arr) {
