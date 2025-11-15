@@ -316,30 +316,64 @@ ${results.map((r, i) => `${i + 1}. **${r.symbol}** - $${r.price?.toFixed(2) || '
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SpeechRecognition()
 
-    recognition.continuous = false
-    recognition.interimResults = false
+    // SMART MODE: Continuous with auto-silence detection
+    recognition.continuous = true
+    recognition.interimResults = true
     recognition.lang = 'en-US'
+    recognition.maxAlternatives = 1
+
+    let finalTranscript = ''
+    let silenceTimer = null
 
     recognition.onstart = () => {
       setIsListening(true)
-      console.log('🎤 Voice recognition started')
+      finalTranscript = ''
+      console.log('🎤 Voice recognition started (speak naturally, I\'ll know when you\'re done)')
     }
 
     recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript
-      console.log('🎤 Heard:', transcript)
-      setInput(transcript)
-      setIsListening(false)
+      let interimTranscript = ''
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + ' '
+        } else {
+          interimTranscript = transcript
+        }
+      }
+
+      // Show live transcript
+      setInput((finalTranscript + interimTranscript).trim())
+
+      // Clear any existing silence timer
+      if (silenceTimer) clearTimeout(silenceTimer)
+
+      // Set new silence timer - auto-submit after 2 seconds of silence
+      silenceTimer = setTimeout(() => {
+        if (finalTranscript.trim()) {
+          console.log('🎤 Silence detected - auto-submitting:', finalTranscript.trim())
+          recognition.stop()
+          // Auto-submit the form
+          setTimeout(() => {
+            const form = document.querySelector('form')
+            form?.requestSubmit()
+          }, 200)
+        }
+      }, 2000) // 2 seconds of silence = done talking
     }
 
     recognition.onerror = (event) => {
       console.error('🎤 Error:', event.error)
       setIsListening(false)
-      alert(`❌ Voice error: ${event.error}`)
+      if (event.error !== 'no-speech' && event.error !== 'aborted') {
+        alert(`❌ Voice error: ${event.error}`)
+      }
     }
 
     recognition.onend = () => {
       setIsListening(false)
+      if (silenceTimer) clearTimeout(silenceTimer)
       console.log('🎤 Voice recognition ended')
     }
 
@@ -352,6 +386,38 @@ ${results.map((r, i) => `${i + 1}. **${r.symbol}** - $${r.price?.toFixed(2) || '
       recognitionRef.current.stop()
       setIsListening(false)
     }
+  }
+
+  // Text-to-Speech: Speak AI responses
+  const speakResponse = (text) => {
+    if (!('speechSynthesis' in window)) return
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel()
+
+    // Clean markdown and special characters for TTS
+    const cleanText = text
+      .replace(/[*_~`#]/g, '') // Remove markdown
+      .replace(/\n+/g, '. ') // Newlines to pauses
+      .replace(/\s+/g, ' ') // Collapse whitespace
+      .trim()
+
+    const utterance = new SpeechSynthesisUtterance(cleanText)
+    utterance.rate = 1.1 // Slightly faster than default
+    utterance.pitch = 1.0
+    utterance.volume = 0.9
+
+    // Use a natural-sounding voice if available
+    const voices = window.speechSynthesis.getVoices()
+    const preferredVoice = voices.find(v =>
+      v.name.includes('Samantha') || // Mac
+      v.name.includes('Google US English') || // Chrome
+      v.lang.startsWith('en-US')
+    )
+    if (preferredVoice) utterance.voice = preferredVoice
+
+    window.speechSynthesis.speak(utterance)
+    console.log('🔊 Speaking response:', cleanText.substring(0, 100) + '...')
   }
 
   // Generate smart AI-powered suggested questions
@@ -511,9 +577,23 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
         userContent = textContent
       }
 
+      // CRITICAL: Add verification footer with actual numbers
+      const verificationFooter = `
+⚠️ CRITICAL ACCURACY REQUIREMENT ⚠️
+You MUST use these EXACT numbers from the live data above:
+- Unicorn Score: ${enrichedContext.unicornScore?.current || 'N/A'}
+- Symbol: ${enrichedContext.symbol}
+- Price: ${enrichedContext.price?.formatted || 'N/A'}
+- EMA Cloud: ${enrichedContext.emaCloud?.status || 'N/A'}
+- Pivot: ${enrichedContext.pivotRibbon?.status || 'N/A'}
+- Ichimoku: ${enrichedContext.ichimoku?.regime || 'N/A'}
+
+NEVER guess or approximate numbers. If you cite a number, it MUST match the data above EXACTLY.
+If you're uncertain about any metric, say "I don't have that data" rather than guessing.`
+
       const aiMessages = [
         { role: 'system', content: systemPrompt },
-        { role: 'system', content: `CURRENT MARKET DATA:\n\n${contextText}` },
+        { role: 'system', content: `CURRENT MARKET DATA:\n\n${contextText}\n\n${verificationFooter}` },
         ...chatHistory.map(m => ({ role: m.role, content: m.content })),
         { role: 'user', content: userContent }
       ]
@@ -523,9 +603,14 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
       const maxTokens = hasImages ? 600 : 300
 
       console.log('[AI Chat] Using model:', model, 'with files:', currentFiles.length)
+      console.log('[AI Chat] Live Data Check:', {
+        score: enrichedContext.unicornScore?.current,
+        symbol: enrichedContext.symbol,
+        price: enrichedContext.price?.current
+      })
 
       const result = await callAI(model, aiMessages, {
-        temperature: 0.7,
+        temperature: 0.1, // LOW temp for factual accuracy - no hallucinations!
         max_tokens: maxTokens,
         cache: false
       })
@@ -539,6 +624,9 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
       }
 
       setMessages(prev => [...prev, assistantMessage])
+
+      // Speak the response (if not an error)
+      setTimeout(() => speakResponse(result.content), 100)
 
       // Generate smart suggestions after AI responds
       setTimeout(() => generateSmartSuggestions(), 500)
