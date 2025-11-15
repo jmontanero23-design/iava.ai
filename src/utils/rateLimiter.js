@@ -22,13 +22,13 @@ class RateLimiter {
       default: { maxPerMinute: 100, maxConcurrent: 2 }
     }
 
-    // Cache TTL in milliseconds
+    // Cache TTL in milliseconds - AGGRESSIVE to avoid 429 errors
     this.cacheTTL = {
-      '1Min': 60 * 1000,      // 1 minute for 1-min bars
-      '5Min': 5 * 60 * 1000,  // 5 minutes for 5-min bars
-      '15Min': 10 * 60 * 1000, // 10 minutes for 15-min bars
-      '1Hour': 30 * 60 * 1000, // 30 minutes for hourly bars
-      '1Day': 60 * 60 * 1000   // 1 hour for daily bars
+      '1Min': 5 * 60 * 1000,   // 5 minutes for 1-min bars (was 1min)
+      '5Min': 15 * 60 * 1000,  // 15 minutes for 5-min bars (was 5min)
+      '15Min': 30 * 60 * 1000, // 30 minutes for 15-min bars (was 10min)
+      '1Hour': 60 * 60 * 1000, // 1 hour for hourly bars (was 30min)
+      '1Day': 4 * 60 * 60 * 1000   // 4 hours for daily bars (was 1hr)
     }
   }
 

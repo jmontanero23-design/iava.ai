@@ -36,21 +36,22 @@ export default function TradingViewChartEmbed() {
       return
     }
 
-    // Otherwise, build URL dynamically
-    // Format: https://www.tradingview.com/chart/?symbol=NASDAQ:AAPL&interval=1
+    // Use your published/saved chart
+    // Your chart: https://www.tradingview.com/chart/DL9sf9Fz/
+    // Embed format: https://s.tradingview.com/widgetembed/?frameElementId=tradingview_xxxxx&symbol=...
+
+    // Option A: Use your saved chart ID (if published)
+    const savedChartId = 'DL9sf9Fz' // Your chart ID
+
+    // Option B: Build dynamic widget embed URL
     const exchange = getExchange(symbol)
     const fullSymbol = `${exchange}:${symbol}`
     const interval = mapTimeframeToInterval(timeframe)
 
-    const params = new URLSearchParams({
-      symbol: fullSymbol,
-      interval: interval,
-      theme: 'dark',
-      // Add your TradingView username if you want to load your saved layouts
-      // user: 'YOUR_USERNAME_HERE'
-    })
+    // Use TradingView widget embed URL (this DOES work in iframes)
+    const widgetUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=${fullSymbol}&interval=${interval}&hidesidetoolbar=0&symboledit=1&saveimage=0&toolbarbg=0B1020&studies=MAExp@tv-basicstudies%1FIchimokuCloud@tv-basicstudies&theme=dark&style=1&timezone=America/New_York&withdateranges=1&hideideas=1&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en&utm_source=app.iava.ai&utm_medium=widget_new&utm_campaign=chart&utm_term=${fullSymbol}`
 
-    setChartUrl(`https://www.tradingview.com/chart/?${params.toString()}`)
+    setChartUrl(widgetUrl)
   }, [symbol, timeframe, savedChartUrl])
 
   return (
