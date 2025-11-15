@@ -56,6 +56,30 @@ export default function AIChat() {
     }))
   }, [messages])
 
+  // Background AI Processing: Resume pending requests on mount
+  useEffect(() => {
+    const checkPendingRequest = () => {
+      try {
+        const pending = localStorage.getItem('iava_pending_request')
+        if (pending) {
+          const { timestamp } = JSON.parse(pending)
+          // If request is older than 5 minutes, clear it (timed out)
+          if (Date.now() - timestamp > 5 * 60 * 1000) {
+            localStorage.removeItem('iava_pending_request')
+            setIsTyping(false)
+          } else {
+            // Resume "thinking" state - request is still pending
+            setIsTyping(true)
+            console.log('[AI Chat] Resuming background request...')
+          }
+        }
+      } catch (e) {
+        console.error('[AI Chat] Error checking pending request:', e)
+      }
+    }
+    checkPendingRequest()
+  }, [])
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -640,6 +664,12 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
     setUploadedFiles([]) // Clear files after sending
     setIsTyping(true)
 
+    // Save pending request for background processing
+    localStorage.setItem('iava_pending_request', JSON.stringify({
+      input: userMessage.content,
+      timestamp: Date.now()
+    }))
+
     try {
       // Determine if we need vision model (for chart screenshots)
       const hasImages = currentFiles.some(f => f.isImage)
@@ -817,6 +847,8 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
       setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsTyping(false)
+      // Clear pending request - AI response completed or errored
+      localStorage.removeItem('iava_pending_request')
     }
   }
 
