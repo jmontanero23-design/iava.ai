@@ -165,7 +165,7 @@ export default function AIInsightsPanel({
       {/* Premium animated background */}
       <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl animate-pulse pointer-events-none" style={{ animationDuration: '4s' }} />
 
-      <div className="relative glass-panel p-5 space-y-4 max-w-full max-h-[460px] overflow-y-auto">
+      <div className="relative glass-panel p-5 space-y-4 max-w-full overflow-hidden">
         {/* Premium Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -356,7 +356,7 @@ export default function AIInsightsPanel({
 
       {/* Expanded Details */}
       {expanded && (
-        <div className="space-y-3 pt-3 border-t border-slate-700">
+        <div className="space-y-3 pt-3 border-t border-slate-700 max-h-52 overflow-y-auto pr-1">
           {/* Confidence Breakdown */}
           {confidence && (
             <div>
