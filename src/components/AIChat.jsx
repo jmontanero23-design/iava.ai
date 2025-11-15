@@ -235,7 +235,7 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
     }
   }
 
-  // Find similar setups using existing scanner API
+  // Find similar setups using existing scanner API - EXPANDED UNIVERSE
   const findSimilarSetups = async () => {
     try {
       setIsTyping(true)
@@ -243,16 +243,16 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
       // Get current market data for context
       const currentTimeframe = marketData.timeframe || '5Min'
 
-      // Use top liquid stocks as default scan universe
-      const topStocks = 'SPY,QQQ,AAPL,MSFT,NVDA,TSLA,AMZN,META,GOOGL,NFLX,AMD,CRM,INTC,CSCO,ADBE,PYPL,DIS,BA,GS,JPM,V,MA,COST,WMT,HD,PG,JNJ,UNH,CVX,XOM'
+      // MUCH LARGER stock universe - top 100+ liquid stocks
+      const fullUniverse = 'SPY,QQQ,IWM,DIA,AAPL,MSFT,NVDA,TSLA,AMZN,META,GOOGL,NFLX,AMD,CRM,INTC,CSCO,ADBE,PYPL,DIS,BA,GS,JPM,V,MA,COST,WMT,HD,PG,JNJ,UNH,CVX,XOM,AVGO,LLY,ABBV,MRK,PFE,TMO,DHR,ABT,NKE,MCD,SBUX,KO,PEP,PM,MO,T,VZ,CMCSA,NFLX,DIS,TMUS,CAT,DE,MMM,HON,UNP,UPS,FDX,RTX,LMT,GD,NOC,F,GM,TSLA,NIO,LCID,RIVN,COIN,SQ,SHOP,UBER,LYFT,ABNB,DASH,SNOW,PLTR,RBLX,SOFI,HOOD,AFRM,DKNG,PENN,MGM,WYNN,LVS,CCL,RCL,NCLH,AAL,UAL,DAL,LUV,JBLU,ALK,ZM,DOCU,NET,DDOG,CRWD,ZS,OKTA,PANW,FTNT,CHPT,BLNK,ENVX,QS,PLUG,FCEL,BE,CLNE,RUN,ENPH,SEDG,SPWR,MAXN,NOVA,CSIQ,JKS,DQ,ICLN,TAN,QCLN'
 
-      // Scan for high-quality setups
+      // Lower threshold to actually find setups (60 instead of 70)
       const params = new URLSearchParams({
-        symbols: topStocks,
+        symbols: fullUniverse,
         timeframe: currentTimeframe,
-        threshold: '70', // High quality only
-        top: '10',
-        enforceDaily: '0', // Cast wider net
+        threshold: '60', // Lowered to find more results
+        top: '20', // Get top 20 so we can show top 10 longs + 10 shorts
+        enforceDaily: '0',
         requireConsensus: '0',
         consensusBonus: '0',
         assetClass: 'stocks'
@@ -263,38 +263,33 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
 
       const data = await response.json()
 
-      // Format results for display
-      const longs = (data.longs || []).slice(0, 5)
-      const shorts = (data.shorts || []).slice(0, 5)
+      // Format results for display - TOP 10 EACH
+      const longs = (data.longs || []).slice(0, 10)
+      const shorts = (data.shorts || []).slice(0, 10)
 
-      let resultText = `🔍 **Similar High-Quality Setups Found**\n\n`
+      let resultText = `🔍 **Market Scan Results** (${fullUniverse.split(',').length}+ stocks scanned)\n\n`
 
       if (longs.length > 0) {
-        resultText += `**🟢 BULLISH (${longs.length} setups)**\n`
+        resultText += `**🟢 TOP ${longs.length} LONG SETUPS**\n`
         longs.forEach((setup, i) => {
-          resultText += `${i + 1}. **${setup.symbol}** - $${setup.last?.close?.toFixed(2) || 'N/A'}\n`
-          resultText += `   • Unicorn Score: ${Math.round(setup.score)}/100\n`
-          resultText += `   • Setup: ${setup.emaCloudNow || 'N/A'} EMA, ${setup.pivotNow || 'N/A'} Pivot\n\n`
+          resultText += `${i + 1}. **${setup.symbol}** - $${setup.last?.close?.toFixed(2)}\n`
+          resultText += `   • Unicorn: ${Math.round(setup.score)}/100 | ${setup.emaCloudNow || 'N/A'} EMA | ${setup.pivotNow || 'N/A'} Pivot\n`
         })
       }
 
       if (shorts.length > 0) {
-        resultText += `\n**🔴 BEARISH (${shorts.length} setups)**\n`
+        resultText += `\n**🔴 TOP ${shorts.length} SHORT SETUPS**\n`
         shorts.forEach((setup, i) => {
-          resultText += `${i + 1}. **${setup.symbol}** - $${setup.last?.close?.toFixed(2) || 'N/A'}\n`
-          resultText += `   • Unicorn Score: ${Math.round(setup.score)}/100\n`
-          resultText += `   • Setup: ${setup.emaCloudNow || 'N/A'} EMA, ${setup.pivotNow || 'N/A'} Pivot\n\n`
+          resultText += `${i + 1}. **${setup.symbol}** - $${setup.last?.close?.toFixed(2)}\n`
+          resultText += `   • Unicorn: ${Math.round(setup.score)}/100 | ${setup.emaCloudNow || 'N/A'} EMA | ${setup.pivotNow || 'N/A'} Pivot\n`
         })
       }
 
       if (longs.length === 0 && shorts.length === 0) {
-        resultText += `No high-quality setups found (Unicorn Score 70+) in top liquid stocks.\n\n`
-        resultText += `Current market may be choppy or lacking confluence. Consider:\n`
-        resultText += `• Lowering threshold to 60+ for moderate setups\n`
-        resultText += `• Waiting for market regime to improve\n`
-        resultText += `• Using the Scanner panel for custom symbol lists\n`
+        resultText += `No setups found with Unicorn Score 60+ across ${fullUniverse.split(',').length} stocks.\n`
+        resultText += `Market is extremely choppy - wait for better conditions or lower threshold to 50.`
       } else {
-        resultText += `\n💡 Click any symbol in your chart to load for detailed analysis!`
+        resultText += `\n💡 These are LIVE scans with real Unicorn Scores. Load any symbol for exact entries/stops.`
       }
 
       const scannerMessage = {
