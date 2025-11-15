@@ -148,28 +148,50 @@ export default function AIChat() {
 
       const chatHistory = messages.slice(-6) // Last 3 exchanges for context
 
-      // Build user message content
-      let userContent = input.trim() || 'Analyze the attached files and provide insights.'
+      // Build user message - Vercel AI SDK format supports vision!
+      let userContent
 
-      // If documents attached, extract text and add to context
-      if (hasDocuments) {
-        const docContext = currentFiles
-          .filter(f => f.isText)
-          .map(f => `\n\n=== Document: ${f.name} ===\n${atob(f.base64.split(',')[1])}`)
-          .join('\n')
-        userContent += docContext
-      }
-
-      // For vision models, we'll include image info in text for now
-      // TODO: Add proper vision model support to backend
       if (hasImages) {
-        userContent += '\n\n[Chart screenshot uploaded - Vision analysis coming soon]'
-        userContent += '\n\nBased on the chart screenshot, please analyze:'
-        userContent += '\n- Support and resistance levels'
-        userContent += '\n- Trend direction and strength'
-        userContent += '\n- Volume patterns'
-        userContent += '\n- Notable technical setups'
-        userContent += '\n- Entry/exit recommendations'
+        // Use multi-part content format for Vercel AI SDK (supports vision in GPT-5!)
+        userContent = []
+
+        // Add text part
+        let textContent = input.trim() || 'Analyze this chart screenshot. Identify key support/resistance levels, trend direction, volume patterns, and any notable technical setups. Provide actionable insights.'
+
+        // Add document text if present
+        if (hasDocuments) {
+          const docContext = currentFiles
+            .filter(f => f.isText)
+            .map(f => `\n\n=== Document: ${f.name} ===\n${atob(f.base64.split(',')[1])}`)
+            .join('\n')
+          textContent += docContext
+        }
+
+        userContent.push({ type: 'text', text: textContent })
+
+        // Add all images (Vercel AI SDK format: type 'image' with base64 data)
+        currentFiles.forEach(file => {
+          if (file.isImage) {
+            userContent.push({
+              type: 'image',
+              image: file.base64 // Vercel AI SDK accepts data:image/...;base64,... format
+            })
+          }
+        })
+      } else {
+        // Text-only message
+        let textContent = input.trim() || 'Analyze the attached files and provide insights.'
+
+        // Add documents
+        if (hasDocuments) {
+          const docContext = currentFiles
+            .filter(f => f.isText)
+            .map(f => `\n\n=== Document: ${f.name} ===\n${atob(f.base64.split(',')[1])}`)
+            .join('\n')
+          textContent += docContext
+        }
+
+        userContent = textContent
       }
 
       const aiMessages = [
@@ -179,9 +201,9 @@ export default function AIChat() {
         { role: 'user', content: userContent }
       ]
 
-      // Use GPT-5 for reasoning (vision support needs backend update)
-      const model = 'gpt-5'
-      const maxTokens = hasImages ? 500 : 300
+      // GPT-5 supports vision! Use GPT-5-mini for speed or GPT-5 for quality
+      const model = hasImages ? 'gpt-5-mini' : 'gpt-5' // gpt-5-mini faster for vision
+      const maxTokens = hasImages ? 600 : 300
 
       console.log('[AI Chat] Using model:', model, 'with files:', currentFiles.length)
 

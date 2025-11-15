@@ -94,10 +94,11 @@ export default async function handler(req, res) {
  */
 function calculateCost(usage, model) {
   // Pricing per 1M tokens (updated 2025)
+  // GPT-5 and GPT-5-mini support vision at same text pricing!
   const pricing = {
     'gpt-5-nano': { input: 0.05, output: 0.40 },
-    'gpt-5-mini': { input: 0.25, output: 2.00 },
-    'gpt-5': { input: 1.25, output: 10.00 },
+    'gpt-5-mini': { input: 0.25, output: 2.00 }, // Vision supported
+    'gpt-5': { input: 1.25, output: 10.00 }, // Vision supported
     'gpt-4.1-nano': { input: 0.10, output: 0.40 },
     'gpt-4.1-mini': { input: 0.40, output: 1.60 },
     'gpt-4.1': { input: 2.00, output: 8.00 },
@@ -111,5 +112,9 @@ function calculateCost(usage, model) {
   const promptCost = (usage.promptTokens / 1000000) * rates.input
   const completionCost = (usage.completionTokens / 1000000) * rates.output
 
-  return parseFloat((promptCost + completionCost).toFixed(6))
+  return {
+    inputCost: parseFloat(promptCost.toFixed(6)),
+    outputCost: parseFloat(completionCost.toFixed(6)),
+    totalCost: parseFloat((promptCost + completionCost).toFixed(6))
+  }
 }
