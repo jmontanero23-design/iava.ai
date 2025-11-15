@@ -187,6 +187,24 @@ select:focus {
   opacity: 0.8;
 }
 
+/* Workflow pill chips (superpower rail) */
+.pill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 0% 0%, rgba(129,140,248,0.25), rgba(15,23,42,0.96));
+  border: 1px solid rgba(148,163,184,0.7);
+  box-shadow: 0 8px 22px rgba(15,23,42,0.9);
+}
+.pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, #a5b4fc, #38bdf8);
+}
+
 /* Utility aesthetics */
 .text-gradient {
   background: linear-gradient(90deg, #34d399, #22d3ee);

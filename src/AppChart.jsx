@@ -549,24 +549,24 @@ export default function App() {
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {showRateBanner && <RateLimitBanner until={rateLimitUntil} />}
 
-        {/* Workflow rail – shows the core superpowers */}
+        {/* Workflow rail – core superpowers */}
         <div className="flex flex-wrap gap-2 text-[11px] text-slate-300">
-          <span className="px-3 py-1 rounded-full bg-slate-900/70 border border-slate-700/70 flex items-center gap-1">
-            <span className="text-xs">①</span>
+          <div className="pill-chip">
+            <span className="pill-dot" />
             <span>Understand Setup (Chart + AI)</span>
-          </span>
-          <span className="px-3 py-1 rounded-full bg-slate-900/70 border border-slate-700/70 flex items-center gap-1">
-            <span className="text-xs">②</span>
+          </div>
+          <div className="pill-chip">
+            <span className="pill-dot" />
             <span>Scan & Build Watchlists</span>
-          </span>
-          <span className="px-3 py-1 rounded-full bg-slate-900/70 border border-slate-700/70 flex items-center gap-1">
-            <span className="text-xs">③</span>
+          </div>
+          <div className="pill-chip">
+            <span className="pill-dot" />
             <span>Backtest & Tune Thresholds</span>
-          </span>
-          <span className="px-3 py-1 rounded-full bg-slate-900/70 border border-slate-700/70 flex items-center gap-1">
-            <span className="text-xs">④</span>
+          </div>
+          <div className="pill-chip">
+            <span className="pill-dot" />
             <span>Execute & Journal</span>
-          </span>
+          </div>
         </div>
 
         {/* Floor 1 – Global control rail */}
