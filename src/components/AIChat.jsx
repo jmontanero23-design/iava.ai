@@ -235,50 +235,34 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
     }
   }
 
-  // Find similar setups using NLP Scanner
-  const findSimilarSetups = async (messageContent) => {
+  // Find similar setups - Redirect to Scanner panel since NLP endpoint not implemented
+  const findSimilarSetups = async () => {
     try {
       setIsTyping(true)
 
-      // Extract trading intent from message
-      const query = messageContent.match(/(?:bullish|bearish|breakout|pullback|reversal|momentum)/gi)?.join(' ') || 'bullish momentum'
-
-      // Call NLP scanner API
-      const response = await fetch('/api/ai/nlp-scan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
-      })
-
-      const data = await response.json()
-
-      // Format scanner results
-      const results = data.results?.slice(0, 5) || []
-      const scannerSummary = `
-🔍 **SIMILAR SETUPS FOUND** (${results.length} matches)
-
-${results.map((r, i) => `${i + 1}. **${r.symbol}** - $${r.price?.toFixed(2) || 'N/A'}
-   • Unicorn Score: ${r.score}/100
-   • ${r.emaCloud} EMA, ${r.pivot} Pivot, ${r.ichi} Ichi
-   • Match: ${r.reasoning || 'Similar pattern detected'}`).join('\n\n')}
-
-💡 Click any symbol above to load its chart!`
-
-      // Add scanner results to chat
+      // Suggest using the Scanner panel instead
       const scannerMessage = {
         role: 'assistant',
-        content: scannerSummary,
-        timestamp: Date.now(),
-        isScanner: true,
-        results: results // Store for potential click actions
+        content: `🔍 **Similar Setups Scanner**
+
+To find similar setups across multiple symbols, use the **Scanner** panel at the bottom of the chart page:
+
+1. Navigate to the "Discover (Scan & Watchlists)" tab
+2. Use the NLP scanner to describe what you're looking for
+3. Set your desired Unicorn Score threshold
+4. Browse results and click any symbol to load its chart
+
+The scanner can search across hundreds of symbols for confluence-based setups matching your criteria!
+
+💡 Tip: Try queries like "bullish breakout with squeeze" or "pullback in uptrend"`,
+        timestamp: Date.now()
       }
-
       setMessages(prev => [...prev, scannerMessage])
-
     } catch (error) {
+      console.error('[AI Chat] Similar setups error:', error)
       const errorMessage = {
         role: 'assistant',
-        content: `⚠️ Scanner failed: ${error.message}`,
+        content: '❌ Unable to scan for similar setups. Please use the Scanner panel at the bottom of the page.',
         timestamp: Date.now(),
         error: true
       }
@@ -287,6 +271,13 @@ ${results.map((r, i) => `${i + 1}. **${r.symbol}** - $${r.price?.toFixed(2) || '
       setIsTyping(false)
     }
   }
+
+  // TODO: Implement NLP scan endpoint at /api/ai/nlp-scan
+  // When implemented, this function should:
+  // 1. Extract trading intent from message (bullish/bearish/breakout/etc)
+  // 2. Call NLP scanner API with query
+  // 3. Format and display results with clickable symbols
+  // 4. Allow loading symbols directly from results
 
   // Export chat to clipboard (markdown format)
   const exportChat = () => {
