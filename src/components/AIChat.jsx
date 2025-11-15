@@ -15,18 +15,45 @@ import { useMarketData } from '../contexts/MarketDataContext.jsx'
 
 export default function AIChat() {
   const { marketData } = useMarketData()
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: 'Hi! I\'m your ELITE AI trading assistant with PhD-level market analysis. I have LIVE access to the current chart\'s market data (indicators, price action, regime). You can also upload chart screenshots of ANY symbol for instant technical analysis, or share documents for insights.',
-      timestamp: Date.now()
+
+  // Load chat history from localStorage on mount
+  const loadChatHistory = () => {
+    try {
+      const saved = localStorage.getItem('iava_chat_history')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        // Only restore if less than 24 hours old
+        if (parsed.timestamp && (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000)) {
+          return parsed.messages
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load chat history:', e)
     }
-  ])
+    // Default greeting
+    return [
+      {
+        role: 'assistant',
+        content: 'Hi! I\'m your ELITE AI trading assistant with PhD-level market analysis. I have LIVE access to the current chart\'s market data (indicators, price action, regime). You can also upload chart screenshots of ANY symbol for instant technical analysis, or share documents for insights.',
+        timestamp: Date.now()
+      }
+    ]
+  }
+
+  const [messages, setMessages] = useState(loadChatHistory())
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState([]) // Chart images, PDFs, CSVs
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
+
+  // Save chat history to localStorage whenever messages change
+  useEffect(() => {
+    localStorage.setItem('iava_chat_history', JSON.stringify({
+      messages,
+      timestamp: Date.now()
+    }))
+  }, [messages])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -74,6 +101,79 @@ export default function AIChat() {
   // Remove uploaded file
   const removeFile = (index) => {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  // Clear chat history
+  const clearChat = () => {
+    if (confirm('Clear chat history? This cannot be undone.')) {
+      const freshMessages = [
+        {
+          role: 'assistant',
+          content: 'Hi! I\'m your ELITE AI trading assistant with PhD-level market analysis. I have LIVE access to the current chart\'s market data (indicators, price action, regime). You can also upload chart screenshots of ANY symbol for instant technical analysis, or share documents for insights.',
+          timestamp: Date.now()
+        }
+      ]
+      setMessages(freshMessages)
+      localStorage.removeItem('iava_chat_history')
+    }
+  }
+
+  // Parse trade setup from AI response
+  const parseTradeSetup = (content) => {
+    // Extract symbol, entry, stop, target from AI response
+    // Look for patterns like: "entry at $185", "stop $184", "target 206"
+    const symbolMatch = content.match(/\b([A-Z]{1,5})\b.*?(?:entry|buy|sell|long|short)/i)
+    const entryMatch = content.match(/(?:entry|buy|long).*?\$?(\d+\.?\d*)/i)
+    const stopMatch = content.match(/(?:stop|stop loss|risk).*?\$?(\d+\.?\d*)/i)
+    const targetMatch = content.match(/(?:target|take profit|tp).*?\$?(\d+\.?\d*)/i)
+    const sideMatch = content.match(/\b(long|short|buy|sell)\b/i)
+
+    if (!entryMatch && !stopMatch && !targetMatch) return null
+
+    return {
+      symbol: symbolMatch ? symbolMatch[1] : marketData.symbol || 'SPY',
+      side: sideMatch ? (sideMatch[1].toLowerCase().includes('long') || sideMatch[1].toLowerCase().includes('buy') ? 'buy' : 'sell') : 'buy',
+      entry: entryMatch ? parseFloat(entryMatch[1]) : null,
+      stopLoss: stopMatch ? parseFloat(stopMatch[1]) : null,
+      target: targetMatch ? parseFloat(targetMatch[1]) : null
+    }
+  }
+
+  // Generate follow-up questions based on AI response
+  const generateFollowUpQuestions = (content) => {
+    const questions = []
+
+    // If AI mentioned a setup, suggest deeper analysis
+    if (content.match(/(?:bullish|bearish|setup|entry|target)/i)) {
+      questions.push('Run backtest on this setup')
+      questions.push('What\'s the historical win rate?')
+      questions.push('Show me similar setups')
+    }
+
+    // If AI mentioned levels, ask about risk
+    if (content.match(/(?:support|resistance|stop|target)/i)) {
+      questions.push('What\'s the risk/reward ratio?')
+      questions.push('Size this position for 1% risk')
+    }
+
+    // If AI mentioned regime, ask about context
+    if (content.match(/(?:regime|trend|bullish|bearish)/i)) {
+      questions.push('How does this compare to daily timeframe?')
+      questions.push('What other stocks show this pattern?')
+    }
+
+    return questions.slice(0, 3) // Max 3 follow-ups
+  }
+
+  // Execute trade setup (emit event to order panel)
+  const executeTradeSetup = (setup) => {
+    // Emit custom event that OrderPanel can listen to
+    window.dispatchEvent(new CustomEvent('ai-trade-setup', {
+      detail: setup
+    }))
+
+    // Visual feedback
+    alert(`Trade setup loaded! Check your order panel.\n\nSymbol: ${setup.symbol}\nSide: ${setup.side}\nEntry: $${setup.entry || 'market'}\nStop: $${setup.stopLoss || 'N/A'}\nTarget: $${setup.target || 'N/A'}`)
   }
 
   const handleSubmit = async (e) => {
@@ -259,7 +359,7 @@ export default function AIChat() {
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-cyan-600 blur-xl opacity-50 animate-pulse" />
             <span className="relative text-3xl filter drop-shadow-lg">🤖</span>
           </div>
-          <div>
+          <div className="flex-1">
             <h3 className="text-xl font-bold bg-gradient-to-r from-indigo-200 via-purple-200 to-cyan-300 bg-clip-text text-transparent">
               AI Assistant
             </h3>
@@ -270,8 +370,17 @@ export default function AIChat() {
                   ? `Live Data: ${currentSymbol} • ${marketData.timeframe}`
                   : 'Sample Data • Load chart for live analysis'}
               </span>
+              <span className="text-slate-500">• Chat persisted 24h</span>
             </p>
           </div>
+          {/* Clear Chat Button */}
+          <button
+            onClick={clearChat}
+            className="px-3 py-1.5 text-xs bg-slate-800/50 hover:bg-rose-500/20 border border-slate-700/50 hover:border-rose-500/40 rounded-lg text-slate-400 hover:text-rose-400 transition-all"
+            title="Clear chat history"
+          >
+            🗑️ Clear
+          </button>
         </div>
       </div>
 
@@ -329,6 +438,58 @@ export default function AIChat() {
                         <span className="font-semibold">{msg.latency}ms</span>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* AI Response Actions - only for assistant messages */}
+                {msg.role === 'assistant' && !msg.error && (
+                  <div className="mt-3 pt-3 border-t border-slate-700/30 space-y-2">
+                    {/* Trade Setup Button - only if AI mentioned trading levels */}
+                    {(() => {
+                      const setup = parseTradeSetup(msg.content)
+                      if (setup) {
+                        return (
+                          <button
+                            onClick={() => executeTradeSetup(setup)}
+                            className="w-full px-3 py-2 text-xs bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 rounded-lg text-white font-semibold flex items-center justify-center gap-2 transition-all shadow-lg"
+                          >
+                            <span>📊</span>
+                            <span>Trade This Setup</span>
+                            <span className="text-emerald-200">({setup.symbol} {setup.side})</span>
+                          </button>
+                        )
+                      }
+                    })()}
+
+                    {/* Follow-up Questions */}
+                    {(() => {
+                      const followUps = generateFollowUpQuestions(msg.content)
+                      if (followUps.length > 0) {
+                        return (
+                          <div className="space-y-1.5">
+                            <div className="text-xs text-slate-500 font-semibold">Ask follow-up:</div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {followUps.map((q, qIdx) => (
+                                <button
+                                  key={qIdx}
+                                  onClick={() => {
+                                    setInput(q)
+                                    // Auto-submit after a short delay to let user see it
+                                    setTimeout(() => {
+                                      const form = document.querySelector('form')
+                                      form?.requestSubmit()
+                                    }, 300)
+                                  }}
+                                  className="px-2.5 py-1 text-xs bg-slate-700/50 hover:bg-indigo-600/30 border border-slate-600/50 hover:border-indigo-500/40 rounded-lg text-slate-300 hover:text-indigo-200 transition-all"
+                                >
+                                  {q}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      }
+                    })()}
                   </div>
                 )}
               </div>
