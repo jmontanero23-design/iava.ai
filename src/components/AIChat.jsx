@@ -44,6 +44,7 @@ export default function AIChat() {
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState([]) // Chart images, PDFs, CSVs
+  const [smartSuggestions, setSmartSuggestions] = useState([]) // AI-generated context-aware questions
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
 
@@ -353,6 +354,45 @@ ${results.map((r, i) => `${i + 1}. **${r.symbol}** - $${r.price?.toFixed(2) || '
     }
   }
 
+  // Generate smart AI-powered suggested questions
+  const generateSmartSuggestions = async () => {
+    try {
+      // Get last 2-3 messages for context
+      const recentMessages = messages.slice(-4)
+      if (recentMessages.length < 2) return // Need some conversation context
+
+      // Build context summary
+      const contextSummary = recentMessages.map(m => `${m.role}: ${m.content.substring(0, 200)}`).join('\n')
+      const symbol = marketData.symbol || 'SPY'
+
+      // Use GPT-5-nano for speed and cost efficiency
+      const prompt = `Based on this trading conversation about ${symbol}, generate 4 intelligent follow-up questions the user might ask next. Make them specific, actionable, and predictive of where the conversation is heading.
+
+Conversation context:
+${contextSummary}
+
+Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanations:
+["question1", "question2", "question3", "question4"]`
+
+      const result = await callAI('gpt-5-nano', [
+        { role: 'user', content: prompt }
+      ], {
+        temperature: 0.8,
+        max_tokens: 150,
+        cache: false
+      })
+
+      // Parse JSON response
+      const questions = JSON.parse(result.content.trim())
+      if (Array.isArray(questions) && questions.length > 0) {
+        setSmartSuggestions(questions.slice(0, 4))
+      }
+    } catch (error) {
+      console.error('Failed to generate smart suggestions:', error)
+      // Silently fail - not critical feature
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if ((!input.trim() && uploadedFiles.length === 0) || isTyping) return
@@ -499,6 +539,9 @@ ${results.map((r, i) => `${i + 1}. **${r.symbol}** - $${r.price?.toFixed(2) || '
       }
 
       setMessages(prev => [...prev, assistantMessage])
+
+      // Generate smart suggestions after AI responds
+      setTimeout(() => generateSmartSuggestions(), 500)
 
     } catch (error) {
       const errorMessage = {
@@ -721,21 +764,32 @@ ${results.map((r, i) => `${i + 1}. **${r.symbol}** - $${r.price?.toFixed(2) || '
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Premium Suggested Questions */}
-      {messages.length <= 1 && (
+      {/* Smart AI-Powered Suggested Questions */}
+      {((messages.length <= 1 && suggestedQuestions.length > 0) || smartSuggestions.length > 0) && (
         <div className="px-4 pb-3">
           <div className="flex items-center gap-2 text-xs text-slate-400 mb-2.5">
-            <span className="text-base">💡</span>
-            <span className="font-semibold uppercase tracking-wider">Suggested Questions</span>
+            <span className="text-base">{smartSuggestions.length > 0 ? '🧠' : '💡'}</span>
+            <span className="font-semibold uppercase tracking-wider">
+              {smartSuggestions.length > 0 ? 'Smart Suggestions' : 'Suggested Questions'}
+            </span>
+            {smartSuggestions.length > 0 && (
+              <span className="text-xs text-emerald-400 ml-1">• AI-Predicted</span>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
-            {suggestedQuestions.map((q, idx) => (
+            {(smartSuggestions.length > 0 ? smartSuggestions : suggestedQuestions).map((q, idx) => (
               <button
                 key={idx}
                 onClick={() => setInput(q)}
-                className="relative group px-3 py-2 text-xs font-medium bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 hover:border-indigo-500/40 text-slate-300 hover:text-indigo-200 rounded-lg transition-all shadow-lg hover:shadow-indigo-500/10"
+                className={`relative group px-3 py-2 text-xs font-medium ${
+                  smartSuggestions.length > 0
+                    ? 'bg-gradient-to-r from-emerald-600/20 to-cyan-600/20 hover:from-emerald-600/30 hover:to-cyan-600/30 border-emerald-500/40 hover:border-emerald-400/50 text-emerald-300 hover:text-emerald-200'
+                    : 'bg-slate-800/50 hover:bg-slate-700/50 border-slate-700/50 hover:border-indigo-500/40 text-slate-300 hover:text-indigo-200'
+                } border rounded-lg transition-all shadow-lg hover:shadow-emerald-500/10`}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
+                {smartSuggestions.length === 0 && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
+                )}
                 <span className="relative">{q}</span>
               </button>
             ))}
