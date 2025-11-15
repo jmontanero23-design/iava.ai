@@ -332,13 +332,16 @@ export default function AIInsightsPanel({
           <div className="relative p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl">
             <div className="flex items-start gap-3">
               <span className="text-rose-400 text-xl">⚠️</span>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="text-sm font-bold text-rose-300 mb-1">
                   {anomalies.length} Anomal{anomalies.length === 1 ? 'y' : 'ies'} Detected
                 </div>
                 <div className="text-xs text-rose-200 flex flex-wrap gap-2">
                   {anomalies.slice(0, 2).map((a, i) => (
-                    <span key={i} className="px-2 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded">
+                    <span
+                      key={i}
+                      className="px-2 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded break-words max-w-[10rem]"
+                    >
                       {a.type}
                     </span>
                   ))}
@@ -365,9 +368,11 @@ export default function AIInsightsPanel({
               </div>
               <div className="space-y-1">
                 {confidence.breakdown && Object.entries(confidence.breakdown).map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400 capitalize">{key.replace(/_/g, ' ')}</span>
-                    <div className="flex items-center gap-2">
+                  <div key={key} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-slate-400 capitalize break-words max-w-[9rem]">
+                      {key.replace(/_/g, ' ')}
+                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
                       <div className="w-20 h-1.5 bg-slate-700 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-to-r from-cyan-600 to-cyan-400"
