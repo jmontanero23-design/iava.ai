@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Force Update - iAVA.ai</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #0B1020 0%, #1a1f35 100%);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      max-width: 600px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 16px;
+      background: linear-gradient(to right, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    p {
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    button {
+      background: linear-gradient(to right, #6366f1, #8b5cf6);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      margin: 8px;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 24px;
+      padding: 16px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 8px;
+      color: #10b981;
+      display: none;
+    }
+    .status.show {
+      display: block;
+    }
+    .log {
+      margin-top: 16px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      text-align: left;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .log div {
+      margin: 4px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 Force Update iAVA.ai</h1>
+    <p>
+      This will completely clear all cached data and force a fresh download of the latest version.
+      <strong>The TTM Squeeze panel will appear after this update.</strong>
+    </p>
+
+    <button id="forceUpdate" onclick="forceUpdate()">
+      🔥 Force Update Now
+    </button>
+
+    <button onclick="window.location.href='/'">
+      ← Back to App
+    </button>
+
+    <div id="status" class="status">
+      <strong>✓ Update Complete!</strong>
+      <p>Redirecting to app in 3 seconds...</p>
+    </div>
+
+    <div id="log" class="log"></div>
+  </div>
+
+  <script>
+    const logEl = document.getElementById('log');
+    const statusEl = document.getElementById('status');
+    const btn = document.getElementById('forceUpdate');
+
+    function log(msg) {
+      const div = document.createElement('div');
+      div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logEl.appendChild(div);
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(msg);
+    }
+
+    async function forceUpdate() {
+      btn.disabled = true;
+      btn.textContent = '⏳ Updating...';
+
+      try {
+        log('Starting force update...');
+
+        // 1. Unregister ALL service workers
+        if ('serviceWorker' in navigator) {
+          log('Unregistering service workers...');
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (const registration of registrations) {
+            await registration.unregister();
+            log(`✓ Unregistered: ${registration.scope}`);
+          }
+          log(`✓ Removed ${registrations.length} service worker(s)`);
+        }
+
+        // 2. Delete ALL caches
+        if ('caches' in window) {
+          log('Deleting all caches...');
+          const cacheNames = await caches.keys();
+          for (const cacheName of cacheNames) {
+            await caches.delete(cacheName);
+            log(`✓ Deleted cache: ${cacheName}`);
+          }
+          log(`✓ Removed ${cacheNames.length} cache(s)`);
+        }
+
+        // 3. Clear localStorage
+        log('Clearing localStorage...');
+        const lsKeys = Object.keys(localStorage);
+        localStorage.clear();
+        log(`✓ Cleared ${lsKeys.length} localStorage item(s)`);
+
+        // 4. Clear sessionStorage
+        log('Clearing sessionStorage...');
+        const ssKeys = Object.keys(sessionStorage);
+        sessionStorage.clear();
+        log(`✓ Cleared ${ssKeys.length} sessionStorage item(s)`);
+
+        // 5. Clear IndexedDB
+        if ('indexedDB' in window) {
+          log('Clearing IndexedDB...');
+          const dbs = await indexedDB.databases();
+          for (const db of dbs) {
+            indexedDB.deleteDatabase(db.name);
+            log(`✓ Deleted database: ${db.name}`);
+          }
+          log(`✓ Removed ${dbs.length} database(s)`);
+        }
+
+        log('');
+        log('✅ ALL CACHE CLEARED!');
+        log('Redirecting to fresh app...');
+
+        statusEl.classList.add('show');
+
+        // Redirect after 3 seconds
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 3000);
+
+      } catch (error) {
+        log(`❌ Error: ${error.message}`);
+        btn.disabled = false;
+        btn.textContent = '🔥 Force Update Now';
+      }
+    }
+  </script>
+</body>
+</html>
