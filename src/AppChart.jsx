@@ -548,15 +548,16 @@ export default function App() {
   return (
     <div className="min-h-screen bg-transparent text-slate-100 bg-grid">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
-      {showRateBanner && <RateLimitBanner until={rateLimitUntil} />}
-      <Hero />
-      <div className="card overflow-hidden">
-        {/* Premium Header */}
-        <div className="p-5 relative overflow-hidden border-b border-slate-700/50">
+        {showRateBanner && <RateLimitBanner until={rateLimitUntil} />}
+        <Hero />
+
+        {/* Floor 1 – Global control rail */}
+        <div className="card overflow-hidden">
+          <div className="p-5 relative overflow-hidden border-b border-slate-700/50">
           <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
 
           <div className="relative space-y-4">
-            {/* Title & Quick Load Section */}
+            {/* Symbol / timeframe / preset rail */}
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-3">
                 <div className="relative">
@@ -587,7 +588,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Symbol Shortcuts Row */}
+            {/* Strategy presets row */}
             <div className="w-full">
               <Presets symbol={symbol} setSymbol={setSymbol} timeframe={timeframe} setTimeframe={setTimeframe} onLoad={(s, tf) => loadBars(s, tf)} />
             </div>
@@ -598,11 +599,11 @@ export default function App() {
               <span>Shortcuts: 1–7 switch presets · ←/→ navigate watchlist · Space toggle Auto</span>
             </div>
           </div>
-        </div>
+          </div>
 
-        {/* Premium Content Sections */}
-        <div className="p-5 space-y-4">
-          {/* Preset Configuration Section */}
+          {/* Floor 1 – Strategy, overlays, gating & status */}
+          <div className="p-5 space-y-4">
+          {/* Strategy Preset Section */}
           <div className="p-4 bg-slate-800/30 rounded-xl border border-purple-500/20">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-base">🎯</span>
@@ -727,27 +728,26 @@ export default function App() {
             </div>
           </div>
 
-          {/* Status Bar */}
+          {/* Status & sharing */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <HealthBadge />
-            <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Link copied', type: 'success' } })) } catch(_) {} }} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all">
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <span className="px-2 py-0.5 rounded-full bg-slate-800/70 border border-slate-600/70">Paper / Live via Alpaca &amp; Yahoo</span>
+              <button onClick={() => { try { navigator.clipboard.writeText(window.location.href); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Link copied', type: 'success' } })) } catch(_) {} }} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all">
               🔗 Copy Link
             </button>
+            </div>
           </div>
         </div>
-      </div>
-      <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streaming || autoRefresh} consensus={consensus} threshold={threshold} />
-      <AIInsightsPanel
-        signal={signalState}
-        bars={bars}
-        symbol={symbol}
-        timeframe={timeframe}
-        account={account}
-      />
-      <LegendChips overlays={overlays} />
+        </div>
 
-      {/* TradingView Professional Chart - Replaces custom CandleChart */}
-      <div className="relative w-full" style={{ height: '600px' }}>
+        {/* Floor 2 – Live symbol view: chart + AI + trade */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          {/* Left: Chart + stats + signals */}
+          <div className="xl:col-span-2 space-y-4">
+            <MarketStats bars={bars} saty={overlays.saty} symbol={symbol} timeframe={timeframe} streaming={streaming || autoRefresh} consensus={consensus} threshold={threshold} />
+            <LegendChips overlays={overlays} />
+            <div className="relative w-full" style={{ height: '600px' }}>
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-950/50 z-10">
             <div className="text-slate-400">Loading {symbol}...</div>
@@ -762,94 +762,137 @@ export default function App() {
           </div>
         )}
 
-        {/* iAVA Unicorn Score Overlay - Proprietary Intelligence */}
-        <div className="absolute top-4 right-4 z-20">
-          <UnicornScorePanel state={signalState.state} />
+            {/* AI-powered overlays on chart */}
+            {/* iAVA Unicorn Score Overlay */}
+            <div className="absolute top-4 right-4 z-20">
+              <UnicornScorePanel state={signalState.state} />
+            </div>
+
+            {/* SATY Levels Overlay */}
+            <div className="absolute top-[280px] right-4 z-20">
+              <SatyLevelsOverlay
+                saty={signalState.state?.saty}
+                currentPrice={bars[bars.length - 1]?.close}
+              />
+            </div>
+
+            {/* Market Regime Indicator */}
+            <div className="absolute bottom-4 left-4 z-20">
+              <MarketRegimeIndicator dailyState={signalState.state?._daily} />
+            </div>
+          </div>
+
+            {/* Signals & squeeze */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+              <SignalsPanel bars={bars} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), components: { ...(signalState?.components||{}), ...(consensusBonus && consensus?.align ? { consensus: 10 } : {}) } }} symbol={symbol} onRefresh={() => loadBars()} onClear={() => setSignalHistory([])} />
+              {showSqueeze && <SqueezePanel bars={bars} />}
+            </div>
+            <SignalFeed items={signalHistory} onSelect={(item) => setFocusTime(item.time)} />
+            <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} rateLimitUntil={rateLimitUntil} />
+          </div>
+
+          {/* Right: AI insights + trade controls */}
+          <div className="space-y-4">
+            <AIInsightsPanel
+              signal={signalState}
+              bars={bars}
+              symbol={symbol}
+              timeframe={timeframe}
+              account={account}
+            />
+            <UnicornCallout threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily, _consensus: consensus, _timeframe: timeframe }} />
+            <UnicornActionBar threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} />
+            <OrdersPanel symbol={symbol} lastPrice={bars[bars.length-1]?.close} saty={overlays.saty} />
+          </div>
         </div>
 
-        {/* SATY Levels Overlay - Support/Resistance */}
-        <div className="absolute top-[280px] right-4 z-20">
-          <SatyLevelsOverlay
-            saty={signalState.state?.saty}
-            currentPrice={bars[bars.length - 1]?.close}
-          />
+        {/* Floor 3 – Discovery, testing & helpers */}
+        <div className="mt-6 space-y-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {/* Scanner + watchlists */}
+            <section className="card p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-sm font-semibold text-slate-200">Find Setups</h2>
+                <span className="text-[11px] text-slate-500">Scanner · Smart Watchlists</span>
+              </div>
+              <ScannerPanel
+                onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf || timeframe); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }}
+                defaultTimeframe={timeframe}
+                currentTimeframe={timeframe}
+                currentEnforceDaily={enforceDaily}
+                currentConsensusBonus={consensusBonus}
+              />
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <WatchlistNavigator onLoadSymbol={(sym, tf) => { setSymbol(sym); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }} timeframe={timeframe} />
+                <WatchlistPanel onLoadSymbol={(sym) => { setSymbol(sym); loadBars(sym, timeframe) }} />
+              </div>
+            </section>
+
+            {/* Backtest & SATY helpers */}
+            <section className="card p-4 space-y-3">
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-sm font-semibold text-slate-200">Test & Tune</h2>
+                <span className="text-[11px] text-slate-500">Backtests · Thresholds · SATY</span>
+              </div>
+              <BacktestPanel symbol={symbol} timeframe={timeframe} preset={backtestPreset} chartThreshold={threshold} chartConsensusBonus={consensusBonus} />
+              <BatchBacktestPanel defaultTimeframe={timeframe} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
+                <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />
+              </div>
+            </section>
+          </div>
+
+          {hud && (
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-3 py-1 rounded-md border border-slate-700 bg-slate-900/80 text-slate-100 text-sm shadow">
+              {hud}
+            </div>
+          )}
+
+          <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} rateLimitUntil={rateLimitUntil} />
         </div>
 
-        {/* Market Regime Indicator - Daily Context */}
-        <div className="absolute bottom-4 left-4 z-20">
-          <MarketRegimeIndicator dailyState={signalState.state?._daily} />
-        </div>
-      </div>
-      <OverlayChips
-        showEma821={showEma821} setShowEma821={setShowEma821}
-        showEma512={showEma512} setShowEma512={setShowEma512}
-        showEma89={showEma89} setShowEma89={setShowEma89}
-        showEma3450={showEma3450} setShowEma3450={setShowEma3450}
-        showIchi={showIchi} setShowIchi={setShowIchi}
-        showRibbon={showRibbon} setShowRibbon={setShowRibbon}
-        showSaty={showSaty} setShowSaty={setShowSaty}
-      />
-      <SignalFeed items={signalHistory} onSelect={(item) => setFocusTime(item.time)} />
-      <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} rateLimitUntil={rateLimitUntil} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <SignalsPanel bars={bars} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), components: { ...(signalState?.components||{}), ...(consensusBonus && consensus?.align ? { consensus: 10 } : {}) } }} symbol={symbol} onRefresh={() => loadBars()} onClear={() => setSignalHistory([])} />
-        {showSqueeze && <SqueezePanel bars={bars} />}
-      </div>
-      <ScannerPanel
-        onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf || timeframe); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }}
-        defaultTimeframe={timeframe}
-        currentTimeframe={timeframe}
-        currentEnforceDaily={enforceDaily}
-        currentConsensusBonus={consensusBonus}
-      />
-      <WatchlistNavigator onLoadSymbol={(sym, tf) => { setSymbol(sym); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }} timeframe={timeframe} />
-      <WatchlistPanel onLoadSymbol={(sym) => { setSymbol(sym); loadBars(sym, timeframe) }} />
-      {hud && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-3 py-1 rounded-md border border-slate-700 bg-slate-900/80 text-slate-100 text-sm shadow">
-          {hud}
-        </div>
-      )}
-      <BacktestPanel symbol={symbol} timeframe={timeframe} preset={backtestPreset} chartThreshold={threshold} chartConsensusBonus={consensusBonus} />
-      <BatchBacktestPanel defaultTimeframe={timeframe} />
-      <HelpFab context={{ symbol, timeframe, enforceDaily, consensus: consensus?.align || false, overlays: { showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty, showSqueeze }, score: Math.round((signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0)), daily: dailyState ? { pivot: dailyState.pivotNow, ichi: dailyState.ichiRegime } : null }} />
-      <UnicornCallout threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily, _consensus: consensus, _timeframe: timeframe }} />
-      <UnicornActionBar threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} />
-      <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
-      <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />
-      <OrdersPanel symbol={symbol} lastPrice={bars[bars.length-1]?.close} saty={overlays.saty} />
-      <ToastHub />
-      <CommandPalette
-        symbol={symbol}
-        setSymbol={(s)=>{ setSymbol(s); loadBars(s, timeframe) }}
-        loadBars={(s, tf)=>loadBars(s, tf)}
-        timeframe={timeframe}
-        setTimeframe={(tf)=>{ setTimeframe(tf); loadBars(symbol, tf) }}
-        overlayState={{
-          ema821: showEma821,
-          ema512: showEma512,
-          ema89: showEma89,
-          ema3450: showEma3450,
-          ribbon: showRibbon,
-          ichi: showIchi,
-          saty: showSaty,
-          squeeze: showSqueeze,
-        }}
-        overlayToggles={{
-          ema821: () => setShowEma821(v => !v),
-          ema512: () => setShowEma512(v => !v),
-          ema89: () => setShowEma89(v => !v),
-          ema3450: () => setShowEma3450(v => !v),
-          ribbon: () => setShowRibbon(v => !v),
-          ichi: () => setShowIchi(v => !v),
-          saty: () => setShowSaty(v => !v),
-          squeeze: () => setShowSqueeze(v => !v),
-        }}
-        applyPreset={applyPreset}
-      />
-      <BuildInfoFooter />
-      <QueueMonitor />
-      <ToastHub />
-      <HelpFab />
+        {/* Global helpers */}
+        <OverlayChips
+          showEma821={showEma821} setShowEma821={setShowEma821}
+          showEma512={showEma512} setShowEma512={setShowEma512}
+          showEma89={showEma89} setShowEma89={setShowEma89}
+          showEma3450={showEma3450} setShowEma3450={setShowEma3450}
+          showIchi={showIchi} setShowIchi={setShowIchi}
+          showRibbon={showRibbon} setShowRibbon={setShowRibbon}
+          showSaty={showSaty} setShowSaty={setShowSaty}
+        />
+        <HelpFab context={{ symbol, timeframe, enforceDaily, consensus: consensus?.align || false, overlays: { showEma821, showEma512, showEma89, showEma3450, showIchi, showRibbon, showSaty, showSqueeze }, score: Math.round((signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0)), daily: dailyState ? { pivot: dailyState.pivotNow, ichi: dailyState.ichiRegime } : null }} />
+        <CommandPalette
+          symbol={symbol}
+          setSymbol={(s)=>{ setSymbol(s); loadBars(s, timeframe) }}
+          loadBars={(s, tf)=>loadBars(s, tf)}
+          timeframe={timeframe}
+          setTimeframe={(tf)=>{ setTimeframe(tf); loadBars(symbol, tf) }}
+          overlayState={{
+            ema821: showEma821,
+            ema512: showEma512,
+            ema89: showEma89,
+            ema3450: showEma3450,
+            ribbon: showRibbon,
+            ichi: showIchi,
+            saty: showSaty,
+            squeeze: showSqueeze,
+          }}
+          overlayToggles={{
+            ema821: () => setShowEma821(v => !v),
+            ema512: () => setShowEma512(v => !v),
+            ema89: () => setShowEma89(v => !v),
+            ema3450: () => setShowEma3450(v => !v),
+            ribbon: () => setShowRibbon(v => !v),
+            ichi: () => setShowIchi(v => !v),
+            saty: () => setShowSaty(v => !v),
+            squeeze: () => setShowSqueeze(v => !v),
+          }}
+          applyPreset={applyPreset}
+        />
+        <BuildInfoFooter />
+        <QueueMonitor />
       </div>
     </div>
   )
