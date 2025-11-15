@@ -234,6 +234,125 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
     }
   }
 
+  // Find similar setups using NLP Scanner
+  const findSimilarSetups = async (messageContent) => {
+    try {
+      setIsTyping(true)
+
+      // Extract trading intent from message
+      const query = messageContent.match(/(?:bullish|bearish|breakout|pullback|reversal|momentum)/gi)?.join(' ') || 'bullish momentum'
+
+      // Call NLP scanner API
+      const response = await fetch('/api/ai/nlp-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      })
+
+      const data = await response.json()
+
+      // Format scanner results
+      const results = data.results?.slice(0, 5) || []
+      const scannerSummary = `
+🔍 **SIMILAR SETUPS FOUND** (${results.length} matches)
+
+${results.map((r, i) => `${i + 1}. **${r.symbol}** - $${r.price?.toFixed(2) || 'N/A'}
+   • Unicorn Score: ${r.score}/100
+   • ${r.emaCloud} EMA, ${r.pivot} Pivot, ${r.ichi} Ichi
+   • Match: ${r.reasoning || 'Similar pattern detected'}`).join('\n\n')}
+
+💡 Click any symbol above to load its chart!`
+
+      // Add scanner results to chat
+      const scannerMessage = {
+        role: 'assistant',
+        content: scannerSummary,
+        timestamp: Date.now(),
+        isScanner: true,
+        results: results // Store for potential click actions
+      }
+
+      setMessages(prev => [...prev, scannerMessage])
+
+    } catch (error) {
+      const errorMessage = {
+        role: 'assistant',
+        content: `⚠️ Scanner failed: ${error.message}`,
+        timestamp: Date.now(),
+        error: true
+      }
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
+      setIsTyping(false)
+    }
+  }
+
+  // Export chat to clipboard (markdown format)
+  const exportChat = () => {
+    const markdown = messages.map(msg => {
+      const timestamp = new Date(msg.timestamp).toLocaleString()
+      const role = msg.role === 'user' ? '**You**' : '**AI Assistant**'
+      return `### ${role} - ${timestamp}\n\n${msg.content}\n\n---\n`
+    }).join('\n')
+
+    const fullExport = `# iAVA AI Trading Chat Export\n\nExported: ${new Date().toLocaleString()}\n\n---\n\n${markdown}`
+
+    navigator.clipboard.writeText(fullExport)
+      .then(() => alert('✅ Chat exported to clipboard! Paste into your notes/journal.'))
+      .catch(() => alert('❌ Failed to copy to clipboard'))
+  }
+
+  // Voice input (using Web Speech API)
+  const [isListening, setIsListening] = useState(false)
+  const recognitionRef = useRef(null)
+
+  const startVoiceInput = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('❌ Voice input not supported in this browser. Try Chrome/Edge.')
+      return
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    const recognition = new SpeechRecognition()
+
+    recognition.continuous = false
+    recognition.interimResults = false
+    recognition.lang = 'en-US'
+
+    recognition.onstart = () => {
+      setIsListening(true)
+      console.log('🎤 Voice recognition started')
+    }
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript
+      console.log('🎤 Heard:', transcript)
+      setInput(transcript)
+      setIsListening(false)
+    }
+
+    recognition.onerror = (event) => {
+      console.error('🎤 Error:', event.error)
+      setIsListening(false)
+      alert(`❌ Voice error: ${event.error}`)
+    }
+
+    recognition.onend = () => {
+      setIsListening(false)
+      console.log('🎤 Voice recognition ended')
+    }
+
+    recognitionRef.current = recognition
+    recognition.start()
+  }
+
+  const stopVoiceInput = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop()
+      setIsListening(false)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if ((!input.trim() && uploadedFiles.length === 0) || isTyping) return
@@ -431,14 +550,23 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
               <span className="text-slate-500">• Chat persisted 24h</span>
             </p>
           </div>
-          {/* Clear Chat Button */}
-          <button
-            onClick={clearChat}
-            className="px-3 py-1.5 text-xs bg-slate-800/50 hover:bg-rose-500/20 border border-slate-700/50 hover:border-rose-500/40 rounded-lg text-slate-400 hover:text-rose-400 transition-all"
-            title="Clear chat history"
-          >
-            🗑️ Clear
-          </button>
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={exportChat}
+              className="px-3 py-1.5 text-xs bg-slate-800/50 hover:bg-indigo-500/20 border border-slate-700/50 hover:border-indigo-500/40 rounded-lg text-slate-400 hover:text-indigo-400 transition-all"
+              title="Export chat to clipboard"
+            >
+              📋 Export
+            </button>
+            <button
+              onClick={clearChat}
+              className="px-3 py-1.5 text-xs bg-slate-800/50 hover:bg-rose-500/20 border border-slate-700/50 hover:border-rose-500/40 rounded-lg text-slate-400 hover:text-rose-400 transition-all"
+              title="Clear chat history"
+            >
+              🗑️ Clear
+            </button>
+          </div>
         </div>
       </div>
 
@@ -534,7 +662,13 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
                                     // Special handling for backtest request
                                     if (q.toLowerCase().includes('backtest')) {
                                       runBacktestAnalysis(msg.content)
-                                    } else {
+                                    }
+                                    // Special handling for similar setups request
+                                    else if (q.toLowerCase().includes('similar')) {
+                                      findSimilarSetups(msg.content)
+                                    }
+                                    // Default: fill input and auto-submit
+                                    else {
                                       setInput(q)
                                       // Auto-submit after a short delay to let user see it
                                       setTimeout(() => {
@@ -546,10 +680,13 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
                                   className={`px-2.5 py-1 text-xs ${
                                     q.toLowerCase().includes('backtest')
                                       ? 'bg-emerald-600/20 hover:bg-emerald-600/30 border-emerald-500/40 hover:border-emerald-400/50 text-emerald-300'
+                                      : q.toLowerCase().includes('similar')
+                                      ? 'bg-cyan-600/20 hover:bg-cyan-600/30 border-cyan-500/40 hover:border-cyan-400/50 text-cyan-300'
                                       : 'bg-slate-700/50 hover:bg-indigo-600/30 border-slate-600/50 hover:border-indigo-500/40 text-slate-300 hover:text-indigo-200'
                                   } border rounded-lg transition-all`}
                                 >
                                   {q.toLowerCase().includes('backtest') && '🔬 '}
+                                  {q.toLowerCase().includes('similar') && '🔍 '}
                                   {q}
                                 </button>
                               ))}
@@ -663,6 +800,23 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
           >
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 opacity-0 group-hover:opacity-10 rounded-xl transition-opacity" />
             <span className="relative text-xl">📎</span>
+          </button>
+
+          {/* Voice Input Button */}
+          <button
+            type="button"
+            onClick={isListening ? stopVoiceInput : startVoiceInput}
+            className={`relative group px-4 py-3 ${
+              isListening
+                ? 'bg-rose-600/20 border-rose-500/40 animate-pulse'
+                : 'bg-slate-800/50 hover:bg-slate-700/50 border-slate-700/50 hover:border-purple-500/40'
+            } border rounded-xl transition-all shadow-lg`}
+            title={isListening ? 'Stop recording' : 'Voice input'}
+          >
+            <div className={`absolute inset-0 bg-gradient-to-r ${
+              isListening ? 'from-rose-600 to-red-600' : 'from-purple-600 to-indigo-600'
+            } opacity-0 group-hover:opacity-10 rounded-xl transition-opacity`} />
+            <span className="relative text-xl">{isListening ? '🔴' : '🎤'}</span>
           </button>
 
           <div className="flex-1 relative group">
