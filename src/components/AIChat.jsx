@@ -817,21 +817,18 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
   return (
     <div className="glass-panel flex flex-col h-[750px] overflow-hidden">
       {/* Premium Header with animated background */}
-      <div className="p-5 border-b border-slate-700/50 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="relative flex items-center gap-3">
+      <div className="panel-header">
+        <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl animate-pulse pointer-events-none" style={{ animationDuration: '4s' }} />
+        <div className="relative flex items-center gap-4">
           {/* Icon with glow effect */}
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-cyan-600 blur-xl opacity-50 animate-pulse" />
-            <span className="relative text-3xl filter drop-shadow-lg">🤖</span>
-          </div>
+          <span className="panel-icon" style={{ fontSize: 'var(--text-3xl)' }}>🤖</span>
           <div className="flex-1">
-            <h3 className="text-xl font-bold bg-gradient-to-r from-indigo-200 via-purple-200 to-cyan-300 bg-clip-text text-transparent">
+            <h3 className="font-bold bg-gradient-to-r from-indigo-200 via-purple-200 to-cyan-300 bg-clip-text text-transparent" style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-bold)' }}>
               AI Assistant
             </h3>
-            <p className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+            <p className="text-slate-400 flex items-center gap-2 mt-1" style={{ fontSize: 'var(--text-xs)' }}>
               <span className={`w-2 h-2 rounded-full ${hasRealData ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
-              <span className="font-semibold">
+              <span style={{ fontWeight: 'var(--font-semibold)' }}>
                 {hasRealData
                   ? `Live Data: ${currentSymbol} • ${marketData.timeframe}`
                   : 'Sample Data • Load chart for live analysis'}
@@ -843,14 +840,14 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
           <div className="flex gap-2">
             <button
               onClick={exportChat}
-              className="px-3 py-1.5 text-xs bg-slate-800/50 hover:bg-indigo-500/20 border border-slate-700/50 hover:border-indigo-500/40 rounded-lg text-slate-400 hover:text-indigo-400 transition-all"
+              className="btn-tertiary btn-sm"
               title="Export chat to clipboard"
             >
               📋 Export
             </button>
             <button
               onClick={clearChat}
-              className="px-3 py-1.5 text-xs bg-slate-800/50 hover:bg-rose-500/20 border border-slate-700/50 hover:border-rose-500/40 rounded-lg text-slate-400 hover:text-rose-400 transition-all"
+              className="btn-ghost btn-sm"
               title="Clear chat history"
             >
               🗑️ Clear
@@ -926,7 +923,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                         return (
                           <button
                             onClick={() => executeTradeSetup(setup)}
-                            className="w-full px-3 py-2 text-xs bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 rounded-lg text-white font-semibold flex items-center justify-center gap-2 transition-all shadow-lg"
+                            className="btn-success w-full flex items-center justify-center gap-2"
                           >
                             <span>📊</span>
                             <span>Trade This Setup</span>
@@ -941,9 +938,9 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                       const followUps = generateFollowUpQuestions(msg.content)
                       if (followUps.length > 0) {
                         return (
-                          <div className="space-y-1.5">
-                            <div className="text-xs text-slate-500 font-semibold">Ask follow-up:</div>
-                            <div className="flex flex-wrap gap-1.5">
+                          <div className="space-y-2">
+                            <div className="text-slate-500" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)' }}>Ask follow-up:</div>
+                            <div className="flex flex-wrap gap-2">
                               {followUps.map((q, qIdx) => (
                                 <button
                                   key={qIdx}
@@ -1004,7 +1001,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                                       }, 300)
                                     }
                                   }}
-                                  className={`px-2.5 py-1 text-xs ${
+                                  className={`btn-xs ${
                                     q.toLowerCase().includes('backtest')
                                       ? 'bg-emerald-600/20 hover:bg-emerald-600/30 border-emerald-500/40 hover:border-emerald-400/50 text-emerald-300'
                                       : q.toLowerCase().includes('similar')
@@ -1012,7 +1009,8 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                                       : q.match(/^Load [A-Z]{1,5}/i)
                                       ? 'bg-purple-600/20 hover:bg-purple-600/30 border-purple-500/40 hover:border-purple-400/50 text-purple-300'
                                       : 'bg-slate-700/50 hover:bg-indigo-600/30 border-slate-600/50 hover:border-indigo-500/40 text-slate-300 hover:text-indigo-200'
-                                  } border rounded-lg transition-all`}
+                                  } border`}
+                                  style={{ borderRadius: 'var(--radius-lg)', transition: 'var(--transition-base)' }}
                                 >
                                   {q.toLowerCase().includes('backtest') && '🔬 '}
                                   {q.toLowerCase().includes('similar') && '🔍 '}
@@ -1054,13 +1052,13 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
       {/* Smart AI-Powered Suggested Questions */}
       {((messages.length <= 1 && suggestedQuestions.length > 0) || smartSuggestions.length > 0) && (
         <div className="px-4 pb-3">
-          <div className="flex items-center gap-2 text-xs text-slate-400 mb-2.5">
-            <span className="text-base">{smartSuggestions.length > 0 ? '🧠' : '💡'}</span>
-            <span className="font-semibold uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-slate-400 mb-3" style={{ fontSize: 'var(--text-xs)' }}>
+            <span style={{ fontSize: 'var(--text-base)' }}>{smartSuggestions.length > 0 ? '🧠' : '💡'}</span>
+            <span className="uppercase tracking-wider" style={{ fontWeight: 'var(--font-semibold)' }}>
               {smartSuggestions.length > 0 ? 'Smart Suggestions' : 'Suggested Questions'}
             </span>
             {smartSuggestions.length > 0 && (
-              <span className="text-xs text-emerald-400 ml-1">• AI-Predicted</span>
+              <span className="text-emerald-400 ml-1" style={{ fontSize: 'var(--text-xs)' }}>• AI-Predicted</span>
             )}
           </div>
           <div className="flex flex-wrap gap-2">
@@ -1068,14 +1066,15 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
               <button
                 key={idx}
                 onClick={() => setInput(q)}
-                className={`relative group px-3 py-2 text-xs font-medium ${
+                className={`relative group px-3 py-2 ${
                   smartSuggestions.length > 0
                     ? 'bg-gradient-to-r from-emerald-600/20 to-cyan-600/20 hover:from-emerald-600/30 hover:to-cyan-600/30 border-emerald-500/40 hover:border-emerald-400/50 text-emerald-300 hover:text-emerald-200'
                     : 'bg-slate-800/50 hover:bg-slate-700/50 border-slate-700/50 hover:border-indigo-500/40 text-slate-300 hover:text-indigo-200'
-                } border rounded-lg transition-all shadow-lg hover:shadow-emerald-500/10`}
+                } border shadow-lg hover:shadow-emerald-500/10`}
+                style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', borderRadius: 'var(--radius-lg)', transition: 'var(--transition-base)' }}
               >
                 {smartSuggestions.length === 0 && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-10 transition-opacity" style={{ borderRadius: 'var(--radius-lg)' }} />
                 )}
                 <span className="relative">{q}</span>
               </button>
@@ -1136,70 +1135,53 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="relative group px-4 py-3 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 hover:border-cyan-500/40 rounded-xl transition-all shadow-lg"
+            className="btn-secondary btn-icon"
             title="Upload chart screenshot or document"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 opacity-0 group-hover:opacity-10 rounded-xl transition-opacity" />
-            <span className="relative text-xl">📎</span>
+            <span style={{ fontSize: 'var(--text-xl)' }}>📎</span>
           </button>
 
           {/* Voice Input Button */}
           <button
             type="button"
             onClick={isListening ? stopVoiceInput : startVoiceInput}
-            className={`relative group px-4 py-3 ${
+            className={`btn-icon ${
               isListening
                 ? 'bg-rose-600/20 border-rose-500/40 animate-pulse'
-                : 'bg-slate-800/50 hover:bg-slate-700/50 border-slate-700/50 hover:border-purple-500/40'
-            } border rounded-xl transition-all shadow-lg`}
+                : 'btn-secondary'
+            }`}
             title={isListening ? 'Stop recording' : 'Voice input'}
           >
-            <div className={`absolute inset-0 bg-gradient-to-r ${
-              isListening ? 'from-rose-600 to-red-600' : 'from-purple-600 to-indigo-600'
-            } opacity-0 group-hover:opacity-10 rounded-xl transition-opacity`} />
-            <span className="relative text-xl">{isListening ? '🔴' : '🎤'}</span>
+            <span style={{ fontSize: 'var(--text-xl)' }}>{isListening ? '🔴' : '🎤'}</span>
           </button>
 
           <div className="flex-1 relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-focus-within:opacity-10 rounded-xl transition-opacity blur-xl" />
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-focus-within:opacity-10 transition-opacity blur-xl" style={{ borderRadius: 'var(--radius-xl)' }} />
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about markets, upload chart screenshots, or share documents..."
-              className="relative w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 focus:border-indigo-500/50 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none transition-all shadow-lg text-sm"
+              className="input relative w-full px-4 py-3 bg-slate-800/50 border-slate-700/50 focus:border-indigo-500/50 text-slate-200 placeholder-slate-500 shadow-lg"
+              style={{ borderRadius: 'var(--radius-xl)', fontSize: 'var(--text-sm)' }}
               disabled={isTyping}
             />
           </div>
           <button
             type="submit"
             disabled={(!input.trim() && uploadedFiles.length === 0) || isTyping}
-            className="relative group px-6 py-3 font-semibold rounded-xl transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+            className="btn-primary"
           >
-            {/* Gradient background */}
-            <div className={`absolute inset-0 ${
-              (!input.trim() && uploadedFiles.length === 0) || isTyping
-                ? 'bg-slate-700'
-                : 'bg-gradient-to-r from-indigo-600 to-purple-600 group-hover:from-indigo-500 group-hover:to-purple-500'
-            } transition-all`} />
-
-            {/* Glow effect */}
-            {(input.trim() || uploadedFiles.length > 0) && !isTyping && (
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
+            {isTyping ? (
+              <>
+                <span className="animate-pulse">Thinking...</span>
+              </>
+            ) : (
+              <>
+                <span>Send</span>
+                <span style={{ fontSize: 'var(--text-lg)' }}>→</span>
+              </>
             )}
-
-            <span className="relative text-white flex items-center gap-2">
-              {isTyping ? (
-                <>
-                  <span className="animate-pulse">Thinking...</span>
-                </>
-              ) : (
-                <>
-                  <span>Send</span>
-                  <span className="text-lg">→</span>
-                </>
-              )}
-            </span>
           </button>
         </div>
       </form>
