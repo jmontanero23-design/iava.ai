@@ -21,13 +21,14 @@ export async function fetchBars(symbol = 'AAPL', timeframe = '1Min', limit = 500
     const interval = mapTimeframeToYahoo(timeframe)
     const range = getRangeForTimeframe(timeframe, limit)
 
-    // Yahoo Finance API endpoint
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`
+    // Use our CORS proxy instead of calling Yahoo directly
+    // Yahoo Finance blocks browser requests with CORS policy
+    const url = `/api/yahoo-proxy?symbol=${symbol}&interval=${interval}&range=${range}`
 
     const response = await fetch(url)
 
     if (!response.ok) {
-      throw new Error(`Yahoo Finance API error: ${response.status}`)
+      throw new Error(`Yahoo Finance proxy error: ${response.status}`)
     }
 
     const data = await response.json()

@@ -148,25 +148,8 @@ export default function AIChat() {
 
       const chatHistory = messages.slice(-6) // Last 3 exchanges for context
 
-      // Build user message with vision support
-      let userContent = input.trim()
-
-      // If images attached, use vision model format
-      if (hasImages) {
-        userContent = [
-          { type: 'text', text: input.trim() || 'Analyze this chart screenshot. Identify key support/resistance levels, trend direction, volume patterns, and any notable technical setups. Provide actionable insights.' }
-        ]
-
-        // Add all images
-        currentFiles.forEach(file => {
-          if (file.isImage) {
-            userContent.push({
-              type: 'image_url',
-              image_url: { url: file.base64 }
-            })
-          }
-        })
-      }
+      // Build user message content
+      let userContent = input.trim() || 'Analyze the attached files and provide insights.'
 
       // If documents attached, extract text and add to context
       if (hasDocuments) {
@@ -174,12 +157,19 @@ export default function AIChat() {
           .filter(f => f.isText)
           .map(f => `\n\n=== Document: ${f.name} ===\n${atob(f.base64.split(',')[1])}`)
           .join('\n')
+        userContent += docContext
+      }
 
-        if (typeof userContent === 'string') {
-          userContent += docContext
-        } else {
-          userContent[0].text += docContext
-        }
+      // For vision models, we'll include image info in text for now
+      // TODO: Add proper vision model support to backend
+      if (hasImages) {
+        userContent += '\n\n[Chart screenshot uploaded - Vision analysis coming soon]'
+        userContent += '\n\nBased on the chart screenshot, please analyze:'
+        userContent += '\n- Support and resistance levels'
+        userContent += '\n- Trend direction and strength'
+        userContent += '\n- Volume patterns'
+        userContent += '\n- Notable technical setups'
+        userContent += '\n- Entry/exit recommendations'
       }
 
       const aiMessages = [
@@ -189,9 +179,9 @@ export default function AIChat() {
         { role: 'user', content: userContent }
       ]
 
-      // Use vision model (GPT-4o) if images, otherwise GPT-5 for reasoning
-      const model = hasImages ? 'gpt-4o' : 'gpt-5'
-      const maxTokens = hasImages ? 500 : 300 // More tokens for chart analysis
+      // Use GPT-5 for reasoning (vision support needs backend update)
+      const model = 'gpt-5'
+      const maxTokens = hasImages ? 500 : 300
 
       console.log('[AI Chat] Using model:', model, 'with files:', currentFiles.length)
 
