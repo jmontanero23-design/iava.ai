@@ -112,9 +112,5 @@ function calculateCost(usage, model) {
   const promptCost = (usage.promptTokens / 1000000) * rates.input
   const completionCost = (usage.completionTokens / 1000000) * rates.output
 
-  return {
-    inputCost: parseFloat(promptCost.toFixed(6)),
-    outputCost: parseFloat(completionCost.toFixed(6)),
-    totalCost: parseFloat((promptCost + completionCost).toFixed(6))
-  }
+  return parseFloat((promptCost + completionCost).toFixed(6))
 }

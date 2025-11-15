@@ -315,16 +315,20 @@ export default function AIChat() {
                   </div>
                 )}
 
-                {msg.cost && (
+                {msg.cost != null && (
                   <div className="flex items-center gap-3 mt-2 pt-2 border-t border-slate-700/30">
                     <div className="flex items-center gap-1 text-xs text-emerald-400">
                       <span>💰</span>
-                      <span className="font-semibold">${msg.cost.totalCost.toFixed(4)}</span>
+                      <span className="font-semibold">
+                        ${typeof msg.cost === 'number' ? msg.cost.toFixed(4) : msg.cost.totalCost?.toFixed(4) || '0.0000'}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-cyan-400">
-                      <span>⚡</span>
-                      <span className="font-semibold">{msg.latency}ms</span>
-                    </div>
+                    {msg.latency != null && (
+                      <div className="flex items-center gap-1 text-xs text-cyan-400">
+                        <span>⚡</span>
+                        <span className="font-semibold">{msg.latency}ms</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
