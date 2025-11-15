@@ -235,34 +235,81 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
     }
   }
 
-  // Find similar setups - Redirect to Scanner panel since NLP endpoint not implemented
+  // Find similar setups using existing scanner API
   const findSimilarSetups = async () => {
     try {
       setIsTyping(true)
 
-      // Suggest using the Scanner panel instead
+      // Get current market data for context
+      const currentTimeframe = marketData.timeframe || '5Min'
+
+      // Use top liquid stocks as default scan universe
+      const topStocks = 'SPY,QQQ,AAPL,MSFT,NVDA,TSLA,AMZN,META,GOOGL,NFLX,AMD,CRM,INTC,CSCO,ADBE,PYPL,DIS,BA,GS,JPM,V,MA,COST,WMT,HD,PG,JNJ,UNH,CVX,XOM'
+
+      // Scan for high-quality setups
+      const params = new URLSearchParams({
+        symbols: topStocks,
+        timeframe: currentTimeframe,
+        threshold: '70', // High quality only
+        top: '10',
+        enforceDaily: '0', // Cast wider net
+        requireConsensus: '0',
+        consensusBonus: '0',
+        assetClass: 'stocks'
+      })
+
+      const response = await fetch(`/api/scan?${params.toString()}`)
+      if (!response.ok) throw new Error('Scanner API failed')
+
+      const data = await response.json()
+
+      // Format results for display
+      const longs = (data.longs || []).slice(0, 5)
+      const shorts = (data.shorts || []).slice(0, 5)
+
+      let resultText = `🔍 **Similar High-Quality Setups Found**\n\n`
+
+      if (longs.length > 0) {
+        resultText += `**🟢 BULLISH (${longs.length} setups)**\n`
+        longs.forEach((setup, i) => {
+          resultText += `${i + 1}. **${setup.symbol}** - $${setup.last?.close?.toFixed(2) || 'N/A'}\n`
+          resultText += `   • Unicorn Score: ${Math.round(setup.score)}/100\n`
+          resultText += `   • Setup: ${setup.emaCloudNow || 'N/A'} EMA, ${setup.pivotNow || 'N/A'} Pivot\n\n`
+        })
+      }
+
+      if (shorts.length > 0) {
+        resultText += `\n**🔴 BEARISH (${shorts.length} setups)**\n`
+        shorts.forEach((setup, i) => {
+          resultText += `${i + 1}. **${setup.symbol}** - $${setup.last?.close?.toFixed(2) || 'N/A'}\n`
+          resultText += `   • Unicorn Score: ${Math.round(setup.score)}/100\n`
+          resultText += `   • Setup: ${setup.emaCloudNow || 'N/A'} EMA, ${setup.pivotNow || 'N/A'} Pivot\n\n`
+        })
+      }
+
+      if (longs.length === 0 && shorts.length === 0) {
+        resultText += `No high-quality setups found (Unicorn Score 70+) in top liquid stocks.\n\n`
+        resultText += `Current market may be choppy or lacking confluence. Consider:\n`
+        resultText += `• Lowering threshold to 60+ for moderate setups\n`
+        resultText += `• Waiting for market regime to improve\n`
+        resultText += `• Using the Scanner panel for custom symbol lists\n`
+      } else {
+        resultText += `\n💡 Click any symbol in your chart to load for detailed analysis!`
+      }
+
       const scannerMessage = {
         role: 'assistant',
-        content: `🔍 **Similar Setups Scanner**
-
-To find similar setups across multiple symbols, use the **Scanner** panel at the bottom of the chart page:
-
-1. Navigate to the "Discover (Scan & Watchlists)" tab
-2. Use the NLP scanner to describe what you're looking for
-3. Set your desired Unicorn Score threshold
-4. Browse results and click any symbol to load its chart
-
-The scanner can search across hundreds of symbols for confluence-based setups matching your criteria!
-
-💡 Tip: Try queries like "bullish breakout with squeeze" or "pullback in uptrend"`,
-        timestamp: Date.now()
+        content: resultText,
+        timestamp: Date.now(),
+        scanResults: { longs, shorts }
       }
       setMessages(prev => [...prev, scannerMessage])
+
     } catch (error) {
-      console.error('[AI Chat] Similar setups error:', error)
+      console.error('[AI Chat] Scanner error:', error)
       const errorMessage = {
         role: 'assistant',
-        content: '❌ Unable to scan for similar setups. Please use the Scanner panel at the bottom of the page.',
+        content: '❌ Scanner temporarily unavailable. Use the Scanner panel at the bottom of the page for manual scanning.',
         timestamp: Date.now(),
         error: true
       }
@@ -271,13 +318,6 @@ The scanner can search across hundreds of symbols for confluence-based setups ma
       setIsTyping(false)
     }
   }
-
-  // TODO: Implement NLP scan endpoint at /api/ai/nlp-scan
-  // When implemented, this function should:
-  // 1. Extract trading intent from message (bullish/bearish/breakout/etc)
-  // 2. Call NLP scanner API with query
-  // 3. Format and display results with clickable symbols
-  // 4. Allow loading symbols directly from results
 
   // Export chat to clipboard (markdown format)
   const exportChat = () => {
