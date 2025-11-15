@@ -139,5 +139,3 @@ export function SkeletonStatsGrid({ items = 4 }) {
     </div>
   )
 }
-
-export default SkeletonLoader
