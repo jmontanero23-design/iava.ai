@@ -533,54 +533,48 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
     }
   }
 
-  // Text-to-Speech: Speak AI responses
-  const speakResponse = (text) => {
-    if (!('speechSynthesis' in window)) {
-      console.warn('🔊 TTS not supported in this browser')
-      return
-    }
+  // Premium Text-to-Speech: Natural human voice using ElevenLabs
+  const speakResponse = async (text) => {
+    try {
+      // Clean markdown and special characters for TTS
+      const cleanText = text
+        .replace(/[*_~`#]/g, '') // Remove markdown
+        .replace(/\n+/g, '. ') // Newlines to pauses
+        .replace(/\s+/g, ' ') // Collapse whitespace
+        .replace(/╔.*?╝/gs, '') // Remove box characters
+        .replace(/[🔴🟢⚠️💡🧠🎯📊✅❌]/g, '') // Remove emojis
+        .trim()
 
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel()
-
-    // Clean markdown and special characters for TTS
-    const cleanText = text
-      .replace(/[*_~`#]/g, '') // Remove markdown
-      .replace(/\n+/g, '. ') // Newlines to pauses
-      .replace(/\s+/g, ' ') // Collapse whitespace
-      .replace(/╔.*?╝/gs, '') // Remove box characters
-      .replace(/[🔴🟢⚠️💡🧠🎯📊]/g, '') // Remove emojis
-      .trim()
-
-    if (!cleanText) {
-      console.warn('🔊 No text to speak after cleaning')
-      return
-    }
-
-    const utterance = new SpeechSynthesisUtterance(cleanText)
-    utterance.rate = 1.1 // Slightly faster than default
-    utterance.pitch = 1.0
-    utterance.volume = 1.0
-
-    // Ensure voices are loaded before selecting
-    const selectVoice = () => {
-      const voices = window.speechSynthesis.getVoices()
-      if (voices.length > 0) {
-        const preferredVoice = voices.find(v =>
-          v.name.includes('Samantha') || // Mac
-          v.name.includes('Google US English') || // Chrome
-          v.name.includes('Microsoft Zira') || // Windows
-          v.lang.startsWith('en-US')
-        )
-        if (preferredVoice) {
-          utterance.voice = preferredVoice
-          console.log('🔊 Using voice:', preferredVoice.name)
-        }
+      if (!cleanText) {
+        console.warn('🔊 No text to speak after cleaning')
+        return
       }
 
-      // When speech ends, auto-restart voice input for continuous conversation
-      utterance.onend = () => {
-        console.log('🔊 Speech finished, restarting voice input...')
+      console.log('[TTS] Converting to premium voice:', cleanText.substring(0, 100) + '...')
+
+      // Call premium TTS API (ElevenLabs Turbo v2.5)
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: cleanText,
+          voiceId: 'pNInz6obpgDQGcFmaJgB' // Adam - clear, professional male voice
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'TTS generation failed')
+      }
+
+      const { audio } = await response.json()
+
+      // Play premium audio using HTML5 Audio API
+      const audioElement = new Audio(audio)
+      audioElement.playbackRate = 1.1 // Slightly faster for efficiency
+
+      audioElement.onended = () => {
+        console.log('🔊 Premium speech finished, restarting voice input...')
         setTimeout(() => {
           if (!isListening) {
             startVoiceInput()
@@ -588,20 +582,47 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
         }, 500) // Small delay before restarting
       }
 
-      utterance.onerror = (event) => {
-        console.error('🔊 TTS error:', event.error)
+      audioElement.onerror = (e) => {
+        console.error('🔊 Audio playback error:', e)
       }
 
-      window.speechSynthesis.speak(utterance)
-      console.log('🔊 Speaking response:', cleanText.substring(0, 100) + '...')
+      await audioElement.play()
+      console.log('🔊 Speaking with PREMIUM ElevenLabs voice (natural, human-like)')
+
+    } catch (error) {
+      console.error('[TTS] Error:', error)
+      // Fallback to browser TTS if premium fails (graceful degradation)
+      console.warn('🔊 Falling back to browser TTS...')
+      fallbackBrowserTTS(text)
+    }
+  }
+
+  // Fallback browser TTS (only if premium fails)
+  const fallbackBrowserTTS = (text) => {
+    if (!('speechSynthesis' in window)) return
+
+    window.speechSynthesis.cancel()
+
+    const cleanText = text
+      .replace(/[*_~`#]/g, '')
+      .replace(/\n+/g, '. ')
+      .replace(/\s+/g, ' ')
+      .replace(/╔.*?╝/gs, '')
+      .replace(/[🔴🟢⚠️💡🧠🎯📊✅❌]/g, '')
+      .trim()
+
+    if (!cleanText) return
+
+    const utterance = new SpeechSynthesisUtterance(cleanText)
+    utterance.rate = 1.1
+    utterance.onend = () => {
+      setTimeout(() => {
+        if (!isListening) startVoiceInput()
+      }, 500)
     }
 
-    // Chrome needs voices to be loaded first
-    if (window.speechSynthesis.getVoices().length === 0) {
-      window.speechSynthesis.onvoiceschanged = selectVoice
-    } else {
-      selectVoice()
-    }
+    window.speechSynthesis.speak(utterance)
+    console.log('🔊 Using fallback browser TTS')
   }
 
   // Generate smart AI-powered suggested questions
