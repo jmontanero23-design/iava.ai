@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Hero from './components/Hero.jsx'
-import CandleChart from './components/chart/CandleChart.jsx'
+import TradingViewChartEmbed from './components/TradingViewChartEmbed.jsx'
 import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend, computeStates, pivotRibbon, ttmBands, ttmSqueeze } from './utils/indicators.js'
 import { useMarketData } from './contexts/MarketDataContext.jsx'
 import SqueezePanel from './components/chart/SqueezePanel.jsx'
@@ -15,6 +15,9 @@ import StatusBar from './components/StatusBar.jsx'
 import LegendChips from './components/LegendChips.jsx'
 import MarketStats from './components/MarketStats.jsx'
 import UnicornCallout from './components/UnicornCallout.jsx'
+import UnicornScorePanel from './components/UnicornScorePanel.jsx'
+import MarketRegimeIndicator from './components/MarketRegimeIndicator.jsx'
+import SatyLevelsOverlay from './components/SatyLevelsOverlay.jsx'
 import UnicornActionBar from './components/UnicornActionBar.jsx'
 import BacktestPanel from './components/BacktestPanel.jsx'
 import BatchBacktestPanel from './components/BatchBacktestPanel.jsx'
@@ -280,7 +283,8 @@ export default function App() {
       account,
       usingSample
     })
-  }, [symbol, timeframe, bars, signalState, dailyState, overlays, threshold, enforceDaily, consensusBonus, consensus, account, usingSample, updateMarketData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [symbol, timeframe, bars, signalState, dailyState, overlays, threshold, enforceDaily, consensusBonus, consensus, account, usingSample])
 
   const stale = useMemo(() => {
     if (!bars?.length) return true
@@ -741,26 +745,41 @@ export default function App() {
         account={account}
       />
       <LegendChips overlays={overlays} />
-      <CandleChart
-        bars={bars}
-        overlays={overlays}
-        markers={signalState.markers}
-        loading={loading}
-        focusTime={focusTime}
-        presetExpected={presetExpected}
-        currentOverlay={currentOverlay}
-        overlayToggles={{
-          ema821: () => setShowEma821(v => !v),
-          ema512: () => setShowEma512(v => !v),
-          ema89: () => setShowEma89(v => !v),
-          ema3450: () => setShowEma3450(v => !v),
-          ribbon: () => setShowRibbon(v => !v),
-          ichi: () => setShowIchi(v => !v),
-          saty: () => setShowSaty(v => !v),
-          squeeze: () => setShowSqueeze(v => !v),
-        }}
-        presetLabel={mtfPreset !== 'manual' ? mlabel(mtfPreset) : ''}
-      />
+
+      {/* TradingView Professional Chart - Replaces custom CandleChart */}
+      <div className="relative w-full" style={{ height: '600px' }}>
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-950/50 z-10">
+            <div className="text-slate-400">Loading {symbol}...</div>
+          </div>
+        )}
+        <TradingViewChartEmbed />
+
+        {/* Preset label overlay */}
+        {mtfPreset !== 'manual' && (
+          <div className="absolute top-4 left-4 z-20 px-3 py-1.5 rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-xs text-indigo-200">
+            {mlabel(mtfPreset)}
+          </div>
+        )}
+
+        {/* iAVA Unicorn Score Overlay - Proprietary Intelligence */}
+        <div className="absolute top-4 right-4 z-20">
+          <UnicornScorePanel state={signalState.state} />
+        </div>
+
+        {/* SATY Levels Overlay - Support/Resistance */}
+        <div className="absolute top-[280px] right-4 z-20">
+          <SatyLevelsOverlay
+            saty={signalState.state?.saty}
+            currentPrice={bars[bars.length - 1]?.close}
+          />
+        </div>
+
+        {/* Market Regime Indicator - Daily Context */}
+        <div className="absolute bottom-4 left-4 z-20">
+          <MarketRegimeIndicator dailyState={signalState.state?._daily} />
+        </div>
+      </div>
       <OverlayChips
         showEma821={showEma821} setShowEma821={setShowEma821}
         showEma512={showEma512} setShowEma512={setShowEma512}
