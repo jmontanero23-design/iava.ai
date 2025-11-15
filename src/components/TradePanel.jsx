@@ -211,18 +211,15 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
   return (
     <div className="card overflow-hidden trade-panel-container">
       {/* Premium Header */}
-      <div className="p-5 relative overflow-hidden border-b border-slate-700/50">
-        <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
+      <div className="panel-header panel-header-success">
+        <div className="absolute inset-0 opacity-15 bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 blur-2xl animate-pulse pointer-events-none" style={{ animationDuration: '4s' }} />
 
         <div className="relative">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               {/* Icon with glow */}
-              <div className="relative">
-                <div className="absolute inset-0 bg-emerald-600 blur-lg opacity-50 animate-pulse" />
-                <span className="relative text-2xl filter drop-shadow-lg">💼</span>
-              </div>
-              <h3 className="text-lg font-bold bg-gradient-to-r from-emerald-200 via-teal-200 to-cyan-300 bg-clip-text text-transparent inline-flex items-center gap-2">
+              <span className="panel-icon" style={{ fontSize: 'var(--text-2xl)' }}>💼</span>
+              <h3 className="font-bold bg-gradient-to-r from-emerald-200 via-teal-200 to-cyan-300 bg-clip-text text-transparent inline-flex items-center gap-2" style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
                 Place Bracket Order (Paper)
                 <InfoPopover title="Risk & Brackets">
                   Size: (risk% × equity) / (entry−stop). Bracket orders place take‑profit and stop‑loss together. Tune % and levels before sending.
@@ -231,56 +228,57 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
             </div>
             <button
               onClick={onClose}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-400 hover:text-white transition-all"
+              className="btn-ghost btn-sm"
             >
               ✕ Close
             </button>
           </div>
 
           {/* Market Status Bar */}
-          <div className="mt-3 flex items-center gap-4 flex-wrap text-xs">
+          <div className="mt-4 flex items-center gap-4 flex-wrap" style={{ fontSize: 'var(--text-xs)' }}>
             <div className="flex items-center gap-2">
               <span className="text-slate-400">Market:</span>
               {clock?.is_open ? (
-                <span className="px-2 py-1 rounded-md bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-semibold">● Open</span>
+                <span className="px-2 py-1 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300" style={{ borderRadius: 'var(--radius-md)', fontWeight: 'var(--font-semibold)' }}>● Open</span>
               ) : (
-                <span className="px-2 py-1 rounded-md bg-amber-500/20 border border-amber-500/30 text-amber-300 font-semibold">● Closed</span>
+                <span className="px-2 py-1 bg-amber-500/20 border border-amber-500/30 text-amber-300" style={{ borderRadius: 'var(--radius-md)', fontWeight: 'var(--font-semibold)' }}>● Closed</span>
               )}
             </div>
             <div className="flex items-center gap-2">
               <span className="text-slate-400">Last:</span>
-              <span className="text-slate-200 font-semibold">${last?.close?.toFixed(2)}</span>
+              <span className="text-slate-200" style={{ fontWeight: 'var(--font-semibold)' }}>${last?.close?.toFixed(2)}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-slate-400">Equity:</span>
-              <span className="text-slate-200 font-semibold">${equity.toLocaleString()}</span>
+              <span className="text-slate-200" style={{ fontWeight: 'var(--font-semibold)' }}>${equity.toLocaleString()}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Premium Content */}
-      <div className="p-5 space-y-4">
+      <div className="p-6 space-y-4">
         {/* Order Configuration Section */}
-        <div className="p-4 bg-slate-800/30 rounded-xl border border-emerald-500/20">
+        <div className="p-4 bg-slate-800/30 border border-emerald-500/20" style={{ borderRadius: 'var(--radius-xl)' }}>
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-base">⚙️</span>
-            <div className="text-xs uppercase tracking-wider text-emerald-300 font-semibold">Order Configuration</div>
+            <span style={{ fontSize: 'var(--text-base)' }}>⚙️</span>
+            <div className="uppercase tracking-wider text-emerald-300" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)' }}>Order Configuration</div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="block">
-              <span className="text-xs text-slate-400 font-medium mb-1.5 block">Side</span>
+              <span className="text-slate-400 mb-2 block" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)' }}>Side</span>
               <select
                 value={side}
                 onChange={e => setSide(e.target.value)}
-                className="select w-full bg-slate-800/50 border-slate-700/50 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+                className="select w-full bg-slate-800/50 border-slate-700/50 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30"
+                style={{ transition: 'var(--transition-base)' }}
               >
                 <option value="buy">Buy (Long)</option>
                 <option value="sell">Sell (Short)</option>
               </select>
             </label>
             <label className="block">
-              <span className="text-xs text-slate-400 font-medium mb-1.5 block">Risk %</span>
+              <span className="text-slate-400 mb-2 block" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)' }}>Risk %</span>
               <input
                 type="number"
                 value={riskPct}
@@ -288,21 +286,23 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
                 min={0.1}
                 max={5}
                 step={0.1}
-                className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+                className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30"
+                style={{ transition: 'var(--transition-base)' }}
               />
             </label>
             <label className="block">
-              <span className="text-xs text-slate-400 font-medium mb-1.5 block">Quantity</span>
+              <span className="text-slate-400 mb-2 block" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)' }}>Quantity</span>
               <input
                 type="number"
                 value={qty}
                 onChange={e => setQty(Number(e.target.value))}
                 min={1}
-                className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+                className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30"
+                style={{ transition: 'var(--transition-base)' }}
               />
             </label>
             <label className="block">
-              <span className="text-xs text-slate-400 font-medium mb-1.5 block">Stop Loss</span>
+              <span className="text-slate-400 mb-2 block" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)' }}>Stop Loss</span>
               <input
                 type="number"
                 value={stop ?? ''}
@@ -314,12 +314,13 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
                   }
                 }}
                 step={0.01}
-                className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30 transition-all"
+                className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30"
+                style={{ transition: 'var(--transition-base)' }}
               />
             </label>
             {!usePartials && (
               <label className="block">
-                <span className="text-xs text-slate-400 font-medium mb-1.5 block">Take Profit</span>
+                <span className="text-slate-400 mb-2 block" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)' }}>Take Profit</span>
                 <input
                   type="number"
                   value={tp ?? ''}
@@ -331,21 +332,22 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
                     }
                   }}
                   step={0.01}
-                  className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+                  className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30"
+                  style={{ transition: 'var(--transition-base)' }}
                 />
               </label>
             )}
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-700/30">
+          <div className="mt-4 pt-4 border-t border-slate-700/30">
             <label className="inline-flex items-center gap-2 cursor-pointer group">
               <input
                 type="checkbox"
                 checked={usePartials}
                 onChange={e => setUsePartials(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                className="checkbox"
                 aria-label="Use partial exits strategy"
               />
-              <span className="text-sm text-slate-300 group-hover:text-emerald-300 transition-colors">
+              <span className="text-slate-300 group-hover:text-emerald-300" style={{ fontSize: 'var(--text-sm)', transition: 'var(--transition-base)' }}>
                 Use Partial Exits (50% at 1R, 25% at 2R, 25% at 3R)
               </span>
             </label>
@@ -354,25 +356,25 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
 
         {/* Premium Partial Exit Plan */}
         {usePartials && partialPlan && (
-          <div className="p-4 bg-slate-800/30 rounded-xl border border-teal-500/20">
+          <div className="p-4 bg-slate-800/30 border border-teal-500/20" style={{ borderRadius: 'var(--radius-xl)' }}>
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-base">🎯</span>
-              <div className="text-xs uppercase tracking-wider text-teal-300 font-semibold">Partial Exit Plan</div>
+              <span style={{ fontSize: 'var(--text-base)' }}>🎯</span>
+              <div className="uppercase tracking-wider text-teal-300" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)' }}>Partial Exit Plan</div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* 1R Exit */}
               <div className="relative group">
-                <div className="absolute inset-0 bg-emerald-600 blur-xl opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
-                <div className="relative p-3 bg-slate-800/50 rounded-lg border border-emerald-500/30 hover:border-emerald-500/50 transition-all">
-                  <div className="text-sm font-bold text-emerald-300 mb-2">50% at 1R</div>
-                  <div className="space-y-1 text-xs">
+                <div className="absolute inset-0 bg-emerald-600 blur-xl opacity-0 group-hover:opacity-10 transition-opacity" style={{ borderRadius: 'var(--radius-lg)' }} />
+                <div className="relative p-3 bg-slate-800/50 border border-emerald-500/30 hover:border-emerald-500/50" style={{ borderRadius: 'var(--radius-lg)', transition: 'var(--transition-base)' }}>
+                  <div className="text-emerald-300 mb-2" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-bold)' }}>50% at 1R</div>
+                  <div className="space-y-1" style={{ fontSize: 'var(--text-xs)' }}>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Qty:</span>
-                      <span className="text-slate-200 font-semibold">{partialPlan.qty1}</span>
+                      <span className="text-slate-200" style={{ fontWeight: 'var(--font-semibold)' }}>{partialPlan.qty1}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">TP:</span>
-                      <span className="text-emerald-300 font-semibold">${partialPlan.tp1.toFixed(2)}</span>
+                      <span className="text-emerald-300" style={{ fontWeight: 'var(--font-semibold)' }}>${partialPlan.tp1.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -380,17 +382,17 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
 
               {/* 2R Exit */}
               <div className="relative group">
-                <div className="absolute inset-0 bg-teal-600 blur-xl opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
-                <div className="relative p-3 bg-slate-800/50 rounded-lg border border-teal-500/30 hover:border-teal-500/50 transition-all">
-                  <div className="text-sm font-bold text-teal-300 mb-2">25% at 2R</div>
-                  <div className="space-y-1 text-xs">
+                <div className="absolute inset-0 bg-teal-600 blur-xl opacity-0 group-hover:opacity-10 transition-opacity" style={{ borderRadius: 'var(--radius-lg)' }} />
+                <div className="relative p-3 bg-slate-800/50 border border-teal-500/30 hover:border-teal-500/50" style={{ borderRadius: 'var(--radius-lg)', transition: 'var(--transition-base)' }}>
+                  <div className="text-teal-300 mb-2" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-bold)' }}>25% at 2R</div>
+                  <div className="space-y-1" style={{ fontSize: 'var(--text-xs)' }}>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Qty:</span>
-                      <span className="text-slate-200 font-semibold">{partialPlan.qty2}</span>
+                      <span className="text-slate-200" style={{ fontWeight: 'var(--font-semibold)' }}>{partialPlan.qty2}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">TP:</span>
-                      <span className="text-teal-300 font-semibold">${partialPlan.tp2.toFixed(2)}</span>
+                      <span className="text-teal-300" style={{ fontWeight: 'var(--font-semibold)' }}>${partialPlan.tp2.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -398,70 +400,66 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
 
               {/* 3R Exit */}
               <div className="relative group">
-                <div className="absolute inset-0 bg-cyan-600 blur-xl opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
-                <div className="relative p-3 bg-slate-800/50 rounded-lg border border-cyan-500/30 hover:border-cyan-500/50 transition-all">
-                  <div className="text-sm font-bold text-cyan-300 mb-2">25% at 3R</div>
-                  <div className="space-y-1 text-xs">
+                <div className="absolute inset-0 bg-cyan-600 blur-xl opacity-0 group-hover:opacity-10 transition-opacity" style={{ borderRadius: 'var(--radius-lg)' }} />
+                <div className="relative p-3 bg-slate-800/50 border border-cyan-500/30 hover:border-cyan-500/50" style={{ borderRadius: 'var(--radius-lg)', transition: 'var(--transition-base)' }}>
+                  <div className="text-cyan-300 mb-2" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-bold)' }}>25% at 3R</div>
+                  <div className="space-y-1" style={{ fontSize: 'var(--text-xs)' }}>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Qty:</span>
-                      <span className="text-slate-200 font-semibold">{partialPlan.qty3}</span>
+                      <span className="text-slate-200" style={{ fontWeight: 'var(--font-semibold)' }}>{partialPlan.qty3}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">TP:</span>
-                      <span className="text-cyan-300 font-semibold">${partialPlan.tp3.toFixed(2)}</span>
+                      <span className="text-cyan-300" style={{ fontWeight: 'var(--font-semibold)' }}>${partialPlan.tp3.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="mt-3 text-xs text-slate-400">
-              Risk per share: <span className="text-slate-300 font-semibold">${partialPlan.risk.toFixed(2)}</span>
+            <div className="mt-3 text-slate-400" style={{ fontSize: 'var(--text-xs)' }}>
+              Risk per share: <span className="text-slate-300" style={{ fontWeight: 'var(--font-semibold)' }}>${partialPlan.risk.toFixed(2)}</span>
             </div>
           </div>
         )}
 
         {/* Action Section */}
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-4 flex-wrap">
           <button
             onClick={submit}
             disabled={submitting || !qty || !stop || (!usePartials && !tp)}
-            className="relative group px-6 py-2.5 rounded-lg text-sm font-bold overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-success"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 group-hover:from-emerald-500 group-hover:to-teal-500 transition-all group-disabled:from-slate-700 group-disabled:to-slate-700" />
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 blur-lg opacity-30 group-hover:opacity-50 transition-opacity group-disabled:opacity-0" />
-            <span className="relative text-white flex items-center gap-2">
-              {submitting ? (
-                <>
-                  <span className="animate-spin">⏳</span>
-                  Placing…
-                </>
-              ) : (
-                <>
-                  <span>📈</span>
-                  {usePartials ? 'Place 3 Orders' : 'Place Order'}
-                </>
-              )}
-            </span>
+            {submitting ? (
+              <>
+                <span className="animate-spin">⏳</span>
+                Placing…
+              </>
+            ) : (
+              <>
+                <span>📈</span>
+                {usePartials ? 'Place 3 Orders' : 'Place Order'}
+              </>
+            )}
           </button>
 
           {/* Result Feedback */}
           {result?.ok && !result.partials && (
-            <div className="px-3 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30">
-              <span className="text-sm text-emerald-300 font-semibold">
+            <div className="px-3 py-2 bg-emerald-500/20 border border-emerald-500/30" style={{ borderRadius: 'var(--radius-lg)' }}>
+              <span className="text-emerald-300" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)' }}>
                 ✓ Order placed: {result.order?.id}
               </span>
             </div>
           )}
           {result?.ok && result.partials && (
-            <div className="px-3 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30">
-              <span className="text-sm text-emerald-300 font-semibold">
+            <div className="px-3 py-2 bg-emerald-500/20 border border-emerald-500/30" style={{ borderRadius: 'var(--radius-lg)' }}>
+              <span className="text-emerald-300" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)' }}>
                 ✓ {result.orders?.length || 0} orders placed
               </span>
             </div>
           )}
           {result && !result.ok && (
-            <div className="px-3 py-2 rounded-lg bg-rose-500/20 border border-rose-500/30">
-              <span className="text-sm text-rose-300 font-semibold">
+            <div className="px-3 py-2 bg-rose-500/20 border border-rose-500/30" style={{ borderRadius: 'var(--radius-lg)' }}>
+              <span className="text-rose-300" style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)' }}>
                 ⚠ {result.error}
               </span>
             </div>
