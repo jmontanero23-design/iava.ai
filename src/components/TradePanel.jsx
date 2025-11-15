@@ -19,6 +19,36 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
     getClock().then(setClock).catch(() => {})
   }, [])
 
+  // Listen for AI trade setup events
+  useEffect(() => {
+    const handleAITradeSetup = (event) => {
+      const setup = event.detail
+      console.log('[TradePanel] Received AI trade setup:', setup)
+
+      // Auto-populate form fields
+      if (setup.side) {
+        setSide(setup.side)
+      }
+      if (setup.stopLoss) {
+        setStop(setup.stopLoss)
+      }
+      if (setup.target) {
+        setTp(setup.target)
+      }
+
+      // Visual feedback
+      const panel = document.querySelector('.trade-panel-container')
+      if (panel) {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        panel.classList.add('ai-setup-highlight')
+        setTimeout(() => panel.classList.remove('ai-setup-highlight'), 2000)
+      }
+    }
+
+    window.addEventListener('ai-trade-setup', handleAITradeSetup)
+    return () => window.removeEventListener('ai-trade-setup', handleAITradeSetup)
+  }, [])
+
   const equity = Number(account?.equity || account?.portfolio_value || 0)
 
   const rec = useMemo(() => {

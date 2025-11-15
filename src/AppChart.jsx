@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import Hero from './components/Hero.jsx'
 import TradingViewChartEmbed from './components/TradingViewChartEmbed.jsx'
 import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend, computeStates, pivotRibbon, ttmBands, ttmSqueeze } from './utils/indicators.js'
 import { useMarketData } from './contexts/MarketDataContext.jsx'
@@ -23,7 +22,6 @@ import BacktestPanel from './components/BacktestPanel.jsx'
 import BatchBacktestPanel from './components/BatchBacktestPanel.jsx'
 import RateLimitBanner from './components/RateLimitBanner.jsx'
 import HelpFab from './components/HelpFab.jsx'
-import ToastHub from './components/ToastHub.jsx'
 import OrdersPanel from './components/OrdersPanel.jsx'
 import SatyTargets from './components/SatyTargets.jsx'
 import InfoPopover from './components/InfoPopover.jsx'
@@ -95,6 +93,7 @@ export default function App() {
   const [llmReady, setLlmReady] = useState(null)
   const [rateLimitUntil, setRateLimitUntil] = useState(0)
   const showRateBanner = (import.meta.env.VITE_SHOW_RATE_BANNER || 'false').toString().toLowerCase() === 'true'
+  const [bottomTab, setBottomTab] = useState('discover')
   // Keyboard shortcuts (presets and nav)
   useEffect(() => {
     const handler = (e) => {
@@ -549,7 +548,26 @@ export default function App() {
     <div className="min-h-screen bg-transparent text-slate-100 bg-grid">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {showRateBanner && <RateLimitBanner until={rateLimitUntil} />}
-        <Hero />
+
+        {/* Workflow rail – shows the core superpowers */}
+        <div className="flex flex-wrap gap-2 text-[11px] text-slate-300">
+          <span className="px-3 py-1 rounded-full bg-slate-900/70 border border-slate-700/70 flex items-center gap-1">
+            <span className="text-xs">①</span>
+            <span>Understand Setup (Chart + AI)</span>
+          </span>
+          <span className="px-3 py-1 rounded-full bg-slate-900/70 border border-slate-700/70 flex items-center gap-1">
+            <span className="text-xs">②</span>
+            <span>Scan & Build Watchlists</span>
+          </span>
+          <span className="px-3 py-1 rounded-full bg-slate-900/70 border border-slate-700/70 flex items-center gap-1">
+            <span className="text-xs">③</span>
+            <span>Backtest & Tune Thresholds</span>
+          </span>
+          <span className="px-3 py-1 rounded-full bg-slate-900/70 border border-slate-700/70 flex items-center gap-1">
+            <span className="text-xs">④</span>
+            <span>Execute & Journal</span>
+          </span>
+        </div>
 
         {/* Floor 1 – Global control rail */}
         <div className="card overflow-hidden">
@@ -808,8 +826,25 @@ export default function App() {
 
         {/* Floor 3 – Discovery, testing & helpers */}
         <div className="mt-6 space-y-4">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            {/* Scanner + watchlists */}
+          {/* Bottom tab nav */}
+          <div className="flex flex-wrap gap-2 text-xs">
+            <button
+              onClick={() => setBottomTab('discover')}
+              className={`px-3 py-1.5 rounded-full border text-xs font-semibold flex items-center gap-1 transition-colors ${bottomTab === 'discover' ? 'bg-indigo-600 text-white border-indigo-400' : 'bg-slate-900/70 text-slate-300 border-slate-700 hover:border-slate-500'}`}
+            >
+              <span>🔍</span>
+              <span>Discover (Scan & Watchlists)</span>
+            </button>
+            <button
+              onClick={() => setBottomTab('backtest')}
+              className={`px-3 py-1.5 rounded-full border text-xs font-semibold flex items-center gap-1 transition-colors ${bottomTab === 'backtest' ? 'bg-purple-600 text-white border-purple-400' : 'bg-slate-900/70 text-slate-300 border-slate-700 hover:border-slate-500'}`}
+            >
+              <span>📈</span>
+              <span>Backtest & SATY</span>
+            </button>
+          </div>
+
+          {bottomTab === 'discover' && (
             <section className="card p-4">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-sm font-semibold text-slate-200">Find Setups</h2>
@@ -827,8 +862,9 @@ export default function App() {
                 <WatchlistPanel onLoadSymbol={(sym) => { setSymbol(sym); loadBars(sym, timeframe) }} />
               </div>
             </section>
+          )}
 
-            {/* Backtest & SATY helpers */}
+          {bottomTab === 'backtest' && (
             <section className="card p-4 space-y-3">
               <div className="flex items-center justify-between mb-1">
                 <h2 className="text-sm font-semibold text-slate-200">Test & Tune</h2>
@@ -841,7 +877,7 @@ export default function App() {
                 <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />
               </div>
             </section>
-          </div>
+          )}
 
           {hud && (
             <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-3 py-1 rounded-md border border-slate-700 bg-slate-900/80 text-slate-100 text-sm shadow">
