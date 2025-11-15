@@ -3,7 +3,7 @@
  * Preserves ALL original functionality
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Hero from './components/Hero.jsx'
 import ToastHub from './components/ToastHub.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
@@ -32,6 +32,55 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('chart')
   const [selectedFeature, setSelectedFeature] = useState(null)
   const [showTour, setShowTour] = useState(false)
+
+  // Keyboard shortcuts for elite UX
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      // Only trigger if not typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+
+      // Cmd/Ctrl + K for Command Palette (common pattern)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        window.dispatchEvent(new CustomEvent('iava.toggleCommandPalette'))
+        return
+      }
+
+      // Number keys (1-5) to switch tabs
+      if (e.key >= '1' && e.key <= '5') {
+        e.preventDefault()
+        const tabs = ['chart', 'ai-features', 'ai-chat', 'monitoring', 'nlp-scanner']
+        setActiveTab(tabs[parseInt(e.key) - 1])
+      }
+
+      // Alt+C for Chart
+      if (e.altKey && e.key === 'c') {
+        e.preventDefault()
+        setActiveTab('chart')
+      }
+
+      // Alt+A for AI Features
+      if (e.altKey && e.key === 'a') {
+        e.preventDefault()
+        setActiveTab('ai-features')
+      }
+
+      // Alt+T for AI Chat
+      if (e.altKey && e.key === 't') {
+        e.preventDefault()
+        setActiveTab('ai-chat')
+      }
+
+      // ? for help/tour
+      if (e.key === '?' && e.shiftKey) {
+        e.preventDefault()
+        setShowTour(true)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [])
 
   // Handle feature selection from dashboard - ALL 12 features supported
   const handleFeatureSelect = (featureId) => {
@@ -76,58 +125,73 @@ export default function App() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setActiveTab('chart')}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 ${
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
                 activeTab === 'chart'
                   ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30'
                   : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
               }`}
+              title="Trading Chart (Alt+C or press 1)"
+              aria-label="Switch to Trading Chart tab"
             >
-              <img src="/logo.svg" className="w-6 h-6" alt="" />
+              <img src="/logo.svg" className="w-6 h-6 scale-hover" alt="" />
               <span>Trading Chart</span>
+              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">1</kbd>
             </button>
             <button
               onClick={() => setActiveTab('ai-features')}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 ${
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
                 activeTab === 'ai-features'
                   ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30'
                   : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
               }`}
+              title="AI Dashboard with 12 Features (Alt+A or press 2)"
+              aria-label="Switch to AI Dashboard tab"
             >
-              <img src="/logo.svg" className="w-6 h-6" alt="" />
+              <img src="/logo.svg" className="w-6 h-6 scale-hover" alt="" />
               <span>AI Dashboard (12 Features)</span>
+              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">2</kbd>
             </button>
             <button
               onClick={() => setActiveTab('ai-chat')}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 ${
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
                 activeTab === 'ai-chat'
                   ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30'
                   : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
               }`}
+              title="AI Chat Assistant (Alt+T or press 3)"
+              aria-label="Switch to AI Chat tab"
             >
-              <img src="/logo.svg" className="w-6 h-6" alt="" />
+              <img src="/logo.svg" className="w-6 h-6 scale-hover" alt="" />
               <span>AI Chat</span>
+              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">3</kbd>
             </button>
             <button
               onClick={() => setActiveTab('monitoring')}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 ${
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
                 activeTab === 'monitoring'
                   ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30'
                   : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
               }`}
+              title="System Health Monitoring (Press 4)"
+              aria-label="Switch to System Health tab"
             >
-              <img src="/logo.svg" className="w-6 h-6" alt="" />
+              <img src="/logo.svg" className="w-6 h-6 scale-hover" alt="" />
               <span>System Health</span>
+              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">4</kbd>
             </button>
             <button
               onClick={() => setActiveTab('nlp-scanner')}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 ${
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
                 activeTab === 'nlp-scanner'
                   ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30'
                   : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
               }`}
+              title="Natural Language Scanner (Press 5)"
+              aria-label="Switch to NLP Scanner tab"
             >
-              <img src="/logo.svg" className="w-6 h-6" alt="" />
+              <img src="/logo.svg" className="w-6 h-6 scale-hover" alt="" />
               <span>NLP Scanner</span>
+              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">5</kbd>
             </button>
 
             {/* Feature Status Badge - Always visible on right side */}
