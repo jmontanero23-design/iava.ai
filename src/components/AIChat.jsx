@@ -144,26 +144,31 @@ export default function AIChat() {
   const generateFollowUpQuestions = (content) => {
     const questions = []
 
+    // PRIORITY: Auto-detect "Load [SYMBOL]" mentions and create buttons
+    const loadMatches = content.match(/Load ([A-Z]{1,5})(?!\w)/g)
+    if (loadMatches) {
+      // Add all unique Load buttons
+      const uniqueSymbols = [...new Set(loadMatches)]
+      uniqueSymbols.slice(0, 2).forEach(match => questions.push(match))
+    }
+
     // If AI mentioned a setup, suggest deeper analysis
     if (content.match(/(?:bullish|bearish|setup|entry|target)/i)) {
       questions.push('Run backtest on this setup')
-      questions.push('What\'s the historical win rate?')
       questions.push('Show me similar setups')
     }
 
     // If AI mentioned levels, ask about risk
     if (content.match(/(?:support|resistance|stop|target)/i)) {
       questions.push('What\'s the risk/reward ratio?')
-      questions.push('Size this position for 1% risk')
     }
 
-    // If AI mentioned regime, ask about context
-    if (content.match(/(?:regime|trend|bullish|bearish)/i)) {
-      questions.push('How does this compare to daily timeframe?')
+    // If AI mentioned regime or trend, ask about context
+    if (content.match(/(?:regime|trend)/i)) {
       questions.push('What other stocks show this pattern?')
     }
 
-    return questions.slice(0, 3) // Max 3 follow-ups
+    return questions.slice(0, 4) // Max 4 follow-ups (to accommodate Load buttons)
   }
 
   // Execute trade setup (emit event to order panel)
@@ -366,6 +371,38 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
       setIsTyping(false)
     }
   }
+
+  // Auto-load symbol for detailed analysis - AI can trigger this
+  const loadSymbolForAnalysis = async (symbol, timeframe = null) => {
+    return new Promise((resolve) => {
+      console.log('[AI Chat] Auto-loading symbol for analysis:', symbol)
+
+      // Dispatch event to load symbol in chart
+      window.dispatchEvent(new CustomEvent('iava.loadSymbol', {
+        detail: { symbol, timeframe }
+      }))
+
+      // Wait for market data to update (give it 2 seconds max)
+      const checkInterval = setInterval(() => {
+        if (marketData.symbol === symbol && marketData.updatedAt) {
+          clearInterval(checkInterval)
+          console.log('[AI Chat] Symbol loaded successfully:', symbol)
+          resolve(true)
+        }
+      }, 100)
+
+      setTimeout(() => {
+        clearInterval(checkInterval)
+        resolve(false) // Timeout
+      }, 2000)
+    })
+  }
+
+  // Expose loadSymbolForAnalysis to window for AI to access
+  useEffect(() => {
+    window.iavaLoadSymbol = loadSymbolForAnalysis
+    return () => { delete window.iavaLoadSymbol }
+  }, [marketData])
 
   // Export chat to clipboard (markdown format)
   const exportChat = () => {
@@ -910,7 +947,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                               {followUps.map((q, qIdx) => (
                                 <button
                                   key={qIdx}
-                                  onClick={() => {
+                                  onClick={async () => {
                                     // Special handling for backtest request
                                     if (q.toLowerCase().includes('backtest')) {
                                       runBacktestAnalysis(msg.content)
@@ -918,6 +955,44 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                                     // Special handling for similar setups request
                                     else if (q.toLowerCase().includes('similar')) {
                                       findSimilarSetups(msg.content)
+                                    }
+                                    // Special handling for "Load [SYMBOL]" buttons - AUTO-LOAD AND ANALYZE
+                                    else if (q.match(/^Load ([A-Z]{1,5})/i)) {
+                                      const symbolMatch = q.match(/^Load ([A-Z]{1,5})/i)
+                                      const symbol = symbolMatch[1].toUpperCase()
+
+                                      setIsTyping(true)
+                                      const loadingMsg = {
+                                        role: 'assistant',
+                                        content: `🔄 Loading ${symbol} and analyzing...`,
+                                        timestamp: Date.now()
+                                      }
+                                      setMessages(prev => [...prev, loadingMsg])
+
+                                      // Trigger symbol load
+                                      const loaded = await loadSymbolForAnalysis(symbol)
+
+                                      if (loaded) {
+                                        // Wait a bit for context to update, then ask AI to analyze
+                                        setTimeout(() => {
+                                          setInput(`Analyze ${symbol} - give me the full breakdown: Unicorn Score, exact entry/stop/target levels, EMA status, Ichimoku analysis, TTM Squeeze, and trade recommendation.`)
+                                          setTimeout(() => {
+                                            const form = document.querySelector('form')
+                                            form?.requestSubmit()
+                                          }, 200)
+                                        }, 500)
+                                      } else {
+                                        setMessages(prev => {
+                                          const updated = [...prev]
+                                          updated[updated.length - 1] = {
+                                            ...updated[updated.length - 1],
+                                            content: `❌ Failed to load ${symbol}. Please try manually loading it on the chart.`,
+                                            error: true
+                                          }
+                                          return updated
+                                        })
+                                        setIsTyping(false)
+                                      }
                                     }
                                     // Default: fill input and auto-submit
                                     else {
@@ -934,11 +1009,14 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                                       ? 'bg-emerald-600/20 hover:bg-emerald-600/30 border-emerald-500/40 hover:border-emerald-400/50 text-emerald-300'
                                       : q.toLowerCase().includes('similar')
                                       ? 'bg-cyan-600/20 hover:bg-cyan-600/30 border-cyan-500/40 hover:border-cyan-400/50 text-cyan-300'
+                                      : q.match(/^Load [A-Z]{1,5}/i)
+                                      ? 'bg-purple-600/20 hover:bg-purple-600/30 border-purple-500/40 hover:border-purple-400/50 text-purple-300'
                                       : 'bg-slate-700/50 hover:bg-indigo-600/30 border-slate-600/50 hover:border-indigo-500/40 text-slate-300 hover:text-indigo-200'
                                   } border rounded-lg transition-all`}
                                 >
                                   {q.toLowerCase().includes('backtest') && '🔬 '}
                                   {q.toLowerCase().includes('similar') && '🔍 '}
+                                  {q.match(/^Load [A-Z]{1,5}/i) && '📊 '}
                                   {q}
                                 </button>
                               ))}

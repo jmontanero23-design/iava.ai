@@ -113,6 +113,22 @@ export default function App() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
+  // AI-triggered symbol loading - allow AI to auto-load stocks for analysis
+  useEffect(() => {
+    const handler = (e) => {
+      const { symbol: newSymbol, timeframe: newTimeframe } = e.detail || {}
+      if (newSymbol) {
+        console.log('[AppChart] AI requesting symbol load:', newSymbol, newTimeframe)
+        setSymbol(newSymbol)
+        if (newTimeframe) setTimeframe(newTimeframe)
+        // loadBars will be called after state updates
+        setTimeout(() => loadBars(newSymbol, newTimeframe || timeframe), 50)
+      }
+    }
+    window.addEventListener('iava.loadSymbol', handler)
+    return () => window.removeEventListener('iava.loadSymbol', handler)
+  }, [timeframe])
+
   function mlabel(id) {
     const map = {
       trendDaily: 'Trend+Daily',
