@@ -9,9 +9,27 @@
  * This panel is always visible showing current score.
  */
 
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 export default function UnicornScorePanel({ state }) {
+  const [isPulsing, setIsPulsing] = useState(false)
+  const prevScoreRef = useRef(null)
+
+  // Detect score changes and trigger pulse animation
+  useEffect(() => {
+    if (state?.score != null) {
+      const currentScore = Math.round(state.score)
+
+      // Trigger pulse only if score actually changed
+      if (prevScoreRef.current !== null && prevScoreRef.current !== currentScore) {
+        setIsPulsing(true)
+        setTimeout(() => setIsPulsing(false), 600) // Match animation duration
+      }
+
+      prevScoreRef.current = currentScore
+    }
+  }, [state?.score])
+
   if (!state || state.score == null) {
     return (
       <div className="glass-panel p-4 min-w-[200px]">
@@ -35,14 +53,14 @@ export default function UnicornScorePanel({ state }) {
 
   return (
     <div className="glass-panel p-4 min-w-[240px] space-y-4">
-      {/* Score Display */}
+      {/* Score Display with pulse on update */}
       <div className="text-center">
-        <div className="relative inline-block">
+        <div className={`relative inline-block ${isPulsing ? 'pulse-ring' : ''}`}>
           {/* Glow effect for high scores */}
           {score >= 70 && (
             <div className="absolute inset-0 bg-emerald-500 blur-2xl opacity-30 animate-pulse" />
           )}
-          <div className="relative text-6xl font-black text-white">
+          <div className={`relative text-6xl font-black text-white transition-all duration-300 ${isPulsing ? 'scale-110' : 'scale-100'}`}>
             {score}
             <span className="text-2xl text-slate-400 font-normal">/100</span>
           </div>
@@ -119,19 +137,31 @@ export default function UnicornScorePanel({ state }) {
 }
 
 /**
- * Individual indicator row with colored status
+ * Individual indicator row with colored status and pulse on change
  */
 function IndicatorRow({ label, value, icon }) {
+  const [isPulsing, setIsPulsing] = useState(false)
+  const prevValueRef = useRef(null)
+
+  // Detect value changes and trigger pulse
+  useEffect(() => {
+    if (value && prevValueRef.current !== null && prevValueRef.current !== value) {
+      setIsPulsing(true)
+      setTimeout(() => setIsPulsing(false), 400)
+    }
+    prevValueRef.current = value
+  }, [value])
+
   const color = getIndicatorColor(value)
   const displayValue = value.charAt(0).toUpperCase() + value.slice(1)
 
   return (
-    <div className="flex items-center justify-between text-xs">
+    <div className={`flex items-center justify-between text-xs transition-all ${isPulsing ? 'pulse-data' : ''}`}>
       <span className="text-slate-400 flex items-center gap-1.5">
-        <span>{icon}</span>
+        <span className={isPulsing ? 'icon-bounce-hover' : ''}>{icon}</span>
         <span>{label}</span>
       </span>
-      <span className={`font-semibold ${color}`}>
+      <span className={`font-semibold ${color} transition-all`}>
         {displayValue}
       </span>
     </div>
