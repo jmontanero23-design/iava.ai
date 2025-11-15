@@ -497,6 +497,24 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
       // Set new silence timer - auto-submit after 2 seconds of silence
       silenceTimer = setTimeout(() => {
         if (finalTranscript.trim()) {
+          const transcript = finalTranscript.trim().toLowerCase()
+
+          // ELITE: Check for trade confirmation keywords
+          const confirmationKeywords = ['yes', 'confirm', 'place trade', 'do it', 'go ahead', 'execute', 'place it', 'yeah', 'yep', 'sure', 'okay', 'ok']
+          const isConfirmation = confirmationKeywords.some(keyword => transcript.includes(keyword))
+
+          // Check if there's a pending trade confirmation
+          const lastMessage = messages[messages.length - 1]
+          if (lastMessage?.awaitingTradeConfirmation && isConfirmation) {
+            console.log('[Voice-to-Trade] Confirmation detected:', transcript)
+            recognition.stop()
+            setInput('')
+            finalTranscript = ''
+            // Execute trade confirmation
+            setTimeout(() => confirmTrade(lastMessage.tradeSetup), 100)
+            return
+          }
+
           console.log('🎤 Silence detected - auto-submitting:', finalTranscript.trim())
           recognition.stop()
           // Auto-submit the form
@@ -531,6 +549,36 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
       recognitionRef.current.stop()
       setIsListening(false)
     }
+  }
+
+  // ELITE FEATURE: Voice-to-Trade Confirmation
+  const confirmTrade = (tradeSetup) => {
+    console.log('[Voice-to-Trade] Trade confirmed! Dispatching to Orders panel:', tradeSetup)
+
+    // Dispatch trade setup to Orders panel
+    window.dispatchEvent(new CustomEvent('ai-trade-setup', {
+      detail: tradeSetup
+    }))
+
+    // Add confirmation message
+    const confirmMsg = {
+      role: 'assistant',
+      content: `✅ Trade dispatched to Orders panel:
+
+**${tradeSetup.symbol}** ${tradeSetup.side.toUpperCase()}
+• Entry: $${tradeSetup.entry?.toFixed(2) || 'Market'}
+• Stop Loss: $${tradeSetup.stopLoss?.toFixed(2) || 'None'}
+• Target: $${tradeSetup.target?.toFixed(2) || 'None'}
+
+Please review and submit the order in the Orders & Positions panel.`,
+      timestamp: Date.now(),
+      tradeConfirmed: true
+    }
+
+    setMessages(prev => [...prev, confirmMsg])
+
+    // Speak confirmation
+    speakResponse('Trade dispatched to orders panel. Please review and submit.')
   }
 
   // Premium Text-to-Speech: Natural human voice using ElevenLabs
@@ -852,6 +900,15 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
 
       setMessages(prev => [...prev, assistantMessage])
 
+      // ELITE FEATURE: Detect trade recommendations for voice-to-trade
+      const tradeSetup = parseTradeSetup(result.content)
+      if (tradeSetup && tradeSetup.entry) {
+        console.log('[Voice-to-Trade] Trade recommendation detected:', tradeSetup)
+        // Add trade confirmation to message
+        assistantMessage.tradeSetup = tradeSetup
+        assistantMessage.awaitingTradeConfirmation = true
+      }
+
       // Speak the response (if not an error)
       setTimeout(() => speakResponse(result.content), 100)
 
@@ -987,10 +1044,30 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                 {/* AI Response Actions - only for assistant messages */}
                 {msg.role === 'assistant' && !msg.error && (
                   <div className="mt-3 pt-3 border-t border-slate-700/30 space-y-2">
-                    {/* Trade Setup Button - only if AI mentioned trading levels */}
-                    {(() => {
+                    {/* ELITE: Voice-to-Trade - Ask for confirmation */}
+                    {msg.awaitingTradeConfirmation && msg.tradeSetup && !msg.tradeConfirmed && (
+                      <div className="space-y-2">
+                        <div className="p-3 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/30 rounded-lg">
+                          <div className="text-xs text-emerald-400 font-semibold mb-2">🎙️ Voice-to-Trade Ready</div>
+                          <div className="text-sm text-slate-300">
+                            Say <span className="font-bold text-emerald-400">"Yes"</span> or <span className="font-bold text-emerald-400">"Confirm"</span> to place this trade
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => confirmTrade(msg.tradeSetup)}
+                          className="btn-success w-full flex items-center justify-center gap-2 pulse-ring"
+                        >
+                          <span>✅</span>
+                          <span>Confirm Trade</span>
+                          <span className="text-emerald-200">({msg.tradeSetup.symbol} {msg.tradeSetup.side})</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Regular Trade Setup Button - for messages without voice confirmation */}
+                    {!msg.awaitingTradeConfirmation && !msg.tradeConfirmed && (() => {
                       const setup = parseTradeSetup(msg.content)
-                      if (setup) {
+                      if (setup && setup.entry) {
                         return (
                           <button
                             onClick={() => executeTradeSetup(setup)}
