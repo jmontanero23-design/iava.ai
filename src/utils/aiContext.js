@@ -162,15 +162,19 @@ export async function buildMarketContext({
   indicators = {},
   regime = null,
   recentSignals = [],
-  bars = []
+  bars = [],
+  timeframe = '1Min',
+  overlays = {},
+  signalState = {}
 }) {
   const context = {
     symbol,
     timestamp: new Date().toISOString(),
     marketHours: isMarketOpen(),
+    timeframe
   }
 
-  // Current price and change
+  // Current price and change with more detail
   if (currentPrice) {
     context.price = {
       current: currentPrice,
@@ -178,19 +182,30 @@ export async function buildMarketContext({
     }
   } else if (bars?.length) {
     const latest = bars[bars.length - 1]
+    const prev = bars.length > 1 ? bars[bars.length - 2] : latest
+    const change = ((latest.close - prev.close) / prev.close * 100)
+
     context.price = {
       current: latest.close,
+      open: latest.open,
+      high: latest.high,
+      low: latest.low,
       formatted: `$${latest.close.toFixed(2)}`,
-      change: bars.length > 1 ? ((latest.close - bars[bars.length - 2].close) / bars[bars.length - 2].close * 100).toFixed(2) + '%' : '0%'
+      change: change.toFixed(2) + '%',
+      changeDirection: change > 0 ? 'up' : change < 0 ? 'down' : 'flat',
+      barRange: `$${latest.low.toFixed(2)} - $${latest.high.toFixed(2)}`,
+      volume: latest.volume
     }
   }
 
-  // Indicator readings
+  // Indicator readings with full component breakdown
   if (indicators.score !== undefined) {
     context.unicornScore = {
       current: Math.round(indicators.score),
       quality: getScoreQuality(indicators.score),
-      interpretation: getScoreInterpretation(indicators.score)
+      interpretation: getScoreInterpretation(indicators.score),
+      // Include component breakdown for transparency
+      components: indicators.components || signalState?.components
     }
   }
 
@@ -249,12 +264,69 @@ export async function buildMarketContext({
     }
   }
 
-  // Support/Resistance levels (if available)
+  // Support/Resistance levels with full SATY data
   if (indicators.satyLevels) {
     context.satyLevels = {
       support: indicators.satyLevels.support,
       resistance: indicators.satyLevels.resistance,
       interpretation: `SATY support at $${indicators.satyLevels.support?.toFixed(2) || 'N/A'}, resistance at $${indicators.satyLevels.resistance?.toFixed(2) || 'N/A'}`
+    }
+  } else if (overlays?.saty?.levels) {
+    // Get full SATY levels from overlays
+    const levels = overlays.saty.levels
+    context.satyLevels = {
+      t0236_dn: levels.t0236?.dn,
+      t0236_up: levels.t0236?.up,
+      t0500_dn: levels.t0500?.dn,
+      t0500_up: levels.t0500?.up,
+      t1000_dn: levels.t1000?.dn,
+      t1000_up: levels.t1000?.up,
+      atr: overlays.saty.atr,
+      interpretation: `SATY levels: Support ${levels.t0236?.dn?.toFixed(2)}, Target ${levels.t1000?.up?.toFixed(2)}, ATR ${overlays.saty.atr?.toFixed(2)}`
+    }
+  }
+
+  // TTM Squeeze data (critical for volatility)
+  if (overlays?.squeeze) {
+    const sq = overlays.squeeze
+    context.ttmSqueeze = {
+      inSqueeze: sq.inSqueeze,
+      momentum: sq.momentum,
+      histogram: sq.histogram,
+      interpretation: sq.inSqueeze
+        ? 'Squeeze ACTIVE - consolidation, explosive move pending'
+        : `Squeeze released - momentum ${sq.momentum > 0 ? 'BULLISH' : 'BEARISH'}`
+    }
+  }
+
+  // Multi-timeframe analysis (if daily data available)
+  if (regime?.dailyData) {
+    context.multiTimeframe = {
+      daily: regime.dailyData,
+      interpretation: `Higher timeframe: ${regime.dailyData.trend || 'unknown'}`
+    }
+  }
+
+  // EMA values for precise analysis
+  if (overlays?.emas) {
+    context.emaValues = {
+      ema8: overlays.emas.ema8,
+      ema21: overlays.emas.ema21,
+      spread: overlays.emas.ema8 && overlays.emas.ema21 ? (overlays.emas.ema8 - overlays.emas.ema21).toFixed(2) : null
+    }
+  }
+
+  // Ichimoku detailed components
+  if (overlays?.ichimoku) {
+    const ichi = overlays.ichimoku
+    context.ichimokuDetails = {
+      tenkan: ichi.tenkan,
+      kijun: ichi.kijun,
+      senkouA: ichi.senkouA,
+      senkouB: ichi.senkouB,
+      chikou: ichi.chikou,
+      priceVsCloud: context.price?.current > Math.max(ichi.senkouA || 0, ichi.senkouB || 0) ? 'above' :
+                    context.price?.current < Math.min(ichi.senkouA || 0, ichi.senkouB || 0) ? 'below' : 'inside'
     }
   }
 
@@ -278,17 +350,33 @@ export function formatContextForAI(context) {
   parts.push(`╚════════════════════════════════════════╝`)
   parts.push(`Time: ${context.timestamp}`)
   parts.push(`Market: ${context.marketHours ? '🟢 OPEN' : '🔴 CLOSED'}`)
+  parts.push(`Timeframe: ${context.timeframe || '1Min'}`)
   parts.push('')
 
-  // Price
+  // Price with full OHLCV
   if (context.price) {
-    parts.push(`Price: ${context.price.formatted}${context.price.change ? ` (${context.price.change})` : ''}`)
+    parts.push(`💰 PRICE: ${context.price.formatted} (${context.price.change || '0%'}) ${context.price.changeDirection || ''}`)
+    if (context.price.barRange) {
+      parts.push(`└─ Range: ${context.price.barRange}, Vol: ${context.price.volume?.toLocaleString() || 'N/A'}`)
+    }
   }
 
-  // Unicorn Score (most important)
+  // Unicorn Score (most important) with component breakdown
   if (context.unicornScore) {
-    parts.push(`\n**Unicorn Score: ${context.unicornScore.current}/100** (${context.unicornScore.quality})`)
+    parts.push(`\n🦄 **UNICORN SCORE: ${context.unicornScore.current}/100** (${context.unicornScore.quality})`)
     parts.push(`└─ ${context.unicornScore.interpretation}`)
+    if (context.unicornScore.components) {
+      const comps = context.unicornScore.components
+      const breakdown = []
+      if (comps.ema !== undefined) breakdown.push(`EMA: ${comps.ema}`)
+      if (comps.pivot !== undefined) breakdown.push(`Pivot: ${comps.pivot}`)
+      if (comps.ichi !== undefined) breakdown.push(`Ichi: ${comps.ichi}`)
+      if (comps.saty !== undefined) breakdown.push(`SATY: ${comps.saty}`)
+      if (comps.squeeze !== undefined) breakdown.push(`Squeeze: ${comps.squeeze}`)
+      if (breakdown.length > 0) {
+        parts.push(`└─ Components: ${breakdown.join(', ')}`)
+      }
+    }
   }
 
   // Indicators
@@ -313,10 +401,49 @@ export function formatContextForAI(context) {
     parts.push(`└─ ${context.regime.interpretation}`)
   }
 
-  // Support/Resistance
+  // Support/Resistance with detailed SATY levels
   if (context.satyLevels) {
-    parts.push(`\nSATY Levels:`)
-    parts.push(`└─ ${context.satyLevels.interpretation}`)
+    parts.push(`\n📊 SATY Levels:`)
+    if (context.satyLevels.t0236_dn) {
+      parts.push(`└─ Stop Zone: $${context.satyLevels.t0236_dn.toFixed(2)} - $${context.satyLevels.t0236_up?.toFixed(2)}`)
+      parts.push(`└─ Target Zone: $${context.satyLevels.t1000_dn?.toFixed(2)} - $${context.satyLevels.t1000_up?.toFixed(2)}`)
+      parts.push(`└─ ATR: $${context.satyLevels.atr?.toFixed(2)}`)
+    } else {
+      parts.push(`└─ ${context.satyLevels.interpretation}`)
+    }
+  }
+
+  // TTM Squeeze (critical for volatility)
+  if (context.ttmSqueeze) {
+    parts.push(`\n💥 TTM Squeeze: ${context.ttmSqueeze.inSqueeze ? '🔴 ACTIVE' : '🟢 RELEASED'}`)
+    parts.push(`└─ ${context.ttmSqueeze.interpretation}`)
+    if (context.ttmSqueeze.momentum !== undefined) {
+      parts.push(`└─ Momentum: ${context.ttmSqueeze.momentum.toFixed(2)}`)
+    }
+  }
+
+  // EMA precise values
+  if (context.emaValues) {
+    parts.push(`\n📈 EMA Values:`)
+    parts.push(`└─ EMA 8: $${context.emaValues.ema8?.toFixed(2)}, EMA 21: $${context.emaValues.ema21?.toFixed(2)}`)
+    if (context.emaValues.spread) {
+      parts.push(`└─ Spread: $${context.emaValues.spread} (${parseFloat(context.emaValues.spread) > 0 ? 'bullish gap' : 'bearish gap'})`)
+    }
+  }
+
+  // Ichimoku detailed components
+  if (context.ichimokuDetails) {
+    const ichi = context.ichimokuDetails
+    parts.push(`\n☁️ Ichimoku Components:`)
+    parts.push(`└─ Tenkan: $${ichi.tenkan?.toFixed(2)}, Kijun: $${ichi.kijun?.toFixed(2)}`)
+    parts.push(`└─ Cloud: $${ichi.senkouA?.toFixed(2)} - $${ichi.senkouB?.toFixed(2)}`)
+    parts.push(`└─ Price vs Cloud: ${ichi.priceVsCloud.toUpperCase()}`)
+  }
+
+  // Multi-timeframe context
+  if (context.multiTimeframe) {
+    parts.push(`\n⏰ Higher Timeframe Context:`)
+    parts.push(`└─ ${context.multiTimeframe.interpretation}`)
   }
 
   // Recent signals

@@ -52,15 +52,42 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
   const equity = Number(account?.equity || account?.portfolio_value || 0)
 
   const rec = useMemo(() => {
-    if (!saty?.levels || !last) return {}
+    if (!last) return {}
     const price = last.close
+    const atr = saty?.atr || price * 0.02 // Fallback: 2% of price if no ATR
+
+    // Calculate sensible stop/TP based on ATR
     if (side === 'buy') {
-      const s = saty.levels.t0236?.dn ?? (price - (saty.atr || 1) * 0.5)
-      const t = saty.levels.t1000?.up ?? (price + (saty.atr || 1))
+      // For buy: stop below, TP above
+      let s = saty?.levels?.t0236?.dn
+      let t = saty?.levels?.t1000?.up
+
+      // Validate stop is reasonable (within 10% of price, below entry)
+      if (!s || s >= price || s < price * 0.9) {
+        s = price - atr * 1.5 // 1.5 ATR below entry
+      }
+
+      // Validate TP is reasonable (above entry, within 20% of price)
+      if (!t || t <= price || t > price * 1.2) {
+        t = price + atr * 3 // 3 ATR above entry (2:1 R/R)
+      }
+
       return { stop: s, tp: t }
     } else {
-      const s = saty.levels.t0236?.up ?? (price + (saty.atr || 1) * 0.5)
-      const t = saty.levels.t1000?.dn ?? (price - (saty.atr || 1))
+      // For sell: stop above, TP below
+      let s = saty?.levels?.t0236?.up
+      let t = saty?.levels?.t1000?.dn
+
+      // Validate stop is reasonable (within 10% of price, above entry)
+      if (!s || s <= price || s > price * 1.1) {
+        s = price + atr * 1.5 // 1.5 ATR above entry
+      }
+
+      // Validate TP is reasonable (below entry, within 20% of price)
+      if (!t || t >= price || t < price * 0.8) {
+        t = price - atr * 3 // 3 ATR below entry (2:1 R/R)
+      }
+
       return { stop: s, tp: t }
     }
   }, [saty, last, side])

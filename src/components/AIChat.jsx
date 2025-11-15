@@ -390,7 +390,10 @@ ${results.map((r, i) => `${i + 1}. **${r.symbol}** - $${r.price?.toFixed(2) || '
 
   // Text-to-Speech: Speak AI responses
   const speakResponse = (text) => {
-    if (!('speechSynthesis' in window)) return
+    if (!('speechSynthesis' in window)) {
+      console.warn('🔊 TTS not supported in this browser')
+      return
+    }
 
     // Cancel any ongoing speech
     window.speechSynthesis.cancel()
@@ -400,24 +403,60 @@ ${results.map((r, i) => `${i + 1}. **${r.symbol}** - $${r.price?.toFixed(2) || '
       .replace(/[*_~`#]/g, '') // Remove markdown
       .replace(/\n+/g, '. ') // Newlines to pauses
       .replace(/\s+/g, ' ') // Collapse whitespace
+      .replace(/╔.*?╝/gs, '') // Remove box characters
+      .replace(/[🔴🟢⚠️💡🧠🎯📊]/g, '') // Remove emojis
       .trim()
+
+    if (!cleanText) {
+      console.warn('🔊 No text to speak after cleaning')
+      return
+    }
 
     const utterance = new SpeechSynthesisUtterance(cleanText)
     utterance.rate = 1.1 // Slightly faster than default
     utterance.pitch = 1.0
-    utterance.volume = 0.9
+    utterance.volume = 1.0
 
-    // Use a natural-sounding voice if available
-    const voices = window.speechSynthesis.getVoices()
-    const preferredVoice = voices.find(v =>
-      v.name.includes('Samantha') || // Mac
-      v.name.includes('Google US English') || // Chrome
-      v.lang.startsWith('en-US')
-    )
-    if (preferredVoice) utterance.voice = preferredVoice
+    // Ensure voices are loaded before selecting
+    const selectVoice = () => {
+      const voices = window.speechSynthesis.getVoices()
+      if (voices.length > 0) {
+        const preferredVoice = voices.find(v =>
+          v.name.includes('Samantha') || // Mac
+          v.name.includes('Google US English') || // Chrome
+          v.name.includes('Microsoft Zira') || // Windows
+          v.lang.startsWith('en-US')
+        )
+        if (preferredVoice) {
+          utterance.voice = preferredVoice
+          console.log('🔊 Using voice:', preferredVoice.name)
+        }
+      }
 
-    window.speechSynthesis.speak(utterance)
-    console.log('🔊 Speaking response:', cleanText.substring(0, 100) + '...')
+      // When speech ends, auto-restart voice input for continuous conversation
+      utterance.onend = () => {
+        console.log('🔊 Speech finished, restarting voice input...')
+        setTimeout(() => {
+          if (!isListening) {
+            startVoiceInput()
+          }
+        }, 500) // Small delay before restarting
+      }
+
+      utterance.onerror = (event) => {
+        console.error('🔊 TTS error:', event.error)
+      }
+
+      window.speechSynthesis.speak(utterance)
+      console.log('🔊 Speaking response:', cleanText.substring(0, 100) + '...')
+    }
+
+    // Chrome needs voices to be loaded first
+    if (window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.onvoiceschanged = selectVoice
+    } else {
+      selectVoice()
+    }
   }
 
   // Generate smart AI-powered suggested questions
@@ -497,28 +536,31 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
         filesCount: currentFiles.length
       })
 
-      // Build world-class trading context from actual market data
+      // Build world-class trading context from actual market data with FULL access
       const enrichedContext = await buildMarketContext({
         symbol: marketData.symbol || 'SPY',
         currentPrice: marketData.currentPrice,
         bars: marketData.bars || [],
+        timeframe: marketData.timeframe || '1Min',
+        overlays: marketData.overlays || {}, // Pass ALL overlays (SATY, Squeeze, EMA, Ichimoku)
+        signalState: marketData.signalState || {}, // Pass full signal state with components
         indicators: {
           score: marketData.signalState?.score,
           emaCloudNow: marketData.signalState?.emaCloudNow,
           pivotNow: marketData.signalState?.pivotNow,
           ichiRegime: marketData.signalState?.ichiRegime,
           satyLevels: marketData.overlays?.saty ? {
-            support: marketData.overlays.saty.levels?.[0],
-            resistance: marketData.overlays.saty.levels?.[2]
+            support: marketData.overlays.saty.levels?.t0236?.dn,
+            resistance: marketData.overlays.saty.levels?.t1000?.up
           } : null,
           components: marketData.signalState?.components
         },
         regime: marketData.dailyState ? {
           type: (marketData.dailyState.pivotNow === 'bullish' && marketData.dailyState.ichiRegime === 'bullish') ? 'bull' :
                 (marketData.dailyState.pivotNow === 'bearish' && marketData.dailyState.ichiRegime === 'bearish') ? 'bear' : 'neutral',
-          strength: 'moderate'
+          strength: 'moderate',
+          dailyData: marketData.dailyState // Include full daily data for multi-timeframe analysis
         } : null,
-        timeframe: marketData.timeframe,
         enforceDaily: marketData.enforceDaily,
         consensus: marketData.consensus
       })
