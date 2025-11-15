@@ -119,16 +119,21 @@ export default function AIChat() {
     }
   }
 
-  // Parse trade setup from AI response
+  // Parse trade setup from AI response with STRICT patterns to avoid false matches
   const parseTradeSetup = (content) => {
     // Extract symbol, entry, stop, target from AI response
-    // Look for patterns like: "entry at $185", "stop $184", "target 206"
+    // STRICT patterns: require $ symbol to avoid matching random numbers like "Unicorn Score 0"
+    // Look for patterns like: "entry at $185.50", "stop $184.20", "target $206.80"
+
     const symbolMatch = content.match(/\b([A-Z]{1,5})\b.*?(?:entry|buy|sell|long|short)/i)
-    const entryMatch = content.match(/(?:entry|buy|long).*?\$?(\d+\.?\d*)/i)
-    const stopMatch = content.match(/(?:stop|stop loss|risk).*?\$?(\d+\.?\d*)/i)
-    const targetMatch = content.match(/(?:target|take profit|tp).*?\$?(\d+\.?\d*)/i)
+
+    // Require $ symbol and optional "at", "@", ":" before price
+    const entryMatch = content.match(/(?:entry|buy at|long at|enter at)\s*(?:at|@|:)?\s*\$(\d+\.?\d*)/i)
+    const stopMatch = content.match(/(?:stop|stop\s*loss|sl|risk)\s*(?:at|@|:)?\s*\$(\d+\.?\d*)/i)
+    const targetMatch = content.match(/(?:target|take\s*profit|tp)\s*(?:at|@|:)?\s*\$(\d+\.?\d*)/i)
     const sideMatch = content.match(/\b(long|short|buy|sell)\b/i)
 
+    // Only proceed if we have at least one valid price with $ symbol
     if (!entryMatch && !stopMatch && !targetMatch) return null
 
     return {
@@ -735,7 +740,7 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
         userContent = textContent
       }
 
-      // CRITICAL: Add verification footer with actual numbers
+      // CRITICAL: Add verification footer with actual numbers INCLUDING SATY/ATR
       const verificationFooter = `
 ⚠️ CRITICAL ACCURACY REQUIREMENT ⚠️
 You MUST use these EXACT numbers from the live data above:
@@ -746,6 +751,19 @@ You MUST use these EXACT numbers from the live data above:
 - Pivot: ${enrichedContext.pivotRibbon?.status || 'N/A'}
 - Ichimoku: ${enrichedContext.ichimoku?.regime || 'N/A'}
 
+🔴 YOU HAVE SATY DATA - USE IT! 🔴
+${enrichedContext.satyLevels ? `- SATY t0236 (Stop Zone): $${enrichedContext.satyLevels.t0236_dn?.toFixed(2)} - $${enrichedContext.satyLevels.t0236_up?.toFixed(2)}
+- SATY t1000 (Target Zone): $${enrichedContext.satyLevels.t1000_dn?.toFixed(2)} - $${enrichedContext.satyLevels.t1000_up?.toFixed(2)}
+- ATR: $${enrichedContext.satyLevels.atr?.toFixed(2)}
+- EMA 8: $${enrichedContext.emaValues?.ema8?.toFixed(2) || 'N/A'}, EMA 21: $${enrichedContext.emaValues?.ema21?.toFixed(2) || 'N/A'}
+- TTM Squeeze: ${enrichedContext.ttmSqueeze?.inSqueeze ? 'ACTIVE' : 'RELEASED'} (Momentum: ${enrichedContext.ttmSqueeze?.momentum?.toFixed(2) || 'N/A'})
+
+✅ YOU CAN COMPUTE iAVA R:R - YOU HAVE ALL THE DATA REQUIRED!
+- Formula: Long Stop = SATY t0236 down - (1 × ATR) = $${enrichedContext.satyLevels.t0236_dn?.toFixed(2)} - $${enrichedContext.satyLevels.atr?.toFixed(2)} = $${(enrichedContext.satyLevels.t0236_dn - enrichedContext.satyLevels.atr)?.toFixed(2)}
+- Formula: Long Target = SATY t1000 up = $${enrichedContext.satyLevels.t1000_up?.toFixed(2)}
+- Current Price = ${enrichedContext.price?.formatted}` : '⚠️ SATY data not available for this symbol - load a symbol with SATY overlay enabled'}
+
+NEVER say "I don't have ATR" or "I don't have SATY levels" - YOU DO HAVE THEM (see above).
 NEVER guess or approximate numbers. If you cite a number, it MUST match the data above EXACTLY.
 If you're uncertain about any metric, say "I don't have that data" rather than guessing.`
 
