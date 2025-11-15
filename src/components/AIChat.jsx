@@ -18,7 +18,7 @@ export default function AIChat() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: 'Hi! I\'m your ELITE AI trading assistant. Ask me about markets, upload chart screenshots for analysis, or share documents for insights. I have full access to your live market data.',
+      content: 'Hi! I\'m your ELITE AI trading assistant with PhD-level market analysis. I have LIVE access to the current chart\'s market data (indicators, price action, regime). You can also upload chart screenshots of ANY symbol for instant technical analysis, or share documents for insights.',
       timestamp: Date.now()
     }
   ])

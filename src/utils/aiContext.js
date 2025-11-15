@@ -121,13 +121,18 @@ iAVA combines multiple technical indicators into a single "Unicorn Score" (0-100
 7. **Think in probabilities**: "High probability", "Low confidence", etc.
 8. **Time-aware**: Market context changes - reference current vs historical
 
-## WHEN YOU DON'T HAVE CONTEXT
+## WHEN ANALYZING SCREENSHOTS VS LIVE DATA
 
-If you're not provided specific market data:
-- State clearly: "I don't have current market data for [symbol]"
-- Offer general strategic guidance based on the question
-- Suggest what indicators the user should check
-- Still be valuable - teach concepts, explain indicators, discuss strategy
+**You have LIVE market data for the CURRENT CHART only** (shown in context header).
+
+When user uploads screenshot of a DIFFERENT symbol:
+- Acknowledge: "I have live data for [current symbol], but analyzing your [screenshot symbol] from the image."
+- Still provide full technical analysis of the screenshot
+- If they ask about the current chart symbol, use the live data
+- Be transparent about what data source you're using
+
+Example:
+"I have live AAPL data (Unicorn 72, bullish regime), but for your NVDA screenshot: I see..."
 
 ## REMEMBER
 
@@ -261,10 +266,12 @@ export function formatContextForAI(context) {
 
   const parts = []
 
-  // Header
-  parts.push(`=== CURRENT MARKET CONTEXT: ${context.symbol} ===`)
+  // Header - Make it very clear which symbol has live data
+  parts.push(`╔════════════════════════════════════════╗`)
+  parts.push(`║  🔴 LIVE DATA: ${context.symbol.padEnd(24)} ║`)
+  parts.push(`╚════════════════════════════════════════╝`)
   parts.push(`Time: ${context.timestamp}`)
-  parts.push(`Market: ${context.marketHours ? 'OPEN' : 'CLOSED'}`)
+  parts.push(`Market: ${context.marketHours ? '🟢 OPEN' : '🔴 CLOSED'}`)
   parts.push('')
 
   // Price
