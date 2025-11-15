@@ -182,7 +182,7 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
   }
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-hidden trade-panel-container">
       {/* Premium Header */}
       <div className="p-5 relative overflow-hidden border-b border-slate-700/50">
         <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
