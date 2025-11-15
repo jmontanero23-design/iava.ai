@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import InfoPopover from './InfoPopover.jsx'
+import { SkeletonScannerResults } from './SkeletonLoader.jsx'
 
 export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', currentTimeframe, currentEnforceDaily, currentConsensusBonus }) {
   const [symbols, setSymbols] = useState('SPY,QQQ,AAPL,MSFT,NVDA,TSLA,AMZN,META,GOOGL,NFLX')
@@ -189,16 +190,16 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
       <div className="space-y-2 max-h-64 overflow-auto pr-1 styled-scrollbar">
         {!items?.length && <div className="text-sm text-slate-500 italic p-4 text-center bg-slate-800/20 rounded-lg border border-slate-700/30">No results</div>}
         {items?.map(it => (
-          <div key={it.symbol} className="relative group">
+          <div key={it.symbol} className="relative group row-highlight">
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 blur-lg opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
             <div className="relative flex items-center justify-between p-3 bg-slate-800/40 rounded-lg border border-slate-700/50 hover:border-cyan-500/40 transition-all">
               <div className="flex items-center gap-3">
-                <span className="text-base font-bold text-slate-100">{it.symbol}</span>
-                <span className="px-2 py-0.5 rounded-md bg-gradient-to-r from-cyan-600/20 to-indigo-600/20 border border-cyan-500/30 text-cyan-300 text-xs font-semibold">{Math.round(it.score)}</span>
+                <span className="text-base font-bold text-slate-100 transition-colors group-hover:text-cyan-300">{it.symbol}</span>
+                <span className="px-2 py-0.5 rounded-md bg-gradient-to-r from-cyan-600/20 to-indigo-600/20 border border-cyan-500/30 text-cyan-300 text-xs font-semibold scale-hover">{Math.round(it.score)}</span>
               </div>
               <button
                 onClick={() => onLoadSymbol?.(it.symbol, timeframe)}
-                className="btn-primary btn-sm"
+                className="btn-primary btn-sm ripple"
               >
                 Load
               </button>
@@ -340,8 +341,17 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
                 disabled={loading}
                 className="btn-primary"
               >
-                {loading ? '⏳' : '🔍'}
-                {loading ? 'Scanning…' : 'Scan'}
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="spinner-sm" />
+                    <span>Scanning…</span>
+                  </div>
+                ) : (
+                  <>
+                    <span>🔍</span>
+                    <span>Scan</span>
+                  </>
+                )}
               </button>
               {universe === 'all' && (
                 <button
@@ -413,8 +423,8 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
             </button>
           )}
           {progress && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="animate-pulse">⏳</span>
+            <div className="flex items-center gap-2 text-xs fade-in">
+              <div className="spinner-sm" />
               <span className="text-cyan-400 font-semibold">{progress}</span>
             </div>
           )}
@@ -449,8 +459,17 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
               disabled={aiReady===false || aiLoading}
               className="btn-secondary"
             >
-              <span>{aiLoading ? '⏳' : '🤖'}</span>
-              {aiLoading ? 'Summarizing…' : 'Summarize (AI)'}
+              {aiLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="spinner-sm" />
+                  <span>Summarizing…</span>
+                </div>
+              ) : (
+                <>
+                  <span>🤖</span>
+                  <span>Summarize (AI)</span>
+                </>
+              )}
             </button>
             {aiErr && (
               <div className="flex items-center gap-1.5 text-xs text-rose-400">
@@ -501,10 +520,14 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
           </div>
 
           {/* Premium Results Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Section title={`Top Longs (${res.longs?.length || 0})`} items={res.longs} />
-            <Section title={`Top Shorts (${res.shorts?.length || 0})`} items={res.shorts} />
-          </div>
+          {loading && !res ? (
+            <SkeletonScannerResults />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in">
+              <Section title={`Top Longs (${res.longs?.length || 0})`} items={res.longs} />
+              <Section title={`Top Shorts (${res.shorts?.length || 0})`} items={res.shorts} />
+            </div>
+          )}
           {/* Premium Watchlist Save Section */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-slate-400 uppercase tracking-wider" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)' }}>Save to Watchlist</span>

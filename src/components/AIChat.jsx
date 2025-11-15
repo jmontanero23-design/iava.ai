@@ -1030,16 +1030,20 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
           </div>
         ))}
 
-        {/* Premium typing indicator */}
+        {/* Premium typing indicator with spinner */}
         {isTyping && (
-          <div className="flex justify-start">
+          <div className="flex justify-start fade-in">
             <div className="relative group">
               <div className="absolute inset-0 bg-cyan-600 blur-xl opacity-10 rounded-2xl" />
               <div className="relative bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm rounded-2xl p-4 shadow-lg">
-                <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 bg-gradient-to-r from-indigo-400 to-cyan-400 rounded-full animate-pulse" />
-                  <div className="w-2.5 h-2.5 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-                  <div className="w-2.5 h-2.5 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+                <div className="flex items-center gap-3">
+                  <div className="spinner-gradient" />
+                  <div className="dots-loader text-cyan-400">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                  <span className="text-sm text-slate-400 loading-text">AI is thinking...</span>
                 </div>
               </div>
             </div>
@@ -1173,9 +1177,10 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
             className="btn-primary"
           >
             {isTyping ? (
-              <>
-                <span className="animate-pulse">Thinking...</span>
-              </>
+              <div className="flex items-center gap-2">
+                <div className="spinner-sm" />
+                <span>Thinking...</span>
+              </div>
             ) : (
               <>
                 <span>Send</span>

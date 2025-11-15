@@ -430,10 +430,10 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
             className="btn-success"
           >
             {submitting ? (
-              <>
-                <span className="animate-spin">⏳</span>
-                Placing…
-              </>
+              <div className="flex items-center gap-2">
+                <div className="spinner-sm" />
+                <span>Placing…</span>
+              </div>
             ) : (
               <>
                 <span>📈</span>
