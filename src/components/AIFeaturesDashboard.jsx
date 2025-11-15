@@ -286,6 +286,53 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
               </div>
             </div>
           )}
+          {/* Superpower Rail */}
+          <div className="mt-5 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="pill-chip text-xs text-slate-100"
+              onClick={() => onFeatureSelect?.('signal_quality')}
+            >
+              <span className="pill-dot" />
+              <span className="font-semibold">Understand Setups</span>
+              <span className="hidden sm:inline text-[11px] text-slate-300/80">
+                Signals · Regime · Confidence
+              </span>
+            </button>
+            <button
+              type="button"
+              className="pill-chip text-xs text-slate-100"
+              onClick={() => onFeatureSelect?.('nlp_scanner')}
+            >
+              <span className="pill-dot" />
+              <span className="font-semibold">Scan & Discover</span>
+              <span className="hidden sm:inline text-[11px] text-slate-300/80">
+                NLP Scanner · Smart Watchlists
+              </span>
+            </button>
+            <button
+              type="button"
+              className="pill-chip text-xs text-slate-100"
+              onClick={() => onFeatureSelect?.('risk_advisor')}
+            >
+              <span className="pill-dot" />
+              <span className="font-semibold">Tune & Manage Risk</span>
+              <span className="hidden sm:inline text-[11px] text-slate-300/80">
+                Sizing · Limits · Stress-tests
+              </span>
+            </button>
+            <button
+              type="button"
+              className="pill-chip text-xs text-slate-100"
+              onClick={() => onFeatureSelect?.('personalized_learning')}
+            >
+              <span className="pill-dot" />
+              <span className="font-semibold">Learn & Evolve</span>
+              <span className="hidden sm:inline text-[11px] text-slate-300/80">
+                Journal · Lessons · Coaching
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -301,14 +348,14 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
             <div className={`absolute inset-0 bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-20 rounded-2xl blur-2xl transition-all duration-300`} />
 
             {/* Card content */}
-            <div className={`relative p-6 bg-slate-900/50 border border-slate-700/50 group-hover:border-slate-600 rounded-2xl backdrop-blur-sm shadow-xl ${glowStyles[feature.glowColor]} transition-all duration-300`}>
+            <div className={`relative p-6 bg-slate-900/50 border border-slate-700/50 group-hover:border-slate-600 rounded-2xl backdrop-blur-sm shadow-xl ${glowStyles[feature.glowColor]} transition-all duration-300 flex flex-col min-h-[220px]`}>
               {/* Icon with gradient background */}
               <div className="flex items-start gap-4 mb-4">
                 <div className={`relative w-14 h-14 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                   <span className="text-3xl filter drop-shadow-lg">{feature.icon}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-slate-100 text-lg mb-1 group-hover:text-white transition-colors">
+                  <h3 className="font-bold text-slate-100 text-lg mb-1 group-hover:text-white transition-colors break-words leading-snug">
                     {feature.name}
                   </h3>
                   <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
@@ -317,15 +364,17 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
                 </div>
               </div>
 
-              <p className="text-sm text-slate-300 leading-relaxed mb-2">
-                {feature.description}
-              </p>
-              <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                {feature.detail}
-              </p>
+              <div className="flex-1 min-h-[56px]">
+                <p className="text-sm text-slate-300 leading-snug mb-1 break-words">
+                  {feature.description}
+                </p>
+                <p className="text-xs text-slate-400 leading-snug break-words">
+                  {feature.detail}
+                </p>
+              </div>
 
               {/* Status badges */}
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="mt-4 flex items-center gap-2 flex-wrap">
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${
                   feature.requiresAPI
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'

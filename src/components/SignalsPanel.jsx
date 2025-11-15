@@ -142,7 +142,9 @@ export default function SignalsPanel({ state, bars = [], symbol = '', onRefresh,
             <div className="absolute inset-0 bg-indigo-600 blur-xl opacity-0 group-hover:opacity-5 rounded-lg transition-opacity" />
             <div className="relative flex justify-between items-center p-3 bg-slate-800/30 rounded-lg border border-slate-700/30 hover:border-indigo-500/30 transition-all">
               <span className="text-sm text-slate-400 font-medium">{r.label}</span>
-              <span className="text-sm text-slate-200 font-semibold">{r.value}</span>
+              <span className="text-sm text-slate-200 font-semibold break-words text-right max-w-[9rem]">
+                {r.value}
+              </span>
             </div>
           </div>
         ))}
