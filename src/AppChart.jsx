@@ -6,7 +6,7 @@ import { useMarketData } from './contexts/MarketDataContext.jsx'
 import SqueezePanel from './components/chart/SqueezePanel.jsx'
 import SignalsPanel from './components/SignalsPanel.jsx'
 import SatyPanel from './components/SatyPanel.jsx'
-import { fetchBars as fetchBarsApi, PRIORITY } from './services/alpacaQueue.js'
+import { fetchBars } from './services/yahooFinance.js' // Yahoo Finance - FREE unlimited data!
 import HealthBadge from './components/HealthBadge.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
 import Presets from './components/Presets.jsx'
@@ -302,8 +302,8 @@ export default function App() {
       const myId = ++loadReq.current
       setLoading(true)
       setError('')
-      // Primary chart data gets highest priority
-      const res = await fetchBarsApi(s, tf, 500, PRIORITY.CHART_PRIMARY)
+      // Yahoo Finance - FREE unlimited data, no rate limits!
+      const res = await fetchBars(s, tf, 500)
       if (myId !== loadReq.current) return
       if (Array.isArray(res) && res.length) { setBars(res); setUsingSample(false) }
       else throw new Error('No data returned')
@@ -330,8 +330,8 @@ export default function App() {
 
   async function loadDaily(s = symbol) {
     try {
-      // Daily bars get secondary priority since they're supplementary
-      const res = await fetchBarsApi(s, '1Day', 400, PRIORITY.CHART_SECONDARY)
+      // Yahoo Finance - Daily bars for regime detection
+      const res = await fetchBars(s, '1Day', 400)
       if (Array.isArray(res) && res.length) setDailyBars(res)
     } catch {}
   }
@@ -349,8 +349,8 @@ export default function App() {
     const sec = mapSecondary(tf)
     if (!sec) { setSecBars([]); setConsensus(null); return }
     try {
-      // Secondary timeframe for consensus gets secondary priority
-      const res = await fetchBarsApi(s, sec, 500, PRIORITY.CHART_SECONDARY)
+      // Yahoo Finance - Secondary timeframe for consensus
+      const res = await fetchBars(s, sec, 500)
       setSecBars(Array.isArray(res) ? res : [])
     } catch { setSecBars([]) }
   }
