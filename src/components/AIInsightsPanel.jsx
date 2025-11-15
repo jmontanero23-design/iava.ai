@@ -269,28 +269,30 @@ export default function AIInsightsPanel({
       {/* Quick Summary - Premium Cards */}
       {hasInsights && (
         <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 items-stretch">
         {/* Signal Quality */}
         <div className="relative group min-w-0">
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl" />
-          <div className="relative p-3 bg-slate-800/50 border border-emerald-500/30 rounded-xl backdrop-blur-sm hover:border-emerald-400/50 transition-all">
+          <div className="relative p-3 bg-slate-800/50 border border-emerald-500/30 rounded-xl backdrop-blur-sm hover:border-emerald-400/50 transition-all h-full flex flex-col justify-between">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">📊</span>
               <div className="text-xs text-emerald-400 font-semibold uppercase tracking-wider">Signal</div>
             </div>
-            <div className="text-sm font-bold text-emerald-300 uppercase break-words leading-snug">{signalType}</div>
+            <div className="text-xs font-bold text-emerald-300 uppercase break-words leading-snug mt-1">
+              {signalType}
+            </div>
           </div>
         </div>
 
         {/* Predictive Confidence */}
         <div className="relative group min-w-0">
           <div className={`absolute inset-0 bg-gradient-to-r ${q.bg} opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl`} />
-          <div className={`relative p-3 bg-slate-800/50 rounded-xl backdrop-blur-sm transition-all border ${q.border}`}>
+          <div className={`relative p-3 bg-slate-800/50 rounded-xl backdrop-blur-sm transition-all border ${q.border} h-full flex flex-col justify-between`}>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">🎯</span>
               <div className={`text-xs font-semibold uppercase tracking-wider ${q.textAccent}`}>Probability</div>
             </div>
-            <div className={`text-sm font-bold leading-snug ${q.textMain}`}>
+            <div className={`text-base font-bold leading-snug ${q.textMain} mt-1`}>
               {Math.round(qualityScore * 100)}%
             </div>
           </div>
@@ -299,12 +301,12 @@ export default function AIInsightsPanel({
         {/* Market Regime */}
         <div className="relative group min-w-0">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-600 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl" />
-          <div className="relative p-3 bg-slate-800/50 border border-cyan-500/30 rounded-xl backdrop-blur-sm hover:border-cyan-400/50 transition-all">
+          <div className="relative p-3 bg-slate-800/50 border border-cyan-500/30 rounded-xl backdrop-blur-sm hover:border-cyan-400/50 transition-all h-full flex flex-col justify-between">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">🌡️</span>
               <div className="text-xs text-cyan-400 font-semibold uppercase tracking-wider">Regime</div>
             </div>
-            <div className="text-sm font-bold text-cyan-300 capitalize break-words leading-snug">
+            <div className="text-xs font-bold text-cyan-300 capitalize break-words leading-snug mt-1">
               {regime?.regime?.replace(/_/g, ' ') || 'Unknown'}
             </div>
           </div>
@@ -313,12 +315,12 @@ export default function AIInsightsPanel({
         {/* Risk Rating */}
         <div className="relative group min-w-0">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl" />
-          <div className="relative p-3 bg-slate-800/50 border border-indigo-500/30 rounded-xl backdrop-blur-sm hover:border-indigo-400/50 transition-all">
+          <div className="relative p-3 bg-slate-800/50 border border-indigo-500/30 rounded-xl backdrop-blur-sm hover:border-indigo-400/50 transition-all h-full flex flex-col justify-between">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">⚖️</span>
               <div className="text-xs text-indigo-400 font-semibold uppercase tracking-wider">Risk</div>
             </div>
-            <div className={`text-sm font-bold ${risk?.positionSize ? 'text-emerald-300' : 'text-yellow-300'}`}>
+            <div className={`text-xs font-bold mt-1 ${risk?.positionSize ? 'text-emerald-300' : 'text-yellow-300'}`}>
               {risk?.positionSize ? 'Sized' : 'Pending'}
             </div>
           </div>
