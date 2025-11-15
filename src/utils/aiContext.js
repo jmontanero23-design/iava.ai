@@ -376,14 +376,23 @@ export async function buildMarketContext({
   // Ichimoku detailed components
   if (overlays?.ichimoku) {
     const ichi = overlays.ichimoku
+    const lastIdx = bars.length - 1
+
+    // Get last values from arrays
+    const tenkanLast = Array.isArray(ichi.tenkan) ? ichi.tenkan[lastIdx] : ichi.tenkan
+    const kijunLast = Array.isArray(ichi.kijun) ? ichi.kijun[lastIdx] : ichi.kijun
+    const senkouALast = Array.isArray(ichi.senkouA) ? ichi.senkouA[lastIdx] : ichi.senkouA
+    const senkouBLast = Array.isArray(ichi.senkouB) ? ichi.senkouB[lastIdx] : ichi.senkouB
+    const chikouLast = Array.isArray(ichi.chikou) ? ichi.chikou[lastIdx] : ichi.chikou
+
     context.ichimokuDetails = {
-      tenkan: ichi.tenkan,
-      kijun: ichi.kijun,
-      senkouA: ichi.senkouA,
-      senkouB: ichi.senkouB,
-      chikou: ichi.chikou,
-      priceVsCloud: context.price?.current > Math.max(ichi.senkouA || 0, ichi.senkouB || 0) ? 'above' :
-                    context.price?.current < Math.min(ichi.senkouA || 0, ichi.senkouB || 0) ? 'below' : 'inside'
+      tenkan: tenkanLast,
+      kijun: kijunLast,
+      senkouA: senkouALast,
+      senkouB: senkouBLast,
+      chikou: chikouLast,
+      priceVsCloud: context.price?.current > Math.max(senkouALast || 0, senkouBLast || 0) ? 'above' :
+                    context.price?.current < Math.min(senkouALast || 0, senkouBLast || 0) ? 'below' : 'inside'
     }
   }
 
