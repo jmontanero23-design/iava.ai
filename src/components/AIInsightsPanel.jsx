@@ -126,17 +126,46 @@ export default function AIInsightsPanel({
   const qualityScore = (typeof rawQualityScore === 'number' && !isNaN(rawQualityScore) && isFinite(rawQualityScore))
     ? Math.max(0, Math.min(1, rawQualityScore))
     : 0
-  const qualityColor = qualityScore >= 0.7 ? 'emerald' : qualityScore >= 0.5 ? 'cyan' : qualityScore >= 0.3 ? 'yellow' : 'rose'
+  const qualityTheme = qualityScore >= 0.7 ? 'emerald' : qualityScore >= 0.5 ? 'cyan' : qualityScore >= 0.3 ? 'yellow' : 'rose'
+
+  const qualityStyles = {
+    emerald: {
+      bg: 'from-emerald-600 to-emerald-400',
+      border: 'border-emerald-500/30 hover:border-emerald-400/50',
+      textAccent: 'text-emerald-400',
+      textMain: 'text-emerald-300',
+    },
+    cyan: {
+      bg: 'from-cyan-600 to-cyan-400',
+      border: 'border-cyan-500/30 hover:border-cyan-400/50',
+      textAccent: 'text-cyan-400',
+      textMain: 'text-cyan-300',
+    },
+    yellow: {
+      bg: 'from-amber-500 to-yellow-400',
+      border: 'border-amber-500/30 hover:border-amber-400/50',
+      textAccent: 'text-amber-300',
+      textMain: 'text-amber-200',
+    },
+    rose: {
+      bg: 'from-rose-600 to-rose-400',
+      border: 'border-rose-500/30 hover:border-rose-400/50',
+      textAccent: 'text-rose-300',
+      textMain: 'text-rose-200',
+    },
+  }
+
+  const q = qualityStyles[qualityTheme] || qualityStyles.emerald
 
   // Get current Unicorn score if available
   const currentScore = signal?.score || 0
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative">
       {/* Premium animated background */}
-      <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
+      <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl animate-pulse pointer-events-none" style={{ animationDuration: '4s' }} />
 
-      <div className="relative glass-panel p-5 space-y-4">
+      <div className="relative glass-panel p-5 space-y-4 max-w-full">
         {/* Premium Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -240,49 +269,49 @@ export default function AIInsightsPanel({
       {/* Quick Summary - Premium Cards */}
       {hasInsights && (
         <>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         {/* Signal Quality */}
-        <div className="relative group">
+        <div className="relative group min-w-0">
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl" />
           <div className="relative p-3 bg-slate-800/50 border border-emerald-500/30 rounded-xl backdrop-blur-sm hover:border-emerald-400/50 transition-all">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">📊</span>
               <div className="text-xs text-emerald-400 font-semibold uppercase tracking-wider">Signal</div>
             </div>
-            <div className="text-sm font-bold text-emerald-300 uppercase">{signalType}</div>
+            <div className="text-sm font-bold text-emerald-300 uppercase break-words leading-snug">{signalType}</div>
           </div>
         </div>
 
         {/* Predictive Confidence */}
-        <div className="relative group">
-          <div className={`absolute inset-0 bg-gradient-to-r from-${qualityColor}-600 to-${qualityColor}-400 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl`} />
-          <div className={`relative p-3 bg-slate-800/50 border border-${qualityColor}-500/30 rounded-xl backdrop-blur-sm hover:border-${qualityColor}-400/50 transition-all`}>
+        <div className="relative group min-w-0">
+          <div className={`absolute inset-0 bg-gradient-to-r ${q.bg} opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl`} />
+          <div className={`relative p-3 bg-slate-800/50 rounded-xl backdrop-blur-sm transition-all border ${q.border}`}>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">🎯</span>
-              <div className={`text-xs text-${qualityColor}-400 font-semibold uppercase tracking-wider`}>Probability</div>
+              <div className={`text-xs font-semibold uppercase tracking-wider ${q.textAccent}`}>Probability</div>
             </div>
-            <div className={`text-sm font-bold text-${qualityColor}-300`}>
+            <div className={`text-sm font-bold leading-snug ${q.textMain}`}>
               {Math.round(qualityScore * 100)}%
             </div>
           </div>
         </div>
 
         {/* Market Regime */}
-        <div className="relative group">
+        <div className="relative group min-w-0">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-600 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl" />
           <div className="relative p-3 bg-slate-800/50 border border-cyan-500/30 rounded-xl backdrop-blur-sm hover:border-cyan-400/50 transition-all">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">🌡️</span>
               <div className="text-xs text-cyan-400 font-semibold uppercase tracking-wider">Regime</div>
             </div>
-            <div className="text-sm font-bold text-cyan-300 capitalize">
+            <div className="text-sm font-bold text-cyan-300 capitalize break-words leading-snug">
               {regime?.regime?.replace(/_/g, ' ') || 'Unknown'}
             </div>
           </div>
         </div>
 
         {/* Risk Rating */}
-        <div className="relative group">
+        <div className="relative group min-w-0">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-10 group-hover:opacity-20 rounded-xl transition-opacity blur-xl" />
           <div className="relative p-3 bg-slate-800/50 border border-indigo-500/30 rounded-xl backdrop-blur-sm hover:border-indigo-400/50 transition-all">
             <div className="flex items-center gap-2 mb-1">
