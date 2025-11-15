@@ -198,11 +198,9 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
               </div>
               <button
                 onClick={() => onLoadSymbol?.(it.symbol, timeframe)}
-                className="relative group/btn px-3 py-1.5 rounded-lg text-xs font-semibold overflow-hidden"
+                className="btn-primary btn-sm"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 group-hover/btn:from-cyan-500 group-hover/btn:to-indigo-500 transition-all" />
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 blur-lg opacity-30 group-hover/btn:opacity-50 transition-opacity" />
-                <span className="relative text-white">Load</span>
+                Load
               </button>
             </div>
           </div>
@@ -214,27 +212,24 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
   return (
     <div className="card overflow-hidden">
       {/* Premium Header */}
-      <div className="p-5 relative overflow-hidden border-b border-slate-700/50">
-        <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
+      <div className="panel-header">
+        <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-2xl animate-pulse pointer-events-none" style={{ animationDuration: '4s' }} />
 
         <div className="relative space-y-4">
           {/* Title Row */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="absolute inset-0 bg-cyan-600 blur-lg opacity-50 animate-pulse" />
-                <span className="relative text-2xl filter drop-shadow-lg">🔍</span>
-              </div>
-              <h3 className="text-lg font-bold bg-gradient-to-r from-cyan-200 to-indigo-300 bg-clip-text text-transparent inline-flex items-center gap-2">
+            <div className="flex items-center gap-4">
+              <span className="panel-icon" style={{ fontSize: 'var(--text-2xl)' }}>🔍</span>
+              <h3 className="font-bold bg-gradient-to-r from-cyan-200 to-indigo-300 bg-clip-text text-transparent inline-flex items-center gap-2" style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
                 Market Scanner
                 <InfoPopover title="Scanner">Scans a symbol list and surfaces the highest Unicorn Scores for longs/shorts.\n\nTips:\n- Enable Daily to require Daily Pivot + Ichimoku agreement.\n- Enable Consensus to require secondary timeframe alignment (Chart's Consensus Bonus = +10).\n- Threshold applies after gating. Counts show what was filtered.</InfoPopover>
                 {matched && (
-                  <span className="px-2 py-0.5 rounded-full border border-emerald-600 text-emerald-300 bg-emerald-900/20 text-[10px] inline-flex items-center gap-1">
+                  <span className="px-2 py-1 border border-emerald-600 text-emerald-300 bg-emerald-900/20 inline-flex items-center gap-1" style={{ fontSize: 'var(--text-xs)', borderRadius: 'var(--radius-full)' }}>
                     matched
                     <InfoPopover title="Matched to chart">Timeframe, Daily gating, and Bonus +10 match the chart's current settings.</InfoPopover>
                   </span>
                 )}
-                <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'How should I configure the Scanner for this market?', context: { timeframe, threshold, enforceDaily, requireConsensus } } })) } catch {} }} className="text-xs text-slate-400 underline">Ask AI</button>
+                <button onClick={() => { try { window.dispatchEvent(new CustomEvent('iava.help', { detail: { question: 'How should I configure the Scanner for this market?', context: { timeframe, threshold, enforceDaily, requireConsensus } } })) } catch {} }} className="text-slate-400 underline" style={{ fontSize: 'var(--text-xs)' }}>Ask AI</button>
               </h3>
             </div>
           </div>
@@ -306,19 +301,17 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={matchChart}
-                className="relative group px-3 py-1.5 rounded-lg text-xs font-semibold overflow-hidden"
+                className="btn-secondary btn-sm"
                 title="Copy timeframe, Daily, and Bonus +10 from the chart"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
-                <span className="relative text-white">Match chart</span>
+                Match chart
               </button>
               <button
                 onClick={useChartConsensus}
-                className="relative group px-3 py-1.5 rounded-lg text-xs font-semibold overflow-hidden"
+                className="btn-secondary btn-sm"
                 title="Require secondary TF alignment (same logic the chart uses)"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
-                <span className="relative text-white">Use chart consensus</span>
+                Use chart consensus
               </button>
               <button
                 onClick={() => {
@@ -334,7 +327,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
                     window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Scan link copied', type: 'success' } }))
                   } catch {}
                 }}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+                className="btn-ghost btn-sm"
                 title="Copy a link that runs this scan via API"
               >
                 Copy scan link
@@ -345,20 +338,16 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
               <button
                 onClick={async()=>{ if (universe === 'all') await fullScanAll(); else await run(); }}
                 disabled={loading}
-                className="relative group px-4 py-2 rounded-lg text-xs font-bold overflow-hidden disabled:opacity-50"
+                className="btn-primary"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 group-hover:from-cyan-500 group-hover:to-indigo-500 transition-all" />
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
-                <span className="relative text-white flex items-center gap-1.5">
-                  {loading ? '⏳' : '🔍'}
-                  {loading ? 'Scanning…' : 'Scan'}
-                </span>
+                {loading ? '⏳' : '🔍'}
+                {loading ? 'Scanning…' : 'Scan'}
               </button>
               {universe === 'all' && (
                 <button
                   onClick={()=>{ abortRef.current.stop = true; setProgress('Stopping…') }}
                   disabled={!loading}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-all disabled:opacity-50"
+                  className="btn-danger btn-sm"
                 >
                   Stop
                 </button>
@@ -384,7 +373,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={()=>setTop(100)}
-            className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+            className="btn-ghost btn-xs"
             title="Show up to 100 results"
           >
             Top 100
@@ -418,7 +407,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
           {assetClass === 'crypto' && universe === 'popular' && (
             <button
               onClick={loadPopularCrypto}
-              className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+              className="btn-ghost btn-xs"
             >
               Load popular
             </button>
@@ -458,14 +447,10 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
                 } finally { setAiLoading(false) }
               }}
               disabled={aiReady===false || aiLoading}
-              className="relative group px-4 py-2 rounded-lg text-xs font-semibold overflow-hidden disabled:opacity-50"
+              className="btn-secondary"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all" />
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
-              <span className="relative text-white flex items-center gap-2">
-                <span>{aiLoading ? '⏳' : '🤖'}</span>
-                {aiLoading ? 'Summarizing…' : 'Summarize (AI)'}
-              </span>
+              <span>{aiLoading ? '⏳' : '🤖'}</span>
+              {aiLoading ? 'Summarizing…' : 'Summarize (AI)'}
             </button>
             {aiErr && (
               <div className="flex items-center gap-1.5 text-xs text-rose-400">
@@ -498,15 +483,15 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
 
           {/* Results Tools */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Results Tools</span>
+            <span className="text-slate-400 uppercase tracking-wider" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)' }}>Results Tools</span>
             <button
               onClick={() => { try { const txt = JSON.stringify(res, null, 2); navigator.clipboard.writeText(txt); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Scan results copied', type: 'success' } })) } catch {} }}
-              className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+              className="btn-ghost btn-xs"
             >
               Copy results
             </button>
             <a
-              className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+              className="btn-ghost btn-xs"
               href={`/api/scan?${new URLSearchParams({ symbols, timeframe, threshold: String(threshold), top: String(top), enforceDaily: enforceDaily ? '1' : '0', requireConsensus: requireConsensus ? '1' : '0', consensusBonus: consensusBonus ? '1' : '0', assetClass }).toString()}`}
               target="_blank"
               rel="noreferrer"
@@ -522,11 +507,12 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
           </div>
           {/* Premium Watchlist Save Section */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Save to Watchlist</span>
+            <span className="text-slate-400 uppercase tracking-wider" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)' }}>Save to Watchlist</span>
             <input
               value={wlName}
               onChange={e=>setWlName(e.target.value)}
-              className="px-3 py-1 rounded-lg text-xs bg-slate-800/50 border border-slate-700/50 focus:border-indigo-500/50 text-slate-200 transition-all"
+              className="input px-3 py-1 bg-slate-800/50 border-slate-700/50 focus:border-indigo-500/50 text-slate-200"
+              style={{ fontSize: 'var(--text-xs)', borderRadius: 'var(--radius-lg)' }}
               placeholder="watchlist name"
             />
             <button
@@ -542,16 +528,15 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
                   window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Watchlist saved', type: 'success' } }))
                 } catch (e) { window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Save failed', type: 'error' } })) }
               }}
-              className="relative group px-3 py-1 rounded-lg text-xs font-semibold overflow-hidden"
+              className="btn-success btn-xs"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 group-hover:from-emerald-500 group-hover:to-teal-500 transition-all" />
-              <span className="relative text-white">Save All</span>
+              Save All
             </button>
             <button
               onClick={async ()=>{
                 try { const { save, setActive } = await import('../utils/watchlists.js'); const base=(wlName||'scanner-top'); const name=base+"-longs"; const longs = (res.longs||[]).map(x=>x.symbol); save(name, longs); setActive(name); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Saved longs', type: 'success' } })) } catch { window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Save failed', type: 'error' } })) }
               }}
-              className="px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-700 hover:bg-emerald-600 text-white transition-all"
+              className="btn-success btn-xs"
             >
               Save Longs
             </button>
@@ -559,20 +544,20 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
               onClick={async ()=>{
                 try { const { save, setActive } = await import('../utils/watchlists.js'); const base=(wlName||'scanner-top'); const name=base+"-shorts"; const shorts = (res.shorts||[]).map(x=>x.symbol); save(name, shorts); setActive(name); window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Saved shorts', type: 'success' } })) } catch { window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Save failed', type: 'error' } })) }
               }}
-              className="px-3 py-1 rounded-lg text-xs font-semibold bg-rose-700 hover:bg-rose-600 text-white transition-all"
+              className="btn-danger btn-xs"
             >
               Save Shorts
             </button>
             <div className="h-4 w-px bg-slate-700" />
             <button
               onClick={exportCsv}
-              className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+              className="btn-ghost btn-xs"
             >
               Export CSV
             </button>
             <button
               onClick={exportJson}
-              className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all"
+              className="btn-ghost btn-xs"
             >
               Export JSON
             </button>
