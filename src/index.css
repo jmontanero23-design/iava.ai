@@ -108,7 +108,9 @@ body {
   touch-action: manipulation;
 }
 
-/* Mobile responsive utilities */
+/* === ELITE MOBILE RESPONSIVE SYSTEM === */
+
+/* Base mobile optimization (phones) */
 @media (max-width: 768px) {
   body {
     font-size: 14px;
@@ -119,14 +121,122 @@ body {
     padding: 1rem !important;
   }
 
-  /* Touch-friendly tap targets */
+  /* Touch-friendly tap targets (44px minimum for accessibility) */
   button, a, input, select, textarea {
     min-height: 44px;
+    font-size: max(16px, 1em); /* Prevent iOS zoom on input focus */
   }
 
   /* Optimize for mobile viewports */
   .card {
     margin: 0.5rem;
+    border-radius: var(--radius-lg);
+  }
+
+  /* Panel headers - more compact on mobile */
+  .panel-header {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  /* Buttons - full width on mobile for primary actions */
+  .btn-mobile-full {
+    width: 100%;
+  }
+
+  /* Text scale adjustments */
+  .text-6xl {
+    font-size: 3rem !important; /* Reduce from 3.75rem */
+  }
+
+  .text-4xl {
+    font-size: 2rem !important; /* Reduce from 2.25rem */
+  }
+
+  /* Stack controls vertically on mobile */
+  .mobile-stack {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .mobile-stack > * {
+    width: 100% !important;
+  }
+
+  /* Grid adjustments */
+  .mobile-single-col {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Hide on mobile */
+  .hide-mobile {
+    display: none !important;
+  }
+
+  /* Show only on mobile */
+  .show-mobile {
+    display: block !important;
+  }
+
+  /* Scrollable containers - better touch scroll */
+  .mobile-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  /* Reduce spacing on mobile */
+  .space-y-4 > * + * {
+    margin-top: 0.75rem !important;
+  }
+
+  .space-y-6 > * + * {
+    margin-top: 1rem !important;
+  }
+
+  /* Compact padding */
+  .mobile-compact {
+    padding: var(--space-2) !important;
+  }
+}
+
+/* Tablet optimization (768px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .glass-panel {
+    padding: 1.25rem !important;
+  }
+
+  /* 2-column grid for tablets */
+  .tablet-2-col {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Small phones (below 375px) */
+@media (max-width: 374px) {
+  body {
+    font-size: 13px;
+  }
+
+  button, a {
+    font-size: 13px;
+  }
+
+  .glass-panel {
+    padding: 0.75rem !important;
+  }
+
+  /* Even more compact */
+  .panel-header {
+    padding: var(--space-2) var(--space-3);
+  }
+}
+
+/* Large phones / phablets (375px - 428px) */
+@media (min-width: 375px) and (max-width: 428px) {
+  /* Optimal for iPhone Pro, standard Android phones */
+  .glass-panel {
+    padding: 1rem !important;
+    border-radius: 14px !important;
   }
 }
 
@@ -1298,4 +1408,186 @@ select:focus {
 .expand-trigger:hover .expand-on-hover {
   max-height: 500px;
   opacity: 1;
+}
+
+/* === TOUCH-FRIENDLY ENHANCEMENTS === */
+
+/* Larger touch targets for mobile */
+@media (max-width: 768px) {
+  .btn, button {
+    min-height: 48px; /* Increased from 44px for comfort */
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .btn-sm {
+    min-height: 44px;
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .btn-xs {
+    min-height: 40px;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  /* Icon buttons need adequate touch area */
+  .btn-icon {
+    min-width: 48px;
+    min-height: 48px;
+  }
+
+  /* Input fields */
+  input, select, textarea {
+    min-height: 48px;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  /* Checkboxes and radio buttons */
+  .checkbox, input[type="checkbox"], input[type="radio"] {
+    min-width: 24px;
+    min-height: 24px;
+    cursor: pointer;
+  }
+}
+
+/* Touch ripple effect */
+.touch-ripple {
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.5s, opacity 0.5s;
+}
+
+.touch-ripple:active::after {
+  transform: translate(-50%, -50%) scale(2);
+  opacity: 1;
+  transition: 0s;
+}
+
+/* Prevent text selection on touch/drag */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Smooth momentum scrolling for touch devices */
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Pull-to-refresh indicator space */
+.pull-to-refresh-space {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Swipe gesture indicator */
+.swipeable {
+  touch-action: pan-y;
+  -webkit-user-drag: none;
+}
+
+/* Active state for touch */
+@media (max-width: 768px) {
+  button:active:not(:disabled),
+  .btn:active:not(:disabled),
+  a:active {
+    transform: scale(0.97);
+    opacity: 0.9;
+  }
+
+  /* Remove hover effects on touch devices (prevents sticky hover) */
+  @media (hover: none) {
+    .hover\:scale-105:hover {
+      transform: none;
+    }
+
+    .card:hover {
+      transform: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+  }
+}
+
+/* Haptic feedback support (vibration API) */
+@supports (vibrate: 1) {
+  .haptic-light:active {
+    /* Light haptic feedback (handled via JS) */
+  }
+
+  .haptic-medium:active {
+    /* Medium haptic feedback (handled via JS) */
+  }
+}
+
+/* Improved focus for keyboard navigation on mobile */
+@media (max-width: 768px) {
+  *:focus-visible {
+    outline: 3px solid rgba(99, 102, 241, 0.6);
+    outline-offset: 2px;
+  }
+}
+
+/* Optimize modal/overlay for mobile */
+@media (max-width: 768px) {
+  .modal, .overlay {
+    position: fixed;
+    inset: 0;
+    padding: var(--space-4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* Bottom sheet style for mobile actions */
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--panel);
+  border-top-left-radius: var(--radius-2xl);
+  border-top-right-radius: var(--radius-2xl);
+  padding: var(--space-6) var(--space-4);
+  padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0));
+  transform: translateY(100%);
+  transition: transform var(--transition-base);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.bottom-sheet-active {
+  transform: translateY(0);
+}
+
+/* Touch-friendly spacing */
+@media (max-width: 768px) {
+  .touch-spacing-y > * + * {
+    margin-top: var(--space-3);
+  }
+
+  .touch-spacing-x > * + * {
+    margin-left: var(--space-3);
+  }
 }
