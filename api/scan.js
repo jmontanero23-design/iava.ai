@@ -86,7 +86,24 @@ export default async function handler(req, res) {
               const ds = computeStates(d)
               const bull = ds.pivotNow === 'bullish' && ds.ichiRegime === 'bullish'
               const bear = ds.pivotNow === 'bearish' && ds.ichiRegime === 'bearish'
-              if ((dir === 'long' && !bull) || (dir === 'short' && !bear)) { dailyBlocked++; continue }
+
+              // PhD-Level Intelligent Daily Enforcement:
+              // LONGS: Require bullish OR neutral daily (block only if bearish)
+              // SHORTS: With-trend (bearish daily) = standard threshold
+              //         Counter-trend (bullish/neutral) = require HIGH score (≥75) for safety
+              if (dir === 'long') {
+                // Block longs only if daily is strongly bearish
+                if (bear) { dailyBlocked++; continue }
+              } else if (dir === 'short') {
+                // Allow shorts in TWO scenarios:
+                // 1. With-trend: Daily bearish → use standard threshold
+                // 2. Counter-trend: Daily bullish/neutral → require ≥75 for strong confluence
+                if (!bear && scoreOut < 75) {
+                  dailyBlocked++
+                  continue
+                }
+              }
+
               if (scoreOut < threshold) { thresholdRejected++; continue }
               results.push({ symbol: sym, score: scoreOut, dir, last: bars[bars.length-1], daily: { pivot: ds.pivotNow, ichi: ds.ichiRegime } })
             } else {
@@ -129,7 +146,24 @@ export default async function handler(req, res) {
           const ds = computeStates(d)
           const bull = ds.pivotNow === 'bullish' && ds.ichiRegime === 'bullish'
           const bear = ds.pivotNow === 'bearish' && ds.ichiRegime === 'bearish'
-          if ((dir === 'long' && !bull) || (dir === 'short' && !bear)) { dailyBlocked++; return }
+
+          // PhD-Level Intelligent Daily Enforcement:
+          // LONGS: Require bullish OR neutral daily (block only if bearish)
+          // SHORTS: With-trend (bearish daily) = standard threshold
+          //         Counter-trend (bullish/neutral) = require HIGH score (≥75) for safety
+          if (dir === 'long') {
+            // Block longs only if daily is strongly bearish
+            if (bear) { dailyBlocked++; return }
+          } else if (dir === 'short') {
+            // Allow shorts in TWO scenarios:
+            // 1. With-trend: Daily bearish → use standard threshold
+            // 2. Counter-trend: Daily bullish/neutral → require ≥75 for strong confluence
+            if (!bear && scoreOut < 75) {
+              dailyBlocked++
+              return
+            }
+          }
+
           if (scoreOut < threshold) { thresholdRejected++; return }
           results.push({ symbol: sym, score: scoreOut, dir, last: bars[bars.length-1], daily: { pivot: ds.pivotNow, ichi: ds.ichiRegime } })
         } else {
