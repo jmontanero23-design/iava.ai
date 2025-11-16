@@ -209,8 +209,15 @@ export default function MobilePushToTalk({ onTranscript, isListening: externalLi
     return null
   }
 
+  // Only show on mobile devices (hide on desktop to avoid clutter)
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768
+
+  if (!isMobile) {
+    return null
+  }
+
   return (
-    <div className="fixed bottom-24 right-6 z-50 flex flex-col items-end gap-3">
+    <div className="fixed bottom-24 right-6 z-50 flex flex-col items-end gap-3 md:hidden">
       {/* Recording Status Card */}
       {(isRecording || isProcessing) && (
         <div className="bg-slate-900/95 backdrop-blur-lg border border-slate-700/50 rounded-xl p-4 shadow-2xl animate-slide-in-right">
