@@ -1509,22 +1509,20 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
             <span style={{ fontSize: 'var(--text-xl)' }}>📎</span>
           </button>
 
-          {/* Voice Input Button - DESKTOP ONLY (mobile uses floating MobilePushToTalk) */}
-          {!(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768) && (
-            <button
-              type="button"
-              onClick={isListening ? stopVoiceInput : startVoiceInput}
-              className={`btn-icon relative ${
-                isListening
-                  ? 'bg-rose-600/20 border-rose-500/40 animate-pulse'
-                  : 'btn-secondary'
-              }`}
-              style={{ zIndex: 2 }}
-              title={isListening ? 'Stop recording' : 'Voice input'}
-            >
-              <span style={{ fontSize: 'var(--text-xl)' }}>{isListening ? '🔴' : '🎤'}</span>
-            </button>
-          )}
+          {/* Voice Input Button - ALL PLATFORMS */}
+          <button
+            type="button"
+            onClick={isListening ? stopVoiceInput : startVoiceInput}
+            className={`btn-icon relative ${
+              isListening
+                ? 'bg-rose-600/20 border-rose-500/40 animate-pulse'
+                : 'btn-secondary'
+            }`}
+            style={{ zIndex: 2, touchAction: 'manipulation' }}
+            title={isListening ? 'Stop recording' : 'Voice input'}
+          >
+            <span style={{ fontSize: 'var(--text-xl)' }}>{isListening ? '🔴' : '🎤'}</span>
+          </button>
 
           <div className="flex-1 relative group">
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-focus-within:opacity-10 transition-opacity blur-xl pointer-events-none" style={{ borderRadius: 'var(--radius-xl)' }} />
@@ -1562,11 +1560,11 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
         </div>
       </form>
 
-      {/* ELITE: Mobile Push-to-Talk Interface */}
-      <MobilePushToTalk
+      {/* ELITE: Mobile Push-to-Talk Interface - DISABLED (using inline mic instead) */}
+      {/* <MobilePushToTalk
         onTranscript={handleMobileTranscript}
         isListening={isListening}
-      />
+      /> */}
     </div>
   )
 }
