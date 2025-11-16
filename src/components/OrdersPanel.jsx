@@ -44,6 +44,55 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
   useEffect(() => { (async () => { try { const r = await fetch('/api/alpaca/account'); const j = await r.json(); if (r.ok) setAccount(j) } catch {} })() }, [])
   useEffect(() => { (async () => { try { const r = await fetch('/api/config'); const j = await r.json(); if (r.ok) setRules(j?.order || null) } catch {} })() }, [])
 
+  // ELITE: Broadcast position updates to AI Copilot
+  useEffect(() => {
+    if (positions && positions.length >= 0) {
+      console.log('[Orders] Broadcasting positions to Copilot:', positions.length)
+      window.dispatchEvent(new CustomEvent('iava-positions-update', {
+        detail: positions
+      }))
+    }
+  }, [positions])
+
+  // ELITE: Listen for AI trade setups (from Voice-to-Trade or Trust Mode)
+  useEffect(() => {
+    const handleTradeSetup = (event) => {
+      const setup = event.detail
+      console.log('[Orders] Received AI trade setup:', setup)
+
+      // Populate order form
+      if (setup.symbol) setSym(setup.symbol)
+      if (setup.side) setSide(setup.side === 'sell' ? 'sell' : 'buy')
+
+      // If we have entry price and targets, use bracket order
+      if (setup.stopLoss || setup.target) {
+        setKlass('bracket')
+
+        const price = setup.entry || Number(lastPrice || 0)
+        if (price && setup.stopLoss) {
+          const slDiff = Math.abs(price - setup.stopLoss) / price * 100
+          setSlPct(slDiff)
+        }
+        if (price && setup.target) {
+          const tpDiff = Math.abs(setup.target - price) / price * 100
+          setTpPct(tpDiff)
+        }
+      }
+
+      // Show toast notification
+      window.dispatchEvent(new CustomEvent('iava.toast', {
+        detail: {
+          text: `Trade setup loaded: ${setup.symbol} ${setup.side?.toUpperCase()}`,
+          type: 'success',
+          ttl: 3000
+        }
+      }))
+    }
+
+    window.addEventListener('ai-trade-setup', handleTradeSetup)
+    return () => window.removeEventListener('ai-trade-setup', handleTradeSetup)
+  }, [lastPrice])
+
   function calcQtyFromRisk() {
     const price = Number(lastPrice || 0)
     const eq = parseFloat(account?.equity || '0')

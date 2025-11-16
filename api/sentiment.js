@@ -21,7 +21,14 @@ export default async function handler(req, res) {
     const hfApiKey = process.env.HUGGINGFACE_API_KEY
 
     if (!hfApiKey) {
-      return res.status(500).json({ error: 'HuggingFace API key not configured' })
+      console.warn('[Sentiment API] HuggingFace API key not configured - returning neutral')
+      return res.status(200).json({
+        sentiment: 'neutral',
+        label: 'NEUTRAL',
+        score: 0.5,
+        fallback: true,
+        reason: 'API key not configured'
+      })
     }
 
     console.log('[Sentiment API] Analyzing:', text.substring(0, 100))
@@ -103,11 +110,13 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('[Sentiment API] Error:', error)
-    return res.status(500).json({
-      error: error.message || 'Sentiment analysis failed',
+    // Return 200 with neutral sentiment instead of 500 to avoid breaking the UI
+    return res.status(200).json({
       sentiment: 'neutral',
       label: 'NEUTRAL',
-      score: 0.5
+      score: 0.5,
+      error: error.message || 'Sentiment analysis failed',
+      fallback: true
     })
   }
 }
