@@ -758,14 +758,13 @@ Please review and submit the order in the Orders & Positions panel.`,
   }
 
   // Play pending audio (called when user taps "Enable Voice" prompt)
-  const playPendingAudio = async () => {
+  // CRITICAL: Must be synchronous - iOS Safari requires audio.play() in user gesture handler
+  const playPendingAudio = () => {
     const timestamp = new Date().toLocaleTimeString()
     setDebugLog(prev => [...prev, `${timestamp} - 🔊 ENABLE VOICE CLICKED`])
 
     console.log('🔊 [DEBUG] ========== ENABLE VOICE CLICKED ==========')
     console.log('🔊 [DEBUG] pendingAudio exists:', !!pendingAudio)
-    console.log('🔊 [DEBUG] audioUnlocked:', audioUnlocked)
-    console.log('🔊 [DEBUG] showAudioPrompt:', showAudioPrompt)
 
     if (!pendingAudio) {
       setDebugLog(prev => [...prev, `${timestamp} - ❌ No pending audio`])
@@ -774,42 +773,56 @@ Please review and submit the order in the Orders & Positions panel.`,
       return
     }
 
-    setDebugLog(prev => [...prev, `${timestamp} - ✅ Playing audio...`])
-    console.log('🔊 [DEBUG] Proceeding with audio playback...')
+    setDebugLog(prev => [...prev, `${timestamp} - ✅ Creating audio element...`])
 
-    try {
-      console.log('[Voice] Attempting to unlock audio...')
-      await unlockAudio() // Ensure audio is unlocked
+    // CRITICAL: Create and play IMMEDIATELY - no async/await before play()
+    // iOS Safari REQUIRES audio.play() to be called synchronously in click handler
+    const audioElement = new Audio(pendingAudio)
+    audioElement.playbackRate = 1.1
 
-      console.log('[Voice] Creating audio element...')
-      const audioElement = new Audio(pendingAudio)
-      audioElement.playbackRate = 1.1
+    audioElement.onended = () => {
+      console.log('🔊 Premium speech finished')
+      setDebugLog(prev => [...prev, `${new Date().toLocaleTimeString()} - ✅ Audio finished`])
+    }
 
-      audioElement.onended = () => {
-        console.log('🔊 Premium speech finished')
-        // REMOVED: Auto-restart voice input (unwanted behavior on mobile)
-      }
-
-      audioElement.onerror = (e) => {
-        console.error('[Voice] Audio playback error:', e)
-        // Dismiss prompt on error
-        setPendingAudio(null)
-        setShowAudioPrompt(false)
-        alert('❌ Audio playback failed. Please try speaking your message again.')
-      }
-
-      console.log('[Voice] Playing audio...')
-      await audioElement.play()
-      console.log('🔊 Playing pending audio with PREMIUM voice')
+    audioElement.onerror = (e) => {
+      const errTime = new Date().toLocaleTimeString()
+      console.error('[Voice] Audio playback error:', e)
+      setDebugLog(prev => [...prev, `${errTime} - ❌ Audio error: ${e.type}`])
       setPendingAudio(null)
       setShowAudioPrompt(false)
-      setAudioUnlocked(true)
-    } catch (error) {
-      console.error('🔊 Failed to play pending audio:', error)
-      // CRITICAL: Dismiss prompt on error (was missing!)
-      setPendingAudio(null)
-      setShowAudioPrompt(false)
-      alert(`❌ Voice playback error: ${error.message}. Try speaking your message again.`)
+      alert('❌ Audio failed. Try tapping mic button again.')
+    }
+
+    // Play IMMEDIATELY - synchronously in click handler
+    console.log('[Voice] Calling audio.play() NOW (synchronously)...')
+    setDebugLog(prev => [...prev, `${timestamp} - 🎵 Calling play()...`])
+
+    const playPromise = audioElement.play()
+
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          console.log('🔊 ✅ Playing with PREMIUM voice')
+          setDebugLog(prev => [...prev, `${new Date().toLocaleTimeString()} - ✅ Playback started!`])
+          setPendingAudio(null)
+          setShowAudioPrompt(false)
+          setAudioUnlocked(true)
+        })
+        .catch(error => {
+          const errTime = new Date().toLocaleTimeString()
+          console.error('🔊 ❌ Playback failed:', error)
+          setDebugLog(prev => [...prev, `${errTime} - ❌ Play failed: ${error.message}`])
+          setPendingAudio(null)
+          setShowAudioPrompt(false)
+
+          // More helpful error message
+          if (error.message.includes('not allowed')) {
+            alert('❌ iPhone blocked audio. Try:\n1. Unmute your phone\n2. Check volume\n3. Reload page and try again')
+          } else {
+            alert(`❌ Audio error: ${error.message}`)
+          }
+        })
     }
   }
 
