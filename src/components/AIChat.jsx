@@ -12,6 +12,7 @@ import { useState, useRef, useEffect } from 'react'
 import { callAI } from '../utils/aiGateway.js'
 import { generateTradingSystemPrompt, buildMarketContext, formatContextForAI } from '../utils/aiContext.js'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
+import MobilePushToTalk from './MobilePushToTalk.jsx'
 
 export default function AIChat() {
   const { marketData } = useMarketData()
@@ -833,6 +834,17 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
     }
   }
 
+  // Handle transcript from mobile push-to-talk
+  const handleMobileTranscript = (transcript) => {
+    console.log('[Mobile Push-to-Talk] Received transcript:', transcript)
+    setInput(transcript)
+    // Auto-submit after a short delay
+    setTimeout(() => {
+      const submitEvent = { preventDefault: () => {} }
+      handleSubmit(submitEvent)
+    }, 100)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if ((!input.trim() && uploadedFiles.length === 0) || isTyping) return
@@ -1503,6 +1515,12 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
           </button>
         </div>
       </form>
+
+      {/* ELITE: Mobile Push-to-Talk Interface */}
+      <MobilePushToTalk
+        onTranscript={handleMobileTranscript}
+        isListening={isListening}
+      />
     </div>
   )
 }
