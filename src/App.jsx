@@ -27,6 +27,8 @@ import GeneticOptimizerPanel from './components/GeneticOptimizerPanel.jsx'
 import MarketSentiment from './components/MarketSentiment.jsx'
 import AITradeCopilot from './components/AITradeCopilot.jsx'
 import PatternRecognition from './components/PatternRecognition.jsx'
+import MultiSymbolAnalysis from './components/MultiSymbolAnalysis.jsx'
+import StrategyBuilder from './components/StrategyBuilder.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -104,7 +106,9 @@ export default function App() {
       'personalized_learning': 'personalized-learning',
       'genetic_optimizer': 'genetic-optimizer',
       'pattern_recognition': 'pattern-recognition',
-      'market_sentiment': 'market-sentiment'
+      'market_sentiment': 'market-sentiment',
+      'multi_symbol': 'multi-symbol',
+      'strategy_builder': 'strategy-builder'
     }
 
     if (featureTabMap[featureId]) {
@@ -244,6 +248,14 @@ export default function App() {
 
         {activeTab === 'pattern-recognition' && (
           <PatternRecognition />
+        )}
+
+        {activeTab === 'multi-symbol' && (
+          <MultiSymbolAnalysis />
+        )}
+
+        {activeTab === 'strategy-builder' && (
+          <StrategyBuilder />
         )}
 
         {activeTab === 'monitoring' && (
