@@ -24,6 +24,7 @@ import SmartWatchlistBuilderPanel from './components/SmartWatchlistBuilderPanel.
 import PredictiveConfidencePanel from './components/PredictiveConfidencePanel.jsx'
 import PersonalizedLearningPanel from './components/PersonalizedLearningPanel.jsx'
 import GeneticOptimizerPanel from './components/GeneticOptimizerPanel.jsx'
+import MarketSentiment from './components/MarketSentiment.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -46,10 +47,10 @@ export default function App() {
         return
       }
 
-      // Number keys (1-5) to switch tabs
-      if (e.key >= '1' && e.key <= '5') {
+      // Number keys (1-6) to switch tabs
+      if (e.key >= '1' && e.key <= '6') {
         e.preventDefault()
-        const tabs = ['chart', 'ai-features', 'ai-chat', 'monitoring', 'nlp-scanner']
+        const tabs = ['chart', 'ai-features', 'ai-chat', 'monitoring', 'nlp-scanner', 'market-sentiment']
         setActiveTab(tabs[parseInt(e.key) - 1])
       }
 
@@ -193,6 +194,20 @@ export default function App() {
               <span>NLP Scanner</span>
               <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">5</kbd>
             </button>
+            <button
+              onClick={() => setActiveTab('market-sentiment')}
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
+                activeTab === 'market-sentiment'
+                  ? 'bg-gradient-to-r from-emerald-600 to-cyan-500 text-white shadow-lg shadow-emerald-500/30'
+                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
+              }`}
+              title="Market Sentiment Dashboard (Press 6)"
+              aria-label="Switch to Market Sentiment tab"
+            >
+              <span className="text-xl">📊</span>
+              <span>Sentiment</span>
+              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">6</kbd>
+            </button>
 
             {/* Feature Status Badge - Always visible on right side */}
             <div className="ml-auto">
@@ -216,6 +231,10 @@ export default function App() {
 
         {activeTab === 'nlp-scanner' && (
           <NaturalLanguageScanner />
+        )}
+
+        {activeTab === 'market-sentiment' && (
+          <MarketSentiment />
         )}
 
         {activeTab === 'monitoring' && (
