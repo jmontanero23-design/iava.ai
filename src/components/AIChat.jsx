@@ -45,6 +45,9 @@ export default function AIChat() {
   const [isTyping, setIsTyping] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState([]) // Chart images, PDFs, CSVs
   const [smartSuggestions, setSmartSuggestions] = useState([]) // AI-generated context-aware questions
+  const [audioUnlocked, setAudioUnlocked] = useState(false) // Mobile Safari audio unlock status
+  const [pendingAudio, setPendingAudio] = useState(null) // Audio waiting for user gesture
+  const [showAudioPrompt, setShowAudioPrompt] = useState(false) // Show "Tap to enable voice" UI
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
 
@@ -79,6 +82,33 @@ export default function AIChat() {
     }
     checkPendingRequest()
   }, [])
+
+  // Detect if running on iOS/Safari mobile
+  const isMobileSafari = () => {
+    const ua = navigator.userAgent
+    const isIOS = /iPad|iPhone|iPod/.test(ua)
+    const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua)
+    const isMobile = /Mobile|Android/.test(ua)
+    return isIOS || (isSafari && isMobile)
+  }
+
+  // CRITICAL: Unlock audio on mobile Safari (requires user gesture)
+  const unlockAudio = async () => {
+    if (audioUnlocked) return true
+
+    try {
+      // Play silent audio to unlock audio context on mobile
+      const silentAudio = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADhAC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAA4T/jCp4AAAAAAAA//tQxAADB8AhSmxhIIEVCSiJrDCQBTcu3UrAIwUdkRgQbw4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e//tQxAkDU8altSvVIdEMFW9W+UgBH///////////////////////w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e//tQxAkDU8altSvVIdEMFW9W+UgBH///////////////////////w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e')
+      silentAudio.volume = 0.01
+      await silentAudio.play()
+      setAudioUnlocked(true)
+      console.log('🔓 Audio unlocked for mobile Safari')
+      return true
+    } catch (error) {
+      console.warn('🔒 Audio unlock failed:', error)
+      return false
+    }
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -452,10 +482,15 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
   const [isListening, setIsListening] = useState(false)
   const recognitionRef = useRef(null)
 
-  const startVoiceInput = () => {
+  const startVoiceInput = async () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       alert('❌ Voice input not supported in this browser. Try Chrome/Edge.')
       return
+    }
+
+    // CRITICAL: Unlock audio on mobile Safari before starting voice (user gesture)
+    if (isMobileSafari()) {
+      await unlockAudio()
     }
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -617,9 +652,69 @@ Please review and submit the order in the Orders & Positions panel.`,
 
       const { audio } = await response.json()
 
-      // Play premium audio using HTML5 Audio API
-      const audioElement = new Audio(audio)
-      audioElement.playbackRate = 1.1 // Slightly faster for efficiency
+      // CRITICAL: Handle mobile Safari autoplay restrictions
+      const playAudio = async (audioData) => {
+        const audioElement = new Audio(audioData)
+        audioElement.playbackRate = 1.1 // Slightly faster for efficiency
+
+        audioElement.onended = () => {
+          console.log('🔊 Premium speech finished, restarting voice input...')
+          setTimeout(() => {
+            if (!isListening) {
+              startVoiceInput()
+            }
+          }, 500) // Small delay before restarting
+        }
+
+        audioElement.onerror = (e) => {
+          console.error('🔊 Audio playback error:', e)
+        }
+
+        try {
+          await audioElement.play()
+          setAudioUnlocked(true) // Mark as unlocked on successful playback
+          console.log('🔊 Speaking with PREMIUM ElevenLabs voice (natural, human-like)')
+        } catch (playError) {
+          // MOBILE SAFARI AUTOPLAY BLOCKED - Store audio and show prompt
+          if (playError.name === 'NotAllowedError' || playError.name === 'NotSupportedError') {
+            console.warn('🔒 Audio autoplay blocked - showing unlock prompt')
+            setPendingAudio(audioData)
+            setShowAudioPrompt(true)
+          } else {
+            throw playError
+          }
+        }
+      }
+
+      // If on mobile Safari and audio not unlocked, try to unlock first
+      if (isMobileSafari() && !audioUnlocked) {
+        const unlocked = await unlockAudio()
+        if (!unlocked) {
+          // Store audio for later playback after user gesture
+          setPendingAudio(audio)
+          setShowAudioPrompt(true)
+          return
+        }
+      }
+
+      await playAudio(audio)
+
+    } catch (error) {
+      console.error('[TTS] Error:', error)
+      // Fallback to browser TTS if premium fails (graceful degradation)
+      console.warn('🔊 Falling back to browser TTS...')
+      fallbackBrowserTTS(text)
+    }
+  }
+
+  // Play pending audio (called when user taps "Enable Voice" prompt)
+  const playPendingAudio = async () => {
+    if (!pendingAudio) return
+
+    try {
+      await unlockAudio() // Ensure audio is unlocked
+      const audioElement = new Audio(pendingAudio)
+      audioElement.playbackRate = 1.1
 
       audioElement.onended = () => {
         console.log('🔊 Premium speech finished, restarting voice input...')
@@ -627,21 +722,15 @@ Please review and submit the order in the Orders & Positions panel.`,
           if (!isListening) {
             startVoiceInput()
           }
-        }, 500) // Small delay before restarting
-      }
-
-      audioElement.onerror = (e) => {
-        console.error('🔊 Audio playback error:', e)
+        }, 500)
       }
 
       await audioElement.play()
-      console.log('🔊 Speaking with PREMIUM ElevenLabs voice (natural, human-like)')
-
+      console.log('🔊 Playing pending audio with PREMIUM voice')
+      setPendingAudio(null)
+      setShowAudioPrompt(false)
     } catch (error) {
-      console.error('[TTS] Error:', error)
-      // Fallback to browser TTS if premium fails (graceful degradation)
-      console.warn('🔊 Falling back to browser TTS...')
-      fallbackBrowserTTS(text)
+      console.error('🔊 Failed to play pending audio:', error)
     }
   }
 
@@ -715,6 +804,11 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
   const handleSubmit = async (e) => {
     e.preventDefault()
     if ((!input.trim() && uploadedFiles.length === 0) || isTyping) return
+
+    // CRITICAL: Unlock audio on mobile Safari (user gesture required)
+    if (isMobileSafari()) {
+      await unlockAudio()
+    }
 
     const userMessage = {
       role: 'user',
@@ -983,6 +1077,25 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
           </div>
         </div>
       </div>
+
+      {/* CRITICAL: Mobile Safari Audio Unlock Prompt */}
+      {showAudioPrompt && pendingAudio && (
+        <div className="mx-4 mt-4 mb-2 p-4 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/40 rounded-lg animate-pulse">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-indigo-300 mb-1">🔊 Voice Ready</div>
+              <div className="text-xs text-slate-300">Tap to enable premium voice playback</div>
+            </div>
+            <button
+              onClick={playPendingAudio}
+              className="btn-success btn-sm flex items-center gap-2 pulse-ring"
+            >
+              <span>🔓</span>
+              <span>Enable Voice</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Premium Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
