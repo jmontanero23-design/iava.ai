@@ -25,6 +25,7 @@ import PredictiveConfidencePanel from './components/PredictiveConfidencePanel.js
 import PersonalizedLearningPanel from './components/PersonalizedLearningPanel.jsx'
 import GeneticOptimizerPanel from './components/GeneticOptimizerPanel.jsx'
 import MarketSentiment from './components/MarketSentiment.jsx'
+import AITradeCopilot from './components/AITradeCopilot.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -33,6 +34,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('chart')
   const [selectedFeature, setSelectedFeature] = useState(null)
   const [showTour, setShowTour] = useState(false)
+  const [showCopilot, setShowCopilot] = useState(true) // AI Copilot visible by default
 
   // Keyboard shortcuts for elite UX
   useEffect(() => {
@@ -291,6 +293,11 @@ export default function App() {
         <TourHelpButton onClick={() => setShowTour(true)} />
 
         <ToastHub />
+
+        {/* AI Trade Copilot - Proactive position monitoring */}
+        {showCopilot && activeTab === 'chart' && (
+          <AITradeCopilot onClose={() => setShowCopilot(false)} />
+        )}
       </div>
     </MarketDataProvider>
   )
