@@ -49,6 +49,7 @@ export default function AIChat() {
   const [audioUnlocked, setAudioUnlocked] = useState(false) // Mobile Safari audio unlock status
   const [pendingAudio, setPendingAudio] = useState(null) // Audio waiting for user gesture
   const [showAudioPrompt, setShowAudioPrompt] = useState(false) // Show "Tap to enable voice" UI
+  const [debugLog, setDebugLog] = useState([]) // Debug log for troubleshooting
   const [trustMode, setTrustMode] = useState(() => {
     // Load trust mode preference from localStorage
     try {
@@ -522,15 +523,29 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
   const recognitionRef = useRef(null)
 
   const startVoiceInput = async () => {
+    const timestamp = new Date().toLocaleTimeString()
+    setDebugLog(prev => [...prev, `${timestamp} - 🎤 Mic button clicked`])
+
+    console.log('🎤 [DEBUG] Start voice input clicked!')
+    console.log('🎤 [DEBUG] Browser:', navigator.userAgent)
+    console.log('🎤 [DEBUG] Has SpeechRecognition:', 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window)
+
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      setDebugLog(prev => [...prev, `${timestamp} - ❌ Speech recognition not supported`])
+      console.error('🎤 [DEBUG] Speech recognition not supported!')
       alert('❌ Voice input not supported in this browser. Try Chrome/Edge.')
       return
     }
 
     // CRITICAL: Unlock audio on mobile Safari before starting voice (user gesture)
     if (isMobileSafari()) {
+      setDebugLog(prev => [...prev, `${timestamp} - 🔓 Unlocking audio (Mobile Safari)`])
+      console.log('🎤 [DEBUG] Mobile Safari detected - unlocking audio...')
       await unlockAudio()
     }
+
+    setDebugLog(prev => [...prev, `${timestamp} - ✅ Starting recognition...`])
+    console.log('🎤 [DEBUG] Attempting to start recognition...')
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SpeechRecognition()
@@ -744,13 +759,23 @@ Please review and submit the order in the Orders & Positions panel.`,
 
   // Play pending audio (called when user taps "Enable Voice" prompt)
   const playPendingAudio = async () => {
-    console.log('[Voice] Enable Voice button clicked!')
+    const timestamp = new Date().toLocaleTimeString()
+    setDebugLog(prev => [...prev, `${timestamp} - 🔊 ENABLE VOICE CLICKED`])
+
+    console.log('🔊 [DEBUG] ========== ENABLE VOICE CLICKED ==========')
+    console.log('🔊 [DEBUG] pendingAudio exists:', !!pendingAudio)
+    console.log('🔊 [DEBUG] audioUnlocked:', audioUnlocked)
+    console.log('🔊 [DEBUG] showAudioPrompt:', showAudioPrompt)
 
     if (!pendingAudio) {
-      console.error('[Voice] No pending audio to play')
+      setDebugLog(prev => [...prev, `${timestamp} - ❌ No pending audio`])
+      console.error('🔊 [DEBUG] No pending audio to play!')
       setShowAudioPrompt(false)
       return
     }
+
+    setDebugLog(prev => [...prev, `${timestamp} - ✅ Playing audio...`])
+    console.log('🔊 [DEBUG] Proceeding with audio playback...')
 
     try {
       console.log('[Voice] Attempting to unlock audio...')
@@ -866,8 +891,24 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
   }
 
   const handleSubmit = async (e) => {
+    const timestamp = new Date().toLocaleTimeString()
+    setDebugLog(prev => [...prev, `${timestamp} - Form submit triggered`])
+
+    console.log('🔵 [DEBUG] Form submit triggered!')
+    console.log('🔵 [DEBUG] Event:', e)
+    console.log('🔵 [DEBUG] Input value:', input)
+    console.log('🔵 [DEBUG] isTyping:', isTyping)
+
     e.preventDefault()
-    if ((!input.trim() && uploadedFiles.length === 0) || isTyping) return
+
+    if ((!input.trim() && uploadedFiles.length === 0) || isTyping) {
+      setDebugLog(prev => [...prev, `${timestamp} - Submit BLOCKED (empty or typing)`])
+      console.log('🔴 [DEBUG] Submit blocked - empty input or already typing')
+      return
+    }
+
+    setDebugLog(prev => [...prev, `${timestamp} - Submit PROCEEDING`])
+    console.log('🟢 [DEBUG] Submit proceeding...')
 
     // CRITICAL: Unlock audio on mobile Safari (user gesture required)
     if (isMobileSafari()) {
@@ -1564,6 +1605,25 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
         onTranscript={handleMobileTranscript}
         isListening={isListening}
       /> */}
+
+      {/* DEBUG PANEL - Shows diagnostic info on screen */}
+      <div className="fixed top-4 left-4 bg-black/90 text-white p-3 rounded-lg text-xs max-w-xs z-[100] font-mono" style={{ maxHeight: '200px', overflow: 'auto' }}>
+        <div className="font-bold mb-2 text-cyan-400">🔧 DEBUG MODE</div>
+        <div className="space-y-1">
+          <div>Audio Unlocked: {audioUnlocked ? '✅' : '❌'}</div>
+          <div>Pending Audio: {pendingAudio ? '✅' : '❌'}</div>
+          <div>Show Prompt: {showAudioPrompt ? '✅' : '❌'}</div>
+          <div>Is Listening: {isListening ? '🔴 YES' : '⚪ NO'}</div>
+          <div>Is Typing: {isTyping ? '⏳ YES' : '⚪ NO'}</div>
+          <div>Input: "{input.substring(0, 20)}{input.length > 20 ? '...' : ''}"</div>
+          <div className="pt-2 border-t border-cyan-500/30">
+            <div className="text-cyan-300 font-bold">Last Events:</div>
+            {debugLog.slice(-5).map((log, i) => (
+              <div key={i} className="text-xs opacity-70">{log}</div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
