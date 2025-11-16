@@ -26,6 +26,7 @@ import PersonalizedLearningPanel from './components/PersonalizedLearningPanel.js
 import GeneticOptimizerPanel from './components/GeneticOptimizerPanel.jsx'
 import MarketSentiment from './components/MarketSentiment.jsx'
 import AITradeCopilot from './components/AITradeCopilot.jsx'
+import PatternRecognition from './components/PatternRecognition.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -101,7 +102,9 @@ export default function App() {
       'multi_timeframe': 'multi-timeframe',
       'trade_journal': 'trade-journal',
       'personalized_learning': 'personalized-learning',
-      'genetic_optimizer': 'genetic-optimizer'
+      'genetic_optimizer': 'genetic-optimizer',
+      'pattern_recognition': 'pattern-recognition',
+      'market_sentiment': 'market-sentiment'
     }
 
     if (featureTabMap[featureId]) {
@@ -237,6 +240,10 @@ export default function App() {
 
         {activeTab === 'market-sentiment' && (
           <MarketSentiment />
+        )}
+
+        {activeTab === 'pattern-recognition' && (
+          <PatternRecognition />
         )}
 
         {activeTab === 'monitoring' && (
