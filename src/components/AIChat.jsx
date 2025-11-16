@@ -1619,24 +1619,6 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
         isListening={isListening}
       /> */}
 
-      {/* DEBUG PANEL - Shows diagnostic info on screen */}
-      <div className="fixed top-4 left-4 bg-black/90 text-white p-3 rounded-lg text-xs max-w-xs z-[100] font-mono" style={{ maxHeight: '200px', overflow: 'auto' }}>
-        <div className="font-bold mb-2 text-cyan-400">🔧 DEBUG MODE</div>
-        <div className="space-y-1">
-          <div>Audio Unlocked: {audioUnlocked ? '✅' : '❌'}</div>
-          <div>Pending Audio: {pendingAudio ? '✅' : '❌'}</div>
-          <div>Show Prompt: {showAudioPrompt ? '✅' : '❌'}</div>
-          <div>Is Listening: {isListening ? '🔴 YES' : '⚪ NO'}</div>
-          <div>Is Typing: {isTyping ? '⏳ YES' : '⚪ NO'}</div>
-          <div>Input: "{input.substring(0, 20)}{input.length > 20 ? '...' : ''}"</div>
-          <div className="pt-2 border-t border-cyan-500/30">
-            <div className="text-cyan-300 font-bold">Last Events:</div>
-            {debugLog.slice(-5).map((log, i) => (
-              <div key={i} className="text-xs opacity-70">{log}</div>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
