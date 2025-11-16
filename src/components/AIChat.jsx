@@ -12,6 +12,7 @@ import { useState, useRef, useEffect } from 'react'
 import { callAI } from '../utils/aiGateway.js'
 import { generateTradingSystemPrompt, buildMarketContext, formatContextForAI } from '../utils/aiContext.js'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
+import MobilePushToTalk from './MobilePushToTalk.jsx'
 
 export default function AIChat() {
   const { marketData } = useMarketData()
@@ -891,6 +892,17 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
     }
   }
 
+  // Handle transcript from mobile push-to-talk
+  const handleMobileTranscript = (transcript) => {
+    console.log('[Mobile Push-to-Talk] Received transcript:', transcript)
+    setInput(transcript)
+    // Auto-submit after a short delay
+    setTimeout(() => {
+      const submitEvent = { preventDefault: () => {} }
+      handleSubmit(submitEvent)
+    }, 100)
+  }
+
   const handleSubmit = async (e) => {
     const timestamp = new Date().toLocaleTimeString()
     setDebugLog(prev => [...prev, `${timestamp} - Form submit triggered`])
@@ -1219,63 +1231,24 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
         </div>
       </div>
 
-      {/* PROACTIVE VOICE UNLOCK - Always show on mobile until unlocked */}
-      {!audioUnlocked && isMobileSafari() && (
-        <div className="mx-4 mt-4 mb-2 p-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/40 rounded-lg relative animate-pulse" style={{ zIndex: 20 }}>
+      {/* CRITICAL: Mobile Safari Audio Unlock Prompt */}
+      {showAudioPrompt && pendingAudio && (
+        <div className="mx-4 mt-4 mb-2 p-4 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/40 rounded-lg relative" style={{ zIndex: 20 }}>
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
-              <div className="text-sm font-semibold text-emerald-300 mb-1">🎤 Enable Voice Features</div>
-              <div className="text-xs text-slate-300">Tap once to unlock voice input & AI speech</div>
+              <div className="text-sm font-semibold text-indigo-300 mb-1">🔊 Voice Ready</div>
+              <div className="text-xs text-slate-300">Tap to enable premium voice playback</div>
             </div>
             <button
-              onClick={() => {
-                const timestamp = new Date().toLocaleTimeString()
-                setDebugLog(prev => [...prev, `${timestamp} - 🔓 Proactive unlock clicked`])
-
-                // Create and play silent audio to unlock
-                const silentAudio = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADhAC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAA4T/jCp4AAAAAAAA//tQxAADB8AhSmxhIIEVCSiJrDCQBTcu3UrAIwUdkRgQbw4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e//tQxAkDU8altSvVIdEMFW9W+UgBH///////////////////////w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e3w4e')
-                silentAudio.volume = 0.01
-
-                silentAudio.play()
-                  .then(() => {
-                    setAudioUnlocked(true)
-                    setDebugLog(prev => [...prev, `${new Date().toLocaleTimeString()} - ✅ Audio unlocked!`])
-
-                    // Show success message
-                    window.dispatchEvent(new CustomEvent('iava.toast', {
-                      detail: {
-                        text: '✅ Voice enabled! Mic and AI speech are ready.',
-                        type: 'success',
-                        ttl: 3000
-                      }
-                    }))
-                  })
-                  .catch(err => {
-                    setDebugLog(prev => [...prev, `${new Date().toLocaleTimeString()} - ❌ Unlock failed: ${err.message}`])
-                    alert('❌ Please allow audio. Check your phone is not on silent mode.')
-                  })
-              }}
+              onClick={playPendingAudio}
               onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
               onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              className="btn-success btn-sm flex items-center gap-2 relative pulse-ring"
+              className="btn-success btn-sm flex items-center gap-2 relative"
               style={{ zIndex: 21, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               <span>🔓</span>
               <span>Enable Voice</span>
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* SUCCESS MESSAGE - Show when unlocked */}
-      {audioUnlocked && isMobileSafari() && messages.length <= 1 && (
-        <div className="mx-4 mt-4 mb-2 p-3 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/30 rounded-lg">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">✅</span>
-            <div>
-              <div className="text-sm font-semibold text-emerald-300">Voice Enabled!</div>
-              <div className="text-xs text-slate-400">Mic and AI speech are ready to use</div>
-            </div>
           </div>
         </div>
       )}
@@ -1639,6 +1612,12 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
           </button>
         </div>
       </form>
+
+      {/* ELITE: Mobile Push-to-Talk Interface - DISABLED (using inline mic instead) */}
+      {/* <MobilePushToTalk
+        onTranscript={handleMobileTranscript}
+        isListening={isListening}
+      /> */}
 
       {/* DEBUG PANEL - Shows diagnostic info on screen */}
       <div className="fixed top-4 left-4 bg-black/90 text-white p-3 rounded-lg text-xs max-w-xs z-[100] font-mono" style={{ maxHeight: '200px', overflow: 'auto' }}>
