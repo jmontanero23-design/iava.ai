@@ -104,14 +104,81 @@ export default function TradeJournalAIPanel() {
     }
   }
 
+  // ELITE: Analyze trade sentiment with HuggingFace AI
+  const analyzeTradeSentiment = async (notes) => {
+    if (!notes || notes.trim().length < 10) {
+      return {
+        sentiment: 'neutral',
+        emotions: [],
+        confidence: 0
+      }
+    }
+
+    try {
+      const response = await fetch('/api/sentiment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: notes })
+      })
+
+      if (!response.ok) throw new Error('Sentiment analysis failed')
+
+      const result = await response.json()
+
+      // Detect specific trading emotions from keywords
+      const emotionKeywords = {
+        fear: ['scared', 'afraid', 'nervous', 'worried', 'panic', 'anxious', 'terrified'],
+        greed: ['greedy', 'euphoric', 'excited', 'overconfident', 'invincible'],
+        fomo: ['fomo', 'missing out', 'everyone else', 'had to get in', 'rushing'],
+        revenge: ['revenge', 'get back', 'make it back', 'angry', 'frustrated', 'mad'],
+        discipline: ['plan', 'followed rules', 'stuck to', 'patient', 'disciplined'],
+        confidence: ['confident', 'clear', 'conviction', 'certain', 'sure']
+      }
+
+      const notesLower = notes.toLowerCase()
+      const detectedEmotions = Object.keys(emotionKeywords).filter(emotion =>
+        emotionKeywords[emotion].some(keyword => notesLower.includes(keyword))
+      )
+
+      return {
+        sentiment: result.sentiment,
+        label: result.label,
+        confidence: result.score,
+        emotions: detectedEmotions,
+        rawText: notes.substring(0, 100)
+      }
+    } catch (error) {
+      console.error('[Trade Sentiment] Error:', error)
+      return {
+        sentiment: 'neutral',
+        emotions: [],
+        confidence: 0
+      }
+    }
+  }
+
   const handleAIReview = async (trade) => {
     setAiReviewing(true)
     setSelectedTrade(trade)
     setAiReview(null)
 
     try {
+      // Get base AI review
       const review = await reviewTrade(trade)
-      setAiReview(review)
+
+      // ENHANCEMENT: Add sentiment analysis of trade notes
+      const sentiment = await analyzeTradeSentiment(trade.notes)
+
+      // Combine review with sentiment insights
+      const enhancedReview = {
+        ...review,
+        sentiment: sentiment.sentiment,
+        emotions: sentiment.emotions,
+        sentimentConfidence: sentiment.confidence,
+        psychologyInsights: generatePsychologyInsights(trade, sentiment)
+      }
+
+      setAiReview(enhancedReview)
     } catch (error) {
       console.error('AI review failed:', error)
       setAiReview({
@@ -121,6 +188,75 @@ export default function TradeJournalAIPanel() {
     } finally {
       setAiReviewing(false)
     }
+  }
+
+  // Generate psychology insights based on trade + sentiment
+  const generatePsychologyInsights = (trade, sentiment) => {
+    const insights = []
+
+    // Check for emotional trading patterns
+    if (sentiment.emotions.includes('fear') && trade.outcome === 'loss') {
+      insights.push({
+        type: 'warning',
+        icon: '⚠️',
+        text: 'Fear-based exit detected. Consider setting mental stops before entering trades.'
+      })
+    }
+
+    if (sentiment.emotions.includes('greed') && trade.outcome === 'loss') {
+      insights.push({
+        type: 'danger',
+        icon: '🚨',
+        text: 'Greed likely caused overtrading. Stick to your profit targets.'
+      })
+    }
+
+    if (sentiment.emotions.includes('fomo')) {
+      insights.push({
+        type: 'warning',
+        icon: '⏸️',
+        text: 'FOMO detected. Best setups come when you wait patiently.'
+      })
+    }
+
+    if (sentiment.emotions.includes('revenge')) {
+      insights.push({
+        type: 'danger',
+        icon: '🛑',
+        text: 'Revenge trading is extremely dangerous. Take a break after losses.'
+      })
+    }
+
+    if (sentiment.emotions.includes('discipline') && trade.outcome === 'win') {
+      insights.push({
+        type: 'success',
+        icon: '✅',
+        text: 'Disciplined execution! This is the path to consistent profitability.'
+      })
+    }
+
+    // Check win rate vs emotions
+    if (sentiment.sentiment === 'negative' && trade.outcome === 'win') {
+      insights.push({
+        type: 'info',
+        icon: '💡',
+        text: 'Negative notes despite winning. Focus on process, not just outcomes.'
+      })
+    }
+
+    // Position sizing insights
+    const riskPercent = trade.stopLoss ?
+      Math.abs((trade.entryPrice - trade.stopLoss) / trade.entryPrice) * 100 : null
+
+    if (riskPercent && riskPercent > 3) {
+      insights.push({
+        type: 'warning',
+        icon: '💰',
+        text: `Risk of ${riskPercent.toFixed(1)}% is high. Consider risking 1-2% per trade.`
+      })
+    }
+
+    return insights
   }
 
   const handleDelete = (tradeId) => {
@@ -518,20 +654,104 @@ export default function TradeJournalAIPanel() {
                   </div>
 
                   {aiReview && aiReview.review && (
-                    <div className="p-3 bg-violet-500/10 rounded-lg border border-violet-500/20">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-base">🤖</span>
-                        <div className="text-sm font-bold text-violet-200">AI Analysis</div>
+                    <div className="space-y-3">
+                      {/* Base AI Review */}
+                      <div className="p-3 bg-violet-500/10 rounded-lg border border-violet-500/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-base">🤖</span>
+                          <div className="text-sm font-bold text-violet-200">AI Analysis</div>
+                        </div>
+                        <div className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
+                          {aiReview.review}
+                        </div>
                       </div>
-                      <div className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
-                        {aiReview.review}
-                      </div>
+
+                      {/* ELITE: Sentiment Analysis */}
+                      {aiReview.sentiment && (
+                        <div className="p-3 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-lg border border-indigo-500/20">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base">🧠</span>
+                              <div className="text-sm font-bold text-indigo-200">Trading Psychology</div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs font-semibold ${
+                                aiReview.sentiment === 'positive' ? 'text-emerald-400' :
+                                aiReview.sentiment === 'negative' ? 'text-red-400' :
+                                'text-slate-400'
+                              }`}>
+                                {aiReview.sentiment === 'positive' ? '✅ Positive' :
+                                 aiReview.sentiment === 'negative' ? '❌ Negative' :
+                                 '➖ Neutral'}
+                              </span>
+                              <span className="text-xs text-slate-500">
+                                {Math.round((aiReview.sentimentConfidence || 0) * 100)}% confident
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Detected Emotions */}
+                          {aiReview.emotions && aiReview.emotions.length > 0 && (
+                            <div className="mb-2">
+                              <div className="text-xs text-slate-400 mb-1">Detected Emotions:</div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {aiReview.emotions.map((emotion, idx) => {
+                                  const emotionStyles = {
+                                    fear: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+                                    greed: 'bg-red-500/20 text-red-300 border-red-500/30',
+                                    fomo: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+                                    revenge: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+                                    discipline: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+                                    confidence: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                                  }
+                                  return (
+                                    <span
+                                      key={idx}
+                                      className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${emotionStyles[emotion] || 'bg-slate-500/20 text-slate-300'}`}
+                                    >
+                                      {emotion.charAt(0).toUpperCase() + emotion.slice(1)}
+                                    </span>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Psychology Insights */}
+                          {aiReview.psychologyInsights && aiReview.psychologyInsights.length > 0 && (
+                            <div className="space-y-2 mt-2">
+                              {aiReview.psychologyInsights.map((insight, idx) => {
+                                const insightStyles = {
+                                  success: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200',
+                                  warning: 'bg-amber-500/10 border-amber-500/30 text-amber-200',
+                                  danger: 'bg-red-500/10 border-red-500/30 text-red-200',
+                                  info: 'bg-cyan-500/10 border-cyan-500/30 text-cyan-200'
+                                }
+                                return (
+                                  <div
+                                    key={idx}
+                                    className={`p-2 rounded border ${insightStyles[insight.type] || insightStyles.info}`}
+                                  >
+                                    <div className="flex items-start gap-2 text-xs">
+                                      <span>{insight.icon}</span>
+                                      <span>{insight.text}</span>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {aiReviewing && (
                     <div className="p-3 bg-slate-700/30 rounded-lg text-sm text-slate-400 text-center">
-                      Analyzing trade with AI...
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="spinner-sm" />
+                        <span>Analyzing trade psychology with AI...</span>
+                      </div>
                     </div>
                   )}
 
