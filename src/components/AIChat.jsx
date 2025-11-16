@@ -471,22 +471,28 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
 
       // Dispatch event to load symbol in chart
       window.dispatchEvent(new CustomEvent('iava.loadSymbol', {
-        detail: { symbol, timeframe }
+        detail: { symbol: symbol.toUpperCase(), timeframe }
       }))
 
-      // Wait for market data to update (give it 2 seconds max)
+      // Wait for market data to update (give it 5 seconds max)
+      let checks = 0
       const checkInterval = setInterval(() => {
-        if (marketData.symbol === symbol && marketData.updatedAt) {
+        checks++
+        console.log(`[AI Chat] Waiting for ${symbol} to load... (check ${checks}/50, current: ${marketData.symbol})`)
+
+        // Case-insensitive comparison
+        if (marketData.symbol?.toUpperCase() === symbol.toUpperCase() && marketData.bars?.length > 0) {
           clearInterval(checkInterval)
-          console.log('[AI Chat] Symbol loaded successfully:', symbol)
+          console.log('[AI Chat] ✅ Symbol loaded successfully:', symbol, 'bars:', marketData.bars?.length)
           resolve(true)
         }
       }, 100)
 
       setTimeout(() => {
         clearInterval(checkInterval)
-        resolve(false) // Timeout
-      }, 2000)
+        console.warn('[AI Chat] ⏱️ Symbol load timeout for:', symbol, '- current symbol:', marketData.symbol)
+        resolve(false) // Timeout after 5 seconds
+      }, 5000)
     })
   }
 
@@ -1503,20 +1509,22 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
             <span style={{ fontSize: 'var(--text-xl)' }}>📎</span>
           </button>
 
-          {/* Voice Input Button */}
-          <button
-            type="button"
-            onClick={isListening ? stopVoiceInput : startVoiceInput}
-            className={`btn-icon relative ${
-              isListening
-                ? 'bg-rose-600/20 border-rose-500/40 animate-pulse'
-                : 'btn-secondary'
-            }`}
-            style={{ zIndex: 2 }}
-            title={isListening ? 'Stop recording' : 'Voice input'}
-          >
-            <span style={{ fontSize: 'var(--text-xl)' }}>{isListening ? '🔴' : '🎤'}</span>
-          </button>
+          {/* Voice Input Button - DESKTOP ONLY (mobile uses floating MobilePushToTalk) */}
+          {!(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth <= 768) && (
+            <button
+              type="button"
+              onClick={isListening ? stopVoiceInput : startVoiceInput}
+              className={`btn-icon relative ${
+                isListening
+                  ? 'bg-rose-600/20 border-rose-500/40 animate-pulse'
+                  : 'btn-secondary'
+              }`}
+              style={{ zIndex: 2 }}
+              title={isListening ? 'Stop recording' : 'Voice input'}
+            >
+              <span style={{ fontSize: 'var(--text-xl)' }}>{isListening ? '🔴' : '🎤'}</span>
+            </button>
+          )}
 
           <div className="flex-1 relative group">
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-focus-within:opacity-10 transition-opacity blur-xl pointer-events-none" style={{ borderRadius: 'var(--radius-xl)' }} />
@@ -1526,14 +1534,18 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about markets, upload chart screenshots, or share documents..."
               className="input relative w-full px-4 py-3 bg-slate-800/50 border-slate-700/50 focus:border-indigo-500/50 text-slate-200 placeholder-slate-500 shadow-lg"
-              style={{ borderRadius: 'var(--radius-xl)', fontSize: 'var(--text-sm)', zIndex: 1 }}
+              style={{ borderRadius: 'var(--radius-xl)', fontSize: 'var(--text-sm)', zIndex: 1, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
               disabled={isTyping}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="sentences"
             />
           </div>
           <button
             type="submit"
             disabled={(!input.trim() && uploadedFiles.length === 0) || isTyping}
-            className="btn-primary"
+            className="btn-primary relative"
+            style={{ zIndex: 2, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             {isTyping ? (
               <div className="flex items-center gap-2">
