@@ -60,14 +60,27 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
       const setup = event.detail
       console.log('[Orders] Received AI trade setup:', setup)
 
+      // Validate setup data
+      if (!setup.symbol || !setup.side) {
+        console.error('[Orders] Invalid trade setup - missing symbol or side:', setup)
+        return
+      }
+
       // Populate order form
-      if (setup.symbol) setSym(setup.symbol)
-      if (setup.side) setSide(setup.side === 'sell' ? 'sell' : 'buy')
+      setSym(setup.symbol)
+      setSide(setup.side === 'sell' ? 'sell' : 'buy')
+
+      // Set quantity if provided by AI
+      if (setup.qty && Number.isFinite(setup.qty) && setup.qty > 0) {
+        setQty(setup.qty)
+        console.log('[Orders] AI specified quantity:', setup.qty)
+      }
 
       // If we have entry price and targets, use bracket order
       if (setup.stopLoss || setup.target) {
         setKlass('bracket')
 
+        // Use current lastPrice from closure (avoid stale price)
         const price = setup.entry || Number(lastPrice || 0)
         if (price && setup.stopLoss) {
           const slDiff = Math.abs(price - setup.stopLoss) / price * 100
@@ -77,12 +90,25 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
           const tpDiff = Math.abs(setup.target - price) / price * 100
           setTpPct(tpDiff)
         }
+
+        // Auto-calculate quantity if not provided by AI (after state updates)
+        if (!setup.qty) {
+          console.log('[Orders] Auto-calculating quantity for bracket order...')
+          setTimeout(() => {
+            // Trigger quantity calculation based on risk %
+            const calcButton = document.querySelector('button[title*="Calculate quantity"]')
+            if (calcButton) {
+              calcButton.click()
+              console.log('[Orders] Auto-triggered Calc Qty')
+            }
+          }, 100)
+        }
       }
 
       // Show toast notification
       window.dispatchEvent(new CustomEvent('iava.toast', {
         detail: {
-          text: `Trade setup loaded: ${setup.symbol} ${setup.side?.toUpperCase()}`,
+          text: `Trade setup loaded: ${setup.symbol} ${setup.side?.toUpperCase()}${setup.qty ? ` (${setup.qty} shares)` : ''}`,
           type: 'success',
           ttl: 3000
         }
@@ -91,7 +117,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
 
     window.addEventListener('ai-trade-setup', handleTradeSetup)
     return () => window.removeEventListener('ai-trade-setup', handleTradeSetup)
-  }, [lastPrice])
+  }, []) // Removed lastPrice dependency to prevent listener recreation
 
   function calcQtyFromRisk() {
     const price = Number(lastPrice || 0)
