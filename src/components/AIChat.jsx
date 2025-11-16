@@ -742,10 +742,19 @@ Please review and submit the order in the Orders & Positions panel.`,
 
   // Play pending audio (called when user taps "Enable Voice" prompt)
   const playPendingAudio = async () => {
-    if (!pendingAudio) return
+    console.log('[Voice] Enable Voice button clicked!')
+
+    if (!pendingAudio) {
+      console.error('[Voice] No pending audio to play')
+      setShowAudioPrompt(false)
+      return
+    }
 
     try {
+      console.log('[Voice] Attempting to unlock audio...')
       await unlockAudio() // Ensure audio is unlocked
+
+      console.log('[Voice] Creating audio element...')
       const audioElement = new Audio(pendingAudio)
       audioElement.playbackRate = 1.1
 
@@ -758,12 +767,20 @@ Please review and submit the order in the Orders & Positions panel.`,
         }, 500)
       }
 
+      audioElement.onerror = (e) => {
+        console.error('[Voice] Audio playback error:', e)
+        alert('❌ Audio playback failed. Please try again.')
+      }
+
+      console.log('[Voice] Playing audio...')
       await audioElement.play()
       console.log('🔊 Playing pending audio with PREMIUM voice')
       setPendingAudio(null)
       setShowAudioPrompt(false)
+      setAudioUnlocked(true)
     } catch (error) {
       console.error('🔊 Failed to play pending audio:', error)
+      alert(`❌ Voice playback error: ${error.message}. Try tapping the button again.`)
     }
   }
 
@@ -852,6 +869,21 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
     // CRITICAL: Unlock audio on mobile Safari (user gesture required)
     if (isMobileSafari()) {
       await unlockAudio()
+    }
+
+    // CRITICAL: Warn if chart data not loaded (unless asking general questions or uploading files)
+    const hasUploadedImages = uploadedFiles.some(f => f.isImage)
+    const isChartQuery = input.toLowerCase().match(/\b(chart|price|score|unicorn|trend|ema|saty|support|resistance|entry|stop|target|trade)\b/)
+    if (isChartQuery && !hasUploadedImages && !hasRealData && !marketData.bars?.length) {
+      const warningMsg = {
+        role: 'assistant',
+        content: '⚠️ **Chart data not loaded yet**\n\nI need live chart data to answer technical questions accurately. Please:\n1. Load a symbol on the Chart tab (Tab #1)\n2. Wait for the chart to finish loading\n3. Then ask your question\n\nOr upload a chart screenshot for analysis instead!',
+        timestamp: Date.now(),
+        warning: true
+      }
+      setMessages(prev => [...prev, warningMsg])
+      setInput('')
+      return
     }
 
     const userMessage = {
@@ -1144,7 +1176,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
 
       {/* CRITICAL: Mobile Safari Audio Unlock Prompt */}
       {showAudioPrompt && pendingAudio && (
-        <div className="mx-4 mt-4 mb-2 p-4 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/40 rounded-lg animate-pulse">
+        <div className="mx-4 mt-4 mb-2 p-4 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/40 rounded-lg relative" style={{ zIndex: 20 }}>
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
               <div className="text-sm font-semibold text-indigo-300 mb-1">🔊 Voice Ready</div>
@@ -1152,7 +1184,8 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
             </div>
             <button
               onClick={playPendingAudio}
-              className="btn-success btn-sm flex items-center gap-2 pulse-ring"
+              className="btn-success btn-sm flex items-center gap-2 relative"
+              style={{ zIndex: 21 }}
             >
               <span>🔓</span>
               <span>Enable Voice</span>
@@ -1413,7 +1446,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
       )}
 
       {/* Premium Input Area */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-slate-700/50 bg-slate-900/30 backdrop-blur-sm">
+      <form onSubmit={handleSubmit} className="p-4 border-t border-slate-700/50 bg-slate-900/30 backdrop-blur-sm relative" style={{ zIndex: 10 }}>
         {/* File Preview Area */}
         {uploadedFiles.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
@@ -1474,25 +1507,26 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
           <button
             type="button"
             onClick={isListening ? stopVoiceInput : startVoiceInput}
-            className={`btn-icon ${
+            className={`btn-icon relative ${
               isListening
                 ? 'bg-rose-600/20 border-rose-500/40 animate-pulse'
                 : 'btn-secondary'
             }`}
+            style={{ zIndex: 2 }}
             title={isListening ? 'Stop recording' : 'Voice input'}
           >
             <span style={{ fontSize: 'var(--text-xl)' }}>{isListening ? '🔴' : '🎤'}</span>
           </button>
 
           <div className="flex-1 relative group">
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-focus-within:opacity-10 transition-opacity blur-xl" style={{ borderRadius: 'var(--radius-xl)' }} />
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-focus-within:opacity-10 transition-opacity blur-xl pointer-events-none" style={{ borderRadius: 'var(--radius-xl)' }} />
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about markets, upload chart screenshots, or share documents..."
               className="input relative w-full px-4 py-3 bg-slate-800/50 border-slate-700/50 focus:border-indigo-500/50 text-slate-200 placeholder-slate-500 shadow-lg"
-              style={{ borderRadius: 'var(--radius-xl)', fontSize: 'var(--text-sm)' }}
+              style={{ borderRadius: 'var(--radius-xl)', fontSize: 'var(--text-sm)', zIndex: 1 }}
               disabled={isTyping}
             />
           </div>
