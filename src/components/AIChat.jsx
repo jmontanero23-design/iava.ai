@@ -697,12 +697,8 @@ Please review and submit the order in the Orders & Positions panel.`,
         audioElement.playbackRate = 1.1 // Slightly faster for efficiency
 
         audioElement.onended = () => {
-          console.log('🔊 Premium speech finished, restarting voice input...')
-          setTimeout(() => {
-            if (!isListening) {
-              startVoiceInput()
-            }
-          }, 500) // Small delay before restarting
+          console.log('🔊 Premium speech finished')
+          // REMOVED: Auto-restart voice input (unwanted on mobile - drains battery, privacy concern)
         }
 
         audioElement.onerror = (e) => {
@@ -765,17 +761,16 @@ Please review and submit the order in the Orders & Positions panel.`,
       audioElement.playbackRate = 1.1
 
       audioElement.onended = () => {
-        console.log('🔊 Premium speech finished, restarting voice input...')
-        setTimeout(() => {
-          if (!isListening) {
-            startVoiceInput()
-          }
-        }, 500)
+        console.log('🔊 Premium speech finished')
+        // REMOVED: Auto-restart voice input (unwanted behavior on mobile)
       }
 
       audioElement.onerror = (e) => {
         console.error('[Voice] Audio playback error:', e)
-        alert('❌ Audio playback failed. Please try again.')
+        // Dismiss prompt on error
+        setPendingAudio(null)
+        setShowAudioPrompt(false)
+        alert('❌ Audio playback failed. Please try speaking your message again.')
       }
 
       console.log('[Voice] Playing audio...')
@@ -786,7 +781,10 @@ Please review and submit the order in the Orders & Positions panel.`,
       setAudioUnlocked(true)
     } catch (error) {
       console.error('🔊 Failed to play pending audio:', error)
-      alert(`❌ Voice playback error: ${error.message}. Try tapping the button again.`)
+      // CRITICAL: Dismiss prompt on error (was missing!)
+      setPendingAudio(null)
+      setShowAudioPrompt(false)
+      alert(`❌ Voice playback error: ${error.message}. Try speaking your message again.`)
     }
   }
 
@@ -809,9 +807,8 @@ Please review and submit the order in the Orders & Positions panel.`,
     const utterance = new SpeechSynthesisUtterance(cleanText)
     utterance.rate = 1.1
     utterance.onend = () => {
-      setTimeout(() => {
-        if (!isListening) startVoiceInput()
-      }, 500)
+      console.log('🔊 Fallback browser TTS finished')
+      // REMOVED: Auto-restart voice input
     }
 
     window.speechSynthesis.speak(utterance)
@@ -1128,7 +1125,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
   ]
 
   return (
-    <div className="glass-panel flex flex-col h-[750px] overflow-hidden">
+    <div className="glass-panel flex flex-col overflow-hidden" style={{ height: 'clamp(500px, 750px, 90vh)' }}>
       {/* Premium Header with animated background */}
       <div className="panel-header">
         <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl animate-pulse pointer-events-none" style={{ animationDuration: '4s' }} />
@@ -1190,8 +1187,10 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
             </div>
             <button
               onClick={playPendingAudio}
+              onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+              onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
               className="btn-success btn-sm flex items-center gap-2 relative"
-              style={{ zIndex: 21 }}
+              style={{ zIndex: 21, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               <span>🔓</span>
               <span>Enable Voice</span>
@@ -1452,7 +1451,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
       )}
 
       {/* Premium Input Area */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-slate-700/50 bg-slate-900/30 backdrop-blur-sm relative" style={{ zIndex: 10 }}>
+      <form onSubmit={handleSubmit} className="p-4 border-t border-slate-700/50 bg-slate-900/30 backdrop-blur-sm relative" style={{ zIndex: 30 }}>
         {/* File Preview Area */}
         {uploadedFiles.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
