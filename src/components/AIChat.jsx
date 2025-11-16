@@ -48,6 +48,14 @@ export default function AIChat() {
   const [audioUnlocked, setAudioUnlocked] = useState(false) // Mobile Safari audio unlock status
   const [pendingAudio, setPendingAudio] = useState(null) // Audio waiting for user gesture
   const [showAudioPrompt, setShowAudioPrompt] = useState(false) // Show "Tap to enable voice" UI
+  const [trustMode, setTrustMode] = useState(() => {
+    // Load trust mode preference from localStorage
+    try {
+      return localStorage.getItem('iava_trust_mode') === 'true'
+    } catch {
+      return false
+    }
+  })
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
 
@@ -58,6 +66,30 @@ export default function AIChat() {
       timestamp: Date.now()
     }))
   }, [messages])
+
+  // Toggle Trust Mode for instant trade execution
+  const toggleTrustMode = () => {
+    const newValue = !trustMode
+    setTrustMode(newValue)
+    localStorage.setItem('iava_trust_mode', String(newValue))
+
+    if (newValue) {
+      // Show warning when enabling trust mode
+      const warningMsg = {
+        role: 'assistant',
+        content: '⚡ **TRUST MODE ENABLED** ⚡\n\nTrades will now execute INSTANTLY without confirmation when I recommend them. Make sure you trust my analysis before enabling this mode.\n\nTo disable: Click the "Trust Mode" button again.',
+        timestamp: Date.now()
+      }
+      setMessages(prev => [...prev, warningMsg])
+    } else {
+      const infoMsg = {
+        role: 'assistant',
+        content: '🛡️ Trust Mode disabled. Trades will now require your confirmation before execution.',
+        timestamp: Date.now()
+      }
+      setMessages(prev => [...prev, infoMsg])
+    }
+  }
 
   // Background AI Processing: Resume pending requests on mount
   useEffect(() => {
@@ -998,9 +1030,18 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
       const tradeSetup = parseTradeSetup(result.content)
       if (tradeSetup && tradeSetup.entry) {
         console.log('[Voice-to-Trade] Trade recommendation detected:', tradeSetup)
-        // Add trade confirmation to message
-        assistantMessage.tradeSetup = tradeSetup
-        assistantMessage.awaitingTradeConfirmation = true
+
+        if (trustMode) {
+          // TRUST MODE ENABLED: Execute trade INSTANTLY without confirmation
+          console.log('[Voice-to-Trade] Trust Mode ACTIVE - Executing trade instantly:', tradeSetup)
+          setTimeout(() => confirmTrade(tradeSetup), 500) // Small delay for UX
+          assistantMessage.tradeSetup = tradeSetup
+          assistantMessage.tradeConfirmed = true // Mark as already confirmed
+        } else {
+          // SAFE MODE: Request user confirmation
+          assistantMessage.tradeSetup = tradeSetup
+          assistantMessage.awaitingTradeConfirmation = true
+        }
       }
 
       // Speak the response (if not an error)
@@ -1060,6 +1101,17 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
           </div>
           {/* Action Buttons */}
           <div className="flex gap-2">
+            <button
+              onClick={toggleTrustMode}
+              className={`btn-sm ${
+                trustMode
+                  ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold shadow-lg shadow-emerald-500/50 pulse-ring'
+                  : 'btn-ghost'
+              }`}
+              title={trustMode ? 'Trust Mode ON - Trades execute instantly!' : 'Trust Mode OFF - Trades require confirmation'}
+            >
+              {trustMode ? '⚡ Trust Mode' : '🛡️ Safe Mode'}
+            </button>
             <button
               onClick={exportChat}
               className="btn-tertiary btn-sm"
