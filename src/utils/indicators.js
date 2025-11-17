@@ -68,6 +68,81 @@ export function atr(bars, period = 14) {
   return out
 }
 
+// RSI (Relative Strength Index) - PhD-level precision
+export function rsi(values, period = 14) {
+  const out = new Array(values.length).fill(null)
+  let avgGain = 0, avgLoss = 0
+
+  // Calculate initial average gain/loss
+  for (let i = 1; i <= period; i++) {
+    const change = values[i] - values[i - 1]
+    if (change > 0) avgGain += change
+    else avgLoss += Math.abs(change)
+  }
+  avgGain /= period
+  avgLoss /= period
+
+  // First RSI value
+  const rs = avgGain / (avgLoss || 1)
+  out[period] = 100 - (100 / (1 + rs))
+
+  // Wilder's smoothing for subsequent values
+  for (let i = period + 1; i < values.length; i++) {
+    const change = values[i] - values[i - 1]
+    const gain = change > 0 ? change : 0
+    const loss = change < 0 ? Math.abs(change) : 0
+
+    avgGain = ((avgGain * (period - 1)) + gain) / period
+    avgLoss = ((avgLoss * (period - 1)) + loss) / period
+
+    const rsValue = avgGain / (avgLoss || 1)
+    out[i] = 100 - (100 / (1 + rsValue))
+  }
+
+  return out
+}
+
+// Relative Volume - compares current volume to average
+export function relativeVolume(bars, period = 20) {
+  if (!bars?.length) return []
+  const volumes = bars.map(b => b.volume || 0)
+  const avgVol = sma(volumes, period)
+  const relVol = new Array(bars.length).fill(null)
+
+  for (let i = 0; i < bars.length; i++) {
+    if (avgVol[i] != null && avgVol[i] > 0) {
+      relVol[i] = volumes[i] / avgVol[i]
+    }
+  }
+
+  return relVol
+}
+
+// ATR Percentile - volatility regime detection
+export function atrPercentile(bars, atrPeriod = 14, lookback = 100) {
+  const atrValues = atr(bars, atrPeriod)
+  const percentiles = new Array(bars.length).fill(null)
+
+  for (let i = lookback; i < bars.length; i++) {
+    const currentATR = atrValues[i]
+    if (currentATR == null) continue
+
+    // Get ATR values for lookback period
+    const historicalATR = []
+    for (let j = i - lookback; j < i; j++) {
+      if (atrValues[j] != null) historicalATR.push(atrValues[j])
+    }
+
+    if (historicalATR.length === 0) continue
+
+    // Calculate percentile rank
+    const below = historicalATR.filter(v => v < currentATR).length
+    percentiles[i] = (below / historicalATR.length) * 100
+  }
+
+  return percentiles
+}
+
 // SATY ATR Levels derived from last ATR and prior close pivot
 export function satyAtrLevels(bars, lookback = 14) {
   if (!bars?.length) return null
@@ -326,6 +401,12 @@ export function computeStates(bars) {
   const saty = satyAtrLevels(bars, 14)
   const rip = ripsterBias3450(close)
   const sq = squeezeState(close, high, low, 20)
+
+  // PhD++ ENHANCEMENTS: RSI, Volume, Volatility Regime
+  const rsiValues = rsi(close, 14)
+  const relVol = relativeVolume(bars, 20)
+  const atrPct = atrPercentile(bars, 14, 100)
+
   // Ichimoku simple regime: price vs cloud midpoint at last bar
   const ichi = ichimoku(bars)
   const i = bars.length - 1
@@ -343,38 +424,117 @@ export function computeStates(bars) {
 
   const pivotNow = ribbon.state[i]
   const satyDir = satyTriggerDirection(bars, saty)
-  // Unicorn Score v1 heuristic (using configurable weights)
+
+  // BIDIRECTIONAL Unicorn Score (bullish = positive, bearish = negative)
+  // Range: -100 to +100 instead of 0 to 100
   let score = 0
   const components = {}
-  const add = (k, v) => { components[k] = v; score += v }
-  add('pivotRibbon', pivotNow === 'bullish' ? UNICORN_WEIGHTS.pivotRibbon : 0)
-  add('ripster3450', rip.bias === 'bullish' ? UNICORN_WEIGHTS.ripster3450 : 0)
-  add('satyTrigger', (satyDir === 'long' && pivotNow === 'bullish') ? UNICORN_WEIGHTS.satyTrigger : 0)
-  // Squeeze scoring (symmetric):
-  // - ON (compression building): uses squeezeOn weight
-  // - Fired in the direction of prevailing regime (up for bull, down for bear): uses squeezeFired weight (decays over 5 bars)
+
+  // Helper to add bidirectional score
+  const add = (k, bullishValue, bearishValue) => {
+    const value = pivotNow === 'bullish' ? bullishValue :
+                  pivotNow === 'bearish' ? bearishValue : 0
+    components[k] = value
+    score += value
+  }
+
+  // Core trend indicators (bidirectional)
+  add('pivotRibbon',
+    pivotNow === 'bullish' ? UNICORN_WEIGHTS.pivotRibbon : 0,
+    pivotNow === 'bearish' ? -UNICORN_WEIGHTS.pivotRibbon : 0
+  )
+
+  add('ripster3450',
+    rip.bias === 'bullish' ? UNICORN_WEIGHTS.ripster3450 : 0,
+    rip.bias === 'bearish' ? -UNICORN_WEIGHTS.ripster3450 : 0
+  )
+
+  add('satyTrigger',
+    (satyDir === 'long' && pivotNow === 'bullish') ? UNICORN_WEIGHTS.satyTrigger : 0,
+    (satyDir === 'short' && pivotNow === 'bearish') ? -UNICORN_WEIGHTS.satyTrigger : 0
+  )
+
+  // Squeeze scoring (bidirectional)
   let squeezeScore = 0
   if (sq.on) {
-    squeezeScore = UNICORN_WEIGHTS.squeezeOn
+    squeezeScore = UNICORN_WEIGHTS.squeezeOn // Neutral - just building pressure
   } else {
     const recent = sq.fired || (sq.firedBarsAgo != null && sq.firedBarsAgo <= 5)
     if (recent) {
-      // Prevailing regime from ribbon/ichi
       const bullish = pivotNow === 'bullish' || ichiRegime === 'bullish'
       const bearish = pivotNow === 'bearish' || ichiRegime === 'bearish'
       const dirNow = sq.fired ? sq.dir : sq.lastDir
-      const aligned = (dirNow === 'up' && bullish) || (dirNow === 'down' && bearish)
-      if (aligned) {
+      const alignedBull = (dirNow === 'up' && bullish)
+      const alignedBear = (dirNow === 'down' && bearish)
+
+      if (alignedBull || alignedBear) {
         const age = sq.fired ? 0 : (sq.firedBarsAgo || 0)
         const base = UNICORN_WEIGHTS.squeezeFired
         const minScore = 5
         const decayed = Math.max(minScore, base - age * 5)
-        squeezeScore = decayed
+        squeezeScore = alignedBull ? decayed : -decayed
       }
     }
   }
-  add('squeeze', squeezeScore)
-  add('ichimoku', ichiRegime === 'bullish' ? UNICORN_WEIGHTS.ichimoku : 0)
+  components.squeeze = squeezeScore
+  score += squeezeScore
+
+  // Ichimoku (bidirectional)
+  const ichiScore = ichiRegime === 'bullish' ? UNICORN_WEIGHTS.ichimoku :
+                    ichiRegime === 'bearish' ? -UNICORN_WEIGHTS.ichimoku : 0
+  components.ichimoku = ichiScore
+  score += ichiScore
+
+  // PhD++ ENHANCEMENTS:
+
+  // RSI Momentum (add up to ±10 points)
+  const currentRSI = rsiValues[i]
+  let rsiScore = 0
+  if (currentRSI != null) {
+    if (currentRSI >= 60 && currentRSI < 80) rsiScore = 10 // Strong bullish momentum
+    else if (currentRSI >= 50 && currentRSI < 60) rsiScore = 5 // Mild bullish
+    else if (currentRSI <= 40 && currentRSI > 20) rsiScore = -10 // Strong bearish momentum
+    else if (currentRSI <= 50 && currentRSI > 40) rsiScore = -5 // Mild bearish
+    // RSI > 80 or < 20 = overbought/oversold, score = 0 (caution)
+  }
+  components.rsiMomentum = rsiScore
+  score += rsiScore
+
+  // Volume Confirmation (add up to ±10 points for high volume breakouts)
+  const currentRelVol = relVol[i]
+  let volumeScore = 0
+  if (currentRelVol != null && currentRelVol >= 1.5) {
+    // High volume confirms the current trend
+    if (pivotNow === 'bullish') volumeScore = 10
+    else if (pivotNow === 'bearish') volumeScore = -10
+    else volumeScore = 5 // High volume in neutral = something brewing
+  }
+  components.volumeConfirmation = volumeScore
+  score += volumeScore
+
+  // Volatility Regime (±5 points bonus/penalty)
+  const currentAtrPct = atrPct[i]
+  let volRegime = 'normal'
+  let volScore = 0
+  if (currentAtrPct != null) {
+    if (currentAtrPct >= 80) {
+      volRegime = 'high' // High volatility - riskier
+      volScore = -5 // Penalty for extreme volatility
+    } else if (currentAtrPct <= 20) {
+      volRegime = 'low' // Low volatility - safer
+      volScore = 5 // Bonus for calm markets
+    }
+  }
+  components.volatilityRegime = volScore
+  score += volScore
+
+  // Normalize score to 0-100 range for UI display (internally it's -100 to +100)
+  // Positive scores = bullish, negative = bearish
+  const normalizedScore = Math.max(0, Math.min(100, score)) // For legacy compatibility
+  const regime = score >= 70 ? 'bullish' :
+                 score <= -70 ? 'bearish' :
+                 score >= 35 ? 'mildly bullish' :
+                 score <= -35 ? 'mildly bearish' : 'neutral'
 
   const markers = []
   // Mark 8/21 crosses
@@ -400,8 +560,15 @@ export function computeStates(bars) {
     ichiRegime,
     pivotNow,
     satyDir,
-    score,
+    score: normalizedScore, // Legacy: 0-100 for UI compatibility
+    rawScore: score,        // PhD++: Bidirectional -100 to +100
+    regime,                 // PhD++: Descriptive regime
     components,
     markers,
+    // PhD++ Enhancements
+    rsi: currentRSI,
+    relativeVolume: currentRelVol,
+    volatilityRegime: volRegime,
+    atrPercentile: currentAtrPct,
   }
 }

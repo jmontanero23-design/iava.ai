@@ -42,8 +42,32 @@ export default function SignalQualityScorerPanel() {
       const shares = parseFloat(newTrade.shares)
       const commission = parseFloat(newTrade.commission) || 0
 
-      if (isNaN(entry) || isNaN(exit) || isNaN(shares) || entry <= 0 || shares <= 0) {
-        alert('Please enter valid trade details')
+      // Enhanced validation with toast feedback
+      if (isNaN(entry) || entry <= 0) {
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: { text: '❌ Entry price must be greater than 0', type: 'error', ttl: 3000 }
+        }))
+        return
+      }
+
+      if (isNaN(exit) || exit <= 0) {
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: { text: '❌ Exit price must be greater than 0', type: 'error', ttl: 3000 }
+        }))
+        return
+      }
+
+      if (isNaN(shares) || shares <= 0) {
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: { text: '❌ Shares must be greater than 0', type: 'error', ttl: 3000 }
+        }))
+        return
+      }
+
+      if (isNaN(commission) || commission < 0) {
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: { text: '❌ Commission cannot be negative', type: 'error', ttl: 3000 }
+        }))
         return
       }
 

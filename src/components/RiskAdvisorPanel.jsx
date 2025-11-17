@@ -79,20 +79,51 @@ export default function RiskAdvisorPanel() {
 
   const handleAddPosition = () => {
     const val = parseFloat(newPosition.value)
-    if (!newPosition.symbol || isNaN(val) || val <= 0) {
-      alert('Please enter valid position details')
+    const vol = parseFloat(newPosition.volatility)
+    const ret = parseFloat(newPosition.expectedReturn)
+
+    // Enhanced validation
+    if (!newPosition.symbol || newPosition.symbol.trim() === '') {
+      window.dispatchEvent(new CustomEvent('iava.toast', {
+        detail: { text: '❌ Please enter a symbol', type: 'error', ttl: 3000 }
+      }))
+      return
+    }
+
+    if (isNaN(val) || val <= 0) {
+      window.dispatchEvent(new CustomEvent('iava.toast', {
+        detail: { text: '❌ Position value must be greater than 0', type: 'error', ttl: 3000 }
+      }))
+      return
+    }
+
+    if (isNaN(vol) || vol <= 0 || vol > 1) {
+      window.dispatchEvent(new CustomEvent('iava.toast', {
+        detail: { text: '❌ Volatility must be between 0 and 1', type: 'error', ttl: 3000 }
+      }))
+      return
+    }
+
+    if (isNaN(ret) || ret < -1 || ret > 2) {
+      window.dispatchEvent(new CustomEvent('iava.toast', {
+        detail: { text: '❌ Expected return must be between -100% and 200%', type: 'error', ttl: 3000 }
+      }))
       return
     }
 
     setPositions([...positions, {
       symbol: newPosition.symbol.toUpperCase(),
       value: val,
-      volatility: newPosition.volatility,
-      expectedReturn: newPosition.expectedReturn
+      volatility: vol,
+      expectedReturn: ret
     }])
 
     setNewPosition({ symbol: '', value: '', volatility: 0.02, expectedReturn: 0.08 })
     setShowAddPosition(false)
+
+    window.dispatchEvent(new CustomEvent('iava.toast', {
+      detail: { text: `✅ Added ${newPosition.symbol.toUpperCase()} to portfolio`, type: 'success', ttl: 3000 }
+    }))
   }
 
   const handleRemovePosition = (index) => {
@@ -166,6 +197,9 @@ export default function RiskAdvisorPanel() {
             <label className="block text-xs text-slate-400 mb-2">Account Size ($)</label>
             <input
               type="number"
+              min="100"
+              max="10000000"
+              step="100"
               value={accountSize}
               onChange={e => setAccountSize(parseFloat(e.target.value) || 0)}
               className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/30 transition-all"
@@ -300,10 +334,12 @@ export default function RiskAdvisorPanel() {
                 <label className="block text-xs text-slate-400 mb-1">Entry Price ($)</label>
                 <input
                   type="number"
+                  min="0.01"
                   step="0.01"
                   value={entryPrice}
                   onChange={e => setEntryPrice(parseFloat(e.target.value) || 0)}
                   className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30 transition-all"
+                  placeholder="100.00"
                 />
               </div>
 
@@ -311,10 +347,12 @@ export default function RiskAdvisorPanel() {
                 <label className="block text-xs text-slate-400 mb-1">Stop Loss ($)</label>
                 <input
                   type="number"
+                  min="0.01"
                   step="0.01"
                   value={stopPrice}
                   onChange={e => setStopPrice(parseFloat(e.target.value) || 0)}
                   className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30 transition-all"
+                  placeholder="98.00"
                 />
               </div>
 

@@ -25,6 +25,8 @@ export default function AITradeCopilot({ onClose }) {
   const [alerts, setAlerts] = useState([])
   const [positions, setPositions] = useState([])
   const [lastCheck, setLastCheck] = useState(Date.now())
+  const [newsCache, setNewsCache] = useState([]) // Breaking news cache
+  const [watchlist, setWatchlist] = useState(['SPY', 'QQQ', 'AAPL', 'TSLA', 'NVDA']) // PhD++: Multi-symbol monitoring
 
   // Listen for position updates from Orders panel
   useEffect(() => {
@@ -55,84 +57,48 @@ export default function AITradeCopilot({ onClose }) {
     const currentTime = Date.now()
 
     positions.forEach(position => {
-      const { symbol, side, entry, quantity, stopLoss, takeProfit } = position
-      const currentPrice = marketData.symbol === symbol ? marketData.price?.close : null
+      // Alpaca position structure: symbol, side, avg_entry_price, qty, current_price, unrealized_pl
+      const { symbol, side, avg_entry_price, qty, current_price } = position
+      const entry = parseFloat(avg_entry_price)
+      const quantity = parseFloat(qty)
+      const currentPrice = current_price ? parseFloat(current_price) :
+        (marketData.symbol === symbol ? marketData.currentPrice : null)
 
-      if (!currentPrice) return
+      if (!currentPrice || !entry) return
 
-      // Alert 1: Stop Loss Approaching
-      if (stopLoss) {
-        const distanceToStop = side === 'buy' ?
-          ((currentPrice - stopLoss) / entry) * 100 :
-          ((stopLoss - currentPrice) / entry) * 100
+      // Alert 1: Unicorn Score Deterioration (for positions in current symbol)
+      if (marketData.symbol === symbol && marketData.signalState) {
+        const score = marketData.signalState.score || 0
 
-        if (distanceToStop < 5 && distanceToStop > 0) {
-          newAlerts.push({
-            id: `stop-${symbol}-${currentTime}`,
-            type: 'warning',
-            priority: 'high',
-            symbol,
-            title: 'Stop Loss Approaching',
-            message: `${symbol} is ${distanceToStop.toFixed(1)}% away from your stop loss at $${stopLoss.toFixed(2)}`,
-            action: 'Consider adjusting or preparing to exit',
-            timestamp: currentTime
-          })
-        }
-      }
-
-      // Alert 2: Profit Target Hit
-      if (takeProfit) {
-        const distanceToTarget = side === 'buy' ?
-          ((takeProfit - currentPrice) / entry) * 100 :
-          ((currentPrice - takeProfit) / entry) * 100
-
-        if (distanceToTarget < 2 && distanceToTarget > -1) {
-          newAlerts.push({
-            id: `target-${symbol}-${currentTime}`,
-            type: 'success',
-            priority: 'high',
-            symbol,
-            title: 'Profit Target Reached!',
-            message: `${symbol} hit your target at $${takeProfit.toFixed(2)}. Current: $${currentPrice.toFixed(2)}`,
-            action: 'Consider taking profits now',
-            timestamp: currentTime
-          })
-        }
-      }
-
-      // Alert 3: Unicorn Score Deterioration
-      if (marketData.symbol === symbol && marketData.unicornScore) {
-        const score = marketData.unicornScore.current
-
-        if (side === 'buy' && score < 40) {
+        if (side === 'long' && score < 40) {
           newAlerts.push({
             id: `score-${symbol}-${currentTime}`,
             type: 'danger',
             priority: 'medium',
             symbol,
             title: 'Unicorn Score Deteriorating',
-            message: `${symbol} Unicorn Score dropped to ${score}/100 (bearish)`,
+            message: `${symbol} Unicorn Score dropped to ${score.toFixed(0)}/100 (bearish)`,
             action: 'Consider tightening stop or exiting',
             timestamp: currentTime
           })
         }
 
-        if (side === 'sell' && score > 70) {
+        if (side === 'short' && score > 70) {
           newAlerts.push({
             id: `score-${symbol}-${currentTime}`,
             type: 'danger',
             priority: 'medium',
             symbol,
             title: 'Unicorn Score Rising',
-            message: `${symbol} Unicorn Score rose to ${score}/100 (bullish)`,
+            message: `${symbol} Unicorn Score rose to ${score.toFixed(0)}/100 (bullish)`,
             action: 'Cover short or tighten stop',
             timestamp: currentTime
           })
         }
       }
 
-      // Alert 4: Large Price Move
-      const priceChange = side === 'buy' ?
+      // Alert 2: Large Price Move
+      const priceChange = side === 'long' ?
         ((currentPrice - entry) / entry) * 100 :
         ((entry - currentPrice) / entry) * 100
 
@@ -149,6 +115,131 @@ export default function AITradeCopilot({ onClose }) {
           timestamp: currentTime
         })
       }
+
+      // PhD++ Alert 3: SATY-Based Stop Loss Recommendation
+      if (marketData.symbol === symbol && marketData.overlays?.saty) {
+        const saty = marketData.overlays.saty
+        const stopLevel = side === 'long' ? saty.levels?.t0236?.dn : saty.levels?.t0236?.up
+
+        if (stopLevel) {
+          const distanceToSATY = Math.abs(currentPrice - stopLevel) / currentPrice * 100
+
+          // Alert if price is near SATY level (good stop location)
+          if (distanceToSATY < 1) {
+            newAlerts.push({
+              id: `saty-stop-${symbol}-${currentTime}`,
+              type: 'info',
+              priority: 'high',
+              symbol,
+              title: 'SATY Stop Level Nearby',
+              message: `Ideal stop loss at $${stopLevel.toFixed(2)} (SATY 0.236 ATR level)`,
+              action: `Consider setting stop at $${stopLevel.toFixed(2)}`,
+              timestamp: currentTime
+            })
+          }
+
+          // Alert if price breaks below/above stop level
+          const stopBroken = side === 'long' ? currentPrice < stopLevel : currentPrice > stopLevel
+          if (stopBroken) {
+            newAlerts.push({
+              id: `saty-broken-${symbol}-${currentTime}`,
+              type: 'danger',
+              priority: 'high',
+              symbol,
+              title: '🚨 SATY Stop Broken!',
+              message: `${symbol} broke SATY stop at $${stopLevel.toFixed(2)}`,
+              action: 'EXIT POSITION NOW - Stop loss triggered',
+              timestamp: currentTime
+            })
+          }
+        }
+
+        // Profit target using SATY 1.0 ATR level
+        const targetLevel = side === 'long' ? saty.levels?.t1000?.up : saty.levels?.t1000?.dn
+        if (targetLevel) {
+          const distanceToTarget = Math.abs(currentPrice - targetLevel) / currentPrice * 100
+
+          if (distanceToTarget < 2) {
+            newAlerts.push({
+              id: `saty-target-${symbol}-${currentTime}`,
+              type: 'success',
+              priority: 'high',
+              symbol,
+              title: '🎯 Profit Target Reached!',
+              message: `${symbol} at SATY 1.0 ATR target: $${targetLevel.toFixed(2)}`,
+              action: 'Consider taking profits or trailing stop',
+              timestamp: currentTime
+            })
+          }
+        }
+      }
+
+      // PhD++ Alert 4: Regime Change Warning
+      if (marketData.symbol === symbol && marketData.signalState?.regime) {
+        const regime = marketData.signalState.regime
+        const regimeScore = marketData.signalState.rawScore || 0
+
+        // Alert if holding long position but regime turned bearish
+        if (side === 'long' && regimeScore < -35) {
+          newAlerts.push({
+            id: `regime-${symbol}-${currentTime}`,
+            type: 'danger',
+            priority: 'high',
+            symbol,
+            title: '⚠️ Regime Turned Bearish',
+            message: `Market regime: ${regime} (score: ${regimeScore.toFixed(0)})`,
+            action: 'Consider exiting long position - bearish regime detected',
+            timestamp: currentTime
+          })
+        }
+
+        // Alert if holding short position but regime turned bullish
+        if (side === 'short' && regimeScore > 35) {
+          newAlerts.push({
+            id: `regime-${symbol}-${currentTime}`,
+            type: 'danger',
+            priority: 'high',
+            symbol,
+            title: '⚠️ Regime Turned Bullish',
+            message: `Market regime: ${regime} (score: ${regimeScore.toFixed(0)})`,
+            action: 'Consider covering short - bullish regime detected',
+            timestamp: currentTime
+          })
+        }
+      }
+
+      // PhD++ Alert 5: RSI Divergence Warning
+      if (marketData.symbol === symbol && marketData.signalState?.rsi) {
+        const rsi = marketData.signalState.rsi
+
+        // Overbought warning for longs
+        if (side === 'long' && rsi > 80) {
+          newAlerts.push({
+            id: `rsi-ob-${symbol}-${currentTime}`,
+            type: 'warning',
+            priority: 'medium',
+            symbol,
+            title: 'RSI Overbought',
+            message: `${symbol} RSI at ${rsi.toFixed(1)} - extremely overbought`,
+            action: 'Consider tightening stops or taking partial profits',
+            timestamp: currentTime
+          })
+        }
+
+        // Oversold warning for shorts
+        if (side === 'short' && rsi < 20) {
+          newAlerts.push({
+            id: `rsi-os-${symbol}-${currentTime}`,
+            type: 'warning',
+            priority: 'medium',
+            symbol,
+            title: 'RSI Oversold',
+            message: `${symbol} RSI at ${rsi.toFixed(1)} - extremely oversold`,
+            action: 'Consider covering short - bounce risk',
+            timestamp: currentTime
+          })
+        }
+      }
     })
 
     // Add new alerts (avoid duplicates)
@@ -163,6 +254,194 @@ export default function AITradeCopilot({ onClose }) {
     setLastCheck(currentTime)
   }
 
+  // PhD++ BREAKING NEWS MONITORING: Check news for positions
+  const checkBreakingNews = async () => {
+    if (positions.length === 0) return
+
+    try {
+      // Get symbols from positions
+      const symbols = [...new Set(positions.map(p => p.symbol))]
+
+      for (const symbol of symbols) {
+        // Fetch news (limit to avoid rate limits)
+        const response = await fetch(`/api/news?symbol=${symbol}&limit=5`)
+        if (!response.ok) continue
+
+        const { news } = await response.json()
+        if (!news || news.length === 0) continue
+
+        // Analyze sentiment of latest news
+        const latestNews = news[0]
+        const newsId = `${symbol}-${latestNews.id || latestNews.headline}`
+
+        // Check if we've already alerted on this news
+        if (newsCache.includes(newsId)) continue
+
+        // Add to cache
+        setNewsCache(prev => [...prev, newsId].slice(-50)) // Keep last 50
+
+        // Analyze sentiment
+        const sentimentResponse = await fetch('/api/sentiment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: latestNews.headline })
+        })
+
+        if (!sentimentResponse.ok) continue
+        const { sentiment, score } = await sentimentResponse.json()
+
+        // Find if we have a position in this symbol
+        const position = positions.find(p => p.symbol === symbol)
+        if (!position) continue
+
+        // Alert if news sentiment contradicts position
+        const isBearishNews = sentiment === 'negative' && score < -0.3
+        const isBullishNews = sentiment === 'positive' && score > 0.3
+
+        if ((position.side === 'long' && isBearishNews) || (position.side === 'short' && isBullishNews)) {
+          const currentTime = Date.now()
+          setAlerts(prev => [{
+            id: `news-${symbol}-${currentTime}`,
+            type: 'warning',
+            priority: 'high',
+            symbol,
+            title: `📰 Breaking News Alert`,
+            message: `${sentiment.toUpperCase()} news: "${latestNews.headline.slice(0, 80)}..."`,
+            action: `Review your ${position.side} position - news sentiment: ${(score * 100).toFixed(0)}%`,
+            timestamp: currentTime
+          }, ...prev].slice(0, 10))
+        }
+
+        // Alert on very strong news regardless of position
+        if (Math.abs(score) > 0.7) {
+          const currentTime = Date.now()
+          setAlerts(prev => [{
+            id: `news-strong-${symbol}-${currentTime}`,
+            type: 'info',
+            priority: 'medium',
+            symbol,
+            title: `📰 Strong ${sentiment} News`,
+            message: `"${latestNews.headline.slice(0, 80)}..."`,
+            action: `Sentiment: ${(score * 100).toFixed(0)}% ${sentiment}`,
+            timestamp: currentTime
+          }, ...prev].slice(0, 10))
+        }
+      }
+    } catch (error) {
+      console.error('[Copilot] News check error:', error)
+    }
+  }
+
+  // PhD++ OPPORTUNITY SCANNER: Scan watchlist for perfect setups
+  const scanForOpportunities = async () => {
+    if (!marketData.symbol) return
+
+    try {
+      // For now, scan the current symbol's state
+      // TODO: Extend to scan entire watchlist via API calls
+
+      const state = marketData.signalState
+      if (!state) return
+
+      const currentTime = Date.now()
+      const symbol = marketData.symbol
+
+      // Perfect Unicorn Setup (score > 85)
+      if (state.score >= 85 && state.rawScore >= 85) {
+        setAlerts(prev => {
+          // Avoid duplicate alerts
+          if (prev.some(a => a.id.includes(`unicorn-perfect-${symbol}`))) return prev
+
+          return [{
+            id: `unicorn-perfect-${symbol}-${currentTime}`,
+            type: 'success',
+            priority: 'high',
+            symbol,
+            title: '🦄 PERFECT UNICORN SETUP!',
+            message: `${symbol} Unicorn Score: ${state.score.toFixed(0)}/100 - ALL indicators aligned`,
+            action: 'Consider entering LONG position',
+            timestamp: currentTime
+          }, ...prev].slice(0, 10)
+        })
+      }
+
+      // Squeeze Fire + Trend Alignment
+      if (state.sq?.fired && state.pivotNow === 'bullish' && state.ichiRegime === 'bullish') {
+        setAlerts(prev => {
+          if (prev.some(a => a.id.includes(`squeeze-fire-${symbol}`))) return prev
+
+          return [{
+            id: `squeeze-fire-${symbol}-${currentTime}`,
+            type: 'success',
+            priority: 'high',
+            symbol,
+            title: '💥 Squeeze Fired + Trend Aligned!',
+            message: `${symbol} squeeze released ${state.sq.dir === 'up' ? 'BULLISH' : 'BEARISH'}`,
+            action: `Breakout in progress - consider ${state.sq.dir === 'up' ? 'LONG' : 'SHORT'}`,
+            timestamp: currentTime
+          }, ...prev].slice(0, 10)
+        })
+      }
+
+      // High Volume + Strong Momentum + SATY Trigger
+      if (state.relativeVolume > 2.0 && state.rsi > 60 && state.satyDir === 'long') {
+        setAlerts(prev => {
+          if (prev.some(a => a.id.includes(`momentum-${symbol}`))) return prev
+
+          return [{
+            id: `momentum-${symbol}-${currentTime}`,
+            type: 'success',
+            priority: 'medium',
+            symbol,
+            title: '⚡ High Volume Momentum Setup',
+            message: `${symbol} - Volume: ${state.relativeVolume.toFixed(1)}x avg, RSI: ${state.rsi.toFixed(0)}`,
+            action: 'Strong momentum confirmed - watch for entry',
+            timestamp: currentTime
+          }, ...prev].slice(0, 10)
+        })
+      }
+
+      // Bearish Perfect Setup (score < 15)
+      if (state.score <= 15 && state.rawScore <= -85) {
+        setAlerts(prev => {
+          if (prev.some(a => a.id.includes(`bear-perfect-${symbol}`))) return prev
+
+          return [{
+            id: `bear-perfect-${symbol}-${currentTime}`,
+            type: 'warning',
+            priority: 'high',
+            symbol,
+            title: '🐻 PERFECT BEARISH SETUP!',
+            message: `${symbol} Unicorn Score: ${state.score.toFixed(0)}/100 - Strong bearish alignment`,
+            action: 'Consider entering SHORT position or exiting longs',
+            timestamp: currentTime
+          }, ...prev].slice(0, 10)
+        })
+      }
+
+    } catch (error) {
+      console.error('[Copilot] Opportunity scan error:', error)
+    }
+  }
+
+  // Run news check every 2 minutes
+  useEffect(() => {
+    if (positions.length === 0) return
+
+    checkBreakingNews() // Check immediately
+    const newsInterval = setInterval(checkBreakingNews, 120000) // Every 2 minutes
+
+    return () => clearInterval(newsInterval)
+  }, [positions, newsCache])
+
+  // Run opportunity scan every 30 seconds
+  useEffect(() => {
+    scanForOpportunities() // Scan immediately
+    const scanInterval = setInterval(scanForOpportunities, 30000) // Every 30 seconds
+
+    return () => clearInterval(scanInterval)
+  }, [marketData])
+
   // Dismiss alert
   const dismissAlert = (alertId) => {
     setAlerts(prev => prev.filter(a => a.id !== alertId))
@@ -171,6 +450,78 @@ export default function AITradeCopilot({ onClose }) {
   // Clear all alerts
   const clearAll = () => {
     setAlerts([])
+  }
+
+  // PhD++ ONE-CLICK EXECUTION: Execute alert recommendation
+  const executeAlert = (alert) => {
+    if (!alert.symbol) return
+
+    // Different actions based on alert type
+    if (alert.id.includes('saty-broken') || alert.id.includes('regime')) {
+      // CRITICAL: Exit position immediately
+      const confirmed = window.confirm(
+        `⚠️ CRITICAL ALERT\n\n${alert.title}\n${alert.message}\n\n` +
+        `This will close your ${alert.symbol} position immediately. Continue?`
+      )
+
+      if (confirmed) {
+        // Dispatch close position event to OrdersPanel
+        window.dispatchEvent(new CustomEvent('iava-close-position', {
+          detail: { symbol: alert.symbol, reason: alert.title }
+        }))
+
+        dismissAlert(alert.id)
+
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: {
+            text: `Closing ${alert.symbol} position...`,
+            type: 'success',
+            ttl: 3000
+          }
+        }))
+      }
+    } else if (alert.id.includes('saty-stop')) {
+      // Set stop loss at SATY level
+      const stopPrice = parseFloat(alert.message.match(/\$([0-9.]+)/)?.[1])
+
+      if (stopPrice) {
+        window.dispatchEvent(new CustomEvent('iava-set-stop', {
+          detail: { symbol: alert.symbol, stopPrice, type: 'saty' }
+        }))
+
+        dismissAlert(alert.id)
+
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: {
+            text: `Setting SATY stop at $${stopPrice.toFixed(2)}`,
+            type: 'success',
+            ttl: 3000
+          }
+        }))
+      }
+    } else if (alert.id.includes('saty-target')) {
+      // Take profits at target
+      const confirmed = window.confirm(
+        `${alert.title}\n\n${alert.message}\n\n` +
+        `Close 50% of your ${alert.symbol} position to lock in profits?`
+      )
+
+      if (confirmed) {
+        window.dispatchEvent(new CustomEvent('iava-take-profits', {
+          detail: { symbol: alert.symbol, percentage: 50, reason: 'SATY target hit' }
+        }))
+
+        dismissAlert(alert.id)
+
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: {
+            text: `Taking 50% profits on ${alert.symbol}`,
+            type: 'success',
+            ttl: 3000
+          }
+        }))
+      }
+    }
   }
 
   if (isMinimized) {
@@ -278,6 +629,12 @@ export default function AITradeCopilot({ onClose }) {
                   info: '💡'
                 }
 
+                // Check if alert is actionable (has one-click execution)
+                const isActionable = alert.id.includes('saty-broken') ||
+                                    alert.id.includes('regime') ||
+                                    alert.id.includes('saty-stop') ||
+                                    alert.id.includes('saty-target')
+
                 return (
                   <div
                     key={alert.id}
@@ -312,8 +669,26 @@ export default function AITradeCopilot({ onClose }) {
                         ✕
                       </button>
                     </div>
-                    <div className="text-xs text-slate-500 mt-1">
-                      {new Date(alert.timestamp).toLocaleTimeString()}
+
+                    {/* PhD++ ONE-CLICK EXECUTION BUTTONS */}
+                    <div className="flex items-center justify-between mt-2 gap-2">
+                      <div className="text-xs text-slate-500">
+                        {new Date(alert.timestamp).toLocaleTimeString()}
+                      </div>
+                      {isActionable && (
+                        <button
+                          onClick={() => executeAlert(alert)}
+                          className={`text-xs px-3 py-1 rounded-lg font-semibold transition-all ${
+                            alert.type === 'danger'
+                              ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/40'
+                              : alert.type === 'success'
+                              ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/40'
+                              : 'bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/40'
+                          }`}
+                        >
+                          ⚡ Execute
+                        </button>
+                      )}
                     </div>
                   </div>
                 )
@@ -323,21 +698,21 @@ export default function AITradeCopilot({ onClose }) {
         </div>
 
         {/* Market Status */}
-        {marketData.symbol && marketData.unicornScore && (
+        {marketData.symbol && marketData.signalState && (
           <div className="bg-slate-800/30 px-3 py-2 border-t border-slate-700/50">
             <div className="flex items-center justify-between text-xs">
               <div className="text-slate-400">
-                {marketData.symbol}: <span className="text-slate-200">${marketData.price?.close?.toFixed(2)}</span>
+                {marketData.symbol}: <span className="text-slate-200">${marketData.currentPrice?.toFixed(2) || 'N/A'}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-slate-400">Unicorn Score:</span>
                 <span className={`font-bold ${
-                  marketData.unicornScore.current >= 70 ? 'text-emerald-400' :
-                  marketData.unicornScore.current >= 50 ? 'text-cyan-400' :
-                  marketData.unicornScore.current >= 35 ? 'text-amber-400' :
+                  (marketData.signalState.score || 0) >= 70 ? 'text-emerald-400' :
+                  (marketData.signalState.score || 0) >= 50 ? 'text-cyan-400' :
+                  (marketData.signalState.score || 0) >= 35 ? 'text-amber-400' :
                   'text-red-400'
                 }`}>
-                  {marketData.unicornScore.current}/100
+                  {(marketData.signalState.score || 0).toFixed(0)}/100
                 </span>
               </div>
             </div>
