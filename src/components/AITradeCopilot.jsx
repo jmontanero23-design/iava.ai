@@ -332,25 +332,43 @@ export default function AITradeCopilot({ onClose }) {
     }
   }
 
-  // PhD++ OPPORTUNITY SCANNER: Scan watchlist for perfect setups
+  // PhD++ OPPORTUNITY SCANNER with RISK VALIDATION
   const scanForOpportunities = async () => {
     if (!marketData.symbol) return
 
     try {
-      // For now, scan the current symbol's state
-      // TODO: Extend to scan entire watchlist via API calls
-
       const state = marketData.signalState
       if (!state) return
 
       const currentTime = Date.now()
       const symbol = marketData.symbol
+      const currentPrice = marketData.currentPrice
 
-      // Perfect Unicorn Setup (score > 85)
-      if (state.score >= 85 && state.rawScore >= 85) {
+      // Import risk controls to check if alerts should be generated
+      const { getRiskConfig, getDailyStats } = await import('../utils/riskControls.js')
+      const riskConfig = getRiskConfig()
+      const dailyStats = getDailyStats()
+
+      // Skip opportunity scanning if trading is halted
+      if (riskConfig.haltTrading) return
+
+      // Skip if daily limits reached
+      if (dailyStats.realizedPnLPct <= -riskConfig.dailyLossLimitPct) return
+      if (dailyStats.tradesCount >= riskConfig.dailyMaxTrades) return
+
+      // Perfect Unicorn Setup (score > 85) with Risk Validation
+      if (state.score >= 85 && state.rawScore >= 85 && currentPrice) {
+        // Calculate estimated stop based on SATY levels
+        const satyStop = state.saty?.support || (currentPrice * 0.985) // Fallback to 1.5% stop
+
         setAlerts(prev => {
           // Avoid duplicate alerts
           if (prev.some(a => a.id.includes(`unicorn-perfect-${symbol}`))) return prev
+
+          // Add risk-aware message
+          const riskMsg = positions.length >= riskConfig.maxConcurrentPositions
+            ? ` ⚠️ Max positions reached (${positions.length}/${riskConfig.maxConcurrentPositions})`
+            : ` ✓ Risk controls OK (${dailyStats.tradesCount}/${riskConfig.dailyMaxTrades} trades today)`
 
           return [{
             id: `unicorn-perfect-${symbol}-${currentTime}`,
@@ -358,9 +376,11 @@ export default function AITradeCopilot({ onClose }) {
             priority: 'high',
             symbol,
             title: '🦄 PERFECT UNICORN SETUP!',
-            message: `${symbol} Unicorn Score: ${state.score.toFixed(0)}/100 - ALL indicators aligned`,
+            message: `${symbol} Unicorn Score: ${state.score.toFixed(0)}/100 - ALL indicators aligned.${riskMsg}`,
             action: 'Consider entering LONG position',
-            timestamp: currentTime
+            timestamp: currentTime,
+            suggestedEntry: currentPrice,
+            suggestedStop: satyStop
           }, ...prev].slice(0, 10)
         })
       }

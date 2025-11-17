@@ -29,6 +29,7 @@ import AITradeCopilot from './components/AITradeCopilot.jsx'
 import PatternRecognition from './components/PatternRecognition.jsx'
 import MultiSymbolAnalysis from './components/MultiSymbolAnalysis.jsx'
 import StrategyBuilder from './components/StrategyBuilder.jsx'
+import RiskControlsPanel from './components/RiskControlsPanel.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -300,6 +301,10 @@ export default function App() {
 
         {activeTab === 'genetic-optimizer' && (
           <GeneticOptimizerPanel />
+        )}
+
+        {activeTab === 'risk-controls' && (
+          <RiskControlsPanel />
         )}
 
         {activeTab !== 'chart' && <BuildInfoFooter />}
