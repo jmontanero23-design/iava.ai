@@ -13,6 +13,7 @@ import { callAI } from '../utils/aiGateway.js'
 import { generateTradingSystemPrompt, buildMarketContext, formatContextForAI } from '../utils/aiContext.js'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
 import MobilePushToTalk from './MobilePushToTalk.jsx'
+import { detectSymbols, detectTimeframe, buildEnhancedContext, formatEnhancedContext } from '../utils/aiEnhancements.js'
 
 export default function AIChat() {
   const { marketData } = useMarketData()
@@ -967,6 +968,49 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
     }))
 
     try {
+      // ELITE: Auto-detect and load symbols mentioned in user message
+      const detectedSymbols = detectSymbols(userMessage.content)
+      const detectedTimeframe = detectTimeframe(userMessage.content)
+
+      console.log('[AI Chat] Detected symbols:', detectedSymbols, 'Timeframe:', detectedTimeframe)
+
+      // If user mentions a different symbol, load it automatically
+      if (detectedSymbols.length > 0) {
+        const newSymbol = detectedSymbols[0]
+        const currentSymbol = marketData.symbol?.toUpperCase()
+
+        if (newSymbol !== currentSymbol) {
+          console.log(`[AI Chat] Auto-loading new symbol: ${newSymbol} (current: ${currentSymbol})`)
+
+          // Show loading message
+          const loadingMsg = {
+            role: 'assistant',
+            content: `🔄 Loading ${newSymbol} chart data for analysis...`,
+            timestamp: Date.now()
+          }
+          setMessages(prev => [...prev, loadingMsg])
+
+          // Load the symbol
+          const loaded = await loadSymbolForAnalysis(newSymbol, detectedTimeframe)
+
+          if (!loaded) {
+            // Failed to load - update loading message
+            setMessages(prev => {
+              const updated = [...prev]
+              updated[updated.length - 1] = {
+                ...updated[updated.length - 1],
+                content: `⚠️ Could not load ${newSymbol} data. Analyzing based on general knowledge...`,
+                warning: true
+              }
+              return updated
+            })
+          } else {
+            // Successfully loaded - remove loading message
+            setMessages(prev => prev.slice(0, -1))
+          }
+        }
+      }
+
       // Determine if we need vision model (for chart screenshots)
       const hasImages = currentFiles.some(f => f.isImage)
       const hasDocuments = currentFiles.some(f => f.isPDF || f.isText)
@@ -1011,6 +1055,24 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
         enforceDaily: marketData.enforceDaily,
         consensus: marketData.consensus
       })
+
+      // ELITE PhD++: Build enhanced context with Multi-Timeframe analysis
+      let multiTFContext = null
+      try {
+        const symbol = marketData.symbol || 'SPY'
+        console.log('[AI Chat] Building enhanced multi-TF context for:', symbol)
+
+        const enhancedData = await buildEnhancedContext(marketData, symbol, {
+          includeMultiTF: true,        // Always include multi-TF analysis
+          includeSentiment: false      // Only include sentiment if explicitly requested (to save API calls)
+        })
+
+        multiTFContext = formatEnhancedContext(enhancedData)
+        console.log('[AI Chat] Multi-TF context built successfully')
+      } catch (error) {
+        console.warn('[AI Chat] Multi-TF context build failed:', error)
+        // Continue without multi-TF context - graceful degradation
+      }
 
       // Generate PhD-level system prompt
       const systemPrompt = generateTradingSystemPrompt()
@@ -1093,9 +1155,25 @@ NEVER say "I don't have ATR" or "I don't have SATY levels" - YOU DO HAVE THEM (s
 NEVER guess or approximate numbers. If you cite a number, it MUST match the data above EXACTLY.
 If you're uncertain about any metric, say "I don't have that data" rather than guessing.`
 
+      // Build comprehensive market data context with Multi-TF analysis
+      let fullMarketContext = `CURRENT MARKET DATA:\n\n${contextText}`
+
+      // Add Multi-Timeframe Analysis if available
+      if (multiTFContext) {
+        fullMarketContext += `\n\n═══════════════════════════════════════════════════\n`
+        fullMarketContext += `🎯 MULTI-TIMEFRAME ANALYSIS (PhD++ Professional)\n`
+        fullMarketContext += `═══════════════════════════════════════════════════\n\n`
+        fullMarketContext += multiTFContext
+        fullMarketContext += `\n\n⚠️ CRITICAL: You MUST reference the Multi-TF analysis in your response!\n`
+        fullMarketContext += `This gives you the COMPLETE PICTURE across all timeframes (1Min → Daily).\n`
+        fullMarketContext += `Never analyze just the current timeframe in isolation - always consider the multi-TF consensus.\n`
+      }
+
+      fullMarketContext += `\n\n${verificationFooter}`
+
       const aiMessages = [
         { role: 'system', content: systemPrompt },
-        { role: 'system', content: `CURRENT MARKET DATA:\n\n${contextText}\n\n${verificationFooter}` },
+        { role: 'system', content: fullMarketContext },
         ...chatHistory.map(m => ({ role: m.role, content: m.content })),
         { role: 'user', content: userContent }
       ]

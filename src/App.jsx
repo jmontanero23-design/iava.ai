@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import Hero from './components/Hero.jsx'
 import ToastHub from './components/ToastHub.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
-import { MarketDataProvider } from './contexts/MarketDataContext.jsx'
+import { MarketDataProvider, useMarketData } from './contexts/MarketDataContext.jsx'
 import AIFeaturesDashboard from './components/AIFeaturesDashboard.jsx'
 import AIChat from './components/AIChat.jsx'
 import NaturalLanguageScanner from './components/NaturalLanguageScanner.jsx'
@@ -35,6 +35,26 @@ import MultiTimeframePanel from './components/MultiTimeframePanel.jsx'
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
 
+// Wrapper component for Multi-TF Panel that needs market data
+function MultiTFPanelWrapper({ setActiveTab }) {
+  const { marketData } = useMarketData()
+  const symbol = marketData.symbol || 'SPY'
+
+  return (
+    <MultiTimeframePanel
+      symbol={symbol}
+      onLoadTimeframe={(tf) => {
+        // Load timeframe on chart
+        window.dispatchEvent(new CustomEvent('iava.loadTimeframe', {
+          detail: { timeframe: tf }
+        }))
+        // Switch to chart tab
+        setActiveTab('chart')
+      }}
+    />
+  )
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('chart')
   const [selectedFeature, setSelectedFeature] = useState(null)
@@ -54,10 +74,10 @@ export default function App() {
         return
       }
 
-      // Number keys (1-6) to switch tabs
-      if (e.key >= '1' && e.key <= '6') {
+      // Number keys (1-7) to switch tabs
+      if (e.key >= '1' && e.key <= '7') {
         e.preventDefault()
-        const tabs = ['chart', 'ai-features', 'ai-chat', 'monitoring', 'nlp-scanner', 'market-sentiment']
+        const tabs = ['chart', 'ai-features', 'ai-chat', 'monitoring', 'nlp-scanner', 'market-sentiment', 'multi-timeframe']
         setActiveTab(tabs[parseInt(e.key) - 1])
       }
 
@@ -219,6 +239,20 @@ export default function App() {
               <span>Sentiment</span>
               <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">6</kbd>
             </button>
+            <button
+              onClick={() => setActiveTab('multi-timeframe')}
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
+                activeTab === 'multi-timeframe'
+                  ? 'bg-gradient-to-r from-cyan-600 to-blue-500 text-white shadow-lg shadow-cyan-500/30'
+                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
+              }`}
+              title="Multi-Timeframe Analysis - PhD++ Professional (Press 7)"
+              aria-label="Switch to Multi-Timeframe Analysis tab"
+            >
+              <span className="text-xl">📊</span>
+              <span>Multi-TF</span>
+              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">7</kbd>
+            </button>
 
             {/* Feature Status Badge - Always visible on right side */}
             <div className="ml-auto">
@@ -285,7 +319,7 @@ export default function App() {
         )}
 
         {activeTab === 'multi-timeframe' && (
-          <MultiTimeframeAnalystPanel />
+          <MultiTFPanelWrapper setActiveTab={setActiveTab} />
         )}
 
         {activeTab === 'smart-watchlist' && (
