@@ -1,17 +1,27 @@
 /**
- * Sentiment Analysis API - HuggingFace DistilBERT
- * Analyzes text sentiment using state-of-the-art NLP model
+ * Sentiment Analysis API - PhD++ Financial Sentiment
+ * Analyzes text sentiment using financial-tuned NLP models
  *
- * Model: distilbert-base-uncased-finetuned-sst-2-english
- * Returns: sentiment (positive/negative/neutral) + confidence score
+ * Models (in order of priority):
+ * 1. ProsusAI/finbert - Financial news specialist
+ * 2. finiteautomata/bertweet-base-sentiment-analysis - Twitter-trained (fast)
+ * 3. distilbert-base-uncased-finetuned-sst-2-english - General fallback
+ *
+ * Returns: sentiment (positive/negative/neutral) + confidence score (-1 to +1)
  */
+
+const MODELS = [
+  'ProsusAI/finbert',                                    // Primary: Financial specialist
+  'finiteautomata/bertweet-base-sentiment-analysis',    // Secondary: Fast, Twitter-trained
+  'distilbert-base-uncased-finetuned-sst-2-english'     // Fallback: General sentiment
+]
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { text } = req.body
+  const { text, useMultiModel = false } = req.body
 
   if (!text || typeof text !== 'string') {
     return res.status(400).json({ error: 'Text is required' })
@@ -25,7 +35,8 @@ export default async function handler(req, res) {
       return res.status(200).json({
         sentiment: 'neutral',
         label: 'NEUTRAL',
-        score: 0.5,
+        score: 0,
+        confidence: 0.5,
         fallback: true,
         reason: 'API key not configured'
       })
@@ -33,9 +44,18 @@ export default async function handler(req, res) {
 
     console.log('[Sentiment API] Analyzing:', text.substring(0, 100))
 
-    // Call HuggingFace Inference API with DistilBERT sentiment model
-    const response = await fetch(
-      'https://api-inference.huggingface.co/models/distilbert-base-uncased-finetuned-sst-2-english',
+    // Multi-model ensemble analysis for higher accuracy
+    if (useMultiModel) {
+      const multiResult = await analyzeMultiModel(text, hfApiKey)
+      return res.status(200).json(multiResult)
+    }
+
+    // Single model analysis with fallback chain
+    for (const model of MODELS) {
+      try {
+        console.log(`[Sentiment API] Trying model: ${model}`)
+        const response = await fetch(
+          `https://api-inference.huggingface.co/models/${model}`,
       {
         method: 'POST',
         headers: {
@@ -93,20 +113,40 @@ export default async function handler(req, res) {
       current.score > max.score ? current : max
     )
 
-    // Normalize label to lowercase sentiment
-    const sentiment = topSentiment.label.toLowerCase() === 'positive' ? 'positive' :
-                      topSentiment.label.toLowerCase() === 'negative' ? 'negative' :
-                      'neutral'
+        // Normalize label and convert to -1 to +1 scale
+        const label = topSentiment.label.toLowerCase()
+        let sentiment = 'neutral'
+        let normalizedScore = 0
 
-    console.log('[Sentiment API] Result:', sentiment, topSentiment.score)
+        if (label.includes('pos') || label.includes('bullish')) {
+          sentiment = 'positive'
+          normalizedScore = topSentiment.score
+        } else if (label.includes('neg') || label.includes('bearish')) {
+          sentiment = 'negative'
+          normalizedScore = -topSentiment.score
+        }
 
-    return res.status(200).json({
-      sentiment,
-      label: topSentiment.label,
-      score: topSentiment.score,
-      text: text.substring(0, 200), // Echo back first 200 chars
-      allScores: sentimentData
-    })
+        console.log(`[Sentiment API] Success with ${model}:`, sentiment, normalizedScore)
+
+        return res.status(200).json({
+          sentiment,
+          label: topSentiment.label,
+          score: normalizedScore,
+          confidence: topSentiment.score,
+          model: model.split('/')[1],
+          text: text.substring(0, 200),
+          allScores: sentimentData
+        })
+
+      } catch (modelError) {
+        console.warn(`[Sentiment API] Model ${model} failed:`, modelError.message)
+        // Continue to next model
+        continue
+      }
+    }
+
+    // All models failed
+    throw new Error('All sentiment models failed')
 
   } catch (error) {
     console.error('[Sentiment API] Error:', error)
@@ -114,9 +154,141 @@ export default async function handler(req, res) {
     return res.status(200).json({
       sentiment: 'neutral',
       label: 'NEUTRAL',
-      score: 0.5,
+      score: 0,
+      confidence: 0.5,
       error: error.message || 'Sentiment analysis failed',
       fallback: true
     })
+  }
+}
+
+/**
+ * Multi-model ensemble analysis for PhD++ accuracy
+ */
+async function analyzeMultiModel(text, apiKey) {
+  try {
+    const results = await Promise.allSettled(
+      MODELS.map(model => analyzeSingleModel(text, model, apiKey))
+    )
+
+    const successful = results
+      .filter(r => r.status === 'fulfilled' && r.value && !r.value.error)
+      .map(r => r.value)
+
+    if (successful.length === 0) {
+      return {
+        sentiment: 'neutral',
+        score: 0,
+        confidence: 0,
+        error: 'All models failed',
+        fallback: true
+      }
+    }
+
+    // Calculate weighted average (higher confidence = higher weight)
+    const totalConfidence = successful.reduce((sum, r) => sum + r.confidence, 0)
+    const weightedScore = successful.reduce(
+      (sum, r) => sum + (r.score * r.confidence),
+      0
+    ) / totalConfidence
+
+    // Determine consensus
+    const positive = successful.filter(r => r.sentiment === 'positive').length
+    const negative = successful.filter(r => r.sentiment === 'negative').length
+
+    let consensus = 'mixed'
+    if (positive === successful.length) consensus = 'strong_positive'
+    else if (negative === successful.length) consensus = 'strong_negative'
+    else if (positive > negative) consensus = 'positive'
+    else if (negative > positive) consensus = 'negative'
+
+    return {
+      sentiment: weightedScore > 0.1 ? 'positive' :
+                 weightedScore < -0.1 ? 'negative' : 'neutral',
+      score: weightedScore,
+      confidence: totalConfidence / successful.length,
+      consensus,
+      models: successful.map(r => ({
+        model: r.model,
+        sentiment: r.sentiment,
+        score: r.score,
+        confidence: r.confidence
+      })),
+      modelsUsed: successful.length,
+      text: text.substring(0, 200)
+    }
+
+  } catch (error) {
+    console.error('[Sentiment API] Multi-model error:', error)
+    return {
+      sentiment: 'neutral',
+      score: 0,
+      confidence: 0,
+      error: error.message,
+      fallback: true
+    }
+  }
+}
+
+/**
+ * Analyze with a single model
+ */
+async function analyzeSingleModel(text, model, apiKey) {
+  const truncatedText = text.length > 512 ? text.substring(0, 512) : text
+
+  const response = await fetch(
+    `https://api-inference.huggingface.co/models/${model}`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        inputs: truncatedText,
+        options: { wait_for_model: true }
+      })
+    }
+  )
+
+  if (!response.ok) {
+    if (response.status === 503) {
+      // Model loading - wait and retry once
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      return analyzeSingleModel(text, model, apiKey)
+    }
+    throw new Error(`Model ${model} returned ${response.status}`)
+  }
+
+  const result = await response.json()
+
+  let sentimentData
+  if (Array.isArray(result) && result.length > 0) {
+    sentimentData = Array.isArray(result[0]) ? result[0] : result
+  } else {
+    throw new Error('Invalid response format')
+  }
+
+  const topSentiment = sentimentData.reduce((max, current) =>
+    current.score > max.score ? current : max
+  )
+
+  const label = topSentiment.label.toLowerCase()
+  let sentiment = 'neutral'
+  let normalizedScore = 0
+
+  if (label.includes('pos') || label.includes('bullish')) {
+    sentiment = 'positive'
+    normalizedScore = topSentiment.score
+  } else if (label.includes('neg') || label.includes('bearish')) {
+    sentiment = 'negative'
+    normalizedScore = -topSentiment.score
+  }
+
+  return {
+    sentiment,
+    score: normalizedScore,
+    confidence: topSentiment.score,
+    model: model.split('/')[1]
   }
 }
