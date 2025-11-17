@@ -54,6 +54,81 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
     }
   }, [positions])
 
+  // ELITE: Listen for AI Copilot close position commands
+  useEffect(() => {
+    const handleClosePosition = (event) => {
+      const { symbol, reason } = event.detail || {}
+      console.log('[Orders] AI Copilot requesting close position:', symbol, reason)
+
+      if (!symbol) {
+        console.error('[Orders] Invalid close position request - missing symbol')
+        return
+      }
+
+      // Close the position
+      closePosition(symbol)
+
+      // Show toast notification
+      window.dispatchEvent(new CustomEvent('iava.toast', {
+        detail: {
+          text: `🤖 AI Copilot closed ${symbol}${reason ? ': ' + reason : ''}`,
+          type: 'warning',
+          ttl: 5000
+        }
+      }))
+    }
+
+    const handleSetStop = (event) => {
+      const { symbol, stopPrice, type } = event.detail || {}
+      console.log('[Orders] AI Copilot requesting set stop:', symbol, stopPrice, type)
+
+      if (!symbol || !stopPrice) {
+        console.error('[Orders] Invalid set stop request - missing symbol or stopPrice')
+        return
+      }
+
+      // TODO: Implement stop loss order placement
+      // For now, just show notification
+      window.dispatchEvent(new CustomEvent('iava.toast', {
+        detail: {
+          text: `🤖 AI Copilot suggests ${type || 'stop'} at $${stopPrice.toFixed(2)} for ${symbol}`,
+          type: 'info',
+          ttl: 5000
+        }
+      }))
+    }
+
+    const handleTakeProfit = (event) => {
+      const { symbol, percentage } = event.detail || {}
+      console.log('[Orders] AI Copilot requesting take profit:', symbol, percentage)
+
+      if (!symbol) {
+        console.error('[Orders] Invalid take profit request - missing symbol')
+        return
+      }
+
+      // TODO: Implement partial profit taking
+      // For now, just show notification
+      window.dispatchEvent(new CustomEvent('iava.toast', {
+        detail: {
+          text: `🤖 AI Copilot suggests taking ${percentage || 50}% profits on ${symbol}`,
+          type: 'success',
+          ttl: 5000
+        }
+      }))
+    }
+
+    window.addEventListener('iava-close-position', handleClosePosition)
+    window.addEventListener('iava-set-stop', handleSetStop)
+    window.addEventListener('iava-take-profit', handleTakeProfit)
+
+    return () => {
+      window.removeEventListener('iava-close-position', handleClosePosition)
+      window.removeEventListener('iava-set-stop', handleSetStop)
+      window.removeEventListener('iava-take-profit', handleTakeProfit)
+    }
+  }, [])
+
   // ELITE: Listen for AI trade setups (from Voice-to-Trade or Trust Mode)
   useEffect(() => {
     const handleTradeSetup = (event) => {

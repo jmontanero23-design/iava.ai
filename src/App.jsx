@@ -30,6 +30,7 @@ import PatternRecognition from './components/PatternRecognition.jsx'
 import MultiSymbolAnalysis from './components/MultiSymbolAnalysis.jsx'
 import StrategyBuilder from './components/StrategyBuilder.jsx'
 import RiskControlsPanel from './components/RiskControlsPanel.jsx'
+import MultiTimeframePanel from './components/MultiTimeframePanel.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
