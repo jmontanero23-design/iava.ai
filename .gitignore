@@ -24,3 +24,4 @@ pnpm-debug.log*
 test-hf-keys.js
 test-new-endpoint.js
 test-router-endpoint.js
+test-hf-models.js

@@ -99,9 +99,9 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
     },
     {
       id: 'multi_timeframe',
-      name: 'Multi-Timeframe Analyst',
-      description: '3-timeframe synthesis',
-      detail: '5m/15m/1h EMA trends, S/R clustering, confluence scoring, entry timing',
+      name: 'Multi-Timeframe Analysis',
+      description: '5-timeframe PhD++ analysis',
+      detail: '1Min → Daily weighted scoring, consensus, divergence alerts, optimal entry TF',
       icon: '⏱️',
       gradient: 'from-purple-600 via-purple-500 to-pink-500',
       glowColor: 'purple',
