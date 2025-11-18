@@ -17,13 +17,19 @@
  */
 export async function fetchBars(symbol = 'AAPL', timeframe = '1Min', limit = 500) {
   try {
+    // PhD++ CRITICAL FIX: Validate symbol before making API call
+    if (!symbol || typeof symbol !== 'string' || symbol.trim() === '') {
+      console.error('[Yahoo Finance] Invalid symbol:', symbol)
+      throw new Error('Invalid symbol - cannot fetch bars')
+    }
+
     // Map our timeframe to Yahoo Finance interval
     const interval = mapTimeframeToYahoo(timeframe)
     const range = getRangeForTimeframe(timeframe, limit)
 
     // Use our CORS proxy instead of calling Yahoo directly
     // Yahoo Finance blocks browser requests with CORS policy
-    const url = `/api/yahoo-proxy?symbol=${symbol}&interval=${interval}&range=${range}`
+    const url = `/api/yahoo-proxy?symbol=${symbol.trim()}&interval=${interval}&range=${range}`
 
     const response = await fetch(url)
 

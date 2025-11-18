@@ -299,8 +299,17 @@ export default function App() {
 
   // Publish market data to context for AI Chat and other features
   useEffect(() => {
-    const currentPrice = bars?.length ? bars[bars.length - 1]?.close : null
-    console.log('[AppChart] Updating MarketDataContext with symbol:', symbol, 'bars:', bars?.length, 'price:', currentPrice)
+    // PhD++ CRITICAL FIX: Only update context when bars actually change
+    // DO NOT trigger on symbol/timeframe change to avoid race condition
+    // where NEW symbol + OLD bars creates mismatched data
+    if (!bars || bars.length === 0) {
+      console.log('[AppChart] Skipping context update - no bars data yet')
+      return
+    }
+
+    const currentPrice = bars[bars.length - 1]?.close
+    console.log('[AppChart] Updating MarketDataContext with symbol:', symbol, 'bars:', bars.length, 'price:', currentPrice)
+
     updateMarketData({
       symbol,
       timeframe,
@@ -318,15 +327,14 @@ export default function App() {
     })
     console.log('[AppChart] MarketDataContext updated successfully')
 
-    // CRITICAL FIX: Notify components that symbol has loaded (fixes race condition)
-    if (symbol && bars?.length > 0) {
-      window.dispatchEvent(new CustomEvent('iava.symbolLoaded', {
-        detail: { symbol, timeframe, bars: bars.length, currentPrice }
-      }))
-      console.log('[AppChart] ✅ Dispatched iava.symbolLoaded event for:', symbol)
-    }
+    // Notify components that symbol has loaded
+    window.dispatchEvent(new CustomEvent('iava.symbolLoaded', {
+      detail: { symbol, timeframe, bars: bars.length, currentPrice }
+    }))
+    console.log('[AppChart] ✅ Dispatched iava.symbolLoaded event for:', symbol)
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [symbol, timeframe, bars, signalState, dailyState, overlays, threshold, enforceDaily, consensusBonus, consensus, account, usingSample])
+  }, [bars, signalState, dailyState, overlays, threshold, enforceDaily, consensusBonus, consensus, account, usingSample])
 
   const stale = useMemo(() => {
     if (!bars?.length) return true
