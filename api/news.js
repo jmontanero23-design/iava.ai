@@ -10,10 +10,6 @@ export default async function handler(req, res) {
     // Use correct server-side environment variable names (not VITE_ prefixed)
     const ALPACA_KEY = process.env.ALPACA_KEY_ID
     const ALPACA_SECRET = process.env.ALPACA_SECRET_KEY
-    const ALPACA_ENV = process.env.ALPACA_ENV || 'paper'
-    const BASE_URL = ALPACA_ENV === 'paper'
-      ? 'https://paper-api.alpaca.markets'
-      : 'https://api.alpaca.markets'
 
     if (!ALPACA_KEY || !ALPACA_SECRET) {
       console.warn('[News API] No Alpaca credentials - returning sample data. Check ALPACA_KEY_ID and ALPACA_SECRET_KEY in Vercel environment variables.')
@@ -24,11 +20,14 @@ export default async function handler(req, res) {
       })
     }
 
-    // Fetch news from Alpaca News API
+    // CRITICAL FIX: News API is on data.alpaca.markets (market data domain)
+    // NOT paper-api.alpaca.markets (trading domain)
+    // The news endpoint is the same for both paper and live accounts
     // https://docs.alpaca.markets/reference/news-1
-    const newsUrl = `${BASE_URL}/v1beta1/news?symbols=${symbol}&limit=${Math.min(limit, 50)}&sort=desc`
+    const DATA_URL = process.env.ALPACA_DATA_URL || 'https://data.alpaca.markets'
+    const newsUrl = `${DATA_URL}/v1beta1/news?symbols=${symbol}&limit=${Math.min(limit, 50)}&sort=desc`
 
-    console.log('[News API] Fetching news for:', symbol)
+    console.log('[News API] Fetching from:', newsUrl)
 
     const response = await fetch(newsUrl, {
       headers: {
