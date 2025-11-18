@@ -1241,19 +1241,23 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
         latency: result.latency
       }
 
-      setMessages(prev => {
-        const updated = [...prev, assistantMessage]
+      // PhD++ ELITE FIX: Store response GLOBALLY first (survives component unmount)
+      try {
+        const currentHistory = JSON.parse(localStorage.getItem('iava_chat_history') || '{"messages":[]}')
+        const updatedMessages = [...currentHistory.messages, assistantMessage]
 
-        // PhD++ CRITICAL FIX: Immediately persist to localStorage BEFORE TTS starts
-        // This prevents race condition where user navigates away before useEffect saves
         localStorage.setItem('iava_chat_history', JSON.stringify({
-          messages: updated,
+          messages: updatedMessages,
           timestamp: Date.now()
         }))
-        console.log('[AI Chat] ✅ AI response persisted to localStorage immediately')
+        localStorage.removeItem('iava_pending_request') // Clear pending since response is saved
+        console.log('[AI Chat] ✅ AI response persisted GLOBALLY (survives unmount)')
+      } catch (e) {
+        console.error('[AI Chat] Failed to persist globally:', e)
+      }
 
-        return updated
-      })
+      // Now update component state (only works if still mounted)
+      setMessages(prev => [...prev, assistantMessage])
 
       // ELITE FEATURE: Detect trade recommendations for voice-to-trade
       const tradeSetup = parseTradeSetup(result.content)
@@ -1286,11 +1290,20 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
         timestamp: Date.now(),
         error: true
       }
+      // Save error globally too
+      try {
+        const currentHistory = JSON.parse(localStorage.getItem('iava_chat_history') || '{"messages":[]}')
+        localStorage.setItem('iava_chat_history', JSON.stringify({
+          messages: [...currentHistory.messages, errorMessage],
+          timestamp: Date.now()
+        }))
+        localStorage.removeItem('iava_pending_request')
+      } catch (e) {
+        console.error('[AI Chat] Failed to persist error globally:', e)
+      }
       setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsTyping(false)
-      // Clear pending request - AI response completed or errored
-      localStorage.removeItem('iava_pending_request')
     }
   }
 

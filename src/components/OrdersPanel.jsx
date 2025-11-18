@@ -81,6 +81,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
     const handleSetStop = async (event) => {
       const { symbol, stopPrice, type } = event.detail || {}
       console.log('[Orders] AI Copilot requesting set stop:', symbol, stopPrice, type)
+      console.log('[Orders] Current positions:', positions.length, positions.map(p => p.symbol))
 
       if (!symbol || !stopPrice) {
         console.error('[Orders] Invalid set stop request - missing symbol or stopPrice')
@@ -89,10 +90,15 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
 
       // PhD++ REAL EXECUTION: Actually place stop loss order
       try {
+        // CRITICAL FIX: Fetch fresh positions instead of using stale state
+        const freshPositions = await fetchPositions()
+        console.log('[Orders] Fresh positions:', freshPositions.length, freshPositions.map(p => p.symbol))
+
         // Find the position to get qty and side
-        const position = positions.find(p => p.symbol === symbol)
+        const position = freshPositions.find(p => p.symbol === symbol)
         if (!position) {
           console.error('[Orders] Position not found for:', symbol)
+          console.error('[Orders] Available positions:', freshPositions.map(p => ({ symbol: p.symbol, qty: p.qty })))
           window.dispatchEvent(new CustomEvent('iava.toast', {
             detail: {
               text: `❌ Position ${symbol} not found`,
@@ -155,8 +161,11 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
 
       // PhD++ REAL EXECUTION: Actually close partial position
       try {
+        // CRITICAL FIX: Fetch fresh positions instead of using stale state
+        const freshPositions = await fetchPositions()
+
         // Find the position
-        const position = positions.find(p => p.symbol === symbol)
+        const position = freshPositions.find(p => p.symbol === symbol)
         if (!position) {
           console.error('[Orders] Position not found for:', symbol)
           window.dispatchEvent(new CustomEvent('iava.toast', {
@@ -309,6 +318,17 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
     const budget = (Math.max(0, parseFloat(riskPct) || 0) / 100) * eq
     const q = Math.floor(budget / perShare)
     if (Number.isFinite(q) && q > 0) setQty(q)
+  }
+
+  // Helper function to fetch fresh positions without updating state
+  async function fetchPositions() {
+    try {
+      const p = await api('/api/alpaca/positions')
+      return Array.isArray(p.json) ? p.json : []
+    } catch (e) {
+      console.error('[Orders] Error fetching positions:', e)
+      return []
+    }
   }
 
   async function refresh() {
