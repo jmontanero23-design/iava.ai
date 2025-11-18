@@ -1241,7 +1241,19 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
         latency: result.latency
       }
 
-      setMessages(prev => [...prev, assistantMessage])
+      setMessages(prev => {
+        const updated = [...prev, assistantMessage]
+
+        // PhD++ CRITICAL FIX: Immediately persist to localStorage BEFORE TTS starts
+        // This prevents race condition where user navigates away before useEffect saves
+        localStorage.setItem('iava_chat_history', JSON.stringify({
+          messages: updated,
+          timestamp: Date.now()
+        }))
+        console.log('[AI Chat] ✅ AI response persisted to localStorage immediately')
+
+        return updated
+      })
 
       // ELITE FEATURE: Detect trade recommendations for voice-to-trade
       const tradeSetup = parseTradeSetup(result.content)

@@ -143,6 +143,23 @@ export default function MarketSentiment() {
 
       const analyzedNews = await Promise.all(sentimentPromises)
       console.log(`[Sentiment] Setting ${analyzedNews.length} analyzed news items:`, analyzedNews.slice(0, 2))
+
+      // PhD++ DIAGNOSTIC: Check if we're using fallback data (no real HF models)
+      const fallbackCount = analyzedNews.filter(item => item.fallback || item.error).length
+      if (fallbackCount > 0) {
+        console.warn(`[Sentiment] ⚠️ WARNING: ${fallbackCount}/${analyzedNews.length} items using fallback data!`)
+        console.warn('[Sentiment] HuggingFace API key likely not configured - sentiment scores are GENERIC')
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: {
+            text: `⚠️ Sentiment analysis using fallback data - add HUGGINGFACE_API_KEY for real PhD++ analysis`,
+            type: 'warning',
+            duration: 8000
+          }
+        }))
+      } else {
+        console.log('[Sentiment] ✅ All items analyzed with REAL HuggingFace models!')
+      }
+
       setNewsItems(analyzedNews)
 
       // Calculate overall sentiment from news (using -1 to +1 normalized scores)
