@@ -171,12 +171,12 @@ export default function WatchlistNavigator({ onLoadSymbol, timeframe }) {
               onChange={e=>setSec(parseInt(e.target.value,10)||5)}
               className="w-16 px-2 py-1 rounded-md text-xs bg-slate-800/50 border border-slate-700/50 focus:border-indigo-500/50 text-slate-200 transition-all"
             />
-            <span className="text-xs text-slate-500">sec</span>
+            <span className="text-xs text-slate-400">sec</span>
           </div>
         </div>
 
         {/* Keyboard Shortcuts Hint */}
-        <div className="flex items-center gap-2 text-xs text-slate-500">
+        <div className="flex items-center gap-2 text-xs text-slate-400">
           <span className="px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700/50 font-mono">←</span>
           <span className="px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700/50 font-mono">→</span>
           <span>Navigate</span>

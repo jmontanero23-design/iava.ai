@@ -41,7 +41,7 @@ export default function MarketRegimeIndicator({ dailyState }) {
           <span className={`text-sm font-bold uppercase tracking-wider ${config.textColor}`}>
             {config.icon} {config.label}
           </span>
-          <span className="text-[10px] text-slate-500 uppercase tracking-wide">
+          <span className="text-[10px] text-slate-400 uppercase tracking-wide">
             Market Regime
           </span>
         </div>
@@ -50,14 +50,14 @@ export default function MarketRegimeIndicator({ dailyState }) {
       {/* Sub-info: Pivot & Ichimoku states */}
       <div className="mt-2 pt-2 border-t border-slate-700/50 flex items-center gap-3 text-[10px]">
         <div className="flex items-center gap-1">
-          <span className="text-slate-500">Pivot:</span>
+          <span className="text-slate-400">Pivot:</span>
           <span className={getIndicatorColor(dailyPivot)}>
             {formatIndicator(dailyPivot)}
           </span>
         </div>
         <div className="w-px h-3 bg-slate-700" />
         <div className="flex items-center gap-1">
-          <span className="text-slate-500">Ichi:</span>
+          <span className="text-slate-400">Ichi:</span>
           <span className={getIndicatorColor(dailyIchi)}>
             {formatIndicator(dailyIchi)}
           </span>
@@ -105,7 +105,7 @@ function getRegimeConfig(regime) {
  * Get color for individual indicator states
  */
 function getIndicatorColor(value) {
-  if (!value) return 'text-slate-500'
+  if (!value) return 'text-slate-400'
   const v = value.toLowerCase()
   if (v === 'bullish') return 'text-green-400'
   if (v === 'bearish') return 'text-red-400'

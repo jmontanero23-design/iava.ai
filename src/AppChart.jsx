@@ -675,7 +675,7 @@ export default function App() {
             </div>
 
             {/* Keyboard Shortcuts Hint */}
-            <div className="text-[11px] text-slate-500 flex items-center gap-2">
+            <div className="text-[11px] text-slate-400 flex items-center gap-2">
               <span>⌨️</span>
               <span>Shortcuts: 1–7 switch presets · ←/→ navigate watchlist · Space toggle Auto</span>
             </div>
@@ -804,8 +804,8 @@ export default function App() {
             <div className="mt-3 pt-3 border-t border-slate-700/30 flex items-center gap-3">
               <span className="text-sm text-slate-400 font-semibold">Threshold</span>
               <InfoPopover title="Threshold">Minimum Unicorn Score to consider a setup. Raise to be more selective; lower to explore more candidates. Scanner applies threshold after gating.</InfoPopover>
-              <input type="range" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10))} className="flex-1 max-w-xs accent-indigo-500" />
-              <input type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="input w-16 bg-slate-800/50 border-slate-700/50 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-all" />
+              <input aria-label="Threshold slider" type="range" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10))} className="flex-1 max-w-xs accent-indigo-500" />
+              <input aria-label="Threshold value" type="number" min={0} max={100} value={threshold} onChange={e => setThreshold(parseInt(e.target.value,10)||0)} className="input w-16 bg-slate-800/50 border-slate-700/50 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-all" />
             </div>
           </div>
 
@@ -911,7 +911,7 @@ export default function App() {
             <section className="card p-4">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-sm font-semibold text-slate-200">Find Setups</h2>
-                <span className="text-[11px] text-slate-500">Scanner · Smart Watchlists</span>
+                <span className="text-[11px] text-slate-400">Scanner · Smart Watchlists</span>
               </div>
               <ScannerPanel
                 onLoadSymbol={(sym, tf) => { setSymbol(sym); setTimeframe(tf || timeframe); setHud(`${sym} · ${tf || timeframe}`); setTimeout(()=>setHud(''), 1500); loadBars(sym, tf || timeframe) }}
@@ -931,7 +931,7 @@ export default function App() {
             <section className="card p-4 space-y-3">
               <div className="flex items-center justify-between mb-1">
                 <h2 className="text-sm font-semibold text-slate-200">Test & Tune</h2>
-                <span className="text-[11px] text-slate-500">Backtests · Thresholds · SATY</span>
+                <span className="text-[11px] text-slate-400">Backtests · Thresholds · SATY</span>
               </div>
               <BacktestPanel symbol={symbol} timeframe={timeframe} preset={backtestPreset} chartThreshold={threshold} chartConsensusBonus={consensusBonus} />
               <BatchBacktestPanel defaultTimeframe={timeframe} />

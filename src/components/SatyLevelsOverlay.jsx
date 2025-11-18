@@ -37,7 +37,7 @@ export default function SatyLevelsOverlay({ saty, currentPrice }) {
           <div className="text-xs font-bold text-teal-300 uppercase tracking-wider">
             SATY Levels
           </div>
-          <div className="text-[10px] text-slate-500">
+          <div className="text-[10px] text-slate-400">
             ATR: {atr ? atr.toFixed(2) : '—'}
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function SatyLevelsOverlay({ saty, currentPrice }) {
             ${resistance ? resistance.toFixed(2) : '—'}
           </div>
           {currentPrice && resistance && (
-            <div className="text-[10px] text-slate-500">
+            <div className="text-[10px] text-slate-400">
               +{((resistance - currentPrice) / currentPrice * 100).toFixed(1)}%
             </div>
           )}
@@ -90,7 +90,7 @@ export default function SatyLevelsOverlay({ saty, currentPrice }) {
             ${support ? support.toFixed(2) : '—'}
           </div>
           {currentPrice && support && (
-            <div className="text-[10px] text-slate-500">
+            <div className="text-[10px] text-slate-400">
               {((support - currentPrice) / currentPrice * 100).toFixed(1)}%
             </div>
           )}

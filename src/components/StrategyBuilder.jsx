@@ -197,13 +197,14 @@ export default function StrategyBuilder() {
         <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/50">
           <div className="text-xs text-slate-400 font-semibold mb-2">DESCRIBE YOUR STRATEGY</div>
           <textarea
+            aria-label="Strategy description"
             value={strategyInput}
             onChange={(e) => setStrategyInput(e.target.value)}
             placeholder="Example: Buy when RSI is below 30 and Unicorn Score above 70, sell at 5% profit or 2% stop loss"
             className="input-field w-full h-24 text-sm resize-none"
           />
           <div className="flex items-center justify-between mt-3">
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-slate-400">
               Use indicators: RSI, EMA, Unicorn Score, SATY, Price
             </div>
             <button
@@ -265,7 +266,7 @@ export default function StrategyBuilder() {
                         e.stopPropagation()
                         deleteStrategy(strategy.id)
                       }}
-                      className="text-slate-500 hover:text-red-400 transition-colors"
+                      className="text-slate-400 hover:text-red-400 transition-colors"
                     >
                       🗑️
                     </button>
@@ -281,7 +282,7 @@ export default function StrategyBuilder() {
                       }`}>
                         {results.winRate}%
                       </div>
-                      <div className="text-xs text-slate-500">Win Rate</div>
+                      <div className="text-xs text-slate-400">Win Rate</div>
                     </div>
                     <div className="text-center">
                       <div className={`text-sm font-bold ${
@@ -291,7 +292,7 @@ export default function StrategyBuilder() {
                       }`}>
                         {results.sharpeRatio}
                       </div>
-                      <div className="text-xs text-slate-500">Sharpe</div>
+                      <div className="text-xs text-slate-400">Sharpe</div>
                     </div>
                     <div className="text-center">
                       <div className={`text-sm font-bold ${
@@ -301,13 +302,13 @@ export default function StrategyBuilder() {
                       }`}>
                         {parseFloat(results.totalReturn) >= 0 ? '+' : ''}{results.totalReturn}%
                       </div>
-                      <div className="text-xs text-slate-500">Return</div>
+                      <div className="text-xs text-slate-400">Return</div>
                     </div>
                     <div className="text-center">
                       <div className="text-sm font-bold text-red-400">
                         {results.maxDrawdown}%
                       </div>
-                      <div className="text-xs text-slate-500">Max DD</div>
+                      <div className="text-xs text-slate-400">Max DD</div>
                     </div>
                   </div>
 

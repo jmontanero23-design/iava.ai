@@ -77,7 +77,7 @@ export default function UnicornCallout({ state, threshold = 70 }) {
         <div className="mt-2 flex items-center gap-2">
           <button onClick={() => setOverrideOpen(v => !v)} className="bg-slate-800 hover:bg-slate-700 text-xs rounded px-2 py-1 border border-slate-700">{overrideOpen ? 'Hide Trade' : 'Proceed (Paper)'}
           </button>
-          <span className="text-xs text-slate-500">Proceed opens a paper trade ticket without daily confluence. Use with caution.</span>
+          <span className="text-xs text-slate-400">Proceed opens a paper trade ticket without daily confluence. Use with caution.</span>
         </div>
         {overrideOpen && (
           <div className="mt-3">
@@ -87,7 +87,7 @@ export default function UnicornCallout({ state, threshold = 70 }) {
         {expErr ? (
           <div className="mt-2 text-xs text-rose-400">
             {expErr}
-            <span className="ml-2 text-slate-500">Check <a href="/api/health" target="_blank" rel="noreferrer" className="underline">/api/health</a> for LLM status.</span>
+            <span className="ml-2 text-slate-400">Check <a href="/api/health" target="_blank" rel="noreferrer" className="underline">/api/health</a> for LLM status.</span>
           </div>
         ) : null}
       </div>

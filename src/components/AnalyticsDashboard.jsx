@@ -319,7 +319,7 @@ export default function AnalyticsDashboard() {
                         <td className="py-2 px-3 text-right text-slate-300">
                           {log.tp ? log.tp.toFixed(2) : '—'}
                         </td>
-                        <td className={`py-2 px-3 text-right font-semibold ${log.pnl ? (parseFloat(log.pnl) > 0 ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-500'}`}>
+                        <td className={`py-2 px-3 text-right font-semibold ${log.pnl ? (parseFloat(log.pnl) > 0 ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-400'}`}>
                           {log.pnl ? `$${parseFloat(log.pnl).toFixed(2)}` : '—'}
                         </td>
                         <td className="py-2 px-3 text-slate-400 text-xs truncate max-w-xs">

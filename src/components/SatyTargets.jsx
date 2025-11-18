@@ -88,7 +88,7 @@ export default function SatyTargets({ saty, last }) {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-4 text-xs text-slate-500">
+                <div className="text-center py-4 text-xs text-slate-400">
                   No upside target available
                 </div>
               )}
@@ -125,7 +125,7 @@ export default function SatyTargets({ saty, last }) {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-4 text-xs text-slate-500">
+                <div className="text-center py-4 text-xs text-slate-400">
                   No downside target available
                 </div>
               )}

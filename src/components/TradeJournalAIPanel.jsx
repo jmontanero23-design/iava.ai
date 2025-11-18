@@ -463,6 +463,7 @@ export default function TradeJournalAIPanel() {
             <div className="mb-3">
               <label className="block text-xs text-slate-400 mb-1">Notes</label>
               <textarea
+                aria-label="Trade notes"
                 value={newTrade.notes}
                 onChange={e => setNewTrade({ ...newTrade, notes: e.target.value })}
                 className="input w-full bg-slate-800/50 border-slate-700/50 focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 transition-all"
@@ -600,7 +601,7 @@ export default function TradeJournalAIPanel() {
                     ${trade.entryPrice} → ${trade.exitPrice} • {trade.shares} shares • P&L: ${trade.pnl.toFixed(2)}
                   </div>
                   {trade.notes && (
-                    <div className="text-xs text-slate-500 mt-2 line-clamp-2">
+                    <div className="text-xs text-slate-400 mt-2 line-clamp-2">
                       {trade.notes}
                     </div>
                   )}
@@ -684,7 +685,7 @@ export default function TradeJournalAIPanel() {
                                  aiReview.sentiment === 'negative' ? '❌ Negative' :
                                  '➖ Neutral'}
                               </span>
-                              <span className="text-xs text-slate-500">
+                              <span className="text-xs text-slate-400">
                                 {Math.round((aiReview.sentimentConfidence || 0) * 100)}% confident
                               </span>
                             </div>

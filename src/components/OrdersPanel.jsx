@@ -530,12 +530,12 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
         <div>
           <div className="text-slate-400 mb-1">Open Orders</div>
           <div className="space-y-2 max-h-56 overflow-auto pr-1">
-            {orders.length === 0 && <div className="text-slate-500 text-xs">No open orders</div>}
+            {orders.length === 0 && <div className="text-slate-400 text-xs">No open orders</div>}
             {orders.map(o => (
               <div key={o.id} className="border border-slate-800 rounded p-2 flex items-center justify-between">
                 <div>
                   <div className="text-slate-200">{o.symbol} · {o.side} · {o.qty} {o.type}</div>
-                  <div className="text-xs text-slate-500">id {o.id} · {o.status}</div>
+                  <div className="text-xs text-slate-400">id {o.id} · {o.status}</div>
                 </div>
                 <button onClick={() => cancelOrder(o.id)} className="btn btn-xs">Cancel</button>
               </div>
@@ -545,12 +545,12 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
         <div>
           <div className="text-slate-400 mb-1">Positions</div>
           <div className="space-y-2 max-h-56 overflow-auto pr-1">
-            {positions.length === 0 && <div className="text-slate-500 text-xs">No positions</div>}
+            {positions.length === 0 && <div className="text-slate-400 text-xs">No positions</div>}
             {positions.map(p => (
               <div key={p.symbol} className="border border-slate-800 rounded p-2 flex items-center justify-between">
                 <div>
                   <div className="text-slate-200">{p.symbol} · {p.side} · qty {p.qty} · avg {Number(p.avg_entry_price).toFixed(2)}</div>
-                  <div className="text-xs text-slate-500">unrealized {Number(p.unrealized_pl).toFixed(2)} · {Number(p.unrealized_plpc * 100).toFixed(2)}%</div>
+                  <div className="text-xs text-slate-400">unrealized {Number(p.unrealized_pl).toFixed(2)} · {Number(p.unrealized_plpc * 100).toFixed(2)}%</div>
                 </div>
                 <button onClick={() => closePosition(p.symbol)} className="btn btn-xs">Close</button>
               </div>

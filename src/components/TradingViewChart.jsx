@@ -105,7 +105,7 @@ function TradingViewChart() {
       <div className="tradingview-widget-container__widget" style={{ height: 'calc(100% - 32px)', width: '100%' }}></div>
       <div className="tradingview-widget-copyright">
         <a href={`https://www.tradingview.com/symbols/${formatSymbolForTradingView(symbol)}/`} rel="noopener noreferrer" target="_blank">
-          <span className="text-xs text-slate-500">TradingView Chart</span>
+          <span className="text-xs text-slate-400">TradingView Chart</span>
         </a>
       </div>
     </div>

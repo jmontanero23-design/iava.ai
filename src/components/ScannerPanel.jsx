@@ -188,7 +188,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
         <div className="text-sm font-bold text-slate-300 uppercase tracking-wider">{title}</div>
       </div>
       <div className="space-y-2 max-h-64 overflow-auto pr-1 styled-scrollbar">
-        {!items?.length && <div className="text-sm text-slate-500 italic p-4 text-center bg-slate-800/20 rounded-lg border border-slate-700/30">No results</div>}
+        {!items?.length && <div className="text-sm text-slate-400 italic p-4 text-center bg-slate-800/20 rounded-lg border border-slate-700/30">No results</div>}
         {items?.map(it => (
           <div key={it.symbol} className="relative group row-highlight">
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 blur-lg opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
@@ -371,9 +371,10 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
       <div className="p-5 space-y-3">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-slate-300">Symbols</span>
-          <span className="text-xs text-slate-500">{assetClass === 'crypto' ? 'e.g., BTC/USD, ETH/USD' : 'paste or import'}</span>
+          <span className="text-xs text-slate-400">{assetClass === 'crypto' ? 'e.g., BTC/USD, ETH/USD' : 'paste or import'}</span>
         </div>
         <textarea
+          aria-label="Symbols list"
           value={symbols}
           onChange={e=>setSymbols(e.target.value)}
           className="w-full h-20 bg-slate-800/50 border border-slate-700/50 focus:border-cyan-500/50 rounded-lg p-3 text-sm text-slate-200 placeholder-slate-500 transition-all"
@@ -587,7 +588,7 @@ export default function ScannerPanel({ onLoadSymbol, defaultTimeframe = '5Min', 
           </div>
 
           {/* Premium Metadata Display */}
-          <div className="text-xs text-slate-500 leading-relaxed">
+          <div className="text-xs text-slate-400 leading-relaxed">
             {assetClass.toUpperCase()} • Universe {res.universe} • TF {res.timeframe} • TH ≥{res.threshold} • Daily {res.enforceDaily ? 'On' : 'Off'} • Consensus {requireConsensus ? 'On' : 'Off'} • Bonus {consensusBonus ? '+10' : 'Off'} • Results L{res.longs?.length||0}/S{res.shorts?.length||0}
             {res.counts ? (
               <>

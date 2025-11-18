@@ -211,7 +211,7 @@ export default function MultiSymbolAnalysis() {
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="text-lg font-bold text-slate-200">{data.symbol}</span>
-                            <span className="text-xs text-slate-500">{data.sector}</span>
+                            <span className="text-xs text-slate-400">{data.sector}</span>
                           </div>
                           <div className="text-sm text-slate-400">${data.price}</div>
                         </div>
@@ -219,7 +219,7 @@ export default function MultiSymbolAnalysis() {
                     </div>
                     <button
                       onClick={() => removeSymbol(data.symbol)}
-                      className="text-slate-500 hover:text-slate-300 text-xs"
+                      className="text-slate-400 hover:text-slate-300 text-xs"
                     >
                       ✕
                     </button>
@@ -237,7 +237,7 @@ export default function MultiSymbolAnalysis() {
                       }`}>
                         {data.unicornScore}
                       </div>
-                      <div className="text-xs text-slate-500">Score</div>
+                      <div className="text-xs text-slate-400">Score</div>
                     </div>
 
                     {/* Change */}
@@ -245,7 +245,7 @@ export default function MultiSymbolAnalysis() {
                       <div className={`text-xl font-bold ${changeColor}`}>
                         {parseFloat(data.change) >= 0 ? '+' : ''}{data.changePercent}%
                       </div>
-                      <div className="text-xs text-slate-500">Change</div>
+                      <div className="text-xs text-slate-400">Change</div>
                     </div>
 
                     {/* Strength */}
@@ -253,7 +253,7 @@ export default function MultiSymbolAnalysis() {
                       <div className={`text-2xl font-bold ${getStrengthColor(data.strength)}`}>
                         {data.strength}/10
                       </div>
-                      <div className="text-xs text-slate-500">Strength</div>
+                      <div className="text-xs text-slate-400">Strength</div>
                     </div>
 
                     {/* Trend */}
@@ -262,7 +262,7 @@ export default function MultiSymbolAnalysis() {
                         {data.trend === 'bullish' ? '🐂' :
                          data.trend === 'bearish' ? '🐻' : '➖'}
                       </div>
-                      <div className="text-xs text-slate-500 capitalize">{data.trend}</div>
+                      <div className="text-xs text-slate-400 capitalize">{data.trend}</div>
                     </div>
                   </div>
 
@@ -275,7 +275,7 @@ export default function MultiSymbolAnalysis() {
                   </div>
 
                   {/* Volume */}
-                  <div className="mt-2 text-xs text-slate-500 text-center">
+                  <div className="mt-2 text-xs text-slate-400 text-center">
                     Volume: {data.volume}
                   </div>
                 </div>

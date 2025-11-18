@@ -269,7 +269,7 @@ export default function NaturalLanguageScanner({ onFiltersGenerated, onLoadSymbo
                     <div className="absolute inset-0 bg-emerald-600 blur-lg opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
                     <div className="relative flex items-center justify-between p-3 bg-slate-800/40 rounded-lg border border-slate-700/50 hover:border-emerald-500/40 transition-all">
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-slate-500 w-4">{idx + 1}</span>
+                        <span className="text-xs text-slate-400 w-4">{idx + 1}</span>
                         <span className="text-base font-bold text-slate-100">{stock.symbol}</span>
                         <span className="px-2 py-0.5 rounded-md bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
                           {Math.round(stock.score)}
@@ -301,7 +301,7 @@ export default function NaturalLanguageScanner({ onFiltersGenerated, onLoadSymbo
                     <div className="absolute inset-0 bg-rose-600 blur-lg opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
                     <div className="relative flex items-center justify-between p-3 bg-slate-800/40 rounded-lg border border-slate-700/50 hover:border-rose-500/40 transition-all">
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-slate-500 w-4">{idx + 1}</span>
+                        <span className="text-xs text-slate-400 w-4">{idx + 1}</span>
                         <span className="text-base font-bold text-slate-100">{stock.symbol}</span>
                         <span className="px-2 py-0.5 rounded-md bg-rose-600/20 border border-rose-500/30 text-rose-300 text-xs font-semibold">
                           {Math.round(stock.score)}

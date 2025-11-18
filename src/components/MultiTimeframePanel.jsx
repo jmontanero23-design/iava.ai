@@ -156,7 +156,7 @@ export default function MultiTimeframePanel({ symbol, onLoadTimeframe }) {
                 <div className={`text-xl font-bold text-${getScoreColor(analysis.weightedScore)}-400`}>
                   {analysis.weightedScore.toFixed(1)} / 100
                 </div>
-                <div className="text-xs text-slate-500 mt-1">
+                <div className="text-xs text-slate-400 mt-1">
                   (Higher TFs weighted more)
                 </div>
               </div>
@@ -183,7 +183,7 @@ export default function MultiTimeframePanel({ symbol, onLoadTimeframe }) {
                 </div>
 
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="text-slate-500">Risk Level:</span>
+                  <span className="text-slate-400">Risk Level:</span>
                   <span className={`px-2 py-0.5 rounded bg-slate-800 text-${analysis.recommendation.riskLevel === 'low' ? 'emerald' : analysis.recommendation.riskLevel === 'medium' ? 'amber' : 'rose'}-400 font-semibold`}>
                     {analysis.recommendation.riskLevel.toUpperCase()}
                   </span>
@@ -205,7 +205,7 @@ export default function MultiTimeframePanel({ symbol, onLoadTimeframe }) {
                     <div className="text-sm text-slate-300">
                       {analysis.bestEntryTimeframe.reason}
                     </div>
-                    <div className="text-xs text-slate-500 mt-1">
+                    <div className="text-xs text-slate-400 mt-1">
                       Strategy: {analysis.bestEntryTimeframe.strategy}
                     </div>
                   </div>
@@ -235,7 +235,7 @@ export default function MultiTimeframePanel({ symbol, onLoadTimeframe }) {
                     <div key={tf} className="p-3 rounded-lg bg-slate-800/30 border border-slate-700/50">
                       <div className="flex items-center justify-between">
                         <div className="text-sm font-semibold text-slate-400">{tf}</div>
-                        <div className="text-xs text-slate-500">❌ Not available</div>
+                        <div className="text-xs text-slate-400">❌ Not available</div>
                       </div>
                     </div>
                   )
@@ -264,26 +264,26 @@ export default function MultiTimeframePanel({ symbol, onLoadTimeframe }) {
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                       <div>
-                        <div className="text-slate-500">Regime</div>
+                        <div className="text-slate-400">Regime</div>
                         <div className={`font-semibold text-${scoreColor}-400`}>
                           {data.regime}
                         </div>
                       </div>
                       <div>
-                        <div className="text-slate-500">RSI</div>
+                        <div className="text-slate-400">RSI</div>
                         <div className="font-semibold text-slate-300">
                           {data.rsi?.toFixed(0) || 'N/A'}
                         </div>
                       </div>
                       <div>
-                        <div className="text-slate-500">Volume</div>
+                        <div className="text-slate-400">Volume</div>
                         <div className="font-semibold text-slate-300">
                           {data.relativeVolume?.toFixed(1) || 'N/A'}x
                         </div>
                       </div>
                       <div>
-                        <div className="text-slate-500">Squeeze</div>
-                        <div className={`font-semibold ${data.squeeze === 'fired' ? 'text-amber-400' : data.squeeze === 'on' ? 'text-rose-400' : 'text-slate-500'}`}>
+                        <div className="text-slate-400">Squeeze</div>
+                        <div className={`font-semibold ${data.squeeze === 'fired' ? 'text-amber-400' : data.squeeze === 'on' ? 'text-rose-400' : 'text-slate-400'}`}>
                           {data.squeeze.toUpperCase()}
                         </div>
                       </div>
@@ -305,7 +305,7 @@ export default function MultiTimeframePanel({ symbol, onLoadTimeframe }) {
                       <span className="text-amber-400 mt-0.5">•</span>
                       <div className="flex-1">
                         <div className="text-amber-300">{warning.message}</div>
-                        <div className="text-xs text-slate-500 mt-0.5">
+                        <div className="text-xs text-slate-400 mt-0.5">
                           Severity: {warning.severity.toUpperCase()} • Type: {warning.type}
                         </div>
                       </div>
@@ -316,7 +316,7 @@ export default function MultiTimeframePanel({ symbol, onLoadTimeframe }) {
             )}
 
             {/* Timestamp */}
-            <div className="text-xs text-slate-500 text-center pt-3 border-t border-slate-700/50">
+            <div className="text-xs text-slate-400 text-center pt-3 border-t border-slate-700/50">
               Last analyzed: {new Date(analysis.timestamp).toLocaleTimeString()}
             </div>
           </>

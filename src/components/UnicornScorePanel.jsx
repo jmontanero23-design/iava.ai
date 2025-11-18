@@ -33,7 +33,7 @@ export default function UnicornScorePanel({ state }) {
   if (!state || state.score == null) {
     return (
       <div className="glass-panel p-4 min-w-[200px]">
-        <div className="text-center text-slate-500 text-sm">
+        <div className="text-center text-slate-400 text-sm">
           Loading...
         </div>
       </div>
@@ -68,7 +68,7 @@ export default function UnicornScorePanel({ state }) {
         <div className={`mt-2 text-sm font-bold uppercase tracking-wider ${qualityColor}`}>
           {quality}
         </div>
-        <div className="text-xs text-slate-500 mt-1">
+        <div className="text-xs text-slate-400 mt-1">
           Confluence Score
         </div>
       </div>
@@ -117,7 +117,7 @@ export default function UnicornScorePanel({ state }) {
       {state.components && (
         <>
           <div className="h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
-          <div className="text-xs text-slate-500 font-mono">
+          <div className="text-xs text-slate-400 font-mono">
             {(() => {
               try {
                 const arr = Object.entries(state.components)

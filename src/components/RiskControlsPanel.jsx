@@ -254,7 +254,7 @@ export default function RiskControlsPanel() {
             <div className="text-lg font-bold text-indigo-400">
               {dailyStats.tradesCount > 0 ? ((dailyStats.wins / dailyStats.tradesCount) * 100).toFixed(0) : 0}%
             </div>
-            <div className="text-xs text-slate-500">{dailyStats.wins}W / {dailyStats.losses}L</div>
+            <div className="text-xs text-slate-400">{dailyStats.wins}W / {dailyStats.losses}L</div>
           </div>
 
           {/* Loss Limit Buffer */}
@@ -300,7 +300,7 @@ export default function RiskControlsPanel() {
                 onChange={e => setConfig({ ...config, perTradeRiskPct: parseFloat(e.target.value) })}
                 className="input w-full"
               />
-              <span className="text-xs text-slate-500">Default: 0.5%</span>
+              <span className="text-xs text-slate-400">Default: 0.5%</span>
             </label>
 
             <label className="space-y-1">
@@ -314,7 +314,7 @@ export default function RiskControlsPanel() {
                 onChange={e => setConfig({ ...config, maxPositionSizePct: parseFloat(e.target.value) })}
                 className="input w-full"
               />
-              <span className="text-xs text-slate-500">Max % of account per position</span>
+              <span className="text-xs text-slate-400">Max % of account per position</span>
             </label>
 
             <label className="space-y-1">
@@ -327,7 +327,7 @@ export default function RiskControlsPanel() {
                 onChange={e => setConfig({ ...config, minPositionSizeDollars: parseFloat(e.target.value) })}
                 className="input w-full"
               />
-              <span className="text-xs text-slate-500">Minimum dollar amount</span>
+              <span className="text-xs text-slate-400">Minimum dollar amount</span>
             </label>
           </div>
         </div>
@@ -354,7 +354,7 @@ export default function RiskControlsPanel() {
                 onChange={e => setConfig({ ...config, dailyLossLimitPct: parseFloat(e.target.value) })}
                 className="input w-full"
               />
-              <span className="text-xs text-slate-500">Stop trading if down X%</span>
+              <span className="text-xs text-slate-400">Stop trading if down X%</span>
             </label>
 
             <label className="space-y-1">
@@ -368,7 +368,7 @@ export default function RiskControlsPanel() {
                 onChange={e => setConfig({ ...config, dailyMaxTrades: parseInt(e.target.value, 10) })}
                 className="input w-full"
               />
-              <span className="text-xs text-slate-500">Maximum number of trades</span>
+              <span className="text-xs text-slate-400">Maximum number of trades</span>
             </label>
           </div>
         </div>
@@ -395,7 +395,7 @@ export default function RiskControlsPanel() {
                 onChange={e => setConfig({ ...config, maxConcurrentPositions: parseInt(e.target.value, 10) })}
                 className="input w-full"
               />
-              <span className="text-xs text-slate-500">Max open positions</span>
+              <span className="text-xs text-slate-400">Max open positions</span>
             </label>
 
             <label className="space-y-1">
@@ -409,7 +409,7 @@ export default function RiskControlsPanel() {
                 onChange={e => setConfig({ ...config, maxTotalExposurePct: parseFloat(e.target.value) })}
                 className="input w-full"
               />
-              <span className="text-xs text-slate-500">Max % of account deployed</span>
+              <span className="text-xs text-slate-400">Max % of account deployed</span>
             </label>
 
             <label className="space-y-1">
@@ -423,7 +423,7 @@ export default function RiskControlsPanel() {
                 onChange={e => setConfig({ ...config, maxConcurrentRiskPct: parseFloat(e.target.value) })}
                 className="input w-full"
               />
-              <span className="text-xs text-slate-500">Max total at-risk capital</span>
+              <span className="text-xs text-slate-400">Max total at-risk capital</span>
             </label>
           </div>
         </div>
@@ -450,7 +450,7 @@ export default function RiskControlsPanel() {
                 onChange={e => setConfig({ ...config, cooldownAfterLossSec: parseInt(e.target.value, 10) })}
                 className="input w-full"
               />
-              <span className="text-xs text-slate-500">Wait time after losing trade</span>
+              <span className="text-xs text-slate-400">Wait time after losing trade</span>
             </label>
 
             <label className="space-y-1">
@@ -464,7 +464,7 @@ export default function RiskControlsPanel() {
                 onChange={e => setConfig({ ...config, minTimeBetweenTradesSec: parseInt(e.target.value, 10) })}
                 className="input w-full"
               />
-              <span className="text-xs text-slate-500">Minimum interval between any trades</span>
+              <span className="text-xs text-slate-400">Minimum interval between any trades</span>
             </label>
           </div>
         </div>
@@ -510,7 +510,7 @@ export default function RiskControlsPanel() {
           <button onClick={handleReset} className="btn-secondary">
             🔄 Reset to Defaults
           </button>
-          <div className="ml-auto text-xs text-slate-500">
+          <div className="ml-auto text-xs text-slate-400">
             Changes take effect immediately
           </div>
         </div>

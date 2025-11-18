@@ -245,7 +245,7 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
                     <div className="text-xs text-emerald-400 font-semibold uppercase tracking-wider">Signals</div>
                   </div>
                   <div className="text-3xl font-bold text-emerald-300">{metrics.signalsTracked}</div>
-                  <div className="text-xs text-slate-500 mt-1">Quality DB</div>
+                  <div className="text-xs text-slate-400 mt-1">Quality DB</div>
                 </div>
               </div>
 
@@ -257,7 +257,7 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
                     <div className="text-xs text-cyan-400 font-semibold uppercase tracking-wider">Trades</div>
                   </div>
                   <div className="text-3xl font-bold text-cyan-300">{metrics.tradesLogged}</div>
-                  <div className="text-xs text-slate-500 mt-1">Journal</div>
+                  <div className="text-xs text-slate-400 mt-1">Journal</div>
                 </div>
               </div>
 
@@ -269,7 +269,7 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
                     <div className="text-xs text-indigo-400 font-semibold uppercase tracking-wider">Lessons</div>
                   </div>
                   <div className="text-3xl font-bold text-indigo-300">{metrics.lessonsCompleted}</div>
-                  <div className="text-xs text-slate-500 mt-1">Learning</div>
+                  <div className="text-xs text-slate-400 mt-1">Learning</div>
                 </div>
               </div>
 
@@ -281,7 +281,7 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
                     <div className="text-xs text-purple-400 font-semibold uppercase tracking-wider">Active</div>
                   </div>
                   <div className="text-3xl font-bold text-purple-300">{metrics.featuresActive}</div>
-                  <div className="text-xs text-slate-500 mt-1">Features</div>
+                  <div className="text-xs text-slate-400 mt-1">Features</div>
                 </div>
               </div>
             </div>

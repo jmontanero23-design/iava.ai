@@ -303,7 +303,7 @@ export default function MarketSentiment() {
                 <div className={`text-2xl font-bold ${getSentimentColor(symbolSentiment.score)}`}>
                   {symbolSentiment.score}
                 </div>
-                <div className="text-xs text-slate-500 mt-1">Score</div>
+                <div className="text-xs text-slate-400 mt-1">Score</div>
               </div>
 
               {/* Regime */}
@@ -315,7 +315,7 @@ export default function MarketSentiment() {
                 }`}>
                   {regime.regime === 'bull' ? '🐂' : regime.regime === 'bear' ? '🐻' : '➖'}
                 </div>
-                <div className="text-xs text-slate-500 mt-1 capitalize">{regime.regime}</div>
+                <div className="text-xs text-slate-400 mt-1 capitalize">{regime.regime}</div>
               </div>
 
               {/* Confidence */}
@@ -323,7 +323,7 @@ export default function MarketSentiment() {
                 <div className="text-2xl font-bold text-cyan-400">
                   {regime.confidence}%
                 </div>
-                <div className="text-xs text-slate-500 mt-1">Confidence</div>
+                <div className="text-xs text-slate-400 mt-1">Confidence</div>
               </div>
             </div>
           </div>
@@ -340,7 +340,7 @@ export default function MarketSentiment() {
               </span>
             </div>
           </div>
-          <div className="text-xs text-slate-500 mb-3">
+          <div className="text-xs text-slate-400 mb-3">
             Using FinBERT (financial), BERTweet (social), and DistilBERT (general) models for consensus analysis
           </div>
 
@@ -382,7 +382,7 @@ export default function MarketSentiment() {
                       </span>
 
                       {/* Confidence */}
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-slate-400">
                         {Math.round((item.confidence || 0.5) * 100)}% confident
                       </span>
 
@@ -416,7 +416,7 @@ export default function MarketSentiment() {
                         </summary>
                         <div className="mt-1 pl-2 space-y-1 border-l-2 border-indigo-500/30">
                           {item.models.map((m, i) => (
-                            <div key={i} className="text-slate-500">
+                            <div key={i} className="text-slate-400">
                               <span className="font-semibold">{m.model}:</span> {m.sentiment}
                               <span className="text-slate-600"> ({Math.round(m.confidence * 100)}%)</span>
                             </div>

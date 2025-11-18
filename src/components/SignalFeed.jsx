@@ -55,7 +55,7 @@ export default function SignalFeed({ items = [], onSelect }) {
                 {/* Signal Details */}
                 <div className="flex-1 min-w-0">
                   {/* Time Label */}
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-1">
+                  <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
                     {item.timeLabel}
                   </div>
 

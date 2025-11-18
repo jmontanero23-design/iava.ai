@@ -124,7 +124,7 @@ export default function WatchlistPanel({ onLoadSymbol }) {
         {symbols.length === 0 ? (
           <div className="text-center py-8">
             <div className="text-4xl mb-2">📋</div>
-            <div className="text-sm text-slate-500 italic">No symbols in this list</div>
+            <div className="text-sm text-slate-400 italic">No symbols in this list</div>
           </div>
         ) : (
           <>
@@ -148,9 +148,9 @@ export default function WatchlistPanel({ onLoadSymbol }) {
                 <div className="px-2 py-0.5 rounded-md bg-emerald-600/20 border border-emerald-500/30">
                   <span className="text-xs text-emerald-400 font-semibold">✓ Active</span>
                 </div>
-                <span className="text-xs text-slate-500">List:</span>
+                <span className="text-xs text-slate-400">List:</span>
                 <span className="text-xs text-slate-300 font-semibold">{active}</span>
-                <span className="text-xs text-slate-500">({symbols.length} symbols)</span>
+                <span className="text-xs text-slate-400">({symbols.length} symbols)</span>
               </div>
             )}
           </>

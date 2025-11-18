@@ -1328,7 +1328,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                   ? `Live Data: ${currentSymbol} • ${marketData.timeframe}`
                   : 'Sample Data • Load chart for live analysis'}
               </span>
-              <span className="text-slate-500">• Chat persisted 24h</span>
+              <span className="text-slate-400">• Chat persisted 24h</span>
             </p>
           </div>
           {/* Action Buttons */}
@@ -1487,7 +1487,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                       if (followUps.length > 0) {
                         return (
                           <div className="space-y-2">
-                            <div className="text-slate-500" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)' }}>Ask follow-up:</div>
+                            <div className="text-slate-400" style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-semibold)' }}>Ask follow-up:</div>
                             <div className="flex flex-wrap gap-2">
                               {followUps.map((q, qIdx) => (
                                 <button
@@ -1655,7 +1655,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                     <div className="text-xs font-medium text-slate-300 truncate max-w-[150px]">
                       {file.name}
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-slate-400">
                       {(file.size / 1024).toFixed(1)} KB
                     </div>
                   </div>
@@ -1711,6 +1711,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
           <div className="flex-1 relative group">
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-focus-within:opacity-10 transition-opacity blur-xl pointer-events-none" style={{ borderRadius: 'var(--radius-xl)' }} />
             <input
+              aria-label="Chat message"
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}

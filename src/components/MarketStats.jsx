@@ -69,7 +69,7 @@ export default function MarketStats({ bars = [], saty, symbol, timeframe, stream
   const getTrendArrow = (value) => {
     if (value > 0.1) return <span className="text-emerald-400">↑</span>
     if (value < -0.1) return <span className="text-rose-400">↓</span>
-    return <span className="text-slate-500">→</span>
+    return <span className="text-slate-400">→</span>
   }
 
   const items = [
@@ -131,7 +131,7 @@ export default function MarketStats({ bars = [], saty, symbol, timeframe, stream
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-base font-semibold text-slate-100">{symbol}</span>
-          <span className="text-xs text-slate-500">·</span>
+          <span className="text-xs text-slate-400">·</span>
           <span className="text-sm text-slate-400">{timeframe}</span>
         </div>
         <div className="flex items-center gap-2">
@@ -204,25 +204,25 @@ export default function MarketStats({ bars = [], saty, symbol, timeframe, stream
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         {regime.factors.adx && (
                           <div className="bg-slate-800/50 rounded px-2 py-1">
-                            <div className="text-slate-500">ADX</div>
+                            <div className="text-slate-400">ADX</div>
                             <div className="font-medium text-slate-200">{regime.factors.adx}</div>
                           </div>
                         )}
                         {regime.factors.trendStrength && (
                           <div className="bg-slate-800/50 rounded px-2 py-1">
-                            <div className="text-slate-500">Trend</div>
+                            <div className="text-slate-400">Trend</div>
                             <div className="font-medium text-slate-200 capitalize">{regime.factors.trendStrength}</div>
                           </div>
                         )}
                         {regime.factors.volatility && (
                           <div className="bg-slate-800/50 rounded px-2 py-1">
-                            <div className="text-slate-500">Volatility</div>
+                            <div className="text-slate-400">Volatility</div>
                             <div className="font-medium text-slate-200 capitalize">{regime.factors.volatility}</div>
                           </div>
                         )}
                         {regime.factors.volume && (
                           <div className="bg-slate-800/50 rounded px-2 py-1">
-                            <div className="text-slate-500">Volume</div>
+                            <div className="text-slate-400">Volume</div>
                             <div className="font-medium text-slate-200 capitalize">{regime.factors.volume}</div>
                           </div>
                         )}
@@ -248,7 +248,7 @@ export default function MarketStats({ bars = [], saty, symbol, timeframe, stream
             className="bg-gradient-to-br from-slate-900/60 to-slate-900/40 rounded-lg px-3 py-2.5 border border-slate-800/80 hover:border-slate-700 hover:scale-[1.02] transition-all duration-200"
             title={item.title || ''}
           >
-            <div className="text-[11px] uppercase tracking-wide text-slate-500 font-medium mb-1 flex items-center justify-between">
+            <div className="text-[11px] uppercase tracking-wide text-slate-400 font-medium mb-1 flex items-center justify-between">
               <span>{item.label}</span>
               {item.icon && <span className="ml-1">{item.icon}</span>}
             </div>

@@ -100,7 +100,7 @@ export default function SatyPanel({ saty, trend }) {
           <div className="space-y-3">
             {/* Primary Targets (±1.0 ATR) */}
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-2">Primary (±1.0 ATR)</div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-2">Primary (±1.0 ATR)</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="relative group">
                   <div className="absolute inset-0 bg-emerald-600 blur-xl opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />
@@ -121,7 +121,7 @@ export default function SatyPanel({ saty, trend }) {
 
             {/* Extension Targets (±1.618 ATR) */}
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-2">Extensions (±1.618 ATR)</div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-2">Extensions (±1.618 ATR)</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="relative group">
                   <div className="absolute inset-0 bg-emerald-600 blur-xl opacity-0 group-hover:opacity-10 rounded-lg transition-opacity" />

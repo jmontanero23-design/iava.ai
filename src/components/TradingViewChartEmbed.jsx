@@ -60,7 +60,7 @@ export default function TradingViewChartEmbed() {
       <div className="absolute inset-0 flex items-center justify-center bg-slate-950 z-10">
         <div className="text-center">
           <div className="text-slate-400 mb-2">Loading TradingView Premium...</div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-slate-400">
             {symbol} • {timeframe}
           </div>
         </div>
@@ -97,7 +97,7 @@ export default function TradingViewChartEmbed() {
               <pre className="bg-slate-900 p-2 rounded text-xs mt-2">
                 VITE_TRADINGVIEW_CHART_URL=your_chart_url_here
               </pre>
-              <p className="text-xs text-slate-500 mt-4">
+              <p className="text-xs text-slate-400 mt-4">
                 Or we can configure it directly in the code - just provide your chart URL
               </p>
             </div>

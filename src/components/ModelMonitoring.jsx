@@ -407,7 +407,7 @@ export default function ModelMonitoring() {
               <div className={`absolute inset-0 ${systemMetrics.network.saveData ? 'bg-emerald-600' : 'bg-slate-600'} blur-xl opacity-0 group-hover:opacity-10 rounded-xl transition-opacity`} />
               <div className="relative p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 backdrop-blur-sm shadow-lg hover:border-slate-600/40 transition-all">
                 <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">Data Saver</div>
-                <div className={`text-xl font-bold ${systemMetrics.network.saveData ? 'text-emerald-400' : 'text-slate-500'}`}>
+                <div className={`text-xl font-bold ${systemMetrics.network.saveData ? 'text-emerald-400' : 'text-slate-400'}`}>
                   {systemMetrics.network.saveData ? 'ON' : 'OFF'}
                 </div>
               </div>

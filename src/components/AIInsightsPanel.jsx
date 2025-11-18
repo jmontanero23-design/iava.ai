@@ -238,7 +238,7 @@ export default function AIInsightsPanel({
                     style={{ width: `${Math.min(100, currentScore)}%` }}
                   />
                 </div>
-                <p className="text-xs text-slate-500 mt-2">
+                <p className="text-xs text-slate-400 mt-2">
                   💡 Tip: Lower the threshold (top of page) to see more signals
                 </p>
               </div>
@@ -250,17 +250,17 @@ export default function AIInsightsPanel({
             <div className="p-3 bg-slate-800/30 rounded-lg">
               <div className="text-xs text-slate-400 mb-1">Indicators</div>
               <div className="text-lg font-bold text-emerald-400">4</div>
-              <div className="text-xs text-slate-500">Tracking</div>
+              <div className="text-xs text-slate-400">Tracking</div>
             </div>
             <div className="p-3 bg-slate-800/30 rounded-lg">
               <div className="text-xs text-slate-400 mb-1">AI Features</div>
               <div className="text-lg font-bold text-cyan-400">12</div>
-              <div className="text-xs text-slate-500">Ready</div>
+              <div className="text-xs text-slate-400">Ready</div>
             </div>
             <div className="p-3 bg-slate-800/30 rounded-lg">
               <div className="text-xs text-slate-400 mb-1">Status</div>
               <div className="text-lg font-bold text-yellow-400">⏳</div>
-              <div className="text-xs text-slate-500">Waiting</div>
+              <div className="text-xs text-slate-400">Waiting</div>
             </div>
           </div>
         </div>
@@ -452,12 +452,12 @@ export default function AIInsightsPanel({
 
       {/* Footer */}
         <div className="pt-3 border-t border-slate-700/50 flex items-center justify-between text-xs">
-          <span className="text-slate-500 flex items-center gap-2">
+          <span className="text-slate-400 flex items-center gap-2">
             <span className="text-purple-400">💎</span>
             Powered by 12 AI Features
           </span>
           {hasInsights && insights.timestamp && (
-            <span className="text-slate-500">
+            <span className="text-slate-400">
               Updated {new Date(insights.timestamp).toLocaleTimeString()}
             </span>
           )}

@@ -89,6 +89,7 @@ export default function HelpFab({ context = {} }) {
               {/* Input Section */}
               <div className="p-4 space-y-3">
                 <textarea
+                  aria-label="Help question"
                   value={q}
                   onChange={e=>setQ(e.target.value)}
                   placeholder="Ask about indicators, score, presets, scanning, backtests…"

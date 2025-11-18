@@ -156,6 +156,7 @@ export default function BatchBacktestPanel({ defaultTimeframe = '5Min' }) {
             <div>
               <div className="text-xs text-slate-400 mb-2">Symbols (comma-separated)</div>
               <textarea
+                aria-label="Symbols"
                 value={symbols}
                 onChange={e=>setSymbols(e.target.value)}
                 className="w-full h-20 bg-slate-800/50 border border-slate-700/50 focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 rounded-lg p-3 text-sm text-slate-200 transition-all resize-none"

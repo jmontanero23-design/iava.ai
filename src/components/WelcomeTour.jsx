@@ -150,7 +150,7 @@ export default function WelcomeTour({ onClose, forceShow = false }) {
                 </button>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-slate-500 font-semibold">
+                  <span className="text-xs text-slate-400 font-semibold">
                     {currentStep + 1} / {TOUR_STEPS.length}
                   </span>
                   <button

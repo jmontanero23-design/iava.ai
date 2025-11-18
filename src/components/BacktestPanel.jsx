@@ -242,7 +242,7 @@ export default function BacktestPanel({ symbol, timeframe, preset, chartThreshol
               <label className="inline-flex items-center gap-2">
                 <input type="checkbox" className="checkbox" checked={consensus} onChange={e=>setConsensus(e.target.checked)} />
                 <span className="text-slate-300">Consensus Bonus</span>
-                <span className="text-slate-500 text-[10px]">(+10 if TFs agree)</span>
+                <span className="text-slate-400 text-[10px]">(+10 if TFs agree)</span>
               </label>
               <label className="inline-flex items-center gap-2">
                 <input type="checkbox" className="checkbox" checked={regimeCurves} onChange={e=>setRegimeCurves(e.target.checked)} disabled={assetClass!=='stocks'} />
@@ -360,7 +360,7 @@ export default function BacktestPanel({ symbol, timeframe, preset, chartThreshol
           <span className="text-rose-400 text-lg">⚠️</span>
           <div className="flex-1">
             <span className="text-sm text-rose-300 font-medium">{aiErr}</span>
-            <span className="text-xs text-slate-500 ml-2">Check <a className="underline hover:text-slate-400" href="/api/health" target="_blank" rel="noreferrer">/api/health</a></span>
+            <span className="text-xs text-slate-400 ml-2">Check <a className="underline hover:text-slate-400" href="/api/health" target="_blank" rel="noreferrer">/api/health</a></span>
           </div>
         </div>
       )}
@@ -427,7 +427,7 @@ export default function BacktestPanel({ symbol, timeframe, preset, chartThreshol
           ) : null}
           {Array.isArray(res.matrix) && res.matrix.length ? (
             <div className="mt-4">
-              <div className="text-xs text-slate-400 mb-1">Heatmap: Avg Fwd % (Threshold × Horizon) <span className="text-slate-500">(hover shows Win%, Median%)</span></div>
+              <div className="text-xs text-slate-400 mb-1">Heatmap: Avg Fwd % (Threshold × Horizon) <span className="text-slate-400">(hover shows Win%, Median%)</span></div>
               <div className="inline-block border border-slate-700 rounded overflow-hidden">
                 <table className="text-xs">
                   <thead>

@@ -240,7 +240,7 @@ export default function ScoreOptimizer({ symbol = 'SPY', timeframe = '15' }) {
                               {data.avgReturn}
                             </span>
                           ) : (
-                            <span className="text-slate-500">—</span>
+                            <span className="text-slate-400">—</span>
                           )}
                         </td>
                         <td className="py-2 px-3 text-right text-slate-300">{data.bullReturn || '—'}</td>
@@ -249,7 +249,7 @@ export default function ScoreOptimizer({ symbol = 'SPY', timeframe = '15' }) {
                           {data.recommendedWeight != null ? (
                             <span className="text-violet-400 font-bold">{data.recommendedWeight}</span>
                           ) : (
-                            <span className="text-slate-500 text-xs italic">{data.note}</span>
+                            <span className="text-slate-400 text-xs italic">{data.note}</span>
                           )}
                         </td>
                       </tr>

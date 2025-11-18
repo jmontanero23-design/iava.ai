@@ -128,7 +128,7 @@ export default function SqueezePanel({ bars = [] }) {
                 <div key={i} className={`w-[2px] h-[6px] ${on===1 ? 'bg-rose-500' : 'bg-emerald-500'}`} />
               ))}
               {!ready && (
-                <div className="text-xs text-slate-500 text-center py-2">
+                <div className="text-xs text-slate-400 text-center py-2">
                   No data yet. Load another timeframe or wait for enough bars.
                 </div>
               )}

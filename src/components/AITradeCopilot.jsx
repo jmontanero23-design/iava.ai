@@ -766,7 +766,7 @@ export default function AITradeCopilot({ onClose }) {
                 </div>
                 <button
                   onClick={clearAll}
-                  className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                  className="text-xs text-slate-400 hover:text-slate-300 transition-colors"
                 >
                   Clear all
                 </button>
@@ -822,7 +822,7 @@ export default function AITradeCopilot({ onClose }) {
                       </div>
                       <button
                         onClick={() => dismissAlert(alert.id)}
-                        className="text-slate-500 hover:text-slate-300 text-xs"
+                        className="text-slate-400 hover:text-slate-300 text-xs"
                       >
                         ✕
                       </button>
@@ -830,7 +830,7 @@ export default function AITradeCopilot({ onClose }) {
 
                     {/* PhD++ ONE-CLICK EXECUTION BUTTONS */}
                     <div className="flex items-center justify-between mt-2 gap-2">
-                      <div className="text-xs text-slate-500">
+                      <div className="text-xs text-slate-400">
                         {new Date(alert.timestamp).toLocaleTimeString()}
                       </div>
                       {isActionable && (

@@ -166,9 +166,9 @@ export default function PersonalizedLearningPanel() {
                       }`}>
                         {lesson.difficulty}
                       </div>
-                      <div className="text-xs text-slate-500">• {lesson.duration}</div>
+                      <div className="text-xs text-slate-400">• {lesson.duration}</div>
                       {lesson.concepts && lesson.concepts.length > 0 && (
-                        <div className="text-xs text-slate-500">• {lesson.concepts.join(', ')}</div>
+                        <div className="text-xs text-slate-400">• {lesson.concepts.join(', ')}</div>
                       )}
                     </div>
                   </div>
