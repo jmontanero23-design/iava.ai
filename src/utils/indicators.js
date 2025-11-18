@@ -550,13 +550,14 @@ export function computeStates(bars) {
     console.log(`[Indicators DEBUG] ${sym} Final Score:`, {
       rawScore: score,
       components,
-      normalized: Math.max(0, Math.min(100, score))
+      absScore: Math.min(100, Math.abs(score)),
+      regime: score >= 70 ? 'BULLISH' : score <= -70 ? 'BEARISH' : 'neutral'
     })
   }
 
-  // Normalize score to 0-100 range for UI display (internally it's -100 to +100)
-  // Positive scores = bullish, negative = bearish
-  const normalizedScore = Math.max(0, Math.min(100, score)) // For legacy compatibility
+  // PhD++ FIX: Use absolute value to show signal strength regardless of direction
+  // This way bearish signals show strength (e.g., -80 shows as 80) instead of 0
+  const normalizedScore = Math.min(100, Math.abs(score))
   const regime = score >= 70 ? 'bullish' :
                  score <= -70 ? 'bearish' :
                  score >= 35 ? 'mildly bullish' :

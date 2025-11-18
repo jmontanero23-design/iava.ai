@@ -41,8 +41,20 @@ export default function UnicornScorePanel({ state }) {
   }
 
   const score = Math.round(state.score)
+  const rawScore = state.rawScore || 0
+  const regime = state.regime || 'neutral'
   const quality = getScoreQuality(score)
   const qualityColor = getScoreColor(score)
+
+  // PhD++ FIX: Determine regime color based on rawScore direction
+  const regimeColor = rawScore >= 70 ? 'text-green-400' :
+                      rawScore <= -70 ? 'text-red-400' :
+                      rawScore >= 35 ? 'text-lime-400' :
+                      rawScore <= -35 ? 'text-orange-400' : 'text-slate-400'
+  const regimeText = rawScore >= 70 ? 'BULLISH' :
+                     rawScore <= -70 ? 'BEARISH' :
+                     rawScore >= 35 ? 'MILDLY BULLISH' :
+                     rawScore <= -35 ? 'MILDLY BEARISH' : 'NEUTRAL'
 
   // Extract indicator states
   const emaCloud = state.emaCloudNow || 'neutral'
@@ -58,18 +70,18 @@ export default function UnicornScorePanel({ state }) {
         <div className={`relative inline-block ${isPulsing ? 'pulse-ring' : ''}`}>
           {/* Glow effect for high scores */}
           {score >= 70 && (
-            <div className="absolute inset-0 bg-emerald-500 blur-2xl opacity-30 animate-pulse" />
+            <div className={`absolute inset-0 ${rawScore >= 0 ? 'bg-emerald-500' : 'bg-red-500'} blur-2xl opacity-30 animate-pulse`} />
           )}
           <div className={`relative text-6xl font-black text-white transition-all duration-300 ${isPulsing ? 'scale-110' : 'scale-100'}`}>
             {score}
             <span className="text-2xl text-slate-400 font-normal">/100</span>
           </div>
         </div>
-        <div className={`mt-2 text-sm font-bold uppercase tracking-wider ${qualityColor}`}>
-          {quality}
+        <div className={`mt-2 text-sm font-bold uppercase tracking-wider ${regimeColor}`}>
+          {regimeText}
         </div>
         <div className="text-xs text-slate-400 mt-1">
-          Confluence Score
+          Signal Strength
         </div>
       </div>
 
@@ -113,22 +125,29 @@ export default function UnicornScorePanel({ state }) {
         />
       </div>
 
-      {/* Score Components (if available) */}
+      {/* Score Components (if available) - PhD++ FIX: Show ALL components */}
       {state.components && (
         <>
           <div className="h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
-          <div className="text-xs text-slate-400 font-mono">
+          <div className="text-xs font-mono flex flex-wrap gap-1">
             {(() => {
               try {
-                const arr = Object.entries(state.components)
-                  .filter(([,v]) => v > 0)
-                  .map(([k,v]) => `${k}:${v}`)
-                if (state._consensus?.align) arr.push('consensus:10')
-                return arr.join(' + ')
+                const entries = Object.entries(state.components).filter(([,v]) => v !== 0)
+                if (entries.length === 0) return <span className="text-slate-400">All neutral</span>
+                return entries.map(([k,v], idx) => {
+                  const sign = v > 0 ? '+' : ''
+                  const color = v > 0 ? 'text-green-400' : 'text-red-400'
+                  return (
+                    <span key={k} className={color}>
+                      {k}:{sign}{v}{idx < entries.length - 1 ? '' : ''}
+                    </span>
+                  )
+                })
               } catch {
-                return 'Calculating...'
+                return <span className="text-slate-400">Calculating...</span>
               }
             })()}
+            {state._consensus?.align && <span className="text-green-400">consensus:+10</span>}
           </div>
         </>
       )}
