@@ -5,15 +5,15 @@
  * Models (in order of priority):
  * 1. ProsusAI/finbert - Financial news specialist
  * 2. finiteautomata/bertweet-base-sentiment-analysis - Twitter-trained (fast)
- * 3. distilbert-base-uncased-finetuned-sst-2-english - General fallback
+ * 3. cardiffnlp/twitter-roberta-base-sentiment-latest - Latest RoBERTa (PhD++ FIXED!)
  *
  * Returns: sentiment (positive/negative/neutral) + confidence score (-1 to +1)
  */
 
 const MODELS = [
-  'ProsusAI/finbert',                                    // Primary: Financial specialist
-  'finiteautomata/bertweet-base-sentiment-analysis',    // Secondary: Fast, Twitter-trained
-  'distilbert-base-uncased-finetuned-sst-2-english'     // Fallback: General sentiment
+  'ProsusAI/finbert',                                      // Primary: Financial specialist
+  'finiteautomata/bertweet-base-sentiment-analysis',      // Secondary: Fast, Twitter-trained
+  'cardiffnlp/twitter-roberta-base-sentiment-latest'      // Fallback: Latest RoBERTa (PhD++ FIXED: distilbert returned 404!)
 ]
 
 export default async function handler(req, res) {
