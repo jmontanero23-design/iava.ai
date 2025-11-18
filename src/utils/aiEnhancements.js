@@ -27,7 +27,14 @@ export function detectSymbols(text) {
 
   // Pattern 2: Standalone tickers (2-5 letters, case insensitive)
   const standalonePattern = /\b([A-Z]{2,5})\b/gi
-  const commonWords = new Set(['I', 'A', 'THE', 'AND', 'OR', 'BUT', 'FOR', 'IS', 'IT', 'TO', 'OF', 'IN', 'ON', 'AT', 'BY', 'UP', 'SO', 'NO', 'GO', 'DO', 'BE', 'IF', 'MY', 'US', 'WE', 'HE', 'SHE', 'YOU', 'THEY', 'ARE', 'WAS', 'WERE', 'BEEN', 'HAVE', 'HAS', 'HAD', 'CAN', 'WILL', 'MAY', 'MUST', 'SHALL', 'COULD', 'WOULD', 'SHOULD', 'ANALYZE', 'TELL', 'GIVE', 'SHOW'])
+  const commonWords = new Set([
+    // Common English words
+    'I', 'A', 'THE', 'AND', 'OR', 'BUT', 'FOR', 'IS', 'IT', 'TO', 'OF', 'IN', 'ON', 'AT', 'BY', 'UP', 'SO', 'NO', 'GO', 'DO', 'BE', 'IF', 'MY', 'US', 'WE', 'HE', 'SHE', 'YOU', 'THEY', 'ARE', 'WAS', 'WERE', 'BEEN', 'HAVE', 'HAS', 'HAD', 'CAN', 'WILL', 'MAY', 'MUST', 'SHALL', 'COULD', 'WOULD', 'SHOULD', 'AN', 'AS', 'AM', 'OUT', 'THAN', 'THEN', 'WHEN', 'WHO', 'WHY', 'HOW', 'ALL', 'ANY', 'EACH', 'SOME', 'MOST', 'BOTH', 'FEW', 'MORE', 'LESS', 'OWN', 'SUCH', 'ONLY', 'SAME', 'OTHER', 'INTO', 'OVER', 'AFTER', 'ALSO', 'BACK', 'EVEN', 'GOOD', 'NEW', 'OLD', 'HIGH', 'LOW', 'PART', 'TAKE', 'GET', 'MAKE', 'COME', 'SEEM', 'SEE', 'WANT', 'LOOK', 'USE', 'FIND', 'WORK', 'TRY', 'ASK', 'NEED', 'FEEL', 'LEAVE', 'PUT', 'MEAN', 'KEEP', 'LET', 'BEGIN', 'HELP', 'TALK', 'TURN', 'START', 'HEAR', 'PLAY', 'RUN', 'MOVE', 'LIKE', 'LIVE', 'BRING', 'WRITE', 'SIT', 'STAND', 'LOSE', 'PAY', 'MEET', 'SET', 'LEARN', 'LEAD', 'WATCH', 'STOP', 'SPEAK', 'READ', 'ALLOW', 'ADD', 'SPEND', 'GROW', 'OPEN', 'WALK', 'WIN', 'OFFER', 'LOVE', 'APPEAR', 'WAIT', 'SERVE', 'DIE', 'SEND', 'BUILD', 'STAY', 'FALL', 'CUT', 'REACH', 'KILL', 'WITH', 'FROM', 'THAT', 'THIS', 'WHAT', 'WHICH', 'THERE', 'THEIR', 'THESE', 'THOSE', 'ABOUT', 'WOULD', 'THERE', 'BEING', 'STILL', 'MIGHT', 'NEVER', 'EVERY', 'SURE', 'WHILE', 'GOING', 'WHERE', 'UNTIL', 'UNDER', 'AGAIN', 'ONCE', 'HERE', 'JUST', 'VERY', 'THINK', 'KNOW', 'COME', 'MADE', 'MANY', 'WELL', 'MUCH', 'LONG', 'REAL', 'CALL', 'FACT', 'LAST', 'NEXT', 'CASE', 'YEAR', 'WEEK', 'MONTH', 'TODAY',
+    // Trading/action verbs (CRITICAL - these were matching as tickers!)
+    'BUY', 'SELL', 'LONG', 'SHORT', 'TRADE', 'INVEST', 'PRICE', 'STOCK', 'HEDGE', 'RISK', 'GAIN', 'LOSS', 'PROFIT', 'ENTRY', 'EXIT', 'LIMIT', 'ORDER', 'FILL', 'DELTA', 'GAMMA', 'THETA', 'VEGA', 'ITM', 'OTM', 'ATM', 'BULL', 'BEAR', 'SWING', 'DAY', 'PUTS', 'CALLS', 'STRIKE', 'BID', 'ASK', 'SPREAD',
+    // AI chat words
+    'ANALYZE', 'TELL', 'GIVE', 'SHOW', 'CHECK', 'EXPLAIN', 'HELP', 'LOAD', 'CHART', 'DATA', 'WHAT', 'WHICH', 'WHERE', 'SETUP'
+  ])
 
   while ((match = standalonePattern.exec(text)) !== null) {
     const word = match[1].toUpperCase()
