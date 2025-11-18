@@ -78,7 +78,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
       }))
     }
 
-    const handleSetStop = (event) => {
+    const handleSetStop = async (event) => {
       const { symbol, stopPrice, type } = event.detail || {}
       console.log('[Orders] AI Copilot requesting set stop:', symbol, stopPrice, type)
 
@@ -87,18 +87,66 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
         return
       }
 
-      // TODO: Implement stop loss order placement
-      // For now, just show notification
-      window.dispatchEvent(new CustomEvent('iava.toast', {
-        detail: {
-          text: `🤖 AI Copilot suggests ${type || 'stop'} at $${stopPrice.toFixed(2)} for ${symbol}`,
-          type: 'info',
-          ttl: 5000
+      // PhD++ REAL EXECUTION: Actually place stop loss order
+      try {
+        // Find the position to get qty and side
+        const position = positions.find(p => p.symbol === symbol)
+        if (!position) {
+          console.error('[Orders] Position not found for:', symbol)
+          window.dispatchEvent(new CustomEvent('iava.toast', {
+            detail: {
+              text: `❌ Position ${symbol} not found`,
+              type: 'error',
+              ttl: 3000
+            }
+          }))
+          return
         }
-      }))
+
+        const qty = Math.abs(parseFloat(position.qty) || 0)
+        const side = parseFloat(position.qty) > 0 ? 'sell' : 'buy' // Opposite side to close
+
+        // Place stop loss order
+        const response = await api('/api/alpaca/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            symbol,
+            side,
+            qty,
+            type: 'stop',
+            timeInForce: 'gtc', // Good til cancelled
+            stopLoss: {
+              stop_price: stopPrice
+            }
+          })
+        })
+
+        if (response.ok) {
+          window.dispatchEvent(new CustomEvent('iava.toast', {
+            detail: {
+              text: `✅ ${type || 'Stop'} set at $${stopPrice.toFixed(2)} for ${symbol}`,
+              type: 'success',
+              ttl: 5000
+            }
+          }))
+          refresh() // Refresh orders to show new stop order
+        } else {
+          throw new Error(response.json?.message || response.text || 'Order failed')
+        }
+      } catch (error) {
+        console.error('[Orders] Failed to set stop:', error)
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: {
+            text: `❌ Failed to set stop: ${error.message}`,
+            type: 'error',
+            ttl: 5000
+          }
+        }))
+      }
     }
 
-    const handleTakeProfit = (event) => {
+    const handleTakeProfit = async (event) => {
       const { symbol, percentage } = event.detail || {}
       console.log('[Orders] AI Copilot requesting take profit:', symbol, percentage)
 
@@ -107,15 +155,67 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
         return
       }
 
-      // TODO: Implement partial profit taking
-      // For now, just show notification
-      window.dispatchEvent(new CustomEvent('iava.toast', {
-        detail: {
-          text: `🤖 AI Copilot suggests taking ${percentage || 50}% profits on ${symbol}`,
-          type: 'success',
-          ttl: 5000
+      // PhD++ REAL EXECUTION: Actually close partial position
+      try {
+        // Find the position
+        const position = positions.find(p => p.symbol === symbol)
+        if (!position) {
+          console.error('[Orders] Position not found for:', symbol)
+          window.dispatchEvent(new CustomEvent('iava.toast', {
+            detail: {
+              text: `❌ Position ${symbol} not found`,
+              type: 'error',
+              ttl: 3000
+            }
+          }))
+          return
         }
-      }))
+
+        const totalQty = Math.abs(parseFloat(position.qty) || 0)
+        const percentToClose = percentage || 50
+        const qtyToClose = Math.floor(totalQty * (percentToClose / 100))
+
+        if (qtyToClose === 0) {
+          throw new Error(`Calculated qty is 0 (${percentToClose}% of ${totalQty})`)
+        }
+
+        const side = parseFloat(position.qty) > 0 ? 'sell' : 'buy' // Opposite side to close
+
+        // Place market order to close partial position
+        const response = await api('/api/alpaca/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            symbol,
+            side,
+            qty: qtyToClose,
+            type: 'market',
+            timeInForce: 'day'
+          })
+        })
+
+        if (response.ok) {
+          window.dispatchEvent(new CustomEvent('iava.toast', {
+            detail: {
+              text: `✅ Taking ${percentToClose}% profit on ${symbol} (${qtyToClose} shares)`,
+              type: 'success',
+              ttl: 5000
+            }
+          }))
+          refresh() // Refresh to show updated position
+        } else {
+          throw new Error(response.json?.message || response.text || 'Order failed')
+        }
+      } catch (error) {
+        console.error('[Orders] Failed to take profit:', error)
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: {
+            text: `❌ Failed to take profit: ${error.message}`,
+            type: 'error',
+            ttl: 5000
+          }
+        }))
+      }
     }
 
     window.addEventListener('iava-close-position', handleClosePosition)
