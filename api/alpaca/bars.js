@@ -50,9 +50,11 @@ export default async function handler(req, res) {
     if (start) qs.set('start', start)
     if (end) qs.set('end', end)
 
-    const dataBase = process.env.ALPACA_DATA_URL || 'https://data.alpaca.markets/v2'
+    // CRITICAL FIX: Bars API is on v2 endpoint, consistent with news API fix
+    // Base URL should be https://data.alpaca.markets, then we add /v2/stocks/bars
+    const dataBase = process.env.ALPACA_DATA_URL || 'https://data.alpaca.markets'
     qs.set('symbols', symbol)
-    const endpoint = `${dataBase}/stocks/bars?${qs.toString()}`
+    const endpoint = `${dataBase}/v2/stocks/bars?${qs.toString()}`
 
     const cacheKey = `${endpoint}|${key}|${secret}`
     const ttl = TTL_MAP[timeframe] || 15000
