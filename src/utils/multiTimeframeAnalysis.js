@@ -11,6 +11,8 @@
  * - Optimal Entry TF: Which timeframe gives best R:R for entry
  */
 
+import { fetchBars } from '../services/yahooFinance.js'
+
 export const TIMEFRAMES = ['1Min', '5Min', '15Min', '1Hour', '1Day']
 
 const TIMEFRAME_WEIGHTS = {
@@ -22,21 +24,26 @@ const TIMEFRAME_WEIGHTS = {
 }
 
 /**
- * Fetch bars for all timeframes
+ * Fetch bars for all timeframes - PhD++ FIXED: Now uses Yahoo Finance!
  */
 export async function fetchAllTimeframes(symbol, limit = 500) {
   const results = {}
 
   try {
+    // PhD++ CRITICAL FIX: Use Yahoo Finance instead of broken Alpaca bars API
+    // Alpaca is now ONLY for trading, Yahoo Finance for data!
     const promises = TIMEFRAMES.map(async (tf) => {
       try {
-        const response = await fetch(`/api/alpaca/bars?symbol=${symbol}&timeframe=${tf}&limit=${limit}`)
-        if (!response.ok) {
-          console.warn(`[Multi-TF] Failed to fetch ${tf} for ${symbol}`)
+        console.log(`[Multi-TF] Fetching ${tf} for ${symbol} from Yahoo Finance...`)
+        const bars = await fetchBars(symbol, tf, limit)
+
+        if (!bars || bars.length === 0) {
+          console.warn(`[Multi-TF] No data for ${tf} - ${symbol}`)
           return { tf, bars: [] }
         }
-        const data = await response.json()
-        return { tf, bars: Array.isArray(data) ? data : [] }
+
+        console.log(`[Multi-TF] ✅ Got ${bars.length} bars for ${tf}`)
+        return { tf, bars }
       } catch (e) {
         console.error(`[Multi-TF] Error fetching ${tf}:`, e)
         return { tf, bars: [] }
@@ -49,6 +56,7 @@ export async function fetchAllTimeframes(symbol, limit = 500) {
       results[tf] = bars
     })
 
+    console.log('[Multi-TF] ✅ All timeframes fetched:', Object.keys(results).map(tf => `${tf}:${results[tf].length}`).join(', '))
     return results
   } catch (e) {
     console.error('[Multi-TF] Fatal error:', e)
