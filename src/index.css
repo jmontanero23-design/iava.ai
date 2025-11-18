@@ -1415,17 +1415,17 @@ select:focus {
 /* Larger touch targets for mobile */
 @media (max-width: 768px) {
   .btn, button {
-    min-height: 48px; /* Increased from 44px for comfort */
+    min-height: 48px; /* WCAG 2.1 Level AAA touch target size */
     padding: var(--space-3) var(--space-4);
   }
 
   .btn-sm {
-    min-height: 44px;
+    min-height: 48px; /* Upgraded from 44px for accessibility */
     padding: var(--space-2) var(--space-4);
   }
 
   .btn-xs {
-    min-height: 40px;
+    min-height: 48px; /* Upgraded from 40px for accessibility */
     padding: var(--space-2) var(--space-3);
   }
 
@@ -1441,11 +1441,12 @@ select:focus {
     padding: var(--space-3) var(--space-4);
   }
 
-  /* Checkboxes and radio buttons */
+  /* Checkboxes and radio buttons - visual 24px but touch area 48px */
   .checkbox, input[type="checkbox"], input[type="radio"] {
     min-width: 24px;
     min-height: 24px;
     cursor: pointer;
+    padding: 12px; /* Creates 48x48px touch target (24px + 12px*2 = 48px) */
   }
 }
 
