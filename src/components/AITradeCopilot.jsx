@@ -18,11 +18,14 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
+import { fetchBars } from '../services/yahooFinance.js'
+import { computeStates } from '../utils/indicators.js'
 
 export default function AITradeCopilot({ onClose }) {
   const { marketData } = useMarketData()
   const [isMinimized, setIsMinimized] = useState(false)
   const [alerts, setAlerts] = useState([])
+  const [symbolScores, setSymbolScores] = useState({}) // Cache scores for each symbol
   const [positions, setPositions] = useState([])
   const [lastCheck, setLastCheck] = useState(Date.now())
   const [newsCache, setNewsCache] = useState([]) // Breaking news cache
@@ -127,6 +130,51 @@ export default function AITradeCopilot({ onClose }) {
     return () => window.removeEventListener('iava-positions-update', handlePositionUpdate)
   }, [])
 
+  // PhD++ CRITICAL FIX: Fetch fresh Unicorn score for ANY symbol
+  // This allows AI Copilot to analyze ALL positions, not just current chart symbol!
+  const fetchFreshScore = async (symbol, timeframe = '1Min') => {
+    try {
+      // Check cache first (5 second TTL to avoid excessive API calls)
+      const cached = symbolScores[symbol]
+      if (cached && Date.now() - cached.timestamp < 5000) {
+        return cached
+      }
+
+      console.log(`[Copilot] Fetching fresh score for ${symbol}...`)
+      const bars = await fetchBars(symbol, timeframe, 200)
+
+      if (!bars || bars.length === 0) {
+        console.warn(`[Copilot] No bars data for ${symbol}`)
+        return null
+      }
+
+      const signalState = computeStates(bars)
+      const currentPrice = bars[bars.length - 1]?.close
+
+      const scoreData = {
+        symbol,
+        score: signalState.score || 0,
+        currentPrice,
+        signalState,
+        bars: bars.length,
+        timestamp: Date.now()
+      }
+
+      // Update cache
+      setSymbolScores(prev => ({
+        ...prev,
+        [symbol]: scoreData
+      }))
+
+      console.log(`[Copilot] ✅ Fresh score for ${symbol}: ${scoreData.score.toFixed(0)}/100`)
+      return scoreData
+
+    } catch (error) {
+      console.error(`[Copilot] Error fetching score for ${symbol}:`, error)
+      return null
+    }
+  }
+
   // Monitor positions and market data for alerts
   useEffect(() => {
     if (!marketData.symbol || positions.length === 0) return
@@ -138,33 +186,36 @@ export default function AITradeCopilot({ onClose }) {
     return () => clearInterval(checkInterval)
   }, [marketData, positions])
 
-  // Proactive analysis of positions
-  const analyzePositions = () => {
+  // Proactive analysis of positions - PhD++ ASYNC for fresh score fetching
+  const analyzePositions = async () => {
     const newAlerts = []
     const currentTime = Date.now()
 
-    positions.forEach(position => {
+    // PhD++ CRITICAL FIX: Analyze ALL positions with fresh scores, not just current chart symbol!
+    for (const position of positions) {
       // Alpaca position structure: symbol, side, avg_entry_price, qty, current_price, unrealized_pl
       const { symbol, side, avg_entry_price, qty, current_price } = position
       const entry = parseFloat(avg_entry_price)
       const quantity = parseFloat(qty)
-      const currentPrice = current_price ? parseFloat(current_price) :
-        (marketData.symbol === symbol ? marketData.currentPrice : null)
+      const currentPrice = current_price ? parseFloat(current_price) : null
 
-      if (!currentPrice || !entry) return
+      if (!currentPrice || !entry) continue
 
-      // Alert 1: Unicorn Score Deterioration (for positions in current symbol)
-      if (marketData.symbol === symbol && marketData.signalState) {
-        const score = marketData.signalState.score || 0
+      // Alert 1: Unicorn Score Deterioration - NOW WORKS FOR ALL POSITIONS!
+      // Fetch fresh score for THIS position's symbol (not just current chart)
+      const scoreData = await fetchFreshScore(symbol)
+
+      if (scoreData) {
+        const score = scoreData.score
 
         if (side === 'long' && score < 40) {
           newAlerts.push({
             id: `score-${symbol}-${currentTime}`,
             type: 'danger',
-            priority: 'medium',
+            priority: 'high', // Elevated from medium - this is REAL-TIME fresh data!
             symbol,
             title: 'Unicorn Score Deteriorating',
-            message: `${symbol} Unicorn Score dropped to ${score.toFixed(0)}/100 (bearish)`,
+            message: `${symbol} Unicorn Score: ${score.toFixed(0)}/100 (BEARISH) - Fresh data!`,
             action: 'Consider tightening stop or exiting',
             timestamp: currentTime
           })
@@ -174,10 +225,10 @@ export default function AITradeCopilot({ onClose }) {
           newAlerts.push({
             id: `score-${symbol}-${currentTime}`,
             type: 'danger',
-            priority: 'medium',
+            priority: 'high',
             symbol,
             title: 'Unicorn Score Rising',
-            message: `${symbol} Unicorn Score rose to ${score.toFixed(0)}/100 (bullish)`,
+            message: `${symbol} Unicorn Score: ${score.toFixed(0)}/100 (BULLISH) - Fresh data!`,
             action: 'Cover short or tighten stop',
             timestamp: currentTime
           })
@@ -261,10 +312,10 @@ export default function AITradeCopilot({ onClose }) {
         }
       }
 
-      // PhD++ Alert 4: Regime Change Warning
-      if (marketData.symbol === symbol && marketData.signalState?.regime) {
-        const regime = marketData.signalState.regime
-        const regimeScore = marketData.signalState.rawScore || 0
+      // PhD++ Alert 4: Regime Change Warning - NOW USES FRESH DATA!
+      if (scoreData?.signalState?.regime) {
+        const regime = scoreData.signalState.regime
+        const regimeScore = scoreData.signalState.rawScore || 0
 
         // Alert if holding long position but regime turned bearish
         if (side === 'long' && regimeScore < -35) {
@@ -274,7 +325,7 @@ export default function AITradeCopilot({ onClose }) {
             priority: 'high',
             symbol,
             title: '⚠️ Regime Turned Bearish',
-            message: `Market regime: ${regime} (score: ${regimeScore.toFixed(0)})`,
+            message: `Market regime: ${regime} (score: ${regimeScore.toFixed(0)}) - Fresh data!`,
             action: 'Consider exiting long position - bearish regime detected',
             timestamp: currentTime
           })
@@ -288,16 +339,16 @@ export default function AITradeCopilot({ onClose }) {
             priority: 'high',
             symbol,
             title: '⚠️ Regime Turned Bullish',
-            message: `Market regime: ${regime} (score: ${regimeScore.toFixed(0)})`,
+            message: `Market regime: ${regime} (score: ${regimeScore.toFixed(0)}) - Fresh data!`,
             action: 'Consider covering short - bullish regime detected',
             timestamp: currentTime
           })
         }
       }
 
-      // PhD++ Alert 5: RSI Divergence Warning
-      if (marketData.symbol === symbol && marketData.signalState?.rsi) {
-        const rsi = marketData.signalState.rsi
+      // PhD++ Alert 5: RSI Divergence Warning - NOW USES FRESH DATA!
+      if (scoreData?.signalState?.rsi) {
+        const rsi = scoreData.signalState.rsi
 
         // Overbought warning for longs
         if (side === 'long' && rsi > 80) {
@@ -307,7 +358,7 @@ export default function AITradeCopilot({ onClose }) {
             priority: 'medium',
             symbol,
             title: 'RSI Overbought',
-            message: `${symbol} RSI at ${rsi.toFixed(1)} - extremely overbought`,
+            message: `${symbol} RSI at ${rsi.toFixed(1)} - extremely overbought (Fresh data!)`,
             action: 'Consider tightening stops or taking partial profits',
             timestamp: currentTime
           })
@@ -321,13 +372,13 @@ export default function AITradeCopilot({ onClose }) {
             priority: 'medium',
             symbol,
             title: 'RSI Oversold',
-            message: `${symbol} RSI at ${rsi.toFixed(1)} - extremely oversold`,
+            message: `${symbol} RSI at ${rsi.toFixed(1)} - extremely oversold (Fresh data!)`,
             action: 'Consider covering short - bounce risk',
             timestamp: currentTime
           })
         }
       }
-    })
+    }
 
     // Add new alerts (avoid duplicates)
     if (newAlerts.length > 0) {
