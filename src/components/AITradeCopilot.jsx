@@ -27,13 +27,76 @@ export default function AITradeCopilot({ onClose }) {
   const [lastCheck, setLastCheck] = useState(Date.now())
   const [newsCache, setNewsCache] = useState([]) // Breaking news cache
   const [watchlist, setWatchlist] = useState(['SPY', 'QQQ', 'AAPL', 'TSLA', 'NVDA']) // PhD++: Multi-symbol monitoring
+  const [validatedSymbols, setValidatedSymbols] = useState(new Set()) // Cache of validated symbols
+
+  // PhD++ CRITICAL: Validate if symbol is a real ticker (prevents SATY, LEVEL, etc.)
+  const validateSymbol = async (symbol) => {
+    if (!symbol || symbol.length < 1 || symbol.length > 5) return false
+
+    // Check cache first
+    if (validatedSymbols.has(symbol)) return true
+
+    // Common indicators/words that are NOT stocks (quick filter)
+    const notStocks = new Set([
+      'SATY', 'ATR', 'EMA', 'SMA', 'RSI', 'MACD', 'VWAP', 'LEVEL', 'ZONE', 'MIN', 'MAX',
+      'SETUP', 'DAILY', 'THE', 'AND', 'FOR', 'BUY', 'SELL', 'LONG', 'SHORT'
+    ])
+    if (notStocks.has(symbol.toUpperCase())) return false
+
+    try {
+      // Validate against Yahoo Finance (already used for price data)
+      const response = await fetch(`/api/yahoo-proxy?symbol=${symbol}&interval=1d&range=1d`)
+      if (response.ok) {
+        const data = await response.json()
+        const isValid = data.bars && data.bars.length > 0
+        if (isValid) {
+          setValidatedSymbols(prev => new Set([...prev, symbol]))
+        }
+        return isValid
+      }
+      return false
+    } catch {
+      return false
+    }
+  }
 
   // Listen for position updates from Orders panel
+  // PhD++ ENHANCED: Validate symbols before accepting positions
   useEffect(() => {
-    const handlePositionUpdate = (event) => {
+    const handlePositionUpdate = async (event) => {
       const updatedPositions = event.detail
-      setPositions(updatedPositions)
-      console.log('[Copilot] Positions updated:', updatedPositions.length)
+      console.log('[Copilot] Raw positions received:', updatedPositions.length)
+
+      // Validate all position symbols
+      const validationResults = await Promise.all(
+        updatedPositions.map(async (pos) => ({
+          ...pos,
+          isValid: await validateSymbol(pos.symbol)
+        }))
+      )
+
+      // Filter and warn about invalid symbols
+      const valid = validationResults.filter(p => p.isValid)
+      const invalid = validationResults.filter(p => !p.isValid)
+
+      if (invalid.length > 0) {
+        console.warn('[Copilot] ⚠️ Invalid symbols detected (filtered out):', invalid.map(p => p.symbol))
+
+        // Add alert for invalid positions
+        setAlerts(prev => [{
+          id: `invalid-symbols-${Date.now()}`,
+          type: 'warning',
+          priority: 'high',
+          symbol: 'SYSTEM',
+          title: '⚠️ Invalid Positions Detected',
+          message: `Filtered out positions with invalid symbols: ${invalid.map(p => p.symbol).join(', ')}`,
+          action: 'Review your positions - these may be test trades',
+          timestamp: Date.now()
+        }, ...prev].slice(0, 10))
+      }
+
+      setPositions(valid)
+      console.log('[Copilot] ✅ Valid positions:', valid.length, 'Invalid:', invalid.length)
     }
 
     window.addEventListener('iava-positions-update', handlePositionUpdate)

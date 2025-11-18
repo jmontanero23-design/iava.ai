@@ -362,6 +362,82 @@ Avoid symbols already in watchlist.`
   }
 }
 
+/**
+ * PhD++ ELITE: Validate if detected symbols are REAL stock tickers or false positives
+ * Uses LLM intelligence to distinguish stocks from trading terms/indicators
+ *
+ * @param {string} text - Original user message text
+ * @param {Array<string>} detectedSymbols - Symbols detected by regex
+ * @returns {Promise<Object>} { valid: [...], rejected: [...], confidence: 0-1 }
+ */
+export async function validateSymbolContext(text, detectedSymbols) {
+  if (!detectedSymbols || detectedSymbols.length === 0) {
+    return { valid: [], rejected: [], confidence: 1.0 }
+  }
+
+  console.log('[Symbol Validator] Validating symbols:', detectedSymbols, 'from text:', text)
+
+  const messages = [
+    {
+      role: 'system',
+      content: `You are a stock symbol validator for a trading platform.
+
+Your job: Determine which detected words are REAL US stock ticker symbols vs false positives.
+
+FALSE POSITIVES to REJECT:
+- Technical indicators: SATY, ATR, EMA, RSI, MACD, VWAP, etc.
+- Trading terms: LEVEL, ZONE, MIN, MAX, SETUP, etc.
+- Timeframes: MIN (minute), HR (hour), DAY, WEEK, etc.
+- Common words: THE, AND, FOR, BUY, SELL, etc.
+- Chart patterns: HEAD, SHOULDER, CUP, HANDLE, etc.
+
+VALID TICKERS to ACCEPT:
+- Real US stocks: AAPL, TSLA, NVDA, SPY, QQQ, etc.
+- ETFs and indexes
+- Must be 1-5 uppercase letters
+- Must be actively traded
+
+Return JSON only:
+{
+  "valid": ["AAPL", "TSLA"],
+  "rejected": ["SATY", "LEVEL", "MIN"],
+  "confidence": 0.95
+}`
+    },
+    {
+      role: 'user',
+      content: `Original text: "${text}"
+
+Detected words: ${JSON.stringify(detectedSymbols)}
+
+Which are REAL stock tickers? Return JSON only.`
+    }
+  ]
+
+  try {
+    const result = await callAI('gpt-5-nano', messages, {
+      temperature: 0.1,
+      max_tokens: 200,
+      json: true,
+      cache: true,
+      cacheTTL: 300 // 5 minutes
+    })
+
+    const validation = JSON.parse(result.content)
+    console.log('[Symbol Validator] Result:', validation)
+    return validation
+  } catch (error) {
+    console.error('[Symbol Validator] Failed:', error)
+    // Fallback: Return all symbols (better than blocking valid ones)
+    return {
+      valid: detectedSymbols,
+      rejected: [],
+      confidence: 0.5,
+      error: error.message
+    }
+  }
+}
+
 export default {
   callAI,
   getGatewayMetrics,
@@ -369,5 +445,6 @@ export default {
   rankSignals,
   analyzeRegime,
   parseNaturalQuery,
-  suggestWatchlistSymbols
+  suggestWatchlistSymbols,
+  validateSymbolContext
 }

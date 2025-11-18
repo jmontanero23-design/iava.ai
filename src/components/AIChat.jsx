@@ -9,7 +9,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react'
-import { callAI } from '../utils/aiGateway.js'
+import { callAI, validateSymbolContext } from '../utils/aiGateway.js'
 import { generateTradingSystemPrompt, buildMarketContext, formatContextForAI } from '../utils/aiContext.js'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
 import MobilePushToTalk from './MobilePushToTalk.jsx'
@@ -17,6 +17,7 @@ import { detectSymbols, detectTimeframe, buildEnhancedContext, formatEnhancedCon
 
 export default function AIChat() {
   const { marketData } = useMarketData()
+  const marketDataRef = useRef(marketData)
 
   // Load chat history from localStorage on mount
   const loadChatHistory = () => {
@@ -466,43 +467,67 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
     }
   }
 
+  // CRITICAL FIX: Keep ref updated with latest marketData to avoid stale closure
+  useEffect(() => {
+    marketDataRef.current = marketData
+  }, [marketData])
+
   // Auto-load symbol for detailed analysis - AI can trigger this
+  // FIXED: Uses ref instead of closure to avoid race condition
   const loadSymbolForAnalysis = async (symbol, timeframe = null) => {
     return new Promise((resolve) => {
       console.log('[AI Chat] Auto-loading symbol for analysis:', symbol)
+
+      // Listen for symbol loaded event (more reliable than polling)
+      const handleSymbolLoaded = (event) => {
+        if (event.detail.symbol?.toUpperCase() === symbol.toUpperCase()) {
+          window.removeEventListener('iava.symbolLoaded', handleSymbolLoaded)
+          clearInterval(checkInterval)
+          clearTimeout(timeout)
+          console.log('[AI Chat] ✅ Symbol loaded successfully:', symbol, 'bars:', event.detail.bars)
+          resolve(true)
+        }
+      }
+      window.addEventListener('iava.symbolLoaded', handleSymbolLoaded)
 
       // Dispatch event to load symbol in chart
       window.dispatchEvent(new CustomEvent('iava.loadSymbol', {
         detail: { symbol: symbol.toUpperCase(), timeframe }
       }))
 
-      // Wait for market data to update (give it 5 seconds max)
+      // Fallback: Poll using ref (not closure) for latest data
       let checks = 0
       const checkInterval = setInterval(() => {
         checks++
-        console.log(`[AI Chat] Waiting for ${symbol} to load... (check ${checks}/50, current: ${marketData.symbol})`)
+        // CRITICAL: Use ref.current to get LATEST marketData, not stale closure
+        const current = marketDataRef.current
+        console.log(`[AI Chat] Waiting for ${symbol} to load... (check ${checks}/50, current: ${current.symbol})`)
 
-        // Case-insensitive comparison
-        if (marketData.symbol?.toUpperCase() === symbol.toUpperCase() && marketData.bars?.length > 0) {
+        if (current.symbol?.toUpperCase() === symbol.toUpperCase() && current.bars?.length > 0) {
+          window.removeEventListener('iava.symbolLoaded', handleSymbolLoaded)
           clearInterval(checkInterval)
-          console.log('[AI Chat] ✅ Symbol loaded successfully:', symbol, 'bars:', marketData.bars?.length)
+          clearTimeout(timeout)
+          console.log('[AI Chat] ✅ Symbol loaded successfully (via polling):', symbol, 'bars:', current.bars?.length)
           resolve(true)
         }
       }, 100)
 
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
+        window.removeEventListener('iava.symbolLoaded', handleSymbolLoaded)
         clearInterval(checkInterval)
-        console.warn('[AI Chat] ⏱️ Symbol load timeout for:', symbol, '- current symbol:', marketData.symbol)
-        resolve(false) // Timeout after 5 seconds
+        console.warn('[AI Chat] ⏱️ Symbol load timeout for:', symbol, '- current symbol:', marketDataRef.current.symbol)
+        resolve(false)
       }, 5000)
     })
   }
 
   // Expose loadSymbolForAnalysis to window for AI to access
+  // FIXED: No dependencies needed since function uses ref
   useEffect(() => {
     window.iavaLoadSymbol = loadSymbolForAnalysis
     return () => { delete window.iavaLoadSymbol }
-  }, [marketData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Export chat to clipboard (markdown format)
   const exportChat = () => {
@@ -969,14 +994,27 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
 
     try {
       // ELITE: Auto-detect and load symbols mentioned in user message
-      const detectedSymbols = detectSymbols(userMessage.content)
-      const detectedTimeframe = detectTimeframe(userMessage.content)
+      const rawSymbols = detectSymbols(userMessage.content)
+      console.log('[AI Chat] Raw detected symbols:', rawSymbols)
 
-      console.log('[AI Chat] Detected symbols:', detectedSymbols, 'Timeframe:', detectedTimeframe)
+      // PhD++ CRITICAL FIX: Use LLM to validate symbols (filters out SATY, LEVEL, MIN, etc.)
+      let validatedSymbols = rawSymbols
+      if (rawSymbols.length > 0) {
+        const validation = await validateSymbolContext(userMessage.content, rawSymbols)
+        validatedSymbols = validation.valid || []
+
+        if (validation.rejected && validation.rejected.length > 0) {
+          console.log('[AI Chat] ✅ Filtered out false positives:', validation.rejected)
+        }
+        console.log('[AI Chat] ✅ Validated symbols:', validatedSymbols, 'Confidence:', validation.confidence)
+      }
+
+      const detectedTimeframe = detectTimeframe(userMessage.content)
+      console.log('[AI Chat] Final symbols to load:', validatedSymbols, 'Timeframe:', detectedTimeframe)
 
       // If user mentions a different symbol, load it automatically
-      if (detectedSymbols.length > 0) {
-        const newSymbol = detectedSymbols[0]
+      if (validatedSymbols.length > 0) {
+        const newSymbol = validatedSymbols[0]
         const currentSymbol = marketData.symbol?.toUpperCase()
 
         if (newSymbol !== currentSymbol) {

@@ -317,6 +317,14 @@ export default function App() {
       usingSample
     })
     console.log('[AppChart] MarketDataContext updated successfully')
+
+    // CRITICAL FIX: Notify components that symbol has loaded (fixes race condition)
+    if (symbol && bars?.length > 0) {
+      window.dispatchEvent(new CustomEvent('iava.symbolLoaded', {
+        detail: { symbol, timeframe, bars: bars.length, currentPrice }
+      }))
+      console.log('[AppChart] ✅ Dispatched iava.symbolLoaded event for:', symbol)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol, timeframe, bars, signalState, dailyState, overlays, threshold, enforceDaily, consensusBonus, consensus, account, usingSample])
 

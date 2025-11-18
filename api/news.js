@@ -11,8 +11,16 @@ export default async function handler(req, res) {
     const ALPACA_KEY = process.env.ALPACA_KEY_ID
     const ALPACA_SECRET = process.env.ALPACA_SECRET_KEY
 
+    // PhD++ DEBUG: Enhanced logging for credentials check
+    console.log('[News API] Environment check:')
+    console.log('  - ALPACA_KEY_ID exists:', !!ALPACA_KEY)
+    console.log('  - ALPACA_KEY_ID first 4 chars:', ALPACA_KEY?.substring(0, 4))
+    console.log('  - ALPACA_SECRET_KEY exists:', !!ALPACA_SECRET)
+    console.log('  - ALPACA_SECRET_KEY length:', ALPACA_SECRET?.length)
+
     if (!ALPACA_KEY || !ALPACA_SECRET) {
-      console.warn('[News API] No Alpaca credentials - returning sample data. Check ALPACA_KEY_ID and ALPACA_SECRET_KEY in Vercel environment variables.')
+      console.warn('[News API] ❌ No Alpaca credentials - returning sample data.')
+      console.warn('[News API] Check ALPACA_KEY_ID and ALPACA_SECRET_KEY in Vercel environment variables.')
       return res.status(200).json({
         news: getSampleNews(symbol),
         source: 'sample_no_credentials',
@@ -27,7 +35,8 @@ export default async function handler(req, res) {
     const DATA_URL = process.env.ALPACA_DATA_URL || 'https://data.alpaca.markets'
     const newsUrl = `${DATA_URL}/v1beta1/news?symbols=${symbol}&limit=${Math.min(limit, 50)}&sort=desc`
 
-    console.log('[News API] Fetching from:', newsUrl)
+    console.log('[News API] 🔄 Fetching from:', newsUrl)
+    console.log('[News API] Request params:', { symbol, limit: Math.min(limit, 50) })
 
     const response = await fetch(newsUrl, {
       headers: {
@@ -36,23 +45,43 @@ export default async function handler(req, res) {
       }
     })
 
+    console.log('[News API] Response status:', response.status, response.statusText)
+
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('[News API] Alpaca error:', response.status, errorText)
+      const errorHeaders = Object.fromEntries(response.headers.entries())
+
+      // PhD++ ENHANCED ERROR LOGGING
+      console.error('[News API] ❌ Alpaca API Error Details:')
+      console.error('  - Status:', response.status, response.statusText)
+      console.error('  - Headers:', JSON.stringify(errorHeaders, null, 2))
+      console.error('  - Body:', errorText)
+
+      // Specific error handling
+      if (response.status === 401) {
+        console.error('[News API] 🚨 AUTHENTICATION FAILED - Check API keys')
+      } else if (response.status === 403) {
+        console.error('[News API] 🚨 FORBIDDEN - Check API permissions for market data')
+      } else if (response.status === 429) {
+        console.error('[News API] 🚨 RATE LIMIT EXCEEDED')
+      } else if (response.status === 404) {
+        console.error('[News API] 🚨 ENDPOINT NOT FOUND - Check URL:', newsUrl)
+      }
 
       // Fallback to sample data
       return res.status(200).json({
         news: getSampleNews(symbol),
         source: 'sample_fallback',
         symbol,
-        error: `Alpaca API error: ${response.status}`
+        error: `Alpaca API error: ${response.status}`,
+        errorDetails: errorText
       })
     }
 
     const data = await response.json()
 
     if (!data.news || data.news.length === 0) {
-      console.log('[News API] No news found for', symbol, '- using sample')
+      console.log('[News API] ⚠️ No news found for', symbol, '- using sample')
       return res.status(200).json({
         news: getSampleNews(symbol),
         source: 'sample_no_data',
@@ -74,7 +103,8 @@ export default async function handler(req, res) {
       source: item.source
     }))
 
-    console.log(`[News API] Fetched ${formattedNews.length} real news items for ${symbol}`)
+    console.log(`[News API] ✅ SUCCESS! Fetched ${formattedNews.length} REAL news items for ${symbol}`)
+    console.log('[News API] Headlines:', formattedNews.slice(0, 3).map(n => n.headline))
 
     return res.status(200).json({
       news: formattedNews,
