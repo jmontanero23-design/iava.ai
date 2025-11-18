@@ -106,7 +106,7 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
         const qty = Math.abs(parseFloat(position.qty) || 0)
         const side = parseFloat(position.qty) > 0 ? 'sell' : 'buy' // Opposite side to close
 
-        // Place stop loss order
+        // Place stop loss order - Alpaca API format for standalone stop orders
         const response = await api('/api/alpaca/order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -115,10 +115,8 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
             side,
             qty,
             type: 'stop',
-            timeInForce: 'gtc', // Good til cancelled
-            stopLoss: {
-              stop_price: stopPrice
-            }
+            stop_price: stopPrice,  // At top level for standalone stop orders
+            time_in_force: 'gtc'    // Snake case for Alpaca API
           })
         })
 
