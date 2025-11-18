@@ -19,7 +19,7 @@ import RiskAdvisorPanel from './components/RiskAdvisorPanel.jsx'
 import TradeJournalAIPanel from './components/TradeJournalAIPanel.jsx'
 import MarketRegimeDetectorPanel from './components/MarketRegimeDetectorPanel.jsx'
 import AnomalyDetectorPanel from './components/AnomalyDetectorPanel.jsx'
-import MultiTimeframeAnalystPanel from './components/MultiTimeframeAnalystPanel.jsx'
+// import MultiTimeframeAnalystPanel from './components/MultiTimeframeAnalystPanel.jsx' // DEPRECATED: Using new MultiTimeframePanel instead
 import SmartWatchlistBuilderPanel from './components/SmartWatchlistBuilderPanel.jsx'
 import PredictiveConfidencePanel from './components/PredictiveConfidencePanel.jsx'
 import PersonalizedLearningPanel from './components/PersonalizedLearningPanel.jsx'
@@ -60,6 +60,29 @@ export default function App() {
   const [selectedFeature, setSelectedFeature] = useState(null)
   const [showTour, setShowTour] = useState(false)
   const [showCopilot, setShowCopilot] = useState(true) // AI Copilot visible by default
+
+  // CRITICAL FIX: Listen for symbol loading from AI Chat
+  useEffect(() => {
+    const handleLoadSymbol = (event) => {
+      const { symbol, timeframe } = event.detail || {}
+      console.log('[App] Received symbol load request:', symbol, timeframe)
+
+      if (symbol) {
+        // Switch to chart tab so symbol can load
+        setActiveTab('chart')
+
+        // Give chart time to mount, then dispatch event again
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('iava.loadSymbol', {
+            detail: { symbol, timeframe }
+          }))
+        }, 100)
+      }
+    }
+
+    window.addEventListener('iava.loadSymbol', handleLoadSymbol)
+    return () => window.removeEventListener('iava.loadSymbol', handleLoadSymbol)
+  }, [])
 
   // Keyboard shortcuts for elite UX
   useEffect(() => {
