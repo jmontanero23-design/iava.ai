@@ -73,7 +73,13 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('[Sentiment API] HuggingFace error:', response.status, errorText)
+      console.error('[Sentiment API] ❌ HuggingFace API error:', {
+        model,
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        headers: Object.fromEntries(response.headers.entries())
+      })
 
       // If model is loading, return neutral sentiment
       if (response.status === 503) {
@@ -86,7 +92,9 @@ export default async function handler(req, res) {
         })
       }
 
-      throw new Error(`HuggingFace API error: ${response.status}`)
+      // Continue to next model instead of throwing
+      console.warn(`[Sentiment API] Model ${model} failed with ${response.status}, trying next model...`)
+      continue
     }
 
     const result = await response.json()
@@ -139,14 +147,19 @@ export default async function handler(req, res) {
         })
 
       } catch (modelError) {
-        console.warn(`[Sentiment API] Model ${model} failed:`, modelError.message)
+        console.error(`[Sentiment API] ❌ Model ${model} exception:`, {
+          error: modelError.message,
+          stack: modelError.stack
+        })
         // Continue to next model
         continue
       }
     }
 
-    // All models failed
-    throw new Error('All sentiment models failed')
+    // All models failed - return detailed error
+    console.error('[Sentiment API] 🚨 ALL MODELS FAILED - Check HuggingFace API key and quota')
+    console.error('[Sentiment API] Tried models:', MODELS)
+    throw new Error('All sentiment models failed - check API key validity and rate limits')
 
   } catch (error) {
     console.error('[Sentiment API] Error:', error)
