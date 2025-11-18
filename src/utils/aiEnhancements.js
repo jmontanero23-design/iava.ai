@@ -14,33 +14,39 @@
  * Supports: AAPL, $AAPL, Apple (AAPL), etc.
  */
 export function detectSymbols(text) {
+  console.log('[detectSymbols] Input text:', text)
   const symbols = new Set()
 
-  // Pattern 1: $TICKER format
-  const dollarPattern = /\$([A-Z]{1,5})\b/g
+  // Pattern 1: $TICKER format (case insensitive)
+  const dollarPattern = /\$([A-Z]{1,5})\b/gi
   let match
   while ((match = dollarPattern.exec(text)) !== null) {
-    symbols.add(match[1])
+    console.log('[detectSymbols] Dollar pattern matched:', match[1])
+    symbols.add(match[1].toUpperCase())
   }
 
-  // Pattern 2: Standalone tickers (2-5 uppercase letters)
-  const standalonePattern = /\b([A-Z]{2,5})\b/g
-  const commonWords = new Set(['I', 'A', 'THE', 'AND', 'OR', 'BUT', 'FOR', 'IS', 'IT', 'TO', 'OF', 'IN', 'ON', 'AT', 'BY', 'UP', 'SO', 'NO', 'GO', 'DO', 'BE', 'IF', 'MY', 'US', 'WE', 'HE', 'SHE', 'YOU', 'THEY', 'ARE', 'WAS', 'WERE', 'BEEN', 'HAVE', 'HAS', 'HAD', 'CAN', 'WILL', 'MAY', 'MUST', 'SHALL', 'COULD', 'WOULD', 'SHOULD'])
+  // Pattern 2: Standalone tickers (2-5 letters, case insensitive)
+  const standalonePattern = /\b([A-Z]{2,5})\b/gi
+  const commonWords = new Set(['I', 'A', 'THE', 'AND', 'OR', 'BUT', 'FOR', 'IS', 'IT', 'TO', 'OF', 'IN', 'ON', 'AT', 'BY', 'UP', 'SO', 'NO', 'GO', 'DO', 'BE', 'IF', 'MY', 'US', 'WE', 'HE', 'SHE', 'YOU', 'THEY', 'ARE', 'WAS', 'WERE', 'BEEN', 'HAVE', 'HAS', 'HAD', 'CAN', 'WILL', 'MAY', 'MUST', 'SHALL', 'COULD', 'WOULD', 'SHOULD', 'ANALYZE', 'TELL', 'GIVE', 'SHOW'])
 
   while ((match = standalonePattern.exec(text)) !== null) {
-    const word = match[1]
+    const word = match[1].toUpperCase()
+    console.log('[detectSymbols] Standalone pattern matched:', word, 'isCommon:', commonWords.has(word))
     if (!commonWords.has(word) && word.length >= 2) {
       symbols.add(word)
     }
   }
 
-  // Pattern 3: Company name with ticker in parentheses
-  const companyPattern = /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*\(([A-Z]{1,5})\)/g
+  // Pattern 3: Company name with ticker in parentheses (case insensitive)
+  const companyPattern = /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*\(([A-Z]{1,5})\)/gi
   while ((match = companyPattern.exec(text)) !== null) {
-    symbols.add(match[2])
+    console.log('[detectSymbols] Company pattern matched:', match[2])
+    symbols.add(match[2].toUpperCase())
   }
 
-  return Array.from(symbols)
+  const result = Array.from(symbols)
+  console.log('[detectSymbols] Final result:', result)
+  return result
 }
 
 /**

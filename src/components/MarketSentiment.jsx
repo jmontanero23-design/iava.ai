@@ -62,12 +62,25 @@ export default function MarketSentiment() {
 
       // ELITE: Fetch REAL news headlines from API
       let headlines = []
+      let newsSource = 'fallback'
       try {
         const newsResponse = await fetch(`/api/news?symbol=${symbol}&limit=10`)
         if (newsResponse.ok) {
           const newsData = await newsResponse.json()
           headlines = newsData.news?.map(n => n.headline) || []
-          console.log(`[Sentiment] Fetched ${headlines.length} real news headlines for ${symbol}`)
+          newsSource = newsData.source || 'unknown'
+          console.log(`[Sentiment] Fetched ${headlines.length} news headlines for ${symbol} from source: ${newsSource}`)
+
+          // CRITICAL: Warn if using sample data
+          if (newsSource !== 'alpaca') {
+            console.warn(`[Sentiment] ⚠️ Using ${newsSource} data instead of real Alpaca news!`)
+            window.dispatchEvent(new CustomEvent('iava.toast', {
+              detail: {
+                text: `Using ${newsSource} news data - check Alpaca API credentials`,
+                type: 'warning'
+              }
+            }))
+          }
         }
       } catch (newsError) {
         console.warn('[Sentiment] Failed to fetch real news, using fallback:', newsError)
@@ -129,6 +142,7 @@ export default function MarketSentiment() {
       })
 
       const analyzedNews = await Promise.all(sentimentPromises)
+      console.log(`[Sentiment] Setting ${analyzedNews.length} analyzed news items:`, analyzedNews.slice(0, 2))
       setNewsItems(analyzedNews)
 
       // Calculate overall sentiment from news (using -1 to +1 normalized scores)

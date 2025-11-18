@@ -63,18 +63,35 @@ export default function App() {
 
   // CRITICAL FIX: Listen for symbol loading from AI Chat
   useEffect(() => {
+    let lastSymbol = null
+    let lastDispatch = 0
+    const DEBOUNCE_MS = 500 // Prevent duplicate events within 500ms
+
     const handleLoadSymbol = (event) => {
-      const { symbol, timeframe } = event.detail || {}
+      const { symbol, timeframe, _forwarded } = event.detail || {}
+
+      // Ignore events we've already forwarded to prevent infinite loop
+      if (_forwarded) return
+
+      // Debounce: Ignore duplicate requests for the same symbol within 500ms
+      const now = Date.now()
+      if (symbol === lastSymbol && (now - lastDispatch) < DEBOUNCE_MS) {
+        console.log('[App] Ignoring duplicate symbol load request (debounced):', symbol)
+        return
+      }
+
       console.log('[App] Received symbol load request:', symbol, timeframe)
+      lastSymbol = symbol
+      lastDispatch = now
 
       if (symbol) {
         // Switch to chart tab so symbol can load
         setActiveTab('chart')
 
-        // Give chart time to mount, then dispatch event again
+        // Give chart time to mount, then dispatch event again with forwarded flag
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('iava.loadSymbol', {
-            detail: { symbol, timeframe }
+            detail: { symbol, timeframe, _forwarded: true }
           }))
         }, 100)
       }

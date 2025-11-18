@@ -7,18 +7,19 @@ export default async function handler(req, res) {
   const { symbol = 'SPY', limit = 10 } = req.query
 
   try {
-    const ALPACA_KEY = process.env.VITE_ALPACA_KEY
-    const ALPACA_SECRET = process.env.VITE_ALPACA_SECRET
-    const USE_PAPER = (process.env.VITE_USE_PAPER || 'true') === 'true'
-    const BASE_URL = USE_PAPER
+    // Use correct server-side environment variable names (not VITE_ prefixed)
+    const ALPACA_KEY = process.env.ALPACA_KEY_ID
+    const ALPACA_SECRET = process.env.ALPACA_SECRET_KEY
+    const ALPACA_ENV = process.env.ALPACA_ENV || 'paper'
+    const BASE_URL = ALPACA_ENV === 'paper'
       ? 'https://paper-api.alpaca.markets'
       : 'https://api.alpaca.markets'
 
     if (!ALPACA_KEY || !ALPACA_SECRET) {
-      console.warn('[News API] No Alpaca credentials - returning sample data')
+      console.warn('[News API] No Alpaca credentials - returning sample data. Check ALPACA_KEY_ID and ALPACA_SECRET_KEY in Vercel environment variables.')
       return res.status(200).json({
         news: getSampleNews(symbol),
-        source: 'sample',
+        source: 'sample_no_credentials',
         symbol
       })
     }
