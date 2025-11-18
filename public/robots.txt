@@ -1,0 +1,21 @@
+# iAVA.ai - Intelligent Trading Platform
+# Robots.txt - Allow all crawlers
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://app.iava.ai/sitemap.xml
+
+# Crawl delay for polite crawlers
+Crawl-delay: 1
+
+# Block API endpoints from indexing
+Disallow: /api/
+
+# Block assets from indexing
+Disallow: /assets/
+
+# Allow main pages
+Allow: /
+Allow: /?*
