@@ -36,16 +36,33 @@ export default function AITradeCopilot({ onClose }) {
     // Check cache first
     if (validatedSymbols.has(symbol)) return true
 
+    const symbolUpper = symbol.toUpperCase()
+
     // Common indicators/words that are NOT stocks (quick filter)
     const notStocks = new Set([
       'SATY', 'ATR', 'EMA', 'SMA', 'RSI', 'MACD', 'VWAP', 'LEVEL', 'ZONE', 'MIN', 'MAX',
       'SETUP', 'DAILY', 'THE', 'AND', 'FOR', 'BUY', 'SELL', 'LONG', 'SHORT'
     ])
-    if (notStocks.has(symbol.toUpperCase())) return false
+    if (notStocks.has(symbolUpper)) return false
 
+    // CRITICAL FIX: Whitelist common stocks (prevents false rejections from API failures)
+    const knownStocks = new Set([
+      'SPY', 'QQQ', 'IWM', 'DIA', 'VTI', 'VOO', 'VEA', 'VWO', 'AGG', 'BND',
+      'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'NVDA', 'META', 'TSLA', 'BRK.B', 'BRKB',
+      'LLY', 'AVGO', 'JPM', 'V', 'UNH', 'XOM', 'WMT', 'MA', 'PG', 'HD',
+      'JNJ', 'COST', 'ABBV', 'NFLX', 'CRM', 'MRK', 'KO', 'BAC', 'PEP', 'CVX',
+      'AMD', 'ADBE', 'TMO', 'ACN', 'CSCO', 'MCD', 'ABT', 'DHR', 'WFC', 'PM'
+    ])
+    if (knownStocks.has(symbolUpper)) {
+      setValidatedSymbols(prev => new Set([...prev, symbol]))
+      return true
+    }
+
+    // For unknown symbols, try to validate via Yahoo Finance
     try {
-      // Validate against Yahoo Finance (already used for price data)
-      const response = await fetch(`/api/yahoo-proxy?symbol=${symbol}&interval=1d&range=1d`)
+      const response = await fetch(`/api/yahoo-proxy?symbol=${symbol}&interval=1d&range=1d`, {
+        signal: AbortSignal.timeout(3000) // 3 second timeout
+      })
       if (response.ok) {
         const data = await response.json()
         const isValid = data.bars && data.bars.length > 0
@@ -54,9 +71,16 @@ export default function AITradeCopilot({ onClose }) {
         }
         return isValid
       }
-      return false
-    } catch {
-      return false
+      // CRITICAL FIX: On API failure, be LENIENT (accept symbol rather than reject)
+      // Better to accept a potentially invalid symbol than reject a valid one
+      console.warn(`[Copilot] Could not validate ${symbol} via API (status: ${response.status}), accepting anyway`)
+      setValidatedSymbols(prev => new Set([...prev, symbol]))
+      return true
+    } catch (error) {
+      // CRITICAL FIX: Network error or timeout = accept symbol (lenient validation)
+      console.warn(`[Copilot] Could not validate ${symbol} (${error.message}), accepting anyway`)
+      setValidatedSymbols(prev => new Set([...prev, symbol]))
+      return true
     }
   }
 
