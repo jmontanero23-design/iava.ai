@@ -37,7 +37,7 @@ export default async function handler(req, res) {
     console.log('[HF Test] Test text:', testText)
 
     const response = await fetch(
-      `https://api-inference.huggingface.co/models/${model}`,
+      `https://router.huggingface.co/hf-inference/models/${model}`,
       {
         method: 'POST',
         headers: {
@@ -100,7 +100,7 @@ export default async function handler(req, res) {
     console.log('[HF Test] Testing model:', model)
 
     const response = await fetch(
-      `https://api-inference.huggingface.co/models/${model}`,
+      `https://router.huggingface.co/hf-inference/models/${model}`,
       {
         method: 'POST',
         headers: {

@@ -54,8 +54,9 @@ export default async function handler(req, res) {
     for (const model of MODELS) {
       try {
         console.log(`[Sentiment API] Trying model: ${model}`)
+        // ✅ FIXED: Updated to new HuggingFace Inference API endpoint (Jan 2025)
         const response = await fetch(
-          `https://api-inference.huggingface.co/models/${model}`,
+          `https://router.huggingface.co/hf-inference/models/${model}`,
       {
         method: 'POST',
         headers: {
@@ -249,8 +250,9 @@ async function analyzeMultiModel(text, apiKey) {
 async function analyzeSingleModel(text, model, apiKey) {
   const truncatedText = text.length > 512 ? text.substring(0, 512) : text
 
+  // ✅ FIXED: Updated to new HuggingFace Inference API endpoint (Jan 2025)
   const response = await fetch(
-    `https://api-inference.huggingface.co/models/${model}`,
+    `https://router.huggingface.co/hf-inference/models/${model}`,
     {
       method: 'POST',
       headers: {

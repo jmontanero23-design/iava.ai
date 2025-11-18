@@ -36,7 +36,7 @@ export default async function handler(req, res) {
 
     // Call HuggingFace Whisper API
     const response = await fetch(
-      'https://api-inference.huggingface.co/models/openai/whisper-large-v3',
+      'https://router.huggingface.co/hf-inference/models/openai/whisper-large-v3',
       {
         method: 'POST',
         headers: {

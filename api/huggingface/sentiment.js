@@ -74,7 +74,7 @@ async function analyzeSingle(text, modelKey, apiKey) {
     const truncatedText = text.length > 512 ? text.substring(0, 512) : text
 
     const response = await fetch(
-      `https://api-inference.huggingface.co/models/${modelName}`,
+      `https://router.huggingface.co/hf-inference/models/${modelName}`,
       {
         method: 'POST',
         headers: {
