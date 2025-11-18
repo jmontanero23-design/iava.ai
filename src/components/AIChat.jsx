@@ -9,7 +9,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react'
-import { callAI, validateSymbolContext } from '../utils/aiGateway.js'
+import { callAI } from '../utils/aiGateway.js'
 import { generateTradingSystemPrompt, buildMarketContext, formatContextForAI } from '../utils/aiContext.js'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
 import MobilePushToTalk from './MobilePushToTalk.jsx'
@@ -993,28 +993,18 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
     }))
 
     try {
-      // ELITE: Auto-detect and load symbols mentioned in user message
-      const rawSymbols = detectSymbols(userMessage.content)
-      console.log('[AI Chat] Raw detected symbols:', rawSymbols)
+      // PhD++ SIMPLIFIED: Auto-detect symbols when explicitly mentioned ($AAPL or Apple (AAPL))
+      // No more aggressive pattern matching, no LLM validation - simple and reliable!
+      const detectedSymbols = detectSymbols(userMessage.content)
+      const detectedTimeframe = detectTimeframe(userMessage.content)
 
-      // PhD++ CRITICAL FIX: Use LLM to validate symbols (filters out SATY, LEVEL, MIN, etc.)
-      let validatedSymbols = rawSymbols
-      if (rawSymbols.length > 0) {
-        const validation = await validateSymbolContext(userMessage.content, rawSymbols)
-        validatedSymbols = validation.valid || []
-
-        if (validation.rejected && validation.rejected.length > 0) {
-          console.log('[AI Chat] ✅ Filtered out false positives:', validation.rejected)
-        }
-        console.log('[AI Chat] ✅ Validated symbols:', validatedSymbols, 'Confidence:', validation.confidence)
+      if (detectedSymbols.length > 0) {
+        console.log('[AI Chat] ✅ Detected symbols:', detectedSymbols, 'Timeframe:', detectedTimeframe)
       }
 
-      const detectedTimeframe = detectTimeframe(userMessage.content)
-      console.log('[AI Chat] Final symbols to load:', validatedSymbols, 'Timeframe:', detectedTimeframe)
-
       // If user mentions a different symbol, load it automatically
-      if (validatedSymbols.length > 0) {
-        const newSymbol = validatedSymbols[0]
+      if (detectedSymbols.length > 0) {
+        const newSymbol = detectedSymbols[0]
         const currentSymbol = marketData.symbol?.toUpperCase()
 
         if (newSymbol !== currentSymbol) {

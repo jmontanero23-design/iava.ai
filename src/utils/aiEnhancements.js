@@ -10,60 +10,40 @@
  */
 
 /**
- * Detect stock symbols in text
- * Supports: AAPL, $AAPL, Apple (AAPL), etc.
+ * Detect stock symbols in text - PhD++ SIMPLIFIED
+ *
+ * ONLY detects symbols when users EXPLICITLY mention them:
+ * - $AAPL format (clear intent to load a ticker)
+ * - Apple (AAPL) format (clear intent with company name)
+ *
+ * REMOVED aggressive standalone pattern that was causing:
+ * - False positives (LEVEL, ZONE, MIN detected as tickers)
+ * - Need for massive filter word lists
+ * - Need for LLM validation adding latency
+ *
+ * Result: Simpler, faster, more reliable - works like it used to!
  */
 export function detectSymbols(text) {
   console.log('[detectSymbols] Input text:', text)
   const symbols = new Set()
 
-  // Pattern 1: $TICKER format (case insensitive)
+  // Pattern 1: $TICKER format (explicit intent - $AAPL, $SPY, etc.)
   const dollarPattern = /\$([A-Z]{1,5})\b/gi
   let match
   while ((match = dollarPattern.exec(text)) !== null) {
-    console.log('[detectSymbols] Dollar pattern matched:', match[1])
+    console.log('[detectSymbols] ✅ Dollar pattern matched:', match[1])
     symbols.add(match[1].toUpperCase())
   }
 
-  // Pattern 2: Standalone tickers (2-5 letters, case insensitive)
-  const standalonePattern = /\b([A-Z]{2,5})\b/gi
-  const commonWords = new Set([
-    // Common English words
-    'I', 'A', 'THE', 'AND', 'OR', 'BUT', 'FOR', 'IS', 'IT', 'TO', 'OF', 'IN', 'ON', 'AT', 'BY', 'UP', 'SO', 'NO', 'GO', 'DO', 'BE', 'IF', 'MY', 'US', 'WE', 'HE', 'SHE', 'YOU', 'THEY', 'ARE', 'WAS', 'WERE', 'BEEN', 'HAVE', 'HAS', 'HAD', 'CAN', 'WILL', 'MAY', 'MUST', 'SHALL', 'COULD', 'WOULD', 'SHOULD', 'AN', 'AS', 'AM', 'OUT', 'THAN', 'THEN', 'WHEN', 'WHO', 'WHY', 'HOW', 'ALL', 'ANY', 'EACH', 'SOME', 'MOST', 'BOTH', 'FEW', 'MORE', 'LESS', 'OWN', 'SUCH', 'ONLY', 'SAME', 'OTHER', 'INTO', 'OVER', 'AFTER', 'ALSO', 'BACK', 'EVEN', 'GOOD', 'NEW', 'OLD', 'HIGH', 'LOW', 'PART', 'TAKE', 'GET', 'MAKE', 'COME', 'SEEM', 'SEE', 'WANT', 'LOOK', 'USE', 'FIND', 'WORK', 'TRY', 'ASK', 'NEED', 'FEEL', 'LEAVE', 'PUT', 'MEAN', 'KEEP', 'LET', 'BEGIN', 'HELP', 'TALK', 'TURN', 'START', 'HEAR', 'PLAY', 'RUN', 'MOVE', 'LIKE', 'LIVE', 'BRING', 'WRITE', 'SIT', 'STAND', 'LOSE', 'PAY', 'MEET', 'SET', 'LEARN', 'LEAD', 'WATCH', 'STOP', 'SPEAK', 'READ', 'ALLOW', 'ADD', 'SPEND', 'GROW', 'OPEN', 'WALK', 'WIN', 'OFFER', 'LOVE', 'APPEAR', 'WAIT', 'SERVE', 'DIE', 'SEND', 'BUILD', 'STAY', 'FALL', 'CUT', 'REACH', 'KILL', 'WITH', 'FROM', 'THAT', 'THIS', 'WHAT', 'WHICH', 'THERE', 'THEIR', 'THESE', 'THOSE', 'ABOUT', 'WOULD', 'THERE', 'BEING', 'STILL', 'MIGHT', 'NEVER', 'EVERY', 'SURE', 'WHILE', 'GOING', 'WHERE', 'UNTIL', 'UNDER', 'AGAIN', 'ONCE', 'HERE', 'JUST', 'VERY', 'THINK', 'KNOW', 'COME', 'MADE', 'MANY', 'WELL', 'MUCH', 'LONG', 'REAL', 'CALL', 'FACT', 'LAST', 'NEXT', 'CASE', 'YEAR', 'WEEK', 'MONTH', 'TODAY',
-
-    // Trading/action verbs (CRITICAL - these were matching as tickers!)
-    'BUY', 'SELL', 'LONG', 'SHORT', 'TRADE', 'INVEST', 'PRICE', 'STOCK', 'HEDGE', 'RISK', 'GAIN', 'LOSS', 'PROFIT', 'ENTRY', 'EXIT', 'LIMIT', 'ORDER', 'FILL', 'DELTA', 'GAMMA', 'THETA', 'VEGA', 'ITM', 'OTM', 'ATM', 'BULL', 'BEAR', 'SWING', 'DAY', 'PUTS', 'CALLS', 'STRIKE', 'BID', 'ASK', 'SPREAD', 'HOLD', 'WATCH', 'ALERT', 'CLOSE', 'BREAK', 'RALLY', 'DROP', 'FADE', 'PUMP', 'DUMP',
-
-    // Technical indicators (CRITICAL - SATY, ATR, EMA, etc. were detected as tickers!)
-    'SATY', 'ATR', 'EMA', 'SMA', 'RSI', 'MACD', 'VWAP', 'BBW', 'TTM', 'ICHI', 'SQUEEZE', 'RIBBON', 'CLOUD', 'STOCH', 'ADX', 'CCI', 'ROC', 'TRIX', 'ALMA', 'KAMA', 'TEMA', 'DEMA', 'HMA', 'WMA', 'ZLEMA', 'MFI', 'OBV', 'CMF', 'CHOP', 'DMI', 'PSAR', 'SAR', 'KELT', 'KC', 'BB', 'BOLL',
-
-    // Trading terms & levels (CRITICAL - LEVEL, ZONE, etc. were detected!)
-    'LEVEL', 'ZONE', 'MIN', 'MAX', 'AVG', 'PCT', 'VOL', 'RANGE', 'DAILY', 'INTRA', 'PREMARKET', 'AFTER', 'HOURS', 'PM', 'AH', 'GAP', 'FILL', 'WICK', 'BODY', 'TAIL', 'HAMMER', 'STAR', 'DOJI', 'ENGULF', 'HARAMI', 'PIN', 'TWEEZER', 'INSIDE', 'OUTSIDE', 'PIVOT', 'SUPPORT', 'RES', 'RESIST', 'TREND', 'CHANNEL', 'FLAG', 'WEDGE', 'HEAD', 'SHOULDER', 'CUP', 'HANDLE', 'DOUBLE', 'TRIPLE', 'TOP', 'BOTTOM', 'BASE', 'PEAK', 'VALLEY',
-
-    // Timeframes (CRITICAL - MIN, HR, etc. detected as tickers!)
-    'MIN', 'MINUTE', 'HR', 'HOUR', 'WK', 'WEEK', 'MO', 'MONTH', 'YR', 'YEAR', 'QTR', 'QUARTER',
-
-    // AI chat & action words
-    'ANALYZE', 'TELL', 'GIVE', 'SHOW', 'CHECK', 'EXPLAIN', 'HELP', 'LOAD', 'CHART', 'DATA', 'WHAT', 'WHICH', 'WHERE', 'SETUP', 'WHEN', 'DOES', 'SHOULD', 'COULD', 'WOULD', 'MIGHT', 'WHATS', 'HOWS', 'WHENS', 'WHOS', 'WHOSE', 'THEM', 'THOSE', 'THESE', 'THAT', 'THIS', 'SUCH', 'SAME', 'SAID', 'SAYS', 'SAY', 'TOLD', 'TELLS', 'MEAN', 'MEANS', 'MEANT'
-  ])
-
-  while ((match = standalonePattern.exec(text)) !== null) {
-    const word = match[1].toUpperCase()
-    console.log('[detectSymbols] Standalone pattern matched:', word, 'isCommon:', commonWords.has(word))
-    if (!commonWords.has(word) && word.length >= 2) {
-      symbols.add(word)
-    }
-  }
-
-  // Pattern 3: Company name with ticker in parentheses (case insensitive)
+  // Pattern 2: Company (TICKER) format (explicit intent - Apple (AAPL), Tesla (TSLA), etc.)
   const companyPattern = /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*\(([A-Z]{1,5})\)/gi
   while ((match = companyPattern.exec(text)) !== null) {
-    console.log('[detectSymbols] Company pattern matched:', match[2])
+    console.log('[detectSymbols] ✅ Company pattern matched:', match[2])
     symbols.add(match[2].toUpperCase())
   }
 
   const result = Array.from(symbols)
-  console.log('[detectSymbols] Final result:', result)
+  console.log('[detectSymbols] Final result:', result.length > 0 ? result : 'No symbols detected (user must use $TICKER or Company (TICKER) format)')
   return result
 }
 
