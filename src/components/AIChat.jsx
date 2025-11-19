@@ -128,6 +128,13 @@ export default function AIChat() {
     return isIOS || (isSafari && isMobile)
   }
 
+  const isMobileDevice = () => {
+    const ua = navigator.userAgent
+    // Check for any mobile device
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
+           (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua)) // iPad Pro detection
+  }
+
   // CRITICAL: Unlock audio on mobile Safari (requires user gesture)
   const unlockAudio = async () => {
     if (audioUnlocked) return true
@@ -563,6 +570,27 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
       return
     }
 
+    // Request microphone permission explicitly
+    try {
+      console.log('🎤 [DEBUG] Requesting microphone permission...')
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      console.log('🎤 [DEBUG] Microphone permission granted!')
+      // Stop the stream immediately - we just needed permission
+      stream.getTracks().forEach(track => track.stop())
+    } catch (error) {
+      console.error('🎤 [DEBUG] Microphone permission denied:', error)
+      setDebugLog(prev => [...prev, `${timestamp} - ❌ Microphone permission denied`])
+
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        alert('🎤 Microphone access denied!\n\nPlease:\n1. Click the lock icon in the address bar\n2. Allow microphone access for this site\n3. Refresh the page and try again')
+      } else if (error.name === 'NotFoundError') {
+        alert('🎤 No microphone found!\n\nPlease connect a microphone and try again.')
+      } else {
+        alert(`🎤 Microphone error: ${error.message}\n\nPlease check your browser settings.`)
+      }
+      return
+    }
+
     // CRITICAL: Unlock audio on mobile Safari before starting voice (user gesture)
     if (isMobileSafari()) {
       setDebugLog(prev => [...prev, `${timestamp} - 🔓 Unlocking audio (Mobile Safari)`])
@@ -644,7 +672,17 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
     recognition.onerror = (event) => {
       console.error('🎤 Error:', event.error)
       setIsListening(false)
-      if (event.error !== 'no-speech' && event.error !== 'aborted') {
+
+      if (event.error === 'not-allowed') {
+        setDebugLog(prev => [...prev, `${timestamp} - ❌ Microphone blocked by browser`])
+        alert('🎤 Microphone access blocked!\n\nTo fix this:\n1. Click the lock/info icon in your address bar\n2. Find "Microphone" settings\n3. Change from "Block" to "Allow"\n4. Refresh the page\n\nNote: If you previously denied access, you must reset permissions in browser settings.')
+      } else if (event.error === 'network') {
+        alert('🎤 Network error - please check your internet connection')
+      } else if (event.error === 'no-speech') {
+        console.log('🎤 No speech detected - ready to try again')
+      } else if (event.error === 'aborted') {
+        console.log('🎤 Voice input cancelled')
+      } else {
         alert(`❌ Voice error: ${event.error}`)
       }
     }
@@ -1745,11 +1783,13 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
         </div>
       </form>
 
-      {/* ELITE: Mobile Push-to-Talk Interface - DISABLED (using inline mic instead) */}
-      {/* <MobilePushToTalk
-        onTranscript={handleMobileTranscript}
-        isListening={isListening}
-      /> */}
+      {/* ELITE: Mobile Push-to-Talk Interface - Show on mobile devices for better UX */}
+      {isMobileDevice() && (
+        <MobilePushToTalk
+          onTranscript={handleMobileTranscript}
+          isListening={isListening}
+        />
+      )}
 
     </div>
   )

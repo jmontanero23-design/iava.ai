@@ -29,20 +29,28 @@ export default function EnhancedStatusBar() {
   useEffect(() => {
     const checkConnection = () => {
       const start = Date.now()
-      fetch('/api/ping').then(() => {
-        const latency = Date.now() - start
-        setConnectionQuality({
-          latency,
-          status: latency < 100 ? 'excellent' : latency < 300 ? 'good' : latency < 500 ? 'fair' : 'poor'
+      fetch('/api/ping')
+        .then(response => {
+          if (response.ok) {
+            const latency = Date.now() - start
+            setConnectionQuality({
+              latency,
+              status: latency < 100 ? 'excellent' : latency < 300 ? 'good' : latency < 500 ? 'fair' : 'poor'
+            })
+          } else {
+            // API exists but returned error - show as poor connection
+            setConnectionQuality({ latency: 999, status: 'poor' })
+          }
         })
-      }).catch(() => {
-        setConnectionQuality({ latency: 0, status: 'offline' })
-      })
+        .catch(() => {
+          // API doesn't exist or network error - show as offline but don't spam console
+          setConnectionQuality({ latency: 0, status: 'offline' })
+        })
     }
 
-    // Check every 10 seconds
+    // Check immediately, then every 30 seconds (reduced frequency)
     checkConnection()
-    const interval = setInterval(checkConnection, 10000)
+    const interval = setInterval(checkConnection, 30000) // Changed from 10s to 30s
     return () => clearInterval(interval)
   }, [])
 
