@@ -28,6 +28,7 @@ export default function TradingViewChartEmbed() {
   // Option 2: Build dynamic URL that updates with symbol/timeframe
   // This will open TradingView with the current symbol and load your account
   const [chartUrl, setChartUrl] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     // If you have a saved chart URL, use that
@@ -51,36 +52,46 @@ export default function TradingViewChartEmbed() {
     // Use TradingView widget embed URL (this DOES work in iframes)
     const widgetUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=${fullSymbol}&interval=${interval}&hidesidetoolbar=0&symboledit=1&saveimage=0&toolbarbg=0B1020&studies=MAExp@tv-basicstudies%1FIchimokuCloud@tv-basicstudies&theme=dark&style=1&timezone=America/New_York&withdateranges=1&hideideas=1&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en&utm_source=app.iava.ai&utm_medium=widget_new&utm_campaign=chart&utm_term=${fullSymbol}`
 
+    console.log('[TradingView] Chart URL set:', widgetUrl)
     setChartUrl(widgetUrl)
+    setIsLoading(true)
   }, [symbol, timeframe, savedChartUrl])
 
   return (
     <div className="w-full h-full relative">
       {/* Loading overlay while iframe loads */}
-      <div className="absolute inset-0 flex items-center justify-center bg-slate-950 z-10">
-        <div className="text-center">
-          <div className="text-slate-400 mb-2">Loading TradingView Premium...</div>
-          <div className="text-xs text-slate-400">
-            {symbol} • {timeframe}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-950 z-10">
+          <div className="text-center">
+            <div className="text-slate-400 mb-2">Loading TradingView Chart...</div>
+            <div className="text-xs text-slate-400">
+              {symbol} • {timeframe}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* TradingView iframe - loads your premium account */}
-      <iframe
-        src={chartUrl}
-        className="w-full h-full border-0"
-        title="TradingView Premium Chart"
-        onLoad={(e) => {
-          // Hide loading overlay when chart loads
-          e.target.previousSibling?.remove()
-        }}
-        allow="fullscreen"
-        style={{
-          minHeight: '600px',
-          backgroundColor: '#0B1020'
-        }}
-      />
+      {chartUrl && (
+        <iframe
+          src={chartUrl}
+          className="w-full h-full border-0"
+          title="TradingView Premium Chart"
+          onLoad={() => {
+            console.log('[TradingView] Chart loaded successfully')
+            setIsLoading(false)
+          }}
+          onError={(e) => {
+            console.error('[TradingView] Chart load error:', e)
+            setIsLoading(false)
+          }}
+          allow="fullscreen"
+          style={{
+            minHeight: '600px',
+            backgroundColor: '#0B1020'
+          }}
+        />
+      )}
 
       {/* Instructions if no chart URL configured */}
       {!chartUrl && (
