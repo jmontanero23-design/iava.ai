@@ -16,16 +16,17 @@ import { useEffect, useRef, memo } from 'react'
 import { useMarketData } from '../contexts/MarketDataContext'
 
 function TradingViewChart() {
-  const container = useRef()
+  const containerRef = useRef()
+  const widgetRef = useRef()
   const { marketData } = useMarketData()
   const symbol = marketData?.symbol || 'AAPL'
   const timeframe = marketData?.timeframe || '1Min'
 
   useEffect(() => {
-    // Clear previous widget
-    if (container.current) {
-      container.current.innerHTML = ''
-    }
+    if (!widgetRef.current) return
+
+    // Clear any existing script in the widget div
+    widgetRef.current.innerHTML = ''
 
     // Create TradingView widget script
     const script = document.createElement('script')
@@ -84,14 +85,15 @@ function TradingViewChart() {
       support_host: 'https://www.tradingview.com'
     })
 
-    container.current.appendChild(script)
+    // Append script to the widget div (NOT the container)
+    widgetRef.current.appendChild(script)
 
     console.log('[TradingView] Widget loaded:', { symbol, timeframe })
 
-    // Cleanup on unmount
+    // Cleanup on unmount or before next render
     return () => {
-      if (container.current) {
-        container.current.innerHTML = ''
+      if (widgetRef.current) {
+        widgetRef.current.innerHTML = ''
       }
     }
   }, [symbol, timeframe])
@@ -99,10 +101,14 @@ function TradingViewChart() {
   return (
     <div
       className="tradingview-widget-container w-full h-full"
-      ref={container}
+      ref={containerRef}
       style={{ height: '100%', width: '100%' }}
     >
-      <div className="tradingview-widget-container__widget" style={{ height: 'calc(100% - 32px)', width: '100%' }}></div>
+      <div
+        className="tradingview-widget-container__widget"
+        ref={widgetRef}
+        style={{ height: 'calc(100% - 32px)', width: '100%' }}
+      ></div>
       <div className="tradingview-widget-copyright">
         <a href={`https://www.tradingview.com/symbols/${formatSymbolForTradingView(symbol)}/`} rel="noopener noreferrer" target="_blank">
           <span className="text-xs text-slate-400">TradingView Chart</span>
