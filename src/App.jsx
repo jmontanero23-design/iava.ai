@@ -401,8 +401,7 @@ export default function App() {
           <AITradeCopilot onClose={() => setShowCopilot(false)} />
         )}
 
-        {/* Enhanced Status Bar - Market regime, AI status, connection quality */}
-        <EnhancedStatusBar />
+        {/* Status Bar removed - was getting in the way */}
       </div>
     </MarketDataProvider>
   )

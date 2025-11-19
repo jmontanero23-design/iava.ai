@@ -570,26 +570,7 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
       return
     }
 
-    // Request microphone permission explicitly
-    try {
-      console.log('🎤 [DEBUG] Requesting microphone permission...')
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      console.log('🎤 [DEBUG] Microphone permission granted!')
-      // Stop the stream immediately - we just needed permission
-      stream.getTracks().forEach(track => track.stop())
-    } catch (error) {
-      console.error('🎤 [DEBUG] Microphone permission denied:', error)
-      setDebugLog(prev => [...prev, `${timestamp} - ❌ Microphone permission denied`])
-
-      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        alert('🎤 Microphone access denied!\n\nPlease:\n1. Click the lock icon in the address bar\n2. Allow microphone access for this site\n3. Refresh the page and try again')
-      } else if (error.name === 'NotFoundError') {
-        alert('🎤 No microphone found!\n\nPlease connect a microphone and try again.')
-      } else {
-        alert(`🎤 Microphone error: ${error.message}\n\nPlease check your browser settings.`)
-      }
-      return
-    }
+    // Don't request permission explicitly - let the browser handle it when starting recognition
 
     // CRITICAL: Unlock audio on mobile Safari before starting voice (user gesture)
     if (isMobileSafari()) {
@@ -1783,13 +1764,11 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
         </div>
       </form>
 
-      {/* ELITE: Mobile Push-to-Talk Interface - Show on mobile devices for better UX */}
-      {isMobileDevice() && (
-        <MobilePushToTalk
-          onTranscript={handleMobileTranscript}
-          isListening={isListening}
-        />
-      )}
+      {/* ELITE: Mobile Push-to-Talk Interface - DISABLED (doesn't work properly) */}
+      {/* <MobilePushToTalk
+        onTranscript={handleMobileTranscript}
+        isListening={isListening}
+      /> */}
 
     </div>
   )
