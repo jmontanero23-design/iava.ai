@@ -17,17 +17,8 @@ export default async function handler(req, res) {
 
     if (!provider) return res.status(500).json({ error: 'LLM_PROVIDER not set' })
 
-    // Parse request body
-    const chunks = []
-    for await (const c of req) chunks.push(c)
-    let body
-    try {
-      body = JSON.parse(Buffer.concat(chunks).toString('utf8'))
-    } catch {
-      return res.status(400).json({ error: 'Invalid JSON' })
-    }
-
-    const { state = {}, threshold = 70, enforceDaily = false } = body || {}
+    // Vercel automatically parses JSON body
+    const { state = {}, threshold = 70, enforceDaily = false } = req.body || {}
     const prompt = buildExplainPrompt(state, { threshold, enforceDaily })
 
     let result

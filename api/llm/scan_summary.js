@@ -17,17 +17,8 @@ export default async function handler(req, res) {
 
     if (!provider) return res.status(500).json({ error: 'LLM_PROVIDER not set' })
 
-    // Parse request body
-    const chunks = []
-    for await (const c of req) chunks.push(c)
-    let body
-    try {
-      body = JSON.parse(Buffer.concat(chunks).toString('utf8'))
-    } catch {
-      return res.status(400).json({ error: 'Invalid JSON' })
-    }
-
-    const { result } = body || {}
+    // Vercel automatically parses JSON body
+    const { result } = req.body || {}
     if (!result || typeof result !== 'object') {
       return res.status(400).json({ error: 'Missing scan result' })
     }
