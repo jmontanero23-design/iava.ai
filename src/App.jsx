@@ -14,6 +14,8 @@ import NaturalLanguageScanner from './components/NaturalLanguageScanner.jsx'
 import ModelMonitoring from './components/ModelMonitoring.jsx'
 import FeatureStatusBadge from './components/FeatureStatusBadge.jsx'
 import WelcomeTour, { TourHelpButton } from './components/WelcomeTour.jsx'
+import ModeToggle from './components/ModeToggle.jsx'
+import EnhancedStatusBar from './components/EnhancedStatusBar.jsx'
 import SignalQualityScorerPanel from './components/SignalQualityScorerPanel.jsx'
 import RiskAdvisorPanel from './components/RiskAdvisorPanel.jsx'
 import TradeJournalAIPanel from './components/TradeJournalAIPanel.jsx'
@@ -294,8 +296,9 @@ export default function App() {
               <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">7</kbd>
             </button>
 
-            {/* Feature Status Badge - Always visible on right side */}
-            <div className="ml-auto">
+            {/* Feature Status Badge & Mode Toggle - Always visible on right side */}
+            <div className="ml-auto flex items-center gap-3">
+              <ModeToggle />
               <FeatureStatusBadge onClick={() => setActiveTab('ai-features')} />
             </div>
           </div>
@@ -397,6 +400,9 @@ export default function App() {
         {showCopilot && activeTab === 'chart' && (
           <AITradeCopilot onClose={() => setShowCopilot(false)} />
         )}
+
+        {/* Enhanced Status Bar - Market regime, AI status, connection quality */}
+        <EnhancedStatusBar />
       </div>
     </MarketDataProvider>
   )

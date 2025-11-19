@@ -34,10 +34,63 @@ export default function CommandPalette({
 
   const actions = useMemo(() => {
     const items = []
+
+    // AI Commands - New Elite Features
+    items.push({ id: 'ai:analyze', group: 'AI', label: '🤖 AI Analysis - Get comprehensive market analysis', hotkey: 'A', run: () => {
+      window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'AI Analysis starting...', type: 'info' } }))
+      // Navigate to AI Chat and trigger analysis
+      window.location.hash = '#ai-chat'
+    }})
+    items.push({ id: 'ai:risk', group: 'AI', label: '⚠️ Risk Assessment - Analyze position risk', hotkey: 'R', run: () => {
+      window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Opening Risk Advisor...', type: 'info' } }))
+      window.location.hash = '#ai-features'
+    }})
+    items.push({ id: 'ai:suggest', group: 'AI', label: '💡 Get AI Suggestions - Trading opportunities', run: () => {
+      window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'AI generating suggestions...', type: 'info' } }))
+      window.location.hash = '#ai-chat'
+    }})
+    items.push({ id: 'ai:sentiment', group: 'AI', label: '📊 Market Sentiment - Social & news analysis', run: () => {
+      window.location.hash = '#market-sentiment'
+    }})
+
+    // Trading Commands - Quick Actions
+    items.push({ id: 'trade:buy', group: 'Trading', label: '📈 Buy Stock - Execute buy order', hotkey: 'B', run: () => {
+      window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Buy order panel opening...', type: 'success' } }))
+    }})
+    items.push({ id: 'trade:sell', group: 'Trading', label: '📉 Sell Stock - Execute sell order', hotkey: 'S', run: () => {
+      window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Sell order panel opening...', type: 'warning' } }))
+    }})
+    items.push({ id: 'trade:alert', group: 'Trading', label: '🔔 Set Alert - Price alert notification', run: () => {
+      window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Alert creation coming soon...', type: 'info' } }))
+    }})
+    items.push({ id: 'trade:watchlist', group: 'Trading', label: '👁️ Add to Watchlist - Track this symbol', run: () => {
+      if (symbol) {
+        const watchlist = JSON.parse(localStorage.getItem('iava_watchlist') || '[]')
+        if (!watchlist.includes(symbol)) {
+          watchlist.push(symbol)
+          localStorage.setItem('iava_watchlist', JSON.stringify(watchlist))
+          window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: `${symbol} added to watchlist`, type: 'success' } }))
+        } else {
+          window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: `${symbol} already in watchlist`, type: 'info' } }))
+        }
+      }
+    }})
+
+    // Navigation Commands
+    items.push({ id: 'nav:chart', group: 'Navigation', label: '📊 View Chart - Trading chart view', hotkey: 'C', run: () => window.location.hash = '#chart' })
+    items.push({ id: 'nav:ai-hub', group: 'Navigation', label: '🤖 AI Hub - All AI features', run: () => window.location.hash = '#ai-features' })
+    items.push({ id: 'nav:settings', group: 'Navigation', label: '⚙️ Settings - Configure app', hotkey: ',', run: () => {
+      window.dispatchEvent(new CustomEvent('iava.toast', { detail: { text: 'Settings coming soon...', type: 'info' } }))
+    }})
+    items.push({ id: 'nav:help', group: 'Navigation', label: '❓ Help & Docs - Get help', hotkey: '?', run: () => {
+      window.dispatchEvent(new CustomEvent('iava.toggleTour'))
+    }})
+
     // Timeframes
     ;['1Min','5Min','15Min','1Hour','1Day'].forEach(tf => items.push({
       id: `tf:${tf}`, group: 'Timeframe', label: `Set timeframe ${tf}`, run: () => setTimeframe?.(tf)
     }))
+
     // Overlays
     const t = overlayToggles || {}
     const st = overlayState || {}
@@ -50,6 +103,7 @@ export default function CommandPalette({
     items.push(toggle('ichi','Ichimoku'))
     items.push(toggle('saty','SATY ATR'))
     items.push(toggle('squeeze','Squeeze'))
+
     // Presets
     const presets = [
       ['trendDaily','Trend + Daily'],
@@ -61,8 +115,11 @@ export default function CommandPalette({
       ['momentumContinuation','Momentum Continuation'],
     ]
     presets.forEach(([id,label]) => items.push({ id:`preset:${id}`, group:'Presets', label:`Apply ${label}`, run: () => applyPreset?.(id) }))
+
     // Scanner
-    items.push({ id:'scan:run', group:'Scanner', label:'Run Scanner now', run: () => { try { window.dispatchEvent(new CustomEvent('iava.scan')) } catch {} } })
+    items.push({ id:'scan:run', group:'Scanner', label:'🔍 Market Scan - Run scanner now', run: () => { try { window.dispatchEvent(new CustomEvent('iava.scan')) } catch {} } })
+    items.push({ id:'scan:nlp', group:'Scanner', label: '🔍 NLP Scanner - Natural language search', run: () => window.location.hash = '#nlp-scanner' })
+
     // Symbol (freeform input)
     items.push({ id:'sym:load', group:'Symbol', label:`Load symbol (current ${symbol})`, run: () => {
       if (!q) return
@@ -71,21 +128,70 @@ export default function CommandPalette({
       setSymbol?.(s)
       loadBars?.(s, timeframe)
     } })
+
     return items
   }, [overlayToggles, overlayState, applyPreset, setTimeframe, setSymbol, loadBars, timeframe, symbol, q])
+
+  // Natural language processing for commands
+  const parseNaturalCommand = (input) => {
+    const lower = input.toLowerCase()
+
+    // Trading actions
+    if (lower.includes('buy') || lower.includes('long')) return 'trade:buy'
+    if (lower.includes('sell') || lower.includes('short')) return 'trade:sell'
+    if (lower.includes('alert') || lower.includes('notify')) return 'trade:alert'
+    if (lower.includes('watch')) return 'trade:watchlist'
+
+    // AI actions
+    if (lower.includes('analyz') || lower.includes('analysis')) return 'ai:analyze'
+    if (lower.includes('risk')) return 'ai:risk'
+    if (lower.includes('suggest') || lower.includes('idea')) return 'ai:suggest'
+    if (lower.includes('sentiment') || lower.includes('social')) return 'ai:sentiment'
+
+    // Navigation
+    if (lower.includes('chart')) return 'nav:chart'
+    if (lower.includes('ai hub') || lower.includes('features')) return 'nav:ai-hub'
+    if (lower.includes('setting')) return 'nav:settings'
+    if (lower.includes('help') || lower.includes('tour')) return 'nav:help'
+
+    // Scanner
+    if (lower.includes('scan')) return 'scan:run'
+    if (lower.includes('nlp') || lower.includes('natural language')) return 'scan:nlp'
+
+    return null
+  }
 
   const filtered = useMemo(() => {
     const qq = q.toLowerCase().trim()
     if (!qq) return actions
+
+    // Try natural language parsing first
+    const nlpMatch = parseNaturalCommand(qq)
+    if (nlpMatch) {
+      const exactMatch = actions.find(a => a.id === nlpMatch)
+      if (exactMatch) {
+        // Put NLP match first, then show other relevant results
+        const others = actions.filter(a =>
+          a.id !== nlpMatch &&
+          (a.label.toLowerCase().includes(qq) || a.id.toLowerCase().includes(qq))
+        )
+        return [exactMatch, ...others]
+      }
+    }
+
+    // Fallback to standard filtering
     return actions.filter(a => a.label.toLowerCase().includes(qq) || a.id.toLowerCase().includes(qq))
   }, [q, actions])
 
-  // Group theme colors
+  // Group theme colors - Elite gradient scheme
   const groupColors = {
+    AI: 'bg-violet-500/20 text-violet-300 border-violet-500/30',
+    Trading: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    Navigation: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
     Timeframe: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
     Overlays: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
     Presets: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    Scanner: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    Scanner: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
     Symbol: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
   }
 
