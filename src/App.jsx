@@ -16,6 +16,7 @@ import FeatureStatusBadge from './components/FeatureStatusBadge.jsx'
 import WelcomeTour, { TourHelpButton } from './components/WelcomeTour.jsx'
 import ModeToggle from './components/ModeToggle.jsx'
 import EnhancedStatusBar from './components/EnhancedStatusBar.jsx'
+import UserProfile from './components/UserProfile.jsx'
 import SignalQualityScorerPanel from './components/SignalQualityScorerPanel.jsx'
 import RiskAdvisorPanel from './components/RiskAdvisorPanel.jsx'
 import TradeJournalAIPanel from './components/TradeJournalAIPanel.jsx'
@@ -191,7 +192,7 @@ export default function App() {
   return (
     <MarketDataProvider>
       <div className="min-h-screen bg-transparent text-slate-100 bg-grid">
-        <div className="max-w-7xl mx-auto p-6 space-y-6">
+        <div className="max-w-7xl mx-auto p-6 space-y-6 pb-16">
           <Hero />
 
         {/* Tab Navigation with Logo */}
@@ -296,10 +297,11 @@ export default function App() {
               <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">7</kbd>
             </button>
 
-            {/* Feature Status Badge & Mode Toggle - Always visible on right side */}
+            {/* User Profile, Mode Toggle & Feature Status - Always visible on right side */}
             <div className="ml-auto flex items-center gap-3">
               <ModeToggle />
               <FeatureStatusBadge onClick={() => setActiveTab('ai-features')} />
+              <UserProfile />
             </div>
           </div>
         </nav>
@@ -401,7 +403,8 @@ export default function App() {
           <AITradeCopilot onClose={() => setShowCopilot(false)} />
         )}
 
-        {/* Status Bar removed - was getting in the way */}
+        {/* Enhanced Status Bar - Fixed at bottom */}
+        <EnhancedStatusBar />
       </div>
     </MarketDataProvider>
   )

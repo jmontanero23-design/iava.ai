@@ -150,7 +150,7 @@ export default function EnhancedStatusBar() {
   const connection = connectionColors[connectionQuality.status] || connectionColors.offline
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-8 bg-slate-900/95 backdrop-blur border-t border-slate-800 flex items-center px-4 gap-4 text-xs z-50" style={{ position: 'fixed' }}>
+    <div className="fixed bottom-0 left-0 right-0 h-10 bg-slate-900 backdrop-blur-xl border-t border-slate-700 flex items-center px-4 gap-4 text-xs z-[100]" style={{ position: 'fixed', bottom: '0px' }}>
       {/* Market Status */}
       <div className="flex items-center gap-2" title={marketOpen ? 'Market is open' : 'Market is closed'}>
         <span className={`w-2 h-2 ${marketOpen ? 'bg-green-500' : 'bg-red-500'} rounded-full ${marketOpen ? 'animate-pulse' : ''}`} />

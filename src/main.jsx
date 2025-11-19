@@ -1,6 +1,6 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App.jsx'
+import Router from './Router.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
 import { initClientLogging } from './utils/logging.js'
 import { registerServiceWorker, initPWA, initOfflineDetection } from './utils/pwa.js'
@@ -25,7 +25,7 @@ if (import.meta.env.PROD) {
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <App />
+      <Router />
     </ErrorBoundary>
   </React.StrictMode>
 )
