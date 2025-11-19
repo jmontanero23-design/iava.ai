@@ -9,6 +9,7 @@ import ToastHub from './components/ToastHub.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
 import { MarketDataProvider, useMarketData } from './contexts/MarketDataContext.jsx'
 import AIFeaturesDashboard from './components/AIFeaturesDashboard.jsx'
+import AIHubDashboard from './components/AIHubDashboard.jsx'
 import AIChat from './components/AIChat.jsx'
 import NaturalLanguageScanner from './components/NaturalLanguageScanner.jsx'
 import ModelMonitoring from './components/ModelMonitoring.jsx'
@@ -117,10 +118,10 @@ export default function App() {
         return
       }
 
-      // Number keys (1-7) to switch tabs
-      if (e.key >= '1' && e.key <= '7') {
+      // Number keys (1-8) to switch tabs
+      if (e.key >= '1' && e.key <= '8') {
         e.preventDefault()
-        const tabs = ['chart', 'ai-features', 'ai-chat', 'monitoring', 'nlp-scanner', 'market-sentiment', 'multi-timeframe']
+        const tabs = ['chart', 'ai-hub', 'ai-features', 'ai-chat', 'monitoring', 'nlp-scanner', 'market-sentiment', 'multi-timeframe']
         setActiveTab(tabs[parseInt(e.key) - 1])
       }
 
@@ -128,6 +129,12 @@ export default function App() {
       if (e.altKey && e.key === 'c') {
         e.preventDefault()
         setActiveTab('chart')
+      }
+
+      // Alt+H for AI Hub
+      if (e.altKey && e.key === 'h') {
+        e.preventDefault()
+        setActiveTab('ai-hub')
       }
 
       // Alt+A for AI Features
@@ -213,18 +220,33 @@ export default function App() {
               <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">1</kbd>
             </button>
             <button
+              onClick={() => setActiveTab('ai-hub')}
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
+                activeTab === 'ai-hub'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/30'
+                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
+              }`}
+              title="AI Hub Command Center (Alt+H or press 2)"
+              aria-label="Switch to AI Hub tab"
+            >
+              <span className="text-xl">🤖</span>
+              <span>AI Hub</span>
+              <span className="px-1.5 py-0.5 bg-white/20 rounded text-xs">17</span>
+              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">2</kbd>
+            </button>
+            <button
               onClick={() => setActiveTab('ai-features')}
               className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
                 activeTab === 'ai-features'
                   ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30'
                   : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
               }`}
-              title="AI Dashboard with 12 Features (Alt+A or press 2)"
+              title="AI Dashboard with 12 Features (Alt+A or press 3)"
               aria-label="Switch to AI Dashboard tab"
             >
               <img src="/logo.svg" className="w-6 h-6 scale-hover" alt="" />
-              <span>AI Dashboard (12 Features)</span>
-              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">2</kbd>
+              <span>AI Dashboard</span>
+              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">3</kbd>
             </button>
             <button
               onClick={() => setActiveTab('ai-chat')}
@@ -233,12 +255,12 @@ export default function App() {
                   ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30'
                   : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
               }`}
-              title="AI Chat Assistant (Alt+T or press 3)"
+              title="AI Chat Assistant (Alt+T or press 4)"
               aria-label="Switch to AI Chat tab"
             >
               <img src="/logo.svg" className="w-6 h-6 scale-hover" alt="" />
               <span>AI Chat</span>
-              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">3</kbd>
+              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">4</kbd>
             </button>
             <button
               onClick={() => setActiveTab('monitoring')}
@@ -309,6 +331,10 @@ export default function App() {
         {/* Tab Content */}
         {activeTab === 'chart' && (
           <AppChart />
+        )}
+
+        {activeTab === 'ai-hub' && (
+          <AIHubDashboard />
         )}
 
         {activeTab === 'ai-features' && (
