@@ -8,7 +8,7 @@
  * - Stale-while-revalidate for JS (show cached, update in background)
  */
 
-const CACHE_VERSION = 'iava-v1.3.0'
+const CACHE_VERSION = 'iava-v1.4.0'
 const STATIC_CACHE = `${CACHE_VERSION}-static`
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`
 const API_CACHE = `${CACHE_VERSION}-api`
