@@ -425,22 +425,6 @@ export function computeStates(bars) {
   const pivotNow = ribbon.state[i]
   const satyDir = satyTriggerDirection(bars, saty)
 
-  // DEBUG: Log indicator states
-  if (bars.length > 0) {
-    const sym = bars[bars.length - 1]?.symbol || 'UNKNOWN'
-    console.log(`[Indicators DEBUG] ${sym}:`, {
-      pivotNow,
-      ripBias: rip.bias,
-      satyDir,
-      ichiRegime,
-      e8: ribbon.e8[i]?.toFixed(2),
-      e21: ribbon.e21[i]?.toFixed(2),
-      e34: ribbon.e34[i]?.toFixed(2),
-      close: close[i]?.toFixed(2),
-      barsCount: bars.length
-    })
-  }
-
   // BIDIRECTIONAL Unicorn Score (bullish = positive, bearish = negative)
   // Range: -100 to +100 instead of 0 to 100
   let score = 0
@@ -543,17 +527,6 @@ export function computeStates(bars) {
   }
   components.volatilityRegime = volScore
   score += volScore
-
-  // DEBUG: Log final score calculation
-  if (bars.length > 0) {
-    const sym = bars[bars.length - 1]?.symbol || 'UNKNOWN'
-    console.log(`[Indicators DEBUG] ${sym} Final Score:`, {
-      rawScore: score,
-      components,
-      absScore: Math.min(100, Math.abs(score)),
-      regime: score >= 70 ? 'BULLISH' : score <= -70 ? 'BEARISH' : 'neutral'
-    })
-  }
 
   // PhD++ FIX: Use absolute value to show signal strength regardless of direction
   // This way bearish signals show strength (e.g., -80 shows as 80) instead of 0
