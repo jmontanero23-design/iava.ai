@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import TradingViewChartEmbed from './components/TradingViewChartEmbed.jsx'
+import TradingViewChart from './components/TradingViewChart.jsx'
 import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend, computeStates, pivotRibbon, ttmBands, ttmSqueeze } from './utils/indicators.js'
 import { useMarketData } from './contexts/MarketDataContext.jsx'
 import SqueezePanel from './components/chart/SqueezePanel.jsx'
@@ -834,7 +834,7 @@ export default function App() {
             <div className="text-slate-400">Loading {symbol}...</div>
           </div>
         )}
-        <TradingViewChartEmbed />
+        <TradingViewChart />
 
         {/* Preset label overlay */}
         {mtfPreset !== 'manual' && (
