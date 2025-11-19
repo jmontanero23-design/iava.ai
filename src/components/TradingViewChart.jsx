@@ -1,101 +1,111 @@
 /**
- * TradingView Chart Component - PhD+++ Quality Implementation
+ * TradingView Chart Component - CORRECT Implementation
  *
- * Uses TradingView's official iframe embed method - the MOST RELIABLE approach
- * Battle-tested in production across thousands of sites
- *
- * Features:
- * - Real-time data from TradingView
- * - All indicators: EMA, Ichimoku, VWAP
- * - Integrates with all AI features via MarketDataContext
- * - Zero configuration errors
- * - Works in all browsers
+ * Uses TradingView's official widget script method
+ * Based on TradingView's documented approach: https://www.tradingview.com/widget/advanced-chart/
  */
 
-import { useMemo, memo } from 'react'
+import { useEffect, useRef, memo } from 'react'
 import { useMarketData } from '../contexts/MarketDataContext'
 
 function TradingViewChart() {
+  const containerRef = useRef(null)
   const { marketData } = useMarketData()
   const symbol = marketData?.symbol || 'AAPL'
   const timeframe = marketData?.timeframe || '1Min'
 
-  // Build the TradingView iframe URL with all features
-  const chartUrl = useMemo(() => {
-    const tvSymbol = formatSymbolForTradingView(symbol)
-    const interval = mapTimeframeToTradingView(timeframe)
+  useEffect(() => {
+    if (!containerRef.current) return
 
-    const params = new URLSearchParams({
-      // Widget configuration
-      frameElementId: 'tradingview_chart',
-      symbol: tvSymbol,
-      interval: interval,
-      hidesidetoolbar: '0',
-      hidetoptoolbar: '0',
-      symboledit: '1',
-      saveimage: '1',
-      toolbarbg: 'rgba(11, 16, 32, 1)',
+    const container = containerRef.current
 
-      // Theme and style
-      theme: 'dark',
-      style: '1', // Candlesticks
+    // Clear any existing content
+    container.innerHTML = ''
+
+    // Create the widget container div that TradingView expects
+    const widgetDiv = document.createElement('div')
+    widgetDiv.className = 'tradingview-widget-container__widget'
+    widgetDiv.style.height = '100%'
+    widgetDiv.style.width = '100%'
+
+    // Create the script element with configuration
+    const script = document.createElement('script')
+    script.type = 'text/javascript'
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js'
+    script.async = true
+
+    // CRITICAL: This is the CORRECT way to pass config to TradingView
+    // The script reads this JSON when it loads
+    const config = {
+      autosize: true,
+      symbol: formatSymbolForTradingView(symbol),
+      interval: mapTimeframeToTradingView(timeframe),
       timezone: 'America/New_York',
+      theme: 'dark',
+      style: '1', // Candlestick
       locale: 'en',
-
+      enable_publishing: false,
+      allow_symbol_change: true,
+      save_image: false,
       // Technical indicators
-      studies: JSON.stringify([
-        'MAExp@tv-basicstudies', // EMA
-        'IchimokuCloud@tv-basicstudies', // Ichimoku
-        'VWAP@tv-basicstudies' // VWAP
-      ]),
-
-      // Features
-      allow_symbol_change: '1',
-      watchlist: JSON.stringify(['AAPL', 'SPY', 'QQQ', 'TSLA', 'NVDA']),
-      details: '1',
-      hotlist: '0',
-      calendar: '0',
-
-      // Colors matching iAVA dark theme
+      studies: [
+        'MAExp@tv-basicstudies',
+        'IchimokuCloud@tv-basicstudies',
+        'VWAP@tv-basicstudies'
+      ],
+      // UI
+      show_popup_button: true,
+      popup_width: '1000',
+      popup_height: '650',
+      hide_side_toolbar: false,
+      hide_top_toolbar: false,
+      // Colors
       backgroundColor: 'rgba(11, 16, 32, 1)',
       gridColor: 'rgba(71, 85, 105, 0.1)',
+      // Features
+      withdateranges: true,
+      range: '1D',
+      details: true,
+      hotlist: false,
+      calendar: false,
+      support_host: 'https://www.tradingview.com'
+    }
 
-      // Performance
-      autosize: '1',
-      withdateranges: '1',
-    })
+    script.textContent = JSON.stringify(config)
 
-    return `https://s.tradingview.com/widgetembed/?${params.toString()}`
+    // Append both to container
+    container.appendChild(widgetDiv)
+    widgetDiv.appendChild(script)
+
+    console.log('[TradingView] Widget initialized:', { symbol, timeframe })
+
+    // Cleanup
+    return () => {
+      if (container) {
+        container.innerHTML = ''
+      }
+    }
   }, [symbol, timeframe])
 
-  console.log('[TradingView] Chart URL generated:', { symbol, timeframe, url: chartUrl })
-
   return (
-    <div className="relative w-full h-full bg-slate-950/50" style={{ minHeight: '600px' }}>
-      {/* TradingView iframe - official embed method */}
-      <iframe
-        id="tradingview_chart"
-        src={chartUrl}
-        className="w-full h-full border-0 overflow-hidden"
-        style={{
-          width: '100%',
-          height: '100%',
-          minHeight: '600px',
-        }}
-        allowTransparency="true"
-        allowFullScreen
-        title={`TradingView Chart - ${symbol}`}
-      />
-
-      {/* Copyright footer */}
-      <div className="absolute bottom-0 right-0 p-2">
+    <div
+      ref={containerRef}
+      className="tradingview-widget-container"
+      style={{
+        width: '100%',
+        height: '100%',
+        minHeight: '600px',
+        position: 'relative'
+      }}
+    >
+      {/* TradingView widget loads here */}
+      <div className="tradingview-widget-copyright" style={{ fontSize: '11px', color: '#64748b', paddingTop: '4px' }}>
         <a
           href={`https://www.tradingview.com/symbols/${formatSymbolForTradingView(symbol)}/`}
-          target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-slate-500 hover:text-slate-400"
+          target="_blank"
         >
-          Powered by TradingView
+          <span>TradingView Chart</span>
         </a>
       </div>
     </div>
@@ -109,7 +119,6 @@ function formatSymbolForTradingView(symbol) {
   if (!symbol) return 'NASDAQ:AAPL'
   if (symbol.includes(':')) return symbol
 
-  // Exchange mappings for common symbols
   const exchangeMap = {
     'SPY': 'AMEX:SPY',
     'QQQ': 'NASDAQ:QQQ',
@@ -123,18 +132,16 @@ function formatSymbolForTradingView(symbol) {
 
   if (exchangeMap[symbol]) return exchangeMap[symbol]
 
-  // Crypto symbols
   const cryptoSymbols = ['BTC', 'ETH', 'BTCUSD', 'ETHUSD']
   if (cryptoSymbols.some(c => symbol.includes(c))) {
     return `BINANCE:${symbol}USD`
   }
 
-  // Default to NASDAQ for most stocks
   return `NASDAQ:${symbol}`
 }
 
 /**
- * Map our timeframe format to TradingView's interval format
+ * Map timeframe to TradingView interval
  */
 function mapTimeframeToTradingView(timeframe) {
   const map = {
@@ -154,6 +161,4 @@ function mapTimeframeToTradingView(timeframe) {
   return map[timeframe] || '1'
 }
 
-// Memoize to prevent unnecessary re-renders
-// This is critical for performance with AI features
 export default memo(TradingViewChart)
