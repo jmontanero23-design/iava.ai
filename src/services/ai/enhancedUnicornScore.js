@@ -6,7 +6,7 @@
  * Better than Bloomberg Terminal, TradingView, and all competitors
  */
 
-import ultraEliteAI from './ultraEliteModels.js';
+import ultraEliteAI from './ultraEliteModels_v2_SIMPLIFIED.js';
 
 export class EnhancedUnicornScore {
   constructor() {
