@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useAuth } from '../hooks/useAuth'
 
 /**
  * User Profile Dropdown Menu
@@ -8,19 +9,12 @@ import { useState, useRef, useEffect } from 'react'
  * - Dropdown menu with user info
  * - Quick settings access
  * - Logout functionality
+ * - JWT authentication integration
  */
 export default function UserProfile() {
-  const [user, setUser] = useState(null)
+  const { user, logout } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef(null)
-
-  // Load user data
-  useEffect(() => {
-    const userData = localStorage.getItem('iava_user')
-    if (userData) {
-      setUser(JSON.parse(userData))
-    }
-  }, [])
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -34,18 +28,18 @@ export default function UserProfile() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleLogout = () => {
-    // Clear user data
-    localStorage.removeItem('iava_user')
-    localStorage.removeItem('iava_remember')
+  const handleLogout = async () => {
+    setShowMenu(false)
 
-    // Show toast
-    window.dispatchEvent(new CustomEvent('iava.toast', {
-      detail: { text: 'Logged out successfully', type: 'success' }
-    }))
+    // Use the auth hook's logout function
+    const result = await logout()
 
-    // Trigger auth change to show login page
-    window.dispatchEvent(new Event('iava.authChange'))
+    if (result.success) {
+      // Show toast
+      window.dispatchEvent(new CustomEvent('iava.toast', {
+        detail: { text: 'Logged out successfully', type: 'success' }
+      }))
+    }
   }
 
   const getInitials = (name) => {
