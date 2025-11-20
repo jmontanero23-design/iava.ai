@@ -70,9 +70,17 @@ async function setupDatabase() {
 
     for (const statement of statements) {
       try {
-        await sql([statement + ';']);
+        // Use raw query execution for schema creation
+        await sql.query(statement + ';');
       } catch (error) {
-        console.warn(`⚠️ Statement failed (might be okay):`, error.message.substring(0, 50));
+        // Try alternative method if that fails
+        try {
+          const { neon } = await import('@neondatabase/serverless');
+          const rawSql = neon(databaseUrl, { fullResults: true });
+          await rawSql(statement + ';');
+        } catch (err) {
+          console.warn(`⚠️ Statement failed:`, error.message.substring(0, 60));
+        }
       }
     }
 
