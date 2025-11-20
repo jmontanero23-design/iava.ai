@@ -22,8 +22,36 @@ export function AuthProvider({ children }) {
   // Check authentication status
   const checkAuth = async () => {
     try {
+      // Check for guest mode first
+      const localUser = localStorage.getItem('iava_user');
+      if (localUser) {
+        try {
+          const userData = JSON.parse(localUser);
+          if (userData.id === 'guest' || userData.email === 'guest@iava.ai') {
+            setUser(userData);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          // Invalid JSON, continue with token check
+        }
+      }
+
       const token = localStorage.getItem('iava_token');
       if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      // Skip API verification for guest token
+      if (token === 'guest-token-no-api-access') {
+        const guestUser = {
+          id: 'guest',
+          email: 'guest@iava.ai',
+          name: 'Guest User',
+          isGuest: true
+        };
+        setUser(guestUser);
         setLoading(false);
         return;
       }
@@ -41,9 +69,19 @@ export function AuthProvider({ children }) {
         // Token invalid, clear it
         localStorage.removeItem('iava_token');
         localStorage.removeItem('iava_session');
+        localStorage.removeItem('iava_user');
       }
     } catch (error) {
       console.error('[Auth] Check failed:', error);
+      // Fallback to localStorage auth for backward compatibility
+      const localUser = localStorage.getItem('iava_user');
+      if (localUser) {
+        try {
+          setUser(JSON.parse(localUser));
+        } catch (e) {
+          console.error('[Auth] Failed to parse local user:', e);
+        }
+      }
     } finally {
       setLoading(false);
     }

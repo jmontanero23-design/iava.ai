@@ -128,13 +128,16 @@ export default function AuthPage() {
       createdAt: new Date().toISOString()
     }
 
+    // Set both old and new auth methods for compatibility
     localStorage.setItem('iava_user', JSON.stringify(guestUser))
+    localStorage.setItem('iava_token', 'guest-token-no-api-access')
 
     window.dispatchEvent(new CustomEvent('iava.toast', {
       detail: { text: 'Entering guest mode - data will not be saved', type: 'info' }
     }))
 
-    window.dispatchEvent(new Event('iava.authChange'))
+    // Reload to trigger auth context update
+    window.location.reload()
   }
 
   return (
