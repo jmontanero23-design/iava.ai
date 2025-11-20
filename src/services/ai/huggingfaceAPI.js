@@ -11,7 +11,8 @@
  */
 
 // HuggingFace Inference API configuration
-const HF_API_URL = 'https://api-inference.huggingface.co/models';
+// ✅ UPDATED: Using new router endpoint (old api-inference.huggingface.co deprecated)
+const HF_API_URL = 'https://router.huggingface.co/hf-inference/models';
 
 // Get API key from environment (available in Vercel)
 const getHFApiKey = () => {
