@@ -29,12 +29,44 @@ export default async function handler(req, res) {
     }
 
     console.log(`[AI Score] Calculating for ${symbol}...`);
+    console.log(`[AI Score] Data structure:`, {
+      hasPrices: !!data.prices,
+      hasCandles: !!data.candles,
+      hasNews: !!data.news,
+      hasState: !!data.state,
+      priceCount: data.prices?.length,
+      candleCount: data.candles?.length
+    });
+    console.log(`[AI Score] HuggingFace API Key configured:`, !!process.env.HUGGINGFACE_API_KEY);
 
     // Calculate the Ultra Elite AI Score on the backend
     // This has access to HUGGINGFACE_API_KEY environment variable
     const result = await scorer.calculateUltraUnicornScore(symbol, data);
 
-    console.log(`[AI Score] Calculated for ${symbol}:`, result.ultraUnicornScore);
+    console.log(`[AI Score] Raw result ultraUnicornScore:`, result.ultraUnicornScore);
+    console.log(`[AI Score] Result quality:`, result.quality);
+    console.log(`[AI Score] Result type:`, typeof result.ultraUnicornScore);
+    console.log(`[AI Score] Is NaN:`, isNaN(result.ultraUnicornScore));
+
+    // Validate result - if invalid, return fallback
+    if (!result || typeof result.ultraUnicornScore !== 'number' || isNaN(result.ultraUnicornScore)) {
+      console.error(`[AI Score] Invalid score calculated - returning fallback`);
+      return res.status(200).json({
+        success: true,
+        score: {
+          symbol,
+          ultraUnicornScore: 50,
+          quality: 'MODERATE 👍',
+          risk: { level: 'medium', factors: [], score: 50 },
+          recommendation: { action: 'HOLD/WAIT', positionSize: 0, reasoning: ['AI models loading - using fallback'] },
+          components: {},
+          signals: { technical: 50, ai: 50, bonuses: 0 },
+          confidence: 0.5,
+          timestamp: Date.now(),
+          fallback: true
+        }
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -43,6 +75,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('[AI Score] Error:', error);
+    console.error('[AI Score] Stack:', error.stack);
     res.status(500).json({
       error: error.message || 'Failed to calculate AI score'
     });

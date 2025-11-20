@@ -417,35 +417,53 @@ export class UltraEliteAI {
 
     let score = 0;
 
-    // Forecast component (0-25)
-    if (signals.forecast.accuracy_score > 0.9) {
-      score += weights.forecast * 100;
-    }
-
-    // Sentiment component (0-15)
-    score += weights.sentiment * (signals.sentiment.sentiment.positive * 100);
-
-    // RL component (0-20)
-    if (signals.rlSignal.action === 'buy') {
-      score += weights.rl * (signals.rlSignal.confidence * 100);
-    }
-
-    // Pattern component (0-15)
-    if (signals.patterns.detected_patterns.length > 0) {
-      const bestPattern = signals.patterns.detected_patterns[0];
-      if (bestPattern.buy_signal) {
-        score += weights.patterns * (bestPattern.confidence * 100);
+    try {
+      // Forecast component (0-25) - Safe navigation
+      if (signals?.forecast?.accuracy_score && signals.forecast.accuracy_score > 0.9) {
+        score += weights.forecast * 100;
+      } else if (signals?.forecast?.accuracy_score) {
+        // Partial credit for lower accuracy
+        score += weights.forecast * (signals.forecast.accuracy_score * 100);
       }
+
+      // Sentiment component (0-15) - Safe navigation
+      const positiveScore = signals?.sentiment?.sentiment?.positive || 0.5; // Default to neutral
+      score += weights.sentiment * (positiveScore * 100);
+
+      // RL component (0-20) - Safe navigation
+      if (signals?.rlSignal?.action === 'buy') {
+        score += weights.rl * ((signals.rlSignal.confidence || 0.5) * 100);
+      } else if (signals?.rlSignal?.action === 'hold') {
+        score += weights.rl * 50; // Neutral score for hold
+      }
+
+      // Pattern component (0-15) - Safe navigation
+      if (signals?.patterns?.detected_patterns?.length > 0) {
+        const bestPattern = signals.patterns.detected_patterns[0];
+        if (bestPattern?.buy_signal) {
+          score += weights.patterns * ((bestPattern.confidence || 0.5) * 100);
+        }
+      }
+
+      // Quantum component (0-10) - Safe navigation
+      const quantumWeight = signals?.quantum?.optimal_weights || signals?.quantum || 0;
+      score += weights.quantum * Math.min(100, quantumWeight * 500);  // Scale up small weights
+
+      // Technical indicators (0-15) - Safe navigation
+      const techScore = signals?.technicals?.score || 50; // Default to neutral
+      score += weights.technicals * techScore;
+
+      // Ensure score is a valid number
+      if (isNaN(score) || !isFinite(score)) {
+        console.error('[UltraScore] Invalid score calculated:', score, 'signals:', signals);
+        return 50; // Return neutral score on error
+      }
+
+      return Math.min(100, Math.max(0, score));
+    } catch (error) {
+      console.error('[UltraScore] Error calculating score:', error);
+      return 50; // Return neutral score on error
     }
-
-    // Quantum component (0-10)
-    const quantumWeight = signals.quantum || 0;
-    score += weights.quantum * (quantumWeight * 500);  // Scale up small weights
-
-    // Technical indicators (0-15)
-    score += weights.technicals * (signals.technicals?.score || 0);
-
-    return Math.min(100, Math.max(0, score));
   }
 
   determineAction(score) {
