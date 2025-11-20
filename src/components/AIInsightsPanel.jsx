@@ -244,24 +244,56 @@ export default function AIInsightsPanel({
               </div>
             </div>
 
-            {/* AI Components */}
+            {/* AI Components - Enhanced Breakdown */}
             {aiScore.scores && (
               <div className="mt-3 pt-3 border-t border-purple-500/20 space-y-2">
-                <div className="flex justify-between text-xs">
-                  <span className="text-purple-300">Technical</span>
-                  <span className="text-white font-semibold">
-                    {Math.round(aiScore.scores.technical?.score || 0)}/100
-                  </span>
+                {/* Technical Score */}
+                <div className="flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-1">
+                    <span className="text-purple-300">Technical</span>
+                    <span className="text-purple-400/50 text-[10px]">(50%)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
+                        style={{ width: `${Math.round(aiScore.scores.technical?.score || 0)}%` }}
+                      />
+                    </div>
+                    <span className="text-white font-semibold w-10 text-right">
+                      {Math.round(aiScore.scores.technical?.score || 0)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-purple-300">AI Models</span>
-                  <span className="text-white font-semibold">
-                    {Math.round(aiScore.scores.ai?.score || 0)}/100
-                  </span>
+
+                {/* AI Models Score */}
+                <div className="flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-1">
+                    <span className="text-purple-300">AI Models</span>
+                    <span className="text-purple-400/50 text-[10px]">(50%)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all"
+                        style={{ width: `${Math.round(aiScore.scores.ai?.score || 0)}%` }}
+                      />
+                    </div>
+                    <span className="text-white font-semibold w-10 text-right">
+                      {Math.round(aiScore.scores.ai?.score || 0)}
+                    </span>
+                  </div>
                 </div>
-                {aiScore.scores.ai?.components?.sentiment && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-purple-300">Sentiment</span>
+
+                {/* Sentiment Component */}
+                {aiScore.scores.ai?.components?.sentiment !== undefined && (
+                  <div className="pl-4 flex justify-between text-[11px] text-purple-200/70">
+                    <div className="flex items-center gap-1">
+                      <span className="text-purple-400">↳ Sentiment</span>
+                      {aiScore.breakdown?.aiTransparency?.modelsFailed > 0 && (
+                        <span className="text-yellow-400 text-[10px]" title="Some sentiment models failed">⚠️</span>
+                      )}
+                    </div>
                     <span className={`font-semibold ${
                       aiScore.scores.ai.components.sentiment > 70 ? 'text-emerald-400' :
                       aiScore.scores.ai.components.sentiment > 30 ? 'text-yellow-400' :
@@ -270,6 +302,38 @@ export default function AIInsightsPanel({
                       {aiScore.scores.ai.components.sentiment > 70 ? 'BULLISH' :
                        aiScore.scores.ai.components.sentiment > 30 ? 'NEUTRAL' : 'BEARISH'}
                     </span>
+                  </div>
+                )}
+
+                {/* Forecast Component */}
+                {aiScore.scores.ai?.components?.forecast !== undefined && (
+                  <div className="pl-4 flex justify-between text-[11px] text-purple-200/70">
+                    <div className="flex items-center gap-1">
+                      <span className="text-purple-400">↳ Chronos Forecast</span>
+                      {aiScore.breakdown?.forecastModel === 'Chronos-2-Bolt (REAL)' ? (
+                        <span className="text-emerald-400 text-[10px]" title="Using Modal GPU">🚀</span>
+                      ) : (
+                        <span className="text-yellow-400 text-[10px]" title="Fallback forecast">⚠️</span>
+                      )}
+                    </div>
+                    <span className="text-white font-medium">
+                      {Math.round(aiScore.scores.ai.components.forecast)}/100
+                    </span>
+                  </div>
+                )}
+
+                {/* AI Transparency Section */}
+                {aiScore.breakdown?.aiTransparency && (
+                  <div className="mt-2 pt-2 border-t border-purple-500/10">
+                    <div className="flex justify-between items-center text-[10px]">
+                      <span className="text-purple-400/70">AI Models Status</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-emerald-400">{aiScore.breakdown.aiTransparency.modelsWorking} working</span>
+                        {aiScore.breakdown.aiTransparency.modelsFailed > 0 && (
+                          <span className="text-red-400">• {aiScore.breakdown.aiTransparency.modelsFailed} failed</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
