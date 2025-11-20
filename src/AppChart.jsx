@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import TradingViewChartEmbed from './components/TradingViewChartEmbed.jsx'
 import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend, computeStates, pivotRibbon, ttmBands, ttmSqueeze } from './utils/indicators.js'
+import { EnhancedUnicornScore } from './services/ai/enhancedUnicornScore.js'
 import { useMarketData } from './contexts/MarketDataContext.jsx'
 import SqueezePanel from './components/chart/SqueezePanel.jsx'
 import SignalsPanel from './components/SignalsPanel.jsx'
@@ -284,6 +285,68 @@ export default function App() {
   const [account, setAccount] = useState(null)
   const signalState = useMemo(() => computeStates(bars), [bars])
   const dailyState = useMemo(() => (dailyBars?.length ? computeStates(dailyBars) : null), [dailyBars])
+
+  // ULTRA ELITE AI INTEGRATION
+  const [aiScore, setAiScore] = useState(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const enhancedScoreCalculator = useRef(new EnhancedUnicornScore())
+
+  // Calculate Ultra Elite AI Score when symbol or bars change
+  useEffect(() => {
+    if (!bars || bars.length < 50 || !symbol) return
+
+    let cancelled = false
+    setAiLoading(true)
+
+    // Prepare data for AI analysis
+    const prepareAIData = () => {
+      const closes = bars.map(b => b.close)
+      const candles = bars.slice(-100).map(b => ({
+        time: b.time,
+        open: b.open,
+        high: b.high,
+        low: b.low,
+        close: b.close,
+        volume: b.volume
+      }))
+
+      return {
+        prices: closes,
+        candles: candles,
+        news: `${symbol} stock market analysis`,  // Could integrate real news API
+        state: signalState,
+        technicals: signalState
+      }
+    }
+
+    // Calculate AI score asynchronously
+    const calculateAI = async () => {
+      try {
+        const aiData = prepareAIData()
+        const result = await enhancedScoreCalculator.current.calculateUltraUnicornScore(symbol, aiData)
+
+        if (!cancelled) {
+          setAiScore(result)
+          console.log('🦄 Ultra Elite AI Score:', result)
+        }
+      } catch (error) {
+        console.error('AI Score calculation error:', error)
+        if (!cancelled) {
+          setAiScore(null)
+        }
+      } finally {
+        if (!cancelled) {
+          setAiLoading(false)
+        }
+      }
+    }
+
+    calculateAI()
+
+    return () => {
+      cancelled = true
+    }
+  }, [symbol, bars, signalState])
 
   // Publish market data to context for AI Chat and other features
   useEffect(() => {
@@ -853,6 +916,8 @@ export default function App() {
               symbol={symbol}
               timeframe={timeframe}
               account={account}
+              aiScore={aiScore}
+              aiLoading={aiLoading}
             />
             <UnicornCallout threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily, _consensus: consensus, _timeframe: timeframe }} />
             <OrdersPanel symbol={symbol} lastPrice={bars[bars.length-1]?.close} saty={overlays.saty} />

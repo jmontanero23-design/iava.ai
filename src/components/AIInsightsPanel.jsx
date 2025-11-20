@@ -17,7 +17,9 @@ export default function AIInsightsPanel({
   bars = [],
   symbol,
   timeframe,
-  account = {}
+  account = {},
+  aiScore = null,
+  aiLoading = false
 }) {
   const [insights, setInsights] = useState(null)
   const [expanded, setExpanded] = useState(false)
@@ -205,6 +207,85 @@ export default function AIInsightsPanel({
             </button>
           )}
         </div>
+
+        {/* ULTRA ELITE AI SCORE - Always show if available */}
+        {aiScore && !aiLoading && (
+          <div className="bg-gradient-to-r from-purple-900/40 to-indigo-900/40 border border-purple-500/30 rounded-xl p-4 shadow-lg">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🦄</span>
+                <span className="text-sm font-bold text-purple-200">ULTRA ELITE AI SCORE</span>
+              </div>
+              <div className="text-xs text-purple-300 bg-purple-800/30 px-2 py-1 rounded">
+                PhD+++
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Main Score */}
+              <div className="text-center">
+                <div className="text-4xl font-black bg-gradient-to-r from-purple-200 to-pink-200 bg-clip-text text-transparent">
+                  {Math.round(aiScore.ultraUnicornScore)}
+                </div>
+                <div className="text-xs text-slate-400 mt-1">Combined Score</div>
+              </div>
+
+              {/* AI Signal */}
+              <div className="text-center">
+                <div className={`text-2xl font-bold ${
+                  aiScore.recommendation?.action === 'STRONG BUY' ? 'text-emerald-400' :
+                  aiScore.recommendation?.action === 'BUY' ? 'text-green-400' :
+                  aiScore.recommendation?.action === 'SELL' ? 'text-red-400' :
+                  'text-yellow-400'
+                }`}>
+                  {aiScore.recommendation?.action || 'ANALYZING'}
+                </div>
+                <div className="text-xs text-slate-400 mt-1">AI Signal</div>
+              </div>
+            </div>
+
+            {/* AI Components */}
+            {aiScore.scores && (
+              <div className="mt-3 pt-3 border-t border-purple-500/20 space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-purple-300">Technical</span>
+                  <span className="text-white font-semibold">
+                    {Math.round(aiScore.scores.technical?.score || 0)}/100
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-purple-300">AI Models</span>
+                  <span className="text-white font-semibold">
+                    {Math.round(aiScore.scores.ai?.score || 0)}/100
+                  </span>
+                </div>
+                {aiScore.scores.ai?.components?.sentiment && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-purple-300">Sentiment</span>
+                    <span className={`font-semibold ${
+                      aiScore.scores.ai.components.sentiment > 70 ? 'text-emerald-400' :
+                      aiScore.scores.ai.components.sentiment > 30 ? 'text-yellow-400' :
+                      'text-red-400'
+                    }`}>
+                      {aiScore.scores.ai.components.sentiment > 70 ? 'BULLISH' :
+                       aiScore.scores.ai.components.sentiment > 30 ? 'NEUTRAL' : 'BEARISH'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Loading State for AI */}
+        {aiLoading && (
+          <div className="bg-gradient-to-r from-purple-900/20 to-indigo-900/20 border border-purple-500/20 rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm text-purple-300">Calculating Ultra Elite AI Score...</span>
+            </div>
+          </div>
+        )}
 
       {/* Empty State - Show when no signal */}
       {!hasInsights && (
