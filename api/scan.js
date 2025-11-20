@@ -50,13 +50,18 @@ export default async function handler(req, res) {
     let consensusBlocked = 0
     let dailyBlocked = 0
     let thresholdRejected = 0
-    const maxConc = parseInt(process.env.SCAN_MAX_CONCURRENCY || '0', 10)
+    // CRITICAL FIX: Force concurrency limit to prevent Alpaca rate limit errors
+    // Default to 5 concurrent requests if not set (prevents 429/500 errors)
+    const maxConc = parseInt(process.env.SCAN_MAX_CONCURRENCY || '5', 10)
     if (Number.isFinite(maxConc) && maxConc > 0) {
       let idx = 0
       async function worker() {
         while (idx < symbols.length) {
           const sym = symbols[idx++]
           try {
+            // Small delay to prevent rate limiting (50ms between requests)
+            if (idx > 1) await new Promise(resolve => setTimeout(resolve, 50))
+
             const bars = assetClass === 'crypto'
               ? await fetchBarsCrypto({ key, secret, dataBaseCrypto, symbol: sym, timeframe, limit })
               : await fetchBars({ key, secret, dataBase, symbol: sym, timeframe, limit })
@@ -239,6 +244,27 @@ async function fetchBars({ key, secret, dataBase, symbol, timeframe, limit }) {
   qs.set('start', startDate.toISOString())
   const endpoint = `${dataBase}/stocks/bars?${qs.toString()}`
   const r = await fetch(endpoint, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
+
+  // Handle rate limit errors (429) with exponential backoff
+  if (r.status === 429) {
+    console.warn(`[Scan] Rate limited on ${symbol}, waiting 1s...`)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Retry once
+    const r2 = await fetch(endpoint, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } })
+    if (!r2.ok) {
+      const j2 = await r2.json().catch(() => ({}))
+      throw new Error(`Rate limit: ${JSON.stringify(j2)}`)
+    }
+    const j = await r2.json()
+    let raw = []
+    if (Array.isArray(j?.bars?.[symbol])) raw = j.bars[symbol]
+    else if (Array.isArray(j?.bars)) raw = j.bars
+    return raw.map(b => ({
+      time: Math.floor(new Date(b.t || b.Timestamp || b.time).getTime() / 1000),
+      open: b.o ?? b.Open, high: b.h ?? b.High, low: b.l ?? b.Low, close: b.c ?? b.Close, volume: b.v ?? b.Volume,
+    }))
+  }
+
   const j = await r.json()
   if (!r.ok) throw new Error(JSON.stringify(j))
   let raw = []
