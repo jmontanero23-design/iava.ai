@@ -25,6 +25,48 @@ export default function MarketRegimeDetectorPanel() {
       // Detect regime
       const regime = detectMarketRegime(bars)
       setRegimeData(regime)
+
+      // Save to database if authenticated
+      const token = localStorage.getItem('iava_token')
+      if (token && regime) {
+        try {
+          const response = await fetch('/api/market/regime', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              symbol,
+              timeframe,
+              regime: regime.regime || regime.label,
+              confidence: regime.confidence,
+              indicators: {
+                adx: regime.factors?.adx,
+                trendStrength: regime.factors?.trendStrength,
+                volatility: regime.factors?.volatility,
+                volumePercentile: regime.factors?.volumePercentile,
+                bullishAlignment: regime.factors?.bullishAlignment,
+                bearishAlignment: regime.factors?.bearishAlignment
+              },
+              validMinutes: timeframe === '1Day' ? 1440 : timeframe === '1Hour' ? 60 : 30
+            })
+          })
+
+          if (response.ok) {
+            // Show success toast
+            window.dispatchEvent(new CustomEvent('iava.toast', {
+              detail: {
+                text: `✅ Regime saved: ${regime.label} (${regime.confidence}% confidence)`,
+                type: 'success',
+                ttl: 3000
+              }
+            }))
+          }
+        } catch (saveError) {
+          console.warn('Failed to save regime to database:', saveError)
+        }
+      }
     } catch (err) {
       console.error('Regime detection failed:', err)
       setError(err.message || 'Failed to detect market regime')

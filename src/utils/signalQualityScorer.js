@@ -903,11 +903,50 @@ class PerformanceDB {
   }
 
   /**
-   * Load data from localStorage
+   * Load data from API or localStorage fallback
    */
-  load() {
-    if (typeof window !== 'undefined' && window.localStorage) {
+  async load() {
+    if (typeof window !== 'undefined') {
       try {
+        const token = localStorage.getItem('iava_token')
+
+        // Try loading from API if authenticated
+        if (token) {
+          try {
+            const response = await fetch('/api/signals/trade?limit=100', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            })
+
+            if (response.ok) {
+              const data = await response.json()
+              if (data.trades && data.trades.length > 0) {
+                // Convert API trades to our format
+                this.trades = data.trades.map(trade => ({
+                  signalId: trade.id,
+                  signalType: trade.tags?.[0] || 'unknown',
+                  entry: parseFloat(trade.price),
+                  exit: trade.pnl ? parseFloat(trade.price) + (trade.pnl / trade.quantity) : null,
+                  quantity: trade.quantity,
+                  direction: trade.side,
+                  pnl: trade.pnl,
+                  pnlPercent: trade.pnl_percent,
+                  timestamp: new Date(trade.created_at).getTime(),
+                  isWin: trade.pnl > 0
+                }))
+
+                // Rebuild stats from trades
+                this.rebuildStatsFromTrades()
+                return
+              }
+            }
+          } catch (apiError) {
+            console.warn('[Signal Quality] API load failed, using localStorage:', apiError)
+          }
+        }
+
+        // Fallback to localStorage
         const saved = localStorage.getItem('iava_signal_quality')
         if (saved) {
           const data = JSON.parse(saved)
@@ -922,11 +961,12 @@ class PerformanceDB {
   }
 
   /**
-   * Save data to localStorage
+   * Save data to API and localStorage
    */
-  save() {
-    if (typeof window !== 'undefined' && window.localStorage) {
+  async save() {
+    if (typeof window !== 'undefined') {
       try {
+        // Always save to localStorage for offline support
         const data = {
           signals: Array.from(this.signals.entries()),
           typeStats: Array.from(this.typeStats.entries()),
@@ -935,10 +975,71 @@ class PerformanceDB {
           updated: new Date().toISOString()
         }
         localStorage.setItem('iava_signal_quality', JSON.stringify(data))
+
+        // Also save to API if authenticated
+        const token = localStorage.getItem('iava_token')
+        if (token && this.trades.length > 0) {
+          const latestTrade = this.trades[this.trades.length - 1]
+
+          // Save the trade to API
+          if (latestTrade.signalType && !latestTrade.savedToAPI) {
+            try {
+              await fetch('/api/signals/trade', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  symbol: latestTrade.symbol || 'SPY',
+                  side: latestTrade.direction || 'buy',
+                  quantity: latestTrade.quantity,
+                  price: latestTrade.entry,
+                  signalType: latestTrade.signalType,
+                  notes: `Signal Quality Score: ${latestTrade.score || 0}`
+                })
+              })
+
+              latestTrade.savedToAPI = true
+            } catch (apiError) {
+              console.warn('[Signal Quality] API save failed:', apiError)
+            }
+          }
+        }
       } catch (error) {
         console.error('[Signal Quality] Failed to save performance data:', error)
       }
     }
+  }
+
+  /**
+   * Rebuild statistics from trade history
+   */
+  rebuildStatsFromTrades() {
+    // Clear existing stats
+    this.signals.clear()
+    this.typeStats.clear()
+
+    // Process each trade
+    this.trades.forEach(trade => {
+      if (trade.signalType) {
+        // Update type stats
+        if (!this.typeStats.has(trade.signalType)) {
+          this.typeStats.set(trade.signalType, {
+            trades: [],
+            totalPnL: 0,
+            wins: 0,
+            losses: 0
+          })
+        }
+
+        const stats = this.typeStats.get(trade.signalType)
+        stats.trades.push(trade)
+        stats.totalPnL += trade.pnl || 0
+        if (trade.isWin) stats.wins++
+        else stats.losses++
+      }
+    })
   }
 
   /**

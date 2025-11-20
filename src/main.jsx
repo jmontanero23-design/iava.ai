@@ -2,6 +2,7 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import Router from './Router.jsx'
 import ErrorBoundary from './ErrorBoundary.jsx'
+import { AuthProvider } from './hooks/useAuth.jsx'
 import { initClientLogging } from './utils/logging.js'
 import { registerServiceWorker, initPWA, initOfflineDetection } from './utils/pwa.js'
 import './index.css'
@@ -24,7 +25,9 @@ if (import.meta.env.PROD) {
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <Router />
+      <AuthProvider>
+        <Router />
+      </AuthProvider>
     </ErrorBoundary>
   </React.StrictMode>
 )

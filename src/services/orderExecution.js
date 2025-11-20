@@ -266,35 +266,71 @@ class OrderExecutionService {
     }
 
     try {
+      // Get JWT token for authenticated requests
+      const token = localStorage.getItem('iava_token')
 
-      const response = await fetch(this.getBaseUrl() + '/v2/orders', {
+      // Use our enhanced trading endpoint with database integration
+      const response = await fetch('/api/trading/execute', {
         method: 'POST',
         headers: {
-          ...this.getHeaders(),
+          'Authorization': token ? `Bearer ${token}` : '',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(order)
+        body: JSON.stringify({
+          symbol: order.symbol,
+          side: order.side,
+          qty: order.qty,
+          type: order.type || 'market',
+          timeInForce: order.time_in_force || 'day',
+          takeProfit: order.take_profit,
+          stopLoss: order.stop_loss,
+          orderClass: order.order_class,
+          signalType: order.signalType || 'manual',
+          notes: order.notes
+        })
       })
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.message || `Order failed: ${response.status}`)
+        throw new Error(error.error || `Order failed: ${response.status}`)
       }
 
-      const placedOrder = await response.json()
+      const result = await response.json()
 
+      // Show success toast
+      if (window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: {
+            text: `✅ ${result.message}`,
+            type: 'success',
+            ttl: 5000
+          }
+        }))
+      }
 
       // Update orders list
       await this.refreshOrders()
 
       // Update positions if order is filled
-      if (placedOrder.status === 'filled') {
+      if (result.trade?.status === 'filled') {
         await this.refreshPositions()
       }
 
-      return placedOrder
+      return result.trade
     } catch (error) {
       console.error('[OrderExecution] ❌ Order placement failed:', error)
+
+      // Show error toast
+      if (window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: {
+            text: `❌ Order failed: ${error.message}`,
+            type: 'error',
+            ttl: 5000
+          }
+        }))
+      }
+
       throw error
     }
   }

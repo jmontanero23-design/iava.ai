@@ -15,11 +15,8 @@ import LegendChips from './components/LegendChips.jsx'
 import MarketStats from './components/MarketStats.jsx'
 import UnicornCallout from './components/UnicornCallout.jsx'
 import UnicornScorePanel from './components/UnicornScorePanel.jsx'
-import MarketRegimeIndicator from './components/MarketRegimeIndicator.jsx'
 import SatyLevelsOverlay from './components/SatyLevelsOverlay.jsx'
-import UnicornActionBar from './components/UnicornActionBar.jsx'
 import BacktestPanel from './components/BacktestPanel.jsx'
-import BatchBacktestPanel from './components/BatchBacktestPanel.jsx'
 import RateLimitBanner from './components/RateLimitBanner.jsx'
 import HelpFab from './components/HelpFab.jsx'
 import OrdersPanel from './components/OrdersPanel.jsx'
@@ -27,7 +24,6 @@ import SatyTargets from './components/SatyTargets.jsx'
 import InfoPopover from './components/InfoPopover.jsx'
 import SymbolSearch from './components/SymbolSearch.jsx'
 import { readParams, writeParams } from './utils/urlState.js'
-import SignalFeed from './components/SignalFeed.jsx'
 import OverlayChips from './components/OverlayChips.jsx'
 import useStreamingBars from './hooks/useStreamingBars.js'
 import WatchlistPanel from './components/WatchlistPanel.jsx'
@@ -839,10 +835,6 @@ export default function App() {
               />
             </div>
 
-            {/* Market Regime Indicator */}
-            <div className="absolute bottom-4 left-4 z-20">
-              <MarketRegimeIndicator dailyState={signalState.state?._daily} />
-            </div>
           </div>
 
             {/* Signals & squeeze */}
@@ -850,7 +842,6 @@ export default function App() {
               <SignalsPanel bars={bars} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), components: { ...(signalState?.components||{}), ...(consensusBonus && consensus?.align ? { consensus: 10 } : {}) } }} symbol={symbol} onRefresh={() => loadBars()} onClear={() => setSignalHistory([])} />
               {showSqueeze && <SqueezePanel bars={bars} />}
             </div>
-            <SignalFeed items={signalHistory} onSelect={(item) => setFocusTime(item.time)} />
             <StatusBar symbol={symbol} timeframe={timeframe} bars={bars} usingSample={usingSample} updatedAt={updatedAt} stale={stale} rateLimitUntil={rateLimitUntil} />
           </div>
 
@@ -864,7 +855,6 @@ export default function App() {
               account={account}
             />
             <UnicornCallout threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _account: account, _daily: dailyState, _enforceDaily: enforceDaily, _consensus: consensus, _timeframe: timeframe }} />
-            <UnicornActionBar threshold={threshold} state={{ ...signalState, score: (signalState?.score || 0) + ((consensusBonus && consensus?.align) ? 10 : 0), _bars: bars.map(b => ({ ...b, symbol })), _daily: dailyState, _enforceDaily: enforceDaily }} symbol={symbol} timeframe={timeframe} />
             <OrdersPanel symbol={symbol} lastPrice={bars[bars.length-1]?.close} saty={overlays.saty} />
           </div>
         </div>
@@ -916,7 +906,6 @@ export default function App() {
                 <span className="text-[11px] text-slate-400">Backtests · Thresholds · SATY</span>
               </div>
               <BacktestPanel symbol={symbol} timeframe={timeframe} preset={backtestPreset} chartThreshold={threshold} chartConsensusBonus={consensusBonus} />
-              <BatchBacktestPanel defaultTimeframe={timeframe} />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <SatyPanel saty={overlays.saty} trend={pivotRibbonTrend(bars.map(b => b.close))} />
                 <SatyTargets saty={overlays.saty} last={bars[bars.length-1]} />

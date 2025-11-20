@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react'
+import { useAuth } from '../hooks/useAuth'
 
 /**
  * Authentication Page - Login/Signup
  *
  * Features:
- * - Email/password authentication
+ * - JWT authentication with Neon database
+ * - Redis session management
  * - Remember me option
  * - Guest mode for trying without signup
  * - Smooth animations
  * - Form validation
- * - User data persistence
+ * - Real user persistence
  */
 export default function AuthPage() {
+  const { login, register, error: authError } = useAuth()
   const [mode, setMode] = useState('login') // login | signup
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,14 +23,6 @@ export default function AuthPage() {
   const [rememberMe, setRememberMe] = useState(true)
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
-  // Check if already logged in
-  useEffect(() => {
-    const user = localStorage.getItem('iava_user')
-    if (user) {
-      // Trigger auth change event to update router
-      window.dispatchEvent(new Event('iava.authChange'))
-    }
-  }, [])
 
   // Validate email
   const validateEmail = (email) => {
@@ -69,39 +64,29 @@ export default function AuthPage() {
     if (!validateForm()) return
 
     setIsLoading(true)
+    setErrors({})
 
-    // Simulate API call
-    setTimeout(() => {
-      // Check if user exists in localStorage (simple auth for now)
-      const users = JSON.parse(localStorage.getItem('iava_users') || '[]')
-      const user = users.find(u => u.email === email && u.password === password)
+    try {
+      // Use real JWT authentication
+      const result = await login(email, password)
 
-      if (user) {
-        // Save current user
-        localStorage.setItem('iava_user', JSON.stringify({
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          createdAt: user.createdAt
-        }))
-
+      if (result.success) {
         if (rememberMe) {
           localStorage.setItem('iava_remember', 'true')
         }
 
         // Show success message
         window.dispatchEvent(new CustomEvent('iava.toast', {
-          detail: { text: `Welcome back, ${user.name}!`, type: 'success' }
+          detail: { text: 'Welcome back!', type: 'success' }
         }))
-
-        // Trigger auth change to update router
-        window.dispatchEvent(new Event('iava.authChange'))
       } else {
-        setErrors({ password: 'Invalid email or password' })
+        setErrors({ password: result.error || 'Invalid email or password' })
       }
-
+    } catch (error) {
+      setErrors({ password: 'Login failed. Please try again.' })
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   // Handle signup
@@ -109,53 +94,29 @@ export default function AuthPage() {
     if (!validateForm()) return
 
     setIsLoading(true)
+    setErrors({})
 
-    // Simulate API call
-    setTimeout(() => {
-      // Get existing users
-      const users = JSON.parse(localStorage.getItem('iava_users') || '[]')
+    try {
+      // Use real JWT authentication with database
+      const result = await register(email, password, name || email.split('@')[0])
 
-      // Check if email already exists
-      if (users.some(u => u.email === email)) {
-        setErrors({ email: 'Email already registered' })
-        setIsLoading(false)
-        return
+      if (result.success) {
+        if (rememberMe) {
+          localStorage.setItem('iava_remember', 'true')
+        }
+
+        // Show success message
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: { text: `Welcome to iAVA.ai, ${name || 'trader'}!`, type: 'success' }
+        }))
+      } else {
+        setErrors({ email: result.error || 'Registration failed' })
       }
-
-      // Create new user
-      const newUser = {
-        id: Date.now().toString(),
-        email,
-        password, // In production, this would be hashed
-        name,
-        createdAt: new Date().toISOString()
-      }
-
-      // Save user
-      users.push(newUser)
-      localStorage.setItem('iava_users', JSON.stringify(users))
-
-      // Auto-login
-      localStorage.setItem('iava_user', JSON.stringify({
-        id: newUser.id,
-        email: newUser.email,
-        name: newUser.name,
-        createdAt: newUser.createdAt
-      }))
-
-      if (rememberMe) {
-        localStorage.setItem('iava_remember', 'true')
-      }
-
-      // Show success message
-      window.dispatchEvent(new CustomEvent('iava.toast', {
-        detail: { text: `Welcome to iAVA.ai, ${name}!`, type: 'success' }
-      }))
-
-      // Trigger auth change to update router
-      window.dispatchEvent(new Event('iava.authChange'))
+    } catch (error) {
+      setErrors({ email: 'Registration failed. Please try again.' })
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   // Handle guest mode
