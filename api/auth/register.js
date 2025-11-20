@@ -6,7 +6,17 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { users, sessions } from '../../lib/db/neon.js';
-import { sessions as redisSession } from '../../lib/redis/client.js';
+
+// Make Redis optional
+let redisSession = null;
+try {
+  const redisModule = await import('../../lib/redis/client.js');
+  if (process.env.REDIS_URL) {
+    redisSession = redisModule.sessions;
+  }
+} catch (error) {
+  console.log('[Register] Redis not available, using database sessions only');
+}
 
 export default async function handler(req, res) {
   // Only allow POST
@@ -52,13 +62,20 @@ export default async function handler(req, res) {
       { expiresIn: '7d' }
     );
 
-    // Store session in Redis
+    // Store session in Redis (if available)
     const sessionId = `${newUser.id}-${Date.now()}`;
-    await redisSession.create(sessionId, {
-      userId: newUser.id,
-      email: newUser.email,
-      createdAt: Date.now()
-    }, 604800); // 7 days in seconds
+    if (redisSession) {
+      try {
+        await redisSession.create(sessionId, {
+          userId: newUser.id,
+          email: newUser.email,
+          createdAt: Date.now()
+        }, 604800); // 7 days in seconds
+      } catch (error) {
+        console.log('[Register] Redis session creation failed:', error.message);
+        // Continue without Redis session
+      }
+    }
 
     // Store session in database
     const tokenHash = await bcrypt.hash(token, 10);

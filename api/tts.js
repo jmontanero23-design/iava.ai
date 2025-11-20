@@ -31,6 +31,7 @@ export default async function handler(req, res) {
     const maxLength = 5000 // ~5K characters max
     const cleanText = text.slice(0, maxLength)
 
+    console.log('[TTS] Generating speech:', {
       length: cleanText.length,
       voiceId,
       model: modelId
@@ -68,6 +69,7 @@ export default async function handler(req, res) {
     // Get audio buffer
     const audioBuffer = await response.arrayBuffer()
 
+    console.log('[TTS] Audio generated:', {
       size: audioBuffer.byteLength,
       format: 'audio/mpeg'
     })
