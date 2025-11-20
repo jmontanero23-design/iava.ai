@@ -30,7 +30,6 @@ export default async function handler(req, res) {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`
 
-    console.log('[Yahoo Proxy] Fetching:', url)
 
     const response = await fetch(url, {
       headers: {

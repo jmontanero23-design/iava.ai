@@ -69,7 +69,6 @@ export default function MarketSentiment() {
           const newsData = await newsResponse.json()
           headlines = newsData.news?.map(n => n.headline) || []
           newsSource = newsData.source || 'unknown'
-          console.log(`[Sentiment] Fetched ${headlines.length} news headlines for ${symbol} from source: ${newsSource}`)
 
           // CRITICAL: Warn if using sample data
           if (newsSource !== 'alpaca') {
@@ -142,7 +141,6 @@ export default function MarketSentiment() {
       })
 
       const analyzedNews = await Promise.all(sentimentPromises)
-      console.log(`[Sentiment] Setting ${analyzedNews.length} analyzed news items:`, analyzedNews.slice(0, 2))
 
       // PhD++ DIAGNOSTIC: Check if we're using fallback data (no real HF models)
       const fallbackCount = analyzedNews.filter(item => item.fallback || item.error).length
@@ -157,7 +155,6 @@ export default function MarketSentiment() {
           }
         }))
       } else {
-        console.log('[Sentiment] ✅ All items analyzed with REAL HuggingFace models!')
       }
 
       setNewsItems(analyzedNews)

@@ -19,7 +19,6 @@ export async function registerServiceWorker() {
       updateViaCache: 'none' // Always check for updates
     })
 
-    console.log('[PWA] Service worker registered:', registration.scope)
 
     // Check for updates every hour
     setInterval(() => {
@@ -29,11 +28,9 @@ export async function registerServiceWorker() {
     // Handle updates
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing
-      console.log('[PWA] Service worker update found')
 
       newWorker?.addEventListener('statechange', () => {
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          console.log('[PWA] New service worker installed, prompting reload')
 
           // Notify user of update
           window.dispatchEvent(new CustomEvent('iava.toast', {
@@ -56,7 +53,6 @@ export async function registerServiceWorker() {
 
     // Listen for controller change (new SW activated)
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      console.log('[PWA] Service worker controller changed')
     })
 
     return registration
@@ -73,13 +69,11 @@ export async function registerServiceWorker() {
 export async function promptInstall() {
   // Check if already installed
   if (window.matchMedia('(display-mode: standalone)').matches) {
-    console.log('[PWA] Already installed')
     return false
   }
 
   // Check if beforeinstallprompt event was captured
   if (!window.__pwaInstallPrompt) {
-    console.log('[PWA] No install prompt available')
     return false
   }
 
@@ -92,7 +86,6 @@ export async function promptInstall() {
 
     // Wait for user response
     const { outcome } = await prompt.userChoice
-    console.log('[PWA] Install prompt outcome:', outcome)
 
     return outcome === 'accepted'
   } catch (error) {
@@ -126,7 +119,6 @@ export function canInstall() {
 export function initPWA() {
   // Capture beforeinstallprompt event
   window.addEventListener('beforeinstallprompt', (e) => {
-    console.log('[PWA] Install prompt available')
     e.preventDefault()
     window.__pwaInstallPrompt = e
 
@@ -138,7 +130,6 @@ export function initPWA() {
 
   // App installed event
   window.addEventListener('appinstalled', () => {
-    console.log('[PWA] App installed successfully')
     window.__pwaInstallPrompt = null
 
     // Show success toast
@@ -155,9 +146,7 @@ export function initPWA() {
 
   // Log install status
   if (isInstalled()) {
-    console.log('[PWA] Running as installed app')
   } else {
-    console.log('[PWA] Running in browser')
   }
 }
 
@@ -167,7 +156,6 @@ export function initPWA() {
 export function initOfflineDetection() {
   const updateOnlineStatus = () => {
     const isOnline = navigator.onLine
-    console.log('[PWA] Connection status:', isOnline ? 'online' : 'offline')
 
     window.dispatchEvent(new CustomEvent('iava.connection', {
       detail: { online: isOnline }
@@ -203,7 +191,6 @@ export async function requestNotificationPermission() {
 
   if (Notification.permission !== 'denied') {
     const permission = await Notification.requestPermission()
-    console.log('[PWA] Notification permission:', permission)
     return permission
   }
 
@@ -240,7 +227,6 @@ export async function showNotification(title, options = {}) {
 export async function clearCaches() {
   const cacheNames = await caches.keys()
   await Promise.all(cacheNames.map((name) => caches.delete(name)))
-  console.log('[PWA] All caches cleared')
 }
 
 /**

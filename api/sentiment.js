@@ -42,7 +42,6 @@ export default async function handler(req, res) {
       })
     }
 
-    console.log('[Sentiment API] Analyzing:', text.substring(0, 100))
 
     // Multi-model ensemble analysis for higher accuracy
     if (useMultiModel) {
@@ -53,7 +52,6 @@ export default async function handler(req, res) {
     // Single model analysis with fallback chain
     for (const model of MODELS) {
       try {
-        console.log(`[Sentiment API] Trying model: ${model}`)
         // ✅ FIXED: Updated to new HuggingFace Inference API endpoint (Jan 2025)
         const response = await fetch(
           `https://router.huggingface.co/hf-inference/models/${model}`,
@@ -84,7 +82,6 @@ export default async function handler(req, res) {
 
       // If model is loading, return neutral sentiment
       if (response.status === 503) {
-        console.log('[Sentiment API] Model loading, returning neutral sentiment')
         return res.status(200).json({
           sentiment: 'neutral',
           label: 'NEUTRAL',
@@ -99,7 +96,6 @@ export default async function handler(req, res) {
     }
 
     const result = await response.json()
-    console.log('[Sentiment API] Raw result:', JSON.stringify(result))
 
     // HuggingFace returns array of label/score pairs
     // Format: [[{label: "POSITIVE", score: 0.9}, {label: "NEGATIVE", score: 0.1}]]
@@ -135,7 +131,6 @@ export default async function handler(req, res) {
           normalizedScore = -topSentiment.score
         }
 
-        console.log(`[Sentiment API] Success with ${model}:`, sentiment, normalizedScore)
 
         return res.status(200).json({
           sentiment,

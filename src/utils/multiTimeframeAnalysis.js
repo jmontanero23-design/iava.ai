@@ -34,7 +34,6 @@ export async function fetchAllTimeframes(symbol, limit = 500) {
     // Alpaca is now ONLY for trading, Yahoo Finance for data!
     const promises = TIMEFRAMES.map(async (tf) => {
       try {
-        console.log(`[Multi-TF] Fetching ${tf} for ${symbol} from Yahoo Finance...`)
         const bars = await fetchBars(symbol, tf, limit)
 
         if (!bars || bars.length === 0) {
@@ -42,7 +41,6 @@ export async function fetchAllTimeframes(symbol, limit = 500) {
           return { tf, bars: [] }
         }
 
-        console.log(`[Multi-TF] ✅ Got ${bars.length} bars for ${tf}`)
         return { tf, bars }
       } catch (e) {
         console.error(`[Multi-TF] Error fetching ${tf}:`, e)
@@ -56,7 +54,6 @@ export async function fetchAllTimeframes(symbol, limit = 500) {
       results[tf] = bars
     })
 
-    console.log('[Multi-TF] ✅ All timeframes fetched:', Object.keys(results).map(tf => `${tf}:${results[tf].length}`).join(', '))
     return results
   } catch (e) {
     console.error('[Multi-TF] Fatal error:', e)

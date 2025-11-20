@@ -35,7 +35,6 @@ async function queryHuggingFace(text, model = MODELS.bertweet) {
   const cached = cache.get(cacheKey)
 
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    console.log('[HuggingFace] Cache hit:', cacheKey.substring(0, 50))
     return cached.data
   }
 
@@ -58,7 +57,6 @@ async function queryHuggingFace(text, model = MODELS.bertweet) {
 
       // Model is loading - retry after delay
       if (response.status === 503) {
-        console.log('[HuggingFace] Model loading, will retry...')
         await new Promise(resolve => setTimeout(resolve, 2000))
         return queryHuggingFace(text, model) // Retry once
       }
@@ -126,7 +124,6 @@ export async function analyzeSentiment(text, options = {}) {
 
     // Fallback to bertweet if primary fails
     if (!result && model !== 'bertweet') {
-      console.log('[HuggingFace] Falling back to bertweet')
       result = await queryHuggingFace(truncatedText, MODELS.bertweet)
     }
 
@@ -287,7 +284,6 @@ export async function analyzeBatch(texts, options = {}) {
  */
 export function clearCache() {
   cache.clear()
-  console.log('[HuggingFace] Cache cleared')
 }
 
 export default {

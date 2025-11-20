@@ -13,7 +13,6 @@ const GATEWAY_URL = '/api/ai/gateway'
  * @returns {Promise<Object>} AI response with usage and cost data
  */
 export async function callAI(model, messages, options = {}) {
-  console.log('[AI Gateway] Calling with model:', model, 'messages:', messages.length)
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), options.timeout || 90000) // 90s default for reasoning models
@@ -32,7 +31,6 @@ export async function callAI(model, messages, options = {}) {
       signal: controller.signal
     })
 
-    console.log('[AI Gateway] Response status:', response.status, response.ok)
 
     clearTimeout(timeout)
 
@@ -50,7 +48,6 @@ export async function callAI(model, messages, options = {}) {
     }
 
     const data = await response.json()
-    console.log('[AI Gateway] Success! Got response:', { model, contentLength: data.content?.length, cost: data.cost })
     return data
 
   } catch (error) {
@@ -306,7 +303,6 @@ Only include filters that are explicitly or implicitly mentioned in the query. B
 
   try {
     const parsed = JSON.parse(result.content)
-    console.log('[NLP Scanner] Parsed query:', parsed)
     return parsed
   } catch {
     return { error: 'Failed to parse query' }
@@ -375,7 +371,6 @@ export async function validateSymbolContext(text, detectedSymbols) {
     return { valid: [], rejected: [], confidence: 1.0 }
   }
 
-  console.log('[Symbol Validator] Validating symbols:', detectedSymbols, 'from text:', text)
 
   const messages = [
     {
@@ -424,7 +419,6 @@ Which are REAL stock tickers? Return JSON only.`
     })
 
     const validation = JSON.parse(result.content)
-    console.log('[Symbol Validator] Result:', validation)
     return validation
   } catch (error) {
     console.error('[Symbol Validator] Failed:', error)

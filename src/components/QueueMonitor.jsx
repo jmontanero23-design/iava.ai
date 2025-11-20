@@ -113,7 +113,6 @@ export default function QueueMonitor() {
             <button
               onClick={() => {
                 const cleared = clearQueue()
-                console.log(`Cleared ${cleared} requests from queue`)
               }}
               disabled={stats.queueLength === 0}
               className="w-full px-3 py-1.5 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-700 disabled:text-slate-400 text-white rounded transition-all text-xs font-semibold"

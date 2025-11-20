@@ -38,10 +38,6 @@ class OrderExecutionService {
       // Load open orders
       await this.refreshOrders()
 
-      console.log('[OrderExecution] ✅ Initialized successfully')
-      console.log('[OrderExecution] Account:', this.accountInfo.account_number)
-      console.log('[OrderExecution] Buying Power:', this.accountInfo.buying_power)
-      console.log('[OrderExecution] Mode:', isPaper ? 'PAPER' : 'LIVE')
 
       return true
     } catch (error) {
@@ -270,7 +266,6 @@ class OrderExecutionService {
     }
 
     try {
-      console.log('[OrderExecution] Placing order:', order)
 
       const response = await fetch(this.getBaseUrl() + '/v2/orders', {
         method: 'POST',
@@ -288,7 +283,6 @@ class OrderExecutionService {
 
       const placedOrder = await response.json()
 
-      console.log('[OrderExecution] ✅ Order placed:', placedOrder.id)
 
       // Update orders list
       await this.refreshOrders()
@@ -319,7 +313,6 @@ class OrderExecutionService {
         throw new Error(`Cancel failed: ${response.status}`)
       }
 
-      console.log('[OrderExecution] ✅ Order cancelled:', orderId)
 
       // Update orders list
       await this.refreshOrders()
@@ -345,7 +338,6 @@ class OrderExecutionService {
         throw new Error(`Cancel all failed: ${response.status}`)
       }
 
-      console.log('[OrderExecution] ✅ All orders cancelled')
 
       // Update orders list
       await this.refreshOrders()
@@ -377,7 +369,6 @@ class OrderExecutionService {
 
       const order = await response.json()
 
-      console.log('[OrderExecution] ✅ Position closed:', symbol)
 
       // Update positions
       await this.refreshPositions()
@@ -405,7 +396,6 @@ class OrderExecutionService {
 
       const orders = await response.json()
 
-      console.log('[OrderExecution] ✅ All positions closed')
 
       // Update positions
       await this.refreshPositions()

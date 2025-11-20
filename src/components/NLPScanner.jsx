@@ -39,7 +39,6 @@ export default function NLPScanner() {
     setInterpretation('')
 
     try {
-      console.log('[NLP Scanner] Parsing query:', query)
 
       // Parse natural language to filter criteria
       const parsed = await parseNaturalQuery(query)
@@ -48,7 +47,6 @@ export default function NLPScanner() {
         throw new Error(parsed.error)
       }
 
-      console.log('[NLP Scanner] Parsed criteria:', parsed)
 
       setInterpretation(parsed.interpretation || 'Searching...')
 
@@ -260,7 +258,6 @@ export default function NLPScanner() {
                     className="relative group/btn px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 rounded-lg text-xs font-semibold text-emerald-300 transition-all"
                     onClick={() => {
                       // Load this symbol into the chart
-                      console.log('[NLP Scanner] Load symbol:', stock.symbol)
                     }}
                   >
                     View Chart →

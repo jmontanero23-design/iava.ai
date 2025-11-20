@@ -47,7 +47,6 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
   // ELITE: Broadcast position updates to AI Copilot
   useEffect(() => {
     if (positions && positions.length >= 0) {
-      console.log('[Orders] Broadcasting positions to Copilot:', positions.length)
       window.dispatchEvent(new CustomEvent('iava-positions-update', {
         detail: positions
       }))
@@ -58,7 +57,6 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
   useEffect(() => {
     const handleClosePosition = (event) => {
       const { symbol, reason } = event.detail || {}
-      console.log('[Orders] AI Copilot requesting close position:', symbol, reason)
 
       if (!symbol) {
         console.error('[Orders] Invalid close position request - missing symbol')
@@ -80,8 +78,6 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
 
     const handleSetStop = async (event) => {
       const { symbol, stopPrice, type } = event.detail || {}
-      console.log('[Orders] AI Copilot requesting set stop:', symbol, stopPrice, type)
-      console.log('[Orders] Current positions:', positions.length, positions.map(p => p.symbol))
 
       if (!symbol || !stopPrice) {
         console.error('[Orders] Invalid set stop request - missing symbol or stopPrice')
@@ -92,7 +88,6 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
       try {
         // CRITICAL FIX: Fetch fresh positions instead of using stale state
         const freshPositions = await fetchPositions()
-        console.log('[Orders] Fresh positions:', freshPositions.length, freshPositions.map(p => p.symbol))
 
         // Find the position to get qty and side
         const position = freshPositions.find(p => p.symbol === symbol)
@@ -152,7 +147,6 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
 
     const handleTakeProfit = async (event) => {
       const { symbol, percentage } = event.detail || {}
-      console.log('[Orders] AI Copilot requesting take profit:', symbol, percentage)
 
       if (!symbol) {
         console.error('[Orders] Invalid take profit request - missing symbol')
@@ -240,7 +234,6 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
   useEffect(() => {
     const handleTradeSetup = (event) => {
       const setup = event.detail
-      console.log('[Orders] Received AI trade setup:', setup)
 
       // Validate setup data
       if (!setup.symbol || !setup.side) {
@@ -255,7 +248,6 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
       // Set quantity if provided by AI
       if (setup.qty && Number.isFinite(setup.qty) && setup.qty > 0) {
         setQty(setup.qty)
-        console.log('[Orders] AI specified quantity:', setup.qty)
       }
 
       // If we have entry price and targets, use bracket order
@@ -275,13 +267,11 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
 
         // Auto-calculate quantity if not provided by AI (after state updates)
         if (!setup.qty) {
-          console.log('[Orders] Auto-calculating quantity for bracket order...')
           setTimeout(() => {
             // Trigger quantity calculation based on risk %
             const calcButton = document.querySelector('button[title*="Calculate quantity"]')
             if (calcButton) {
               calcButton.click()
-              console.log('[Orders] Auto-triggered Calc Qty')
             }
           }, 100)
         }

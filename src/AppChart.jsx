@@ -117,32 +117,24 @@ export default function App() {
   useEffect(() => {
     const handler = (e) => {
       const { symbol: newSymbol, timeframe: newTimeframe } = e.detail || {}
-      console.log('[AppChart] Event received. newSymbol:', newSymbol, 'newTimeframe:', newTimeframe, 'currentSymbol:', symbol, 'currentTimeframe:', timeframe)
 
       if (newSymbol) {
-        console.log('[AppChart] AI requesting symbol load:', newSymbol, newTimeframe)
-        console.log('[AppChart] Calling setSymbol(' + newSymbol + ')')
         setSymbol(newSymbol)
 
         if (newTimeframe) {
-          console.log('[AppChart] Calling setTimeframe(' + newTimeframe + ')')
           setTimeframe(newTimeframe)
         }
 
         // loadBars will be called after state updates
         const tfToUse = newTimeframe || timeframe
-        console.log('[AppChart] Scheduling loadBars(' + newSymbol + ', ' + tfToUse + ') in 50ms')
         setTimeout(() => {
-          console.log('[AppChart] Executing scheduled loadBars for:', newSymbol, tfToUse)
           loadBars(newSymbol, tfToUse)
         }, 50)
       }
     }
     window.addEventListener('iava.loadSymbol', handler)
-    console.log('[AppChart] Event listener registered for iava.loadSymbol')
     return () => {
       window.removeEventListener('iava.loadSymbol', handler)
-      console.log('[AppChart] Event listener removed')
     }
   }, [timeframe, symbol])
 
@@ -303,12 +295,10 @@ export default function App() {
     // DO NOT trigger on symbol/timeframe change to avoid race condition
     // where NEW symbol + OLD bars creates mismatched data
     if (!bars || bars.length === 0) {
-      console.log('[AppChart] Skipping context update - no bars data yet')
       return
     }
 
     const currentPrice = bars[bars.length - 1]?.close
-    console.log('[AppChart] Updating MarketDataContext with symbol:', symbol, 'bars:', bars.length, 'price:', currentPrice)
 
     updateMarketData({
       symbol,
@@ -325,13 +315,11 @@ export default function App() {
       account,
       usingSample
     })
-    console.log('[AppChart] MarketDataContext updated successfully')
 
     // Notify components that symbol has loaded
     window.dispatchEvent(new CustomEvent('iava.symbolLoaded', {
       detail: { symbol, timeframe, bars: bars.length, currentPrice }
     }))
-    console.log('[AppChart] ✅ Dispatched iava.symbolLoaded event for:', symbol)
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bars, signalState, dailyState, overlays, threshold, enforceDaily, consensusBonus, consensus, account, usingSample])
@@ -348,22 +336,16 @@ export default function App() {
   }, [bars, timeframe])
 
   async function loadBars(s = symbol, tf = timeframe) {
-    console.log('[AppChart] loadBars called with symbol:', s, 'timeframe:', tf)
     try {
       const myId = ++loadReq.current
-      console.log('[AppChart] loadBars request ID:', myId)
       setLoading(true)
       setError('')
       // Yahoo Finance - FREE unlimited data, no rate limits!
-      console.log('[AppChart] Fetching bars from Yahoo Finance for:', s, tf)
       const res = await fetchBars(s, tf, 500)
-      console.log('[AppChart] fetchBars returned:', res?.length, 'bars')
       if (myId !== loadReq.current) {
-        console.log('[AppChart] Request superseded, ignoring. Current:', loadReq.current, 'Mine:', myId)
         return
       }
       if (Array.isArray(res) && res.length) {
-        console.log('[AppChart] Setting bars for', s, '- count:', res.length)
         setBars(res)
         setUsingSample(false)
       }

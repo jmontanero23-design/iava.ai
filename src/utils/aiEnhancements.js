@@ -24,26 +24,22 @@
  * Result: Simpler, faster, more reliable - works like it used to!
  */
 export function detectSymbols(text) {
-  console.log('[detectSymbols] Input text:', text)
   const symbols = new Set()
 
   // Pattern 1: $TICKER format (explicit intent - $AAPL, $SPY, etc.)
   const dollarPattern = /\$([A-Z]{1,5})\b/gi
   let match
   while ((match = dollarPattern.exec(text)) !== null) {
-    console.log('[detectSymbols] ✅ Dollar pattern matched:', match[1])
     symbols.add(match[1].toUpperCase())
   }
 
   // Pattern 2: Company (TICKER) format (explicit intent - Apple (AAPL), Tesla (TSLA), etc.)
   const companyPattern = /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*\(([A-Z]{1,5})\)/gi
   while ((match = companyPattern.exec(text)) !== null) {
-    console.log('[detectSymbols] ✅ Company pattern matched:', match[2])
     symbols.add(match[2].toUpperCase())
   }
 
   const result = Array.from(symbols)
-  console.log('[detectSymbols] Final result:', result.length > 0 ? result : 'No symbols detected (user must use $TICKER or Company (TICKER) format)')
   return result
 }
 

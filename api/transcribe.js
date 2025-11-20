@@ -18,7 +18,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Audio data is required (base64)' })
     }
 
-    console.log('[Transcribe] Transcribing audio:', {
       format,
       size: audio.length
     })
@@ -64,7 +63,6 @@ export default async function handler(req, res) {
 
     const result = await response.json()
 
-    console.log('[Transcribe] Success! Transcribed:', result.text)
 
     res.status(200).json({
       text: result.text,

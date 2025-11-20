@@ -1148,7 +1148,6 @@ export async function optimizeWithGA(options = {}) {
 
     // Early termination if converged
     if (detectConvergence(history)) {
-      console.log('[GA] Converged early at generation', gen)
       break
     }
 

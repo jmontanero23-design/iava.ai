@@ -23,7 +23,6 @@ export default function TradePanel({ bars = [], saty, account, defaultSide = 'bu
   useEffect(() => {
     const handleAITradeSetup = (event) => {
       const setup = event.detail
-      console.log('[TradePanel] Received AI trade setup:', setup)
 
       // Auto-populate form fields
       if (setup.side) {

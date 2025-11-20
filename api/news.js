@@ -12,11 +12,6 @@ export default async function handler(req, res) {
     const ALPACA_SECRET = process.env.ALPACA_SECRET_KEY
 
     // PhD++ DEBUG: Enhanced logging for credentials check
-    console.log('[News API] Environment check:')
-    console.log('  - ALPACA_KEY_ID exists:', !!ALPACA_KEY)
-    console.log('  - ALPACA_KEY_ID first 4 chars:', ALPACA_KEY?.substring(0, 4))
-    console.log('  - ALPACA_SECRET_KEY exists:', !!ALPACA_SECRET)
-    console.log('  - ALPACA_SECRET_KEY length:', ALPACA_SECRET?.length)
 
     if (!ALPACA_KEY || !ALPACA_SECRET) {
       console.warn('[News API] ❌ No Alpaca credentials - returning sample data.')
@@ -35,8 +30,6 @@ export default async function handler(req, res) {
     const DATA_URL = process.env.ALPACA_DATA_URL || 'https://data.alpaca.markets'
     const newsUrl = `${DATA_URL}/v1beta1/news?symbols=${symbol}&limit=${Math.min(limit, 50)}&sort=desc`
 
-    console.log('[News API] 🔄 Fetching from:', newsUrl)
-    console.log('[News API] Request params:', { symbol, limit: Math.min(limit, 50) })
 
     const response = await fetch(newsUrl, {
       headers: {
@@ -45,7 +38,6 @@ export default async function handler(req, res) {
       }
     })
 
-    console.log('[News API] Response status:', response.status, response.statusText)
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -81,7 +73,6 @@ export default async function handler(req, res) {
     const data = await response.json()
 
     if (!data.news || data.news.length === 0) {
-      console.log('[News API] ⚠️ No news found for', symbol, '- using sample')
       return res.status(200).json({
         news: getSampleNews(symbol),
         source: 'sample_no_data',
@@ -103,8 +94,6 @@ export default async function handler(req, res) {
       source: item.source
     }))
 
-    console.log(`[News API] ✅ SUCCESS! Fetched ${formattedNews.length} REAL news items for ${symbol}`)
-    console.log('[News API] Headlines:', formattedNews.slice(0, 3).map(n => n.headline))
 
     return res.status(200).json({
       news: formattedNews,

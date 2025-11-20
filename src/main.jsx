@@ -17,7 +17,6 @@ initOfflineDetection()
 if (import.meta.env.PROD) {
   registerServiceWorker().then((registration) => {
     if (registration) {
-      console.log('[App] PWA features enabled')
     }
   })
 }

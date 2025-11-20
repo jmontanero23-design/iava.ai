@@ -80,7 +80,6 @@ class RequestQueue {
     // Check cache first
     const cached = this.getCached(cacheKey)
     if (cached) {
-      console.log(`[RequestQueue] Cache hit for ${cacheKey}`)
       resolve({ ...cached, fromCache: true })
       return
     }
@@ -92,7 +91,6 @@ class RequestQueue {
 
     if (existingIdx >= 0) {
       // Piggyback on existing request
-      console.log(`[RequestQueue] Deduplicating request for ${cacheKey}`)
       const existing = this.queue[existingIdx]
 
       // Chain the promises
@@ -121,7 +119,6 @@ class RequestQueue {
     this.queue.push(queueItem)
     this.sortQueue()
 
-    console.log(`[RequestQueue] Queued ${cacheKey} with priority ${priority}. Queue length: ${this.queue.length}`)
 
     // Start processing if not already running
     if (!this.processing) {
@@ -171,7 +168,6 @@ class RequestQueue {
       if (this.rateLimitBackoff > 0) {
         const backoffRemaining = this.rateLimitBackoff - now
         if (backoffRemaining > 0) {
-          console.log(`[RequestQueue] Rate limit backoff: waiting ${Math.ceil(backoffRemaining / 1000)}s`)
           await new Promise(resolve => setTimeout(resolve, Math.min(backoffRemaining, 5000)))
           continue
         }
@@ -199,7 +195,6 @@ class RequestQueue {
   async executeRequest(request) {
     const { symbol, timeframe, limit, fetchFn, resolve, reject, callbacks, cacheKey, retries } = request
 
-    console.log(`[RequestQueue] Executing ${cacheKey} (${this.activeRequests}/${this.maxConcurrent} active)`)
 
     try {
       // Call the actual fetch function
@@ -236,7 +231,6 @@ class RequestQueue {
         const backoffSeconds = Math.min(Math.pow(2, this.errorCount), 60)
         this.rateLimitBackoff = Date.now() + (backoffSeconds * 1000)
 
-        console.log(`[RequestQueue] Rate limited! Backing off for ${backoffSeconds}s (attempt ${this.errorCount})`)
 
         // Retry with exponential backoff
         if (retries < 3) {
@@ -277,7 +271,6 @@ class RequestQueue {
   clearQueue() {
     const cleared = this.queue.length
     this.queue = []
-    console.log(`[RequestQueue] Cleared ${cleared} pending requests`)
     return cleared
   }
 

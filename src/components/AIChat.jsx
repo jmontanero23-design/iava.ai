@@ -109,7 +109,6 @@ export default function AIChat() {
           } else {
             // Resume "thinking" state - request is still pending
             setIsTyping(true)
-            console.log('[AI Chat] Resuming background request...')
           }
         }
       } catch (e) {
@@ -145,7 +144,6 @@ export default function AIChat() {
       silentAudio.volume = 0.01
       await silentAudio.play()
       setAudioUnlocked(true)
-      console.log('🔓 Audio unlocked for mobile Safari')
       return true
     } catch (error) {
       console.warn('🔒 Audio unlock failed:', error)
@@ -483,7 +481,6 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
   // FIXED: Uses ref instead of closure to avoid race condition
   const loadSymbolForAnalysis = async (symbol, timeframe = null) => {
     return new Promise((resolve) => {
-      console.log('[AI Chat] Auto-loading symbol for analysis:', symbol)
 
       // Listen for symbol loaded event (more reliable than polling)
       const handleSymbolLoaded = (event) => {
@@ -491,7 +488,6 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
           window.removeEventListener('iava.symbolLoaded', handleSymbolLoaded)
           clearInterval(checkInterval)
           clearTimeout(timeout)
-          console.log('[AI Chat] ✅ Symbol loaded successfully:', symbol, 'bars:', event.detail.bars)
           resolve(true)
         }
       }
@@ -508,13 +504,11 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
         checks++
         // CRITICAL: Use ref.current to get LATEST marketData, not stale closure
         const current = marketDataRef.current
-        console.log(`[AI Chat] Waiting for ${symbol} to load... (check ${checks}/50, current: ${current.symbol})`)
 
         if (current.symbol?.toUpperCase() === symbol.toUpperCase() && current.bars?.length > 0) {
           window.removeEventListener('iava.symbolLoaded', handleSymbolLoaded)
           clearInterval(checkInterval)
           clearTimeout(timeout)
-          console.log('[AI Chat] ✅ Symbol loaded successfully (via polling):', symbol, 'bars:', current.bars?.length)
           resolve(true)
         }
       }, 100)
@@ -559,9 +553,6 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
     const timestamp = new Date().toLocaleTimeString()
     setDebugLog(prev => [...prev, `${timestamp} - 🎤 Mic button clicked`])
 
-    console.log('🎤 [DEBUG] Start voice input clicked!')
-    console.log('🎤 [DEBUG] Browser:', navigator.userAgent)
-    console.log('🎤 [DEBUG] Has SpeechRecognition:', 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window)
 
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       setDebugLog(prev => [...prev, `${timestamp} - ❌ Speech recognition not supported`])
@@ -575,12 +566,10 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
     // CRITICAL: Unlock audio on mobile Safari before starting voice (user gesture)
     if (isMobileSafari()) {
       setDebugLog(prev => [...prev, `${timestamp} - 🔓 Unlocking audio (Mobile Safari)`])
-      console.log('🎤 [DEBUG] Mobile Safari detected - unlocking audio...')
       await unlockAudio()
     }
 
     setDebugLog(prev => [...prev, `${timestamp} - ✅ Starting recognition...`])
-    console.log('🎤 [DEBUG] Attempting to start recognition...')
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SpeechRecognition()
@@ -597,7 +586,6 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
     recognition.onstart = () => {
       setIsListening(true)
       finalTranscript = ''
-      console.log('🎤 Voice recognition started (speak naturally, I\'ll know when you\'re done)')
     }
 
     recognition.onresult = (event) => {
@@ -630,7 +618,6 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
           // Check if there's a pending trade confirmation
           const lastMessage = messages[messages.length - 1]
           if (lastMessage?.awaitingTradeConfirmation && isConfirmation) {
-            console.log('[Voice-to-Trade] Confirmation detected:', transcript)
             recognition.stop()
             setInput('')
             finalTranscript = ''
@@ -639,7 +626,6 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
             return
           }
 
-          console.log('🎤 Silence detected - auto-submitting:', finalTranscript.trim())
           recognition.stop()
           // Auto-submit the form
           setTimeout(() => {
@@ -660,9 +646,7 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
       } else if (event.error === 'network') {
         alert('🎤 Network error - please check your internet connection')
       } else if (event.error === 'no-speech') {
-        console.log('🎤 No speech detected - ready to try again')
       } else if (event.error === 'aborted') {
-        console.log('🎤 Voice input cancelled')
       } else {
         alert(`❌ Voice error: ${event.error}`)
       }
@@ -671,7 +655,6 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
     recognition.onend = () => {
       setIsListening(false)
       if (silenceTimer) clearTimeout(silenceTimer)
-      console.log('🎤 Voice recognition ended')
     }
 
     recognitionRef.current = recognition
@@ -687,7 +670,6 @@ ${data.curve?.slice(0, 5).map(c => `• Score ${c.th}+: ${c.events} trades, ${c.
 
   // ELITE FEATURE: Voice-to-Trade Confirmation
   const confirmTrade = (tradeSetup) => {
-    console.log('[Voice-to-Trade] Trade confirmed! Dispatching to Orders panel:', tradeSetup)
 
     // Dispatch trade setup to Orders panel
     window.dispatchEvent(new CustomEvent('ai-trade-setup', {
@@ -732,7 +714,6 @@ Please review and submit the order in the Orders & Positions panel.`,
         return
       }
 
-      console.log('[TTS] Converting to premium voice:', cleanText.substring(0, 100) + '...')
 
       // Call premium TTS API (ElevenLabs Turbo v2.5)
       const response = await fetch('/api/tts', {
@@ -757,7 +738,6 @@ Please review and submit the order in the Orders & Positions panel.`,
         audioElement.playbackRate = 1.1 // Slightly faster for efficiency
 
         audioElement.onended = () => {
-          console.log('🔊 Premium speech finished')
           // REMOVED: Auto-restart voice input (unwanted on mobile - drains battery, privacy concern)
         }
 
@@ -768,7 +748,6 @@ Please review and submit the order in the Orders & Positions panel.`,
         try {
           await audioElement.play()
           setAudioUnlocked(true) // Mark as unlocked on successful playback
-          console.log('🔊 Speaking with PREMIUM ElevenLabs voice (natural, human-like)')
         } catch (playError) {
           // MOBILE SAFARI AUTOPLAY BLOCKED - Store audio and show prompt
           if (playError.name === 'NotAllowedError' || playError.name === 'NotSupportedError') {
@@ -808,8 +787,6 @@ Please review and submit the order in the Orders & Positions panel.`,
     const timestamp = new Date().toLocaleTimeString()
     setDebugLog(prev => [...prev, `${timestamp} - 🔊 ENABLE VOICE CLICKED`])
 
-    console.log('🔊 [DEBUG] ========== ENABLE VOICE CLICKED ==========')
-    console.log('🔊 [DEBUG] pendingAudio exists:', !!pendingAudio)
 
     if (!pendingAudio) {
       setDebugLog(prev => [...prev, `${timestamp} - ❌ No pending audio`])
@@ -826,7 +803,6 @@ Please review and submit the order in the Orders & Positions panel.`,
     audioElement.playbackRate = 1.1
 
     audioElement.onended = () => {
-      console.log('🔊 Premium speech finished')
       setDebugLog(prev => [...prev, `${new Date().toLocaleTimeString()} - ✅ Audio finished`])
     }
 
@@ -840,7 +816,6 @@ Please review and submit the order in the Orders & Positions panel.`,
     }
 
     // Play IMMEDIATELY - synchronously in click handler
-    console.log('[Voice] Calling audio.play() NOW (synchronously)...')
     setDebugLog(prev => [...prev, `${timestamp} - 🎵 Calling play()...`])
 
     const playPromise = audioElement.play()
@@ -848,7 +823,6 @@ Please review and submit the order in the Orders & Positions panel.`,
     if (playPromise !== undefined) {
       playPromise
         .then(() => {
-          console.log('🔊 ✅ Playing with PREMIUM voice')
           setDebugLog(prev => [...prev, `${new Date().toLocaleTimeString()} - ✅ Playback started!`])
           setPendingAudio(null)
           setShowAudioPrompt(false)
@@ -890,12 +864,10 @@ Please review and submit the order in the Orders & Positions panel.`,
     const utterance = new SpeechSynthesisUtterance(cleanText)
     utterance.rate = 1.1
     utterance.onend = () => {
-      console.log('🔊 Fallback browser TTS finished')
       // REMOVED: Auto-restart voice input
     }
 
     window.speechSynthesis.speak(utterance)
-    console.log('🔊 Using fallback browser TTS')
   }
 
   // Generate smart AI-powered suggested questions
@@ -939,7 +911,6 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
 
   // Handle transcript from mobile push-to-talk
   const handleMobileTranscript = (transcript) => {
-    console.log('[Mobile Push-to-Talk] Received transcript:', transcript)
     setInput(transcript)
     // Auto-submit after a short delay
     setTimeout(() => {
@@ -952,21 +923,15 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
     const timestamp = new Date().toLocaleTimeString()
     setDebugLog(prev => [...prev, `${timestamp} - Form submit triggered`])
 
-    console.log('🔵 [DEBUG] Form submit triggered!')
-    console.log('🔵 [DEBUG] Event:', e)
-    console.log('🔵 [DEBUG] Input value:', input)
-    console.log('🔵 [DEBUG] isTyping:', isTyping)
 
     e.preventDefault()
 
     if ((!input.trim() && uploadedFiles.length === 0) || isTyping) {
       setDebugLog(prev => [...prev, `${timestamp} - Submit BLOCKED (empty or typing)`])
-      console.log('🔴 [DEBUG] Submit blocked - empty input or already typing')
       return
     }
 
     setDebugLog(prev => [...prev, `${timestamp} - Submit PROCEEDING`])
-    console.log('🟢 [DEBUG] Submit proceeding...')
 
     // CRITICAL: Unlock audio on mobile Safari (user gesture required)
     if (isMobileSafari()) {
@@ -1018,7 +983,6 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
       const detectedTimeframe = detectTimeframe(userMessage.content)
 
       if (detectedSymbols.length > 0) {
-        console.log('[AI Chat] ✅ Detected symbols:', detectedSymbols, 'Timeframe:', detectedTimeframe)
       }
 
       // If user mentions a different symbol, load it automatically
@@ -1027,7 +991,6 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
         const currentSymbol = marketData.symbol?.toUpperCase()
 
         if (newSymbol !== currentSymbol) {
-          console.log(`[AI Chat] Auto-loading new symbol: ${newSymbol} (current: ${currentSymbol})`)
 
           // Show loading message
           const loadingMsg = {
@@ -1063,7 +1026,6 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
       const hasDocuments = currentFiles.some(f => f.isPDF || f.isText)
 
       // Debug: Log market data to verify connection
-      console.log('AI Chat Market Data:', {
         symbol: marketData.symbol,
         hasRealData,
         scoreAvailable: !!marketData.signalState?.score,
@@ -1107,7 +1069,6 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
       let multiTFContext = null
       try {
         const symbol = marketData.symbol || 'SPY'
-        console.log('[AI Chat] Building enhanced multi-TF context for:', symbol)
 
         const enhancedData = await buildEnhancedContext(marketData, symbol, {
           includeMultiTF: true,        // Always include multi-TF analysis
@@ -1115,7 +1076,6 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
         })
 
         multiTFContext = formatEnhancedContext(enhancedData)
-        console.log('[AI Chat] Multi-TF context built successfully')
       } catch (error) {
         console.warn('[AI Chat] Multi-TF context build failed:', error)
         // Continue without multi-TF context - graceful degradation
@@ -1229,8 +1189,6 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
       const model = hasImages ? 'gpt-5-mini' : 'gpt-5' // gpt-5-mini faster for vision
       const maxTokens = hasImages ? 600 : 300
 
-      console.log('[AI Chat] Using model:', model, 'with files:', currentFiles.length)
-      console.log('[AI Chat] Live Data Check:', {
         score: enrichedContext.unicornScore?.current,
         symbol: enrichedContext.symbol,
         price: enrichedContext.price?.current
@@ -1260,7 +1218,6 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
           timestamp: Date.now()
         }))
         localStorage.removeItem('iava_pending_request') // Clear pending since response is saved
-        console.log('[AI Chat] ✅ AI response persisted GLOBALLY (survives unmount)')
       } catch (e) {
         console.error('[AI Chat] Failed to persist globally:', e)
       }
@@ -1271,11 +1228,9 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
       // ELITE FEATURE: Detect trade recommendations for voice-to-trade
       const tradeSetup = parseTradeSetup(result.content)
       if (tradeSetup && tradeSetup.entry) {
-        console.log('[Voice-to-Trade] Trade recommendation detected:', tradeSetup)
 
         if (trustMode) {
           // TRUST MODE ENABLED: Execute trade INSTANTLY without confirmation
-          console.log('[Voice-to-Trade] Trust Mode ACTIVE - Executing trade instantly:', tradeSetup)
           setTimeout(() => confirmTrade(tradeSetup), 500) // Small delay for UX
           assistantMessage.tradeSetup = tradeSetup
           assistantMessage.tradeConfirmed = true // Mark as already confirmed

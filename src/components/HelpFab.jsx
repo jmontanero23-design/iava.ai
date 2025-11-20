@@ -14,7 +14,6 @@ export default function HelpFab({ context = {} }) {
     function onHelp(ev) {
       try {
         const detail = ev.detail || {}
-        console.log('[HelpFab] Help event received:', { question: detail.question?.substring(0, 50), hasContext: Boolean(detail.context) })
         if (typeof detail.question === 'string') setQ(detail.question)
         if (detail.context) setEventCtx(detail.context)
         setAns('')
@@ -31,10 +30,8 @@ export default function HelpFab({ context = {} }) {
     try {
       setLoading(true); setAns('')
       const merged = { ...(context||{}), ...(eventCtx||{}) }
-      console.log('[HelpFab] Sending question to API:', q.substring(0, 50) + '...')
       const r = await fetch('/api/llm/help', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q, context: merged }) })
       const j = await r.json()
-      console.log('[HelpFab] API response:', { ok: r.ok, status: r.status, hasAnswer: Boolean(j.answer) })
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
       setAns(j.answer || '')
     } catch (e) {

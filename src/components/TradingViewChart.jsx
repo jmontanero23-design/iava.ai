@@ -77,7 +77,6 @@ function TradingViewChart() {
     container.appendChild(widgetDiv)
     widgetDiv.appendChild(script)
 
-    console.log('[TradingView] Widget initialized:', { symbol, timeframe })
 
     // Cleanup
     return () => {

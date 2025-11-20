@@ -39,7 +39,6 @@ export default function MobilePushToTalk({ onTranscript, isListening: externalLi
   // Start recording
   const startRecording = async () => {
     try {
-      console.log('[Push-to-Talk] Starting recording...')
 
       // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -77,7 +76,6 @@ export default function MobilePushToTalk({ onTranscript, isListening: externalLi
       }
 
       mediaRecorder.onstop = async () => {
-        console.log('[Push-to-Talk] Recording stopped')
         setIsRecording(false)
         setRecordingTime(0)
 
@@ -105,7 +103,6 @@ export default function MobilePushToTalk({ onTranscript, isListening: externalLi
         setRecordingTime(prev => prev + 1)
       }, 1000)
 
-      console.log('[Push-to-Talk] Recording started')
 
     } catch (error) {
       console.error('[Push-to-Talk] Error starting recording:', error)
@@ -135,13 +132,11 @@ export default function MobilePushToTalk({ onTranscript, isListening: externalLi
     try {
       // Create audio blob
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-      console.log('[Push-to-Talk] Audio blob created:', audioBlob.size, 'bytes')
 
       // Convert to base64
       const base64Audio = await blobToBase64(audioBlob)
 
       // Call transcription API
-      console.log('[Push-to-Talk] Sending to Whisper API...')
       const response = await fetch('/api/transcribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -157,7 +152,6 @@ export default function MobilePushToTalk({ onTranscript, isListening: externalLi
       }
 
       const { text } = await response.json()
-      console.log('[Push-to-Talk] Transcription:', text)
 
       if (text && text.trim()) {
         // Send transcribed text to parent (AI Chat)

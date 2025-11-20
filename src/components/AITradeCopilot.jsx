@@ -92,7 +92,6 @@ export default function AITradeCopilot({ onClose }) {
   useEffect(() => {
     const handlePositionUpdate = async (event) => {
       const updatedPositions = event.detail
-      console.log('[Copilot] Raw positions received:', updatedPositions.length)
 
       // Validate all position symbols
       const validationResults = await Promise.all(
@@ -123,7 +122,6 @@ export default function AITradeCopilot({ onClose }) {
       }
 
       setPositions(valid)
-      console.log('[Copilot] ✅ Valid positions:', valid.length, 'Invalid:', invalid.length)
     }
 
     window.addEventListener('iava-positions-update', handlePositionUpdate)
@@ -140,7 +138,6 @@ export default function AITradeCopilot({ onClose }) {
         return cached
       }
 
-      console.log(`[Copilot] Fetching fresh score for ${symbol}...`)
       const bars = await fetchBars(symbol, timeframe, 200)
 
       if (!bars || bars.length === 0) {
@@ -166,7 +163,6 @@ export default function AITradeCopilot({ onClose }) {
         [symbol]: scoreData
       }))
 
-      console.log(`[Copilot] ✅ Fresh score for ${symbol}: ${scoreData.score.toFixed(0)}/100`)
       return scoreData
 
     } catch (error) {

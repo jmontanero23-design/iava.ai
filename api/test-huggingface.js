@@ -33,8 +33,6 @@ export default async function handler(req, res) {
     const testText = "Apple stock surges on strong earnings report"
     const model = 'ProsusAI/finbert'
 
-    console.log('[HF Test] Testing model:', model)
-    console.log('[HF Test] Test text:', testText)
 
     const response = await fetch(
       `https://router.huggingface.co/hf-inference/models/${model}`,
@@ -52,7 +50,6 @@ export default async function handler(req, res) {
       }
     )
 
-    console.log('[HF Test] Response status:', response.status)
 
     if (response.status === 503) {
       const errorText = await response.text()
@@ -73,7 +70,6 @@ export default async function handler(req, res) {
       })
     } else {
       const data = await response.json()
-      console.log('[HF Test] Success! Data:', JSON.stringify(data))
 
       results.tests.push({
         name: 'HuggingFace API Call (FinBERT)',
@@ -97,7 +93,6 @@ export default async function handler(req, res) {
     const testText = "This is great news for traders!"
     const model = 'finiteautomata/bertweet-base-sentiment-analysis'
 
-    console.log('[HF Test] Testing model:', model)
 
     const response = await fetch(
       `https://router.huggingface.co/hf-inference/models/${model}`,
@@ -192,7 +187,6 @@ export default async function handler(req, res) {
                    'ISSUES DETECTED - SEE DETAILS BELOW'
   }
 
-  console.log('[HF Test] Summary:', results.summary)
 
   return res.status(200).json(results)
 }

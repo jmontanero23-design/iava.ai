@@ -50,7 +50,6 @@ export default async function handler(req, res) {
     const startTime = Date.now()
     const selectedModel = model || 'gpt-5-nano'
 
-    console.log('[AI Gateway SDK] Calling:', selectedModel, 'messages:', messages.length)
 
     // Use Vercel AI SDK
     const result = await generateText({
@@ -62,7 +61,6 @@ export default async function handler(req, res) {
 
     const latency = Date.now() - startTime
 
-    console.log('[AI Gateway SDK] Success! Latency:', latency, 'ms')
 
     // Calculate cost
     const cost = calculateCost(result.usage, selectedModel)

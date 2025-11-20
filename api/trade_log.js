@@ -79,7 +79,6 @@ export default async function handler(req, res) {
       tradeLog.push(entry)
 
       // Log to console for Vercel logs
-      console.log('[trade_log]', JSON.stringify(entry))
 
       // TODO: Persist to external storage
       // await saveToVercelKV(entry)
