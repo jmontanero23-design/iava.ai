@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import TradingViewChartEmbed from './components/TradingViewChartEmbed.jsx'
 import { emaCloud, ichimoku, satyAtrLevels, pivotRibbonTrend, computeStates, pivotRibbon, ttmBands, ttmSqueeze } from './utils/indicators.js'
-import { EnhancedUnicornScore } from './services/ai/enhancedUnicornScore.js'
 import { useMarketData } from './contexts/MarketDataContext.jsx'
 import SqueezePanel from './components/chart/SqueezePanel.jsx'
 import SignalsPanel from './components/SignalsPanel.jsx'
@@ -286,10 +285,9 @@ export default function App() {
   const signalState = useMemo(() => computeStates(bars), [bars])
   const dailyState = useMemo(() => (dailyBars?.length ? computeStates(dailyBars) : null), [dailyBars])
 
-  // ULTRA ELITE AI INTEGRATION
+  // ULTRA ELITE AI INTEGRATION - Backend API call (environment variables accessible on server)
   const [aiScore, setAiScore] = useState(null)
   const [aiLoading, setAiLoading] = useState(false)
-  const enhancedScoreCalculator = useRef(new EnhancedUnicornScore())
 
   // Calculate Ultra Elite AI Score when symbol or bars change
   useEffect(() => {
@@ -319,15 +317,27 @@ export default function App() {
       }
     }
 
-    // Calculate AI score asynchronously
+    // Call backend API to calculate AI score (HuggingFace API key available there)
     const calculateAI = async () => {
       try {
         const aiData = prepareAIData()
-        const result = await enhancedScoreCalculator.current.calculateUltraUnicornScore(symbol, aiData)
 
-        if (!cancelled) {
-          setAiScore(result)
-          console.log('🦄 Ultra Elite AI Score:', result)
+        // Call backend API endpoint
+        const response = await fetch('/api/ai/score', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbol, data: aiData })
+        })
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`)
+        }
+
+        const { success, score } = await response.json()
+
+        if (!cancelled && success) {
+          setAiScore(score)
+          console.log('🦄 Ultra Elite AI Score:', score)
         }
       } catch (error) {
         console.error('AI Score calculation error:', error)
