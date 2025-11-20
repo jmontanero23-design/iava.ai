@@ -1025,17 +1025,6 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
       const hasImages = currentFiles.some(f => f.isImage)
       const hasDocuments = currentFiles.some(f => f.isPDF || f.isText)
 
-      // Debug: Log market data to verify connection
-        symbol: marketData.symbol,
-        hasRealData,
-        scoreAvailable: !!marketData.signalState?.score,
-        barsCount: marketData.bars?.length || 0,
-        currentPrice: marketData.currentPrice,
-        hasImages,
-        hasDocuments,
-        filesCount: currentFiles.length
-      })
-
       // Build world-class trading context from actual market data with FULL access
       const enrichedContext = await buildMarketContext({
         symbol: marketData.symbol || 'SPY',
