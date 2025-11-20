@@ -1178,11 +1178,6 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
       const model = hasImages ? 'gpt-5-mini' : 'gpt-5' // gpt-5-mini faster for vision
       const maxTokens = hasImages ? 600 : 300
 
-        score: enrichedContext.unicornScore?.current,
-        symbol: enrichedContext.symbol,
-        price: enrichedContext.price?.current
-      })
-
       const result = await callAI(model, aiMessages, {
         temperature: 0.1, // LOW temp for factual accuracy - no hallucinations!
         max_tokens: maxTokens,
