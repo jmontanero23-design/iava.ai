@@ -3,6 +3,9 @@
  * Run this to initialize your Neon PostgreSQL database
  */
 
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { neon } from '@neondatabase/serverless';
 import fs from 'fs';
 import path from 'path';

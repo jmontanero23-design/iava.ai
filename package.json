@@ -16,6 +16,7 @@
     "@neondatabase/serverless": "^1.0.2",
     "ai": "^5.0.92",
     "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
     "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
