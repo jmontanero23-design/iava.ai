@@ -37,7 +37,7 @@ export const ChronosForecasting = {
           body: JSON.stringify({
             time_series: data,
             horizon: horizon,
-            model: 'bolt-base'
+            model: 'base'  // Using Chronos-T5-Base for better accuracy
           }),
           timeout: 30000
         });
