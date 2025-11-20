@@ -601,10 +601,24 @@ export class EnhancedUnicornScore {
         score: scores.ai.score,
         weight: scores.ai.weight,
         contribution: scores.ai.score * scores.ai.weight,
-        topFactors: this.getTopFactors(scores.ai.components)
+        topFactors: this.getTopFactors(scores.ai.components),
+        // AI Model Transparency - Show which models contributed
+        modelsUsed: aiSignals.breakdown?.modelsUsed || [],
+        modelsFailed: aiSignals.breakdown?.modelsFailed || [],
+        modelContributions: aiSignals.breakdown?.contributions || {},
+        successRate: aiSignals.breakdown?.successRate || 'N/A'
       },
       bonuses: scores.bonuses,
-      summary: this.generateSummary(scores, aiSignals)
+      summary: this.generateSummary(scores, aiSignals),
+      // Top-level AI transparency
+      aiTransparency: {
+        totalModels: (aiSignals.breakdown?.modelsUsed?.length || 0) + (aiSignals.breakdown?.modelsFailed?.length || 0),
+        modelsWorking: aiSignals.breakdown?.modelsUsed?.length || 0,
+        modelsFailed: aiSignals.breakdown?.modelsFailed?.length || 0,
+        successRate: aiSignals.breakdown?.successRate || 'N/A',
+        workingModels: aiSignals.breakdown?.modelsUsed || [],
+        failedModels: aiSignals.breakdown?.modelsFailed || []
+      }
     };
   }
 

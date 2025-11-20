@@ -48,6 +48,18 @@ export default async function handler(req, res) {
     console.log(`[AI Score] Result type:`, typeof result.ultraUnicornScore);
     console.log(`[AI Score] Is NaN:`, isNaN(result.ultraUnicornScore));
 
+    // Log AI Model Transparency
+    if (result.breakdown?.aiTransparency) {
+      console.log(`[AI Score] 🤖 AI Models:`, {
+        total: result.breakdown.aiTransparency.totalModels,
+        working: result.breakdown.aiTransparency.modelsWorking,
+        failed: result.breakdown.aiTransparency.modelsFailed,
+        successRate: result.breakdown.aiTransparency.successRate,
+        workingModels: result.breakdown.aiTransparency.workingModels,
+        failedModels: result.breakdown.aiTransparency.failedModels
+      });
+    }
+
     // Validate result - if invalid, return fallback
     if (!result || typeof result.ultraUnicornScore !== 'number' || isNaN(result.ultraUnicornScore)) {
       console.error(`[AI Score] Invalid score calculated - returning fallback`);

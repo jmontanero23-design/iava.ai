@@ -379,7 +379,7 @@ export class UltraEliteAI {
     ]);
 
     // Combine all signals with weighted ensemble
-    const ultraScore = this.calculateUltraScore({
+    const scoreResult = this.calculateUltraScore({
       forecast,
       sentiment,
       rlSignal,
@@ -387,6 +387,9 @@ export class UltraEliteAI {
       quantum,
       technicals: data.technicals  // Our existing indicators
     });
+
+    const ultraScore = scoreResult.score || scoreResult; // Handle both old and new format
+    const breakdown = scoreResult.breakdown || {};
 
     return {
       symbol,
@@ -398,7 +401,16 @@ export class UltraEliteAI {
         sentiment: sentiment,
         rl_decision: rlSignal,
         patterns: patterns,
-        quantum_weight: quantum.optimal_weights[symbol] || 0
+        quantum_weight: quantum.optimal_weights?.[symbol] || 0
+      },
+      breakdown: {
+        modelsUsed: breakdown.modelsUsed || [],
+        modelsFailed: breakdown.modelsFailed || [],
+        contributions: breakdown.contributions || {},
+        totalModels: (breakdown.modelsUsed?.length || 0) + (breakdown.modelsFailed?.length || 0),
+        successRate: breakdown.modelsUsed?.length ?
+          `${breakdown.modelsUsed.length}/${(breakdown.modelsUsed.length + (breakdown.modelsFailed?.length || 0))}` :
+          'N/A'
       },
       timestamp: Date.now()
     };
@@ -407,62 +419,119 @@ export class UltraEliteAI {
   calculateUltraScore(signals) {
     // PhD Elite+++ Weighted Ensemble
     const weights = {
-      forecast: 0.25,      // Time series prediction
-      sentiment: 0.15,     // News/social sentiment
-      rl: 0.20,           // RL agent decision
-      patterns: 0.15,     // Chart patterns
-      quantum: 0.10,      // Portfolio optimization
+      forecast: 0.25,      // Time series prediction (Chronos-2 + TimesFM)
+      sentiment: 0.15,     // News/social sentiment (FinBERT + BERTweet + Twitter-RoBERTa)
+      rl: 0.20,           // RL agent decision (FinRL)
+      patterns: 0.15,     // Chart patterns (YOLOv8 ChartScanAI)
+      quantum: 0.10,      // Portfolio optimization (Quantum VQE)
       technicals: 0.15   // Traditional indicators
     };
 
     let score = 0;
+    const breakdown = {
+      modelsUsed: [],
+      modelsFailed: [],
+      contributions: {}
+    };
 
     try {
       // Forecast component (0-25) - Safe navigation
+      let forecastContribution = 0;
       if (signals?.forecast?.accuracy_score && signals.forecast.accuracy_score > 0.9) {
-        score += weights.forecast * 100;
+        forecastContribution = weights.forecast * 100;
+        breakdown.modelsUsed.push('Chronos-2 (Amazon)');
       } else if (signals?.forecast?.accuracy_score) {
-        // Partial credit for lower accuracy
-        score += weights.forecast * (signals.forecast.accuracy_score * 100);
+        forecastContribution = weights.forecast * (signals.forecast.accuracy_score * 100);
+        breakdown.modelsUsed.push('Chronos-2 (Partial)');
+      } else {
+        breakdown.modelsFailed.push('Chronos-2');
       }
+      score += forecastContribution;
+      breakdown.contributions.forecast = forecastContribution;
 
       // Sentiment component (0-15) - Safe navigation
-      const positiveScore = signals?.sentiment?.sentiment?.positive || 0.5; // Default to neutral
-      score += weights.sentiment * (positiveScore * 100);
+      const positiveScore = signals?.sentiment?.sentiment?.positive;
+      let sentimentContribution = 0;
+      if (positiveScore !== undefined) {
+        sentimentContribution = weights.sentiment * (positiveScore * 100);
+        const models = signals?.sentiment?.models_used || ['FinBERT', 'BERTweet', 'Twitter-RoBERTa'];
+        breakdown.modelsUsed.push(...models);
+      } else {
+        sentimentContribution = weights.sentiment * 50; // Fallback
+        breakdown.modelsFailed.push('Sentiment Models');
+      }
+      score += sentimentContribution;
+      breakdown.contributions.sentiment = sentimentContribution;
 
       // RL component (0-20) - Safe navigation
+      let rlContribution = 0;
       if (signals?.rlSignal?.action === 'buy') {
-        score += weights.rl * ((signals.rlSignal.confidence || 0.5) * 100);
+        rlContribution = weights.rl * ((signals.rlSignal.confidence || 0.5) * 100);
+        breakdown.modelsUsed.push('FinRL (Buy)');
       } else if (signals?.rlSignal?.action === 'hold') {
-        score += weights.rl * 50; // Neutral score for hold
+        rlContribution = weights.rl * 50;
+        breakdown.modelsUsed.push('FinRL (Hold)');
+      } else if (signals?.rlSignal?.action) {
+        breakdown.modelsUsed.push('FinRL (Sell)');
+      } else {
+        breakdown.modelsFailed.push('FinRL');
       }
+      score += rlContribution;
+      breakdown.contributions.rl = rlContribution;
 
       // Pattern component (0-15) - Safe navigation
+      let patternContribution = 0;
       if (signals?.patterns?.detected_patterns?.length > 0) {
         const bestPattern = signals.patterns.detected_patterns[0];
         if (bestPattern?.buy_signal) {
-          score += weights.patterns * ((bestPattern.confidence || 0.5) * 100);
+          patternContribution = weights.patterns * ((bestPattern.confidence || 0.5) * 100);
+          breakdown.modelsUsed.push(`YOLOv8 (${bestPattern.pattern})`);
         }
+      } else {
+        breakdown.modelsFailed.push('YOLOv8 Pattern Detection');
       }
+      score += patternContribution;
+      breakdown.contributions.patterns = patternContribution;
 
       // Quantum component (0-10) - Safe navigation
-      const quantumWeight = signals?.quantum?.optimal_weights || signals?.quantum || 0;
-      score += weights.quantum * Math.min(100, quantumWeight * 500);  // Scale up small weights
+      let quantumContribution = 0;
+      const quantumWeight = signals?.quantum?.optimal_weights || signals?.quantum;
+      if (quantumWeight) {
+        quantumContribution = weights.quantum * Math.min(100, quantumWeight * 500);
+        breakdown.modelsUsed.push('Quantum VQE');
+      } else {
+        breakdown.modelsFailed.push('Quantum Optimization');
+      }
+      score += quantumContribution;
+      breakdown.contributions.quantum = quantumContribution;
 
       // Technical indicators (0-15) - Safe navigation
-      const techScore = signals?.technicals?.score || 50; // Default to neutral
-      score += weights.technicals * techScore;
+      const techScore = signals?.technicals?.score || 50;
+      const techContribution = weights.technicals * techScore;
+      score += techContribution;
+      breakdown.contributions.technicals = techContribution;
+      breakdown.modelsUsed.push('Traditional Indicators');
 
       // Ensure score is a valid number
       if (isNaN(score) || !isFinite(score)) {
         console.error('[UltraScore] Invalid score calculated:', score, 'signals:', signals);
-        return 50; // Return neutral score on error
+        return { score: 50, breakdown }; // Return neutral score on error
       }
 
-      return Math.min(100, Math.max(0, score));
+      const finalScore = Math.min(100, Math.max(0, score));
+
+      // Log breakdown for debugging
+      console.log(`[UltraScore] Breakdown:`, {
+        finalScore,
+        modelsUsed: breakdown.modelsUsed.length,
+        modelsFailed: breakdown.modelsFailed.length,
+        contributions: breakdown.contributions
+      });
+
+      return { score: finalScore, breakdown };
     } catch (error) {
       console.error('[UltraScore] Error calculating score:', error);
-      return 50; // Return neutral score on error
+      return { score: 50, breakdown }; // Return neutral score on error
     }
   }
 
