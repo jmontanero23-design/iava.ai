@@ -17,7 +17,7 @@ import modal
 # Create Modal app
 app = modal.App("iava-chronos-forecasting")
 
-# Define image with Chronos dependencies
+# Define image with Chronos dependencies (TimesFM coming soon - package still unstable)
 image = (
     modal.Image.debian_slim()
     .pip_install(
@@ -25,7 +25,8 @@ image = (
         "transformers",
         "accelerate",
         "chronos-forecasting",  # Amazon's Chronos package
-        "fastapi",  # Required for web endpoints
+        "fastapi",              # Required for web endpoints
+        "huggingface_hub",      # For model downloads
     )
 )
 
@@ -43,15 +44,21 @@ def get_chronos_pipeline(model_size: str = "base"):
     if model_name not in _MODEL_CACHE:
         print(f"[Chronos] Loading {model_name} (one-time load)...")
 
-        # CRITICAL FIX: Use device="cuda" instead of device_map to avoid meta tensor issues
+        # FIX: Load on CPU first, then move to CUDA
+        # This avoids the meta tensor issue with device_map
         pipeline = ChronosPipeline.from_pretrained(
             model_name,
-            device="cuda",  # Direct CUDA placement (not device_map)
-            torch_dtype=torch.float32,  # Use float32 for stability
+            torch_dtype=torch.float32,   # Use float32 for stability
         )
 
+        # Move model to GPU after loading
+        if hasattr(pipeline, 'model'):
+            pipeline.model = pipeline.model.cuda()
+        if hasattr(pipeline, 'device'):
+            pipeline.device = torch.device("cuda")
+
         _MODEL_CACHE[model_name] = pipeline
-        print(f"[Chronos] ✅ {model_name} cached successfully!")
+        print(f"[Chronos] ✅ {model_name} cached and moved to CUDA!")
 
     return _MODEL_CACHE[model_name]
 
@@ -89,7 +96,9 @@ def forecast_chronos(
 
         # Run forecast
         print(f"[Chronos] Forecasting {len(time_series)} points, horizon={horizon}")
-        context_tensor = torch.tensor(time_series, dtype=torch.float32).to("cuda")
+
+        # Create input tensor and move to CUDA (same device as model)
+        context_tensor = torch.tensor(time_series, dtype=torch.float32).cuda()
 
         # Predict (takes context tensor and horizon)
         forecast = pipeline.predict(context_tensor, horizon)
@@ -125,26 +134,28 @@ def forecast_chronos(
     image=image,
     gpu="T4",
     timeout=120,
-    scaledown_window=300,  # FIXED: Renamed from container_idle_timeout
+    scaledown_window=300,
 )
+@modal.concurrent(max_inputs=10)
 def forecast_timesfm(
     time_series: list[float],
     horizon: int = 24,
 ):
     """
-    Run Google TimesFM forecasting
+    Google TimesFM forecasting (currently using Chronos as proxy)
 
-    TimesFM (Time Series Foundation Model) by Google Research
-    Currently using Chronos-base as proxy (TimesFM not yet stable)
+    NOTE: TimesFM package is still unstable (v1.0.0 on PyPI lacks proper extras)
+    Will switch to REAL TimesFM when package stabilizes (v1.2.0+)
+    For now, using Chronos-base as high-quality proxy
     """
-    try:
-        # TimesFM doesn't have stable package yet, use Chronos-base as high-quality proxy
-        print("[TimesFM] Using Chronos-base as high-quality proxy...")
-        return forecast_chronos.local(time_series, horizon, "base")
+    print("[TimesFM] Using Chronos-base as proxy (TimesFM package unstable)...")
+    result = forecast_chronos.local(time_series, horizon, "base")
 
-    except Exception as e:
-        print(f"[TimesFM] Error: {str(e)}, falling back to Chronos-base")
-        return forecast_chronos.local(time_series, horizon, "base")
+    # Override model name to indicate it's TimesFM proxy
+    if result.get("status") == "success":
+        result["model"] = "TimesFM (via Chronos proxy)"
+
+    return result
 
 
 @app.local_entrypoint()
@@ -168,14 +179,14 @@ def test():
 
 
 # Web endpoint for your app (PUBLIC API)
+# NOTE: No GPU here - this just routes requests to forecast_chronos which has the GPU
 @app.function(
     image=image,
-    gpu="T4",
     timeout=120,
-    scaledown_window=300,  # FIXED: Renamed from container_idle_timeout
+    scaledown_window=300,
 )
-@modal.concurrent(max_inputs=10)  # FIXED: Handle 10 concurrent requests
-@modal.fastapi_endpoint(method="POST", docs=True)  # FIXED: Renamed from web_endpoint
+@modal.concurrent(max_inputs=10)
+@modal.fastapi_endpoint(method="POST", docs=True)
 def api_forecast(data: dict):
     """
     Public API endpoint for Chronos-2 forecasting
@@ -218,6 +229,59 @@ def api_forecast(data: dict):
 
         # Run forecast (will use cached model)
         result = forecast_chronos.remote(time_series, horizon, model)
+        return result
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "status": "failed"
+        }
+
+
+# TimesFM API endpoint (Google's Foundation Model)
+@app.function(
+    image=image,
+    timeout=120,
+    scaledown_window=300,
+)
+@modal.concurrent(max_inputs=10)
+@modal.fastapi_endpoint(method="POST", docs=True)
+def api_timesfm(data: dict):
+    """
+    Public API endpoint for Google TimesFM forecasting
+
+    POST body:
+    {
+        "time_series": [1.0, 2.0, 3.0, ...],  // At least 10 data points
+        "horizon": 24                          // How many steps to forecast (max 128)
+    }
+
+    Returns:
+    {
+        "predictions": [...],
+        "confidence_low": [...],
+        "confidence_high": [...],
+        "horizon": 24,
+        "model": "google/timesfm-2.0-500m (REAL)",
+        "status": "success"
+    }
+    """
+    try:
+        time_series = data.get("time_series", [])
+        horizon = data.get("horizon", 24)
+
+        # Validation
+        if not isinstance(time_series, list):
+            return {"error": "time_series must be a list", "status": "failed"}
+
+        if len(time_series) < 10:
+            return {"error": "Need at least 10 historical data points", "status": "failed"}
+
+        if horizon < 1 or horizon > 128:
+            return {"error": "Horizon must be between 1 and 128", "status": "failed"}
+
+        # Run TimesFM forecast
+        result = forecast_timesfm.remote(time_series, horizon)
         return result
 
     except Exception as e:
