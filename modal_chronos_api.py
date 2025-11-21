@@ -1,7 +1,7 @@
 """
 Modal Deployment: Real Chronos-2 Time Series Forecasting API
 
-Cost: ~$0.001 per forecast (CPU mode for stability)
+Cost: ~$0.001 per forecast (CPU mode - CUDA disabled at runtime)
 Setup:
   1. pip install modal
   2. modal setup
@@ -9,7 +9,7 @@ Setup:
 
 Author: iava.ai
 Date: November 21, 2025
-Version: 3.0 (CPU-only mode for stability - fixes device mismatch errors)
+Version: 4.1 (CUDA disabled at runtime - fixes accelerate meta tensor bug)
 """
 
 import modal
@@ -18,10 +18,11 @@ import modal
 app = modal.App("iava-chronos-forecasting")
 
 # Define image with Chronos dependencies
+# NOTE: Using regular PyTorch - we disable CUDA at runtime inside function
 image = (
     modal.Image.debian_slim()
     .pip_install(
-        "torch",
+        "torch",                # Regular PyTorch (not CPU-only)
         "transformers",
         "accelerate",
         "chronos-forecasting",  # Amazon's Chronos package
@@ -35,36 +36,37 @@ image = (
 _MODEL_CACHE = {}
 
 def get_chronos_pipeline(model_size: str = "base"):
-    """Load and cache Chronos pipeline - CPU mode for stability"""
+    """Load and cache Chronos pipeline - CPU mode (no device_map to avoid meta tensors)"""
+    import os
     import torch
     from chronos import ChronosPipeline
-    import os
 
-    # FORCE CPU: Disable CUDA entirely
+    # CRITICAL: Disable CUDA BEFORE importing/loading anything
+    # This makes accelerate skip device mapping entirely
     os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
     model_name = f"amazon/chronos-t5-{model_size}"
 
     if model_name not in _MODEL_CACHE:
-        print(f"[Chronos] Loading {model_name} (one-time load, CPU mode)...")
+        print(f"[Chronos] Loading {model_name} (CPU mode, no device_map)...")
         print(f"[Chronos] CUDA available: {torch.cuda.is_available()}")
 
-        # CPU-ONLY MODE: Don't specify device_map, defaults to CPU
-        # This avoids device mismatch with internal boundaries tensor
+        # NO device_map - let it load to CPU naturally without accelerate interference
+        # Using dtype instead of torch_dtype (deprecated)
         pipeline = ChronosPipeline.from_pretrained(
             model_name,
-            torch_dtype=torch.float32,   # Use float32 for stability
+            dtype=torch.float32,
         )
 
         _MODEL_CACHE[model_name] = pipeline
-        print(f"[Chronos] ✅ {model_name} cached on CPU!")
+        print(f"[Chronos] ✅ {model_name} cached!")
 
     return _MODEL_CACHE[model_name]
 
 
 @app.function(
     image=image,
-    cpu=4,             # Use 4 CPUs for faster inference (no GPU needed)
+    cpu=4,             # Use 4 CPUs (GPU has Chronos library bug)
     memory=8192,       # 8GB RAM for model
     timeout=120,       # 2 minutes max
     scaledown_window=300,
@@ -76,7 +78,7 @@ def forecast_chronos(
     model_size: str = "base"  # tiny, small, base (recommended), or large
 ):
     """
-    Run Chronos-2 forecasting (CPU mode for stability)
+    Run Chronos-2 forecasting (CUDA disabled at runtime - fixes accelerate bug)
 
     Args:
         time_series: Historical values (e.g., stock prices)
@@ -97,7 +99,7 @@ def forecast_chronos(
         # Run forecast
         print(f"[Chronos] Forecasting {len(time_series)} points, horizon={horizon}")
 
-        # Create input tensor on CPU (matches model device)
+        # Create input tensor on CPU
         context_tensor = torch.tensor(time_series, dtype=torch.float32)
 
         # Predict (takes context tensor and horizon)
@@ -105,7 +107,7 @@ def forecast_chronos(
 
         # Extract median and quantiles
         low_quantile, median, high_quantile = np.quantile(
-            forecast[0].numpy(),  # Already on CPU
+            forecast[0].numpy(),
             [0.1, 0.5, 0.9],
             axis=0
         )
