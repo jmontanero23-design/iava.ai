@@ -31,6 +31,27 @@ export default function AITradeCopilot({ onClose }) {
   const [newsCache, setNewsCache] = useState([]) // Breaking news cache
   const [watchlist, setWatchlist] = useState(['SPY', 'QQQ', 'AAPL', 'TSLA', 'NVDA']) // PhD++: Multi-symbol monitoring
   const [validatedSymbols, setValidatedSymbols] = useState(new Set()) // Cache of validated symbols
+  const [lastConfluence, setLastConfluence] = useState(null) // Track confluence changes
+
+  // PhD++ CONFLUENCE CALCULATOR: Calculate current multi-TF confluence status
+  const getConfluenceStatus = () => {
+    const primary = marketData.signalState?.pivotNow
+    const daily = marketData.dailyState?.pivotNow
+    const secondary = marketData.consensus?.secondary?.pivotNow
+
+    const directions = [primary, daily, secondary].filter(d => d && d !== 'neutral')
+    const bullishCount = directions.filter(d => d === 'bullish').length
+    const bearishCount = directions.filter(d => d === 'bearish').length
+
+    const allAligned = bullishCount === directions.length || bearishCount === directions.length
+
+    if (allAligned && directions.length >= 2) {
+      return { status: 'full', direction: bullishCount > 0 ? 'bullish' : 'bearish', count: directions.length }
+    } else if (bullishCount >= 2 || bearishCount >= 2) {
+      return { status: 'partial', direction: bullishCount > bearishCount ? 'bullish' : 'bearish', count: Math.max(bullishCount, bearishCount) }
+    }
+    return { status: 'mixed', direction: 'neutral', count: 0 }
+  }
 
   // PhD++ POSITION HEALTH SCORE: Calculate comprehensive health for a position
   const calculatePositionHealth = (position, scoreData) => {
@@ -689,6 +710,39 @@ export default function AITradeCopilot({ onClose }) {
     return () => clearInterval(scanInterval)
   }, [marketData])
 
+  // PhD++ CONFLUENCE CHANGE ALERT: Alert when confluence changes to FULL
+  useEffect(() => {
+    if (!marketData.signalState) return
+
+    const currentConfluence = getConfluenceStatus()
+    const symbol = marketData.symbol
+
+    // Check for confluence change to FULL
+    if (lastConfluence?.status !== 'full' && currentConfluence.status === 'full' && symbol) {
+      const direction = currentConfluence.direction.toUpperCase()
+      const currentTime = Date.now()
+
+      setAlerts(prev => {
+        // Avoid duplicate alerts
+        if (prev.some(a => a.id.includes(`confluence-${symbol}`) && Date.now() - a.timestamp < 300000)) return prev
+
+        return [{
+          id: `confluence-${symbol}-${currentTime}`,
+          type: 'success',
+          priority: 'high',
+          symbol,
+          title: `🎯 FULL CONFLUENCE: ${direction}`,
+          message: `${symbol} now has ${currentConfluence.count} timeframes aligned ${direction}`,
+          action: direction === 'BULLISH' ? 'High-conviction LONG setup' : 'High-conviction SHORT setup',
+          timestamp: currentTime
+        }, ...prev].slice(0, 10)
+      })
+    }
+
+    // Track current confluence state
+    setLastConfluence(currentConfluence)
+  }, [marketData.signalState, marketData.dailyState, marketData.consensus])
+
   // Dismiss alert
   const dismissAlert = (alertId) => {
     setAlerts(prev => prev.filter(a => a.id !== alertId))
@@ -907,6 +961,103 @@ export default function AITradeCopilot({ onClose }) {
             {positions.length > 3 && (
               <div className="text-xs text-slate-500 text-center">+{positions.length - 3} more positions</div>
             )}
+          </div>
+        )}
+
+        {/* PhD++ Multi-TF Confluence Indicator */}
+        {marketData.signalState && (
+          <div className="bg-slate-900/30 px-3 py-2 border-b border-slate-700/50">
+            <div className="text-xs text-slate-500 font-semibold mb-1.5">MULTI-TF CONFLUENCE</div>
+            <div className="flex items-center gap-2">
+              {/* Current Timeframe */}
+              <div className={`px-2 py-1 rounded text-xs font-semibold ${
+                marketData.signalState.pivotNow === 'bullish' ? 'bg-emerald-900/50 text-emerald-400' :
+                marketData.signalState.pivotNow === 'bearish' ? 'bg-red-900/50 text-red-400' :
+                'bg-slate-800 text-slate-400'
+              }`}>
+                <span className="opacity-60">{marketData.timeframe || '5m'}</span>
+                <span className="ml-1">
+                  {marketData.signalState.pivotNow === 'bullish' ? '↑' :
+                   marketData.signalState.pivotNow === 'bearish' ? '↓' : '—'}
+                </span>
+              </div>
+
+              {/* Daily Timeframe */}
+              {marketData.dailyState && (
+                <>
+                  <span className="text-slate-600">+</span>
+                  <div className={`px-2 py-1 rounded text-xs font-semibold ${
+                    marketData.dailyState.pivotNow === 'bullish' ? 'bg-emerald-900/50 text-emerald-400' :
+                    marketData.dailyState.pivotNow === 'bearish' ? 'bg-red-900/50 text-red-400' :
+                    'bg-slate-800 text-slate-400'
+                  }`}>
+                    <span className="opacity-60">D</span>
+                    <span className="ml-1">
+                      {marketData.dailyState.pivotNow === 'bullish' ? '↑' :
+                       marketData.dailyState.pivotNow === 'bearish' ? '↓' : '—'}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {/* Consensus (Secondary TF) */}
+              {marketData.consensus && (
+                <>
+                  <span className="text-slate-600">+</span>
+                  <div className={`px-2 py-1 rounded text-xs font-semibold ${
+                    marketData.consensus.secondary?.pivotNow === 'bullish' ? 'bg-emerald-900/50 text-emerald-400' :
+                    marketData.consensus.secondary?.pivotNow === 'bearish' ? 'bg-red-900/50 text-red-400' :
+                    'bg-slate-800 text-slate-400'
+                  }`}>
+                    <span className="opacity-60">{marketData.consensus.secTf || '15m'}</span>
+                    <span className="ml-1">
+                      {marketData.consensus.secondary?.pivotNow === 'bullish' ? '↑' :
+                       marketData.consensus.secondary?.pivotNow === 'bearish' ? '↓' : '—'}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {/* Confluence Status */}
+              <div className="ml-auto flex items-center gap-1.5">
+                {(() => {
+                  const primary = marketData.signalState?.pivotNow
+                  const daily = marketData.dailyState?.pivotNow
+                  const secondary = marketData.consensus?.secondary?.pivotNow
+
+                  // Count alignments
+                  const directions = [primary, daily, secondary].filter(d => d && d !== 'neutral')
+                  const bullishCount = directions.filter(d => d === 'bullish').length
+                  const bearishCount = directions.filter(d => d === 'bearish').length
+
+                  const allAligned = bullishCount === directions.length || bearishCount === directions.length
+                  const partialAlign = bullishCount >= 2 || bearishCount >= 2
+
+                  if (allAligned && directions.length >= 2) {
+                    return (
+                      <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        FULL CONFLUENCE
+                      </span>
+                    )
+                  } else if (partialAlign) {
+                    return (
+                      <span className="text-xs font-medium text-amber-400 flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-amber-500" />
+                        PARTIAL
+                      </span>
+                    )
+                  } else {
+                    return (
+                      <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-slate-600" />
+                        MIXED
+                      </span>
+                    )
+                  }
+                })()}
+              </div>
+            </div>
           </div>
         )}
 
