@@ -15,6 +15,54 @@
 import { useState, useEffect } from 'react'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
 
+// ============================================================================
+// OPTION 4: KEYWORD-BASED IMPORTANCE WEIGHTING
+// ============================================================================
+
+/**
+ * Keyword importance boosters for sentiment weighting
+ * Higher = more impactful news that should have more weight
+ */
+const KEYWORD_BOOSTS = {
+  // Fed & Monetary Policy (highest impact)
+  'fomc': 2.5, 'rate hike': 2.3, 'rate cut': 2.3, 'federal reserve': 2.5,
+  'interest rate': 2.0, 'quantitative': 2.0, 'tightening': 1.8, 'powell': 2.0,
+
+  // Market Events (high impact)
+  'crash': 2.5, 'surge': 1.8, 'plunge': 2.0, 'rally': 1.8, 'correction': 1.7,
+  'bear market': 2.0, 'bull market': 1.8, 'all-time high': 1.6, 'record': 1.4,
+  'vix': 1.8, 'volatility': 1.5, 'panic': 2.0,
+
+  // Corporate Actions
+  'bankruptcy': 2.5, 'merger': 2.2, 'acquisition': 2.2, 'buyout': 2.0,
+  'earnings beat': 2.0, 'earnings miss': 2.0, 'guidance': 1.8,
+
+  // Analyst & Regulatory
+  'upgrade': 1.6, 'downgrade': 1.6, 'sec': 2.0, 'investigation': 2.0,
+  'lawsuit': 1.8, 'fraud': 2.0, 'fine': 1.5,
+
+  // Source indicators (if mentioned in headline)
+  'bloomberg': 1.5, 'reuters': 1.5, 'wsj': 1.5, 'breaking': 1.8
+}
+
+/**
+ * Calculate importance weight for a headline based on keywords
+ * @param {string} headline - News headline text
+ * @returns {number} Weight multiplier (1.0 = normal, 2.5 = very important)
+ */
+function getHeadlineWeight(headline) {
+  const lowerHeadline = headline.toLowerCase()
+  let maxBoost = 1.0
+
+  for (const [keyword, boost] of Object.entries(KEYWORD_BOOSTS)) {
+    if (lowerHeadline.includes(keyword)) {
+      maxBoost = Math.max(maxBoost, boost)
+    }
+  }
+
+  return maxBoost
+}
+
 export default function MarketSentiment() {
   const { marketData } = useMarketData()
 
@@ -27,7 +75,7 @@ export default function MarketSentiment() {
 
   // Calculate market regime from market data
   const getMarketRegime = () => {
-    if (!marketData.unicornScore) return { regime: 'neutral', confidence: 0 }
+    if (!marketData.unicornScore) return { regime: 'neutral', confidence: 50 } // FIX: Was 0%, now 50%
 
     const score = marketData.unicornScore.current
     const emaData = marketData.indicators?.ema
@@ -159,17 +207,40 @@ export default function MarketSentiment() {
 
       setNewsItems(analyzedNews)
 
-      // Calculate overall sentiment from news (using -1 to +1 normalized scores)
-      const sentimentScores = analyzedNews.map(item => {
-        if (item.error || item.fallback) {
-          return 50 // Neutral for errors/fallbacks
-        }
+      // Calculate overall sentiment from news using OPTION 4 WEIGHTED AVERAGE
+      // Important news (crash, FOMC, VIX) has MORE weight than generic articles
+      let totalWeight = 0
+      let weightedSentimentSum = 0
+
+      analyzedNews.forEach(item => {
+        // Calculate keyword-based importance weight
+        const weight = getHeadlineWeight(item.headline)
+
         // Convert -1 to +1 scale to 0 to 100 scale
         // -1 (bearish) = 0, 0 (neutral) = 50, +1 (bullish) = 100
-        return ((item.score + 1) / 2) * 100
+        const score = item.error || item.fallback
+          ? 50 // Neutral for errors/fallbacks
+          : ((item.score + 1) / 2) * 100
+
+        // Store weight on item for UI display
+        item.weight = weight
+
+        // Accumulate weighted score
+        totalWeight += weight
+        weightedSentimentSum += score * weight
+
+        // Log high-impact news
+        if (weight > 1.5) {
+          console.log(`📊 High-impact news (${weight.toFixed(1)}x): "${item.headline.substring(0, 50)}..."`)
+        }
       })
 
-      const avgSentiment = sentimentScores.reduce((a, b) => a + b, 0) / sentimentScores.length
+      // Calculate weighted average (instead of simple average)
+      const avgSentiment = totalWeight > 0
+        ? weightedSentimentSum / totalWeight
+        : 50
+
+      console.log(`📰 Sentiment: ${analyzedNews.length} articles, total weight: ${totalWeight.toFixed(1)}, weighted avg: ${avgSentiment.toFixed(1)}`)
 
       // Blend with technical sentiment
       const regime = getMarketRegime()
@@ -382,6 +453,17 @@ export default function MarketSentiment() {
                       <span className="text-xs text-slate-400">
                         {Math.round((item.confidence || 0.5) * 100)}% confident
                       </span>
+
+                      {/* Option 4: Importance Weight Badge */}
+                      {item.weight && item.weight > 1.2 && (
+                        <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${
+                          item.weight >= 2.0 ? 'bg-red-600/30 border border-red-500/40 text-red-300' :
+                          item.weight >= 1.5 ? 'bg-amber-600/30 border border-amber-500/40 text-amber-300' :
+                          'bg-cyan-600/20 border border-cyan-500/30 text-cyan-300'
+                        }`}>
+                          {item.weight.toFixed(1)}x impact
+                        </span>
+                      )}
 
                       {/* PhD++ Multi-Model Consensus Badge */}
                       {item.consensus && (
