@@ -322,11 +322,20 @@ export default function App() {
       try {
         const aiData = prepareAIData()
 
-        // Call backend API endpoint
+        // Call backend API endpoint with gated bonus settings
         const response = await fetch('/api/ai/score', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ symbol, data: aiData })
+          body: JSON.stringify({
+            symbol,
+            data: aiData,
+            settings: {
+              enforceDaily,
+              consensusBonus,
+              dailyState,
+              consensus
+            }
+          })
         })
 
         if (!response.ok) {
@@ -356,7 +365,7 @@ export default function App() {
     return () => {
       cancelled = true
     }
-  }, [symbol, bars, signalState])
+  }, [symbol, bars, signalState, enforceDaily, consensusBonus, dailyState, consensus])
 
   // Publish market data to context for AI Chat and other features
   useEffect(() => {

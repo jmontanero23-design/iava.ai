@@ -905,7 +905,7 @@ export default function AITradeCopilot({ onClose }) {
                     {(marketData.signalState.score || 0).toFixed(0)}
                   </span>
                 </div>
-                {/* Ultra Unicorn Score (AI-powered) */}
+                {/* Ultra Unicorn Score (AI-powered with bonuses) */}
                 <div className="flex items-center gap-1">
                   <span className="text-slate-500">🦄 AI:</span>
                   <span className={`font-bold ${
@@ -916,6 +916,18 @@ export default function AITradeCopilot({ onClose }) {
                   }`}>
                     {marketData.unicornScore?.ultraUnicornScore?.toFixed(0) || '--'}
                   </span>
+                  {/* Show bonus breakdown if bonuses applied */}
+                  {marketData.unicornScore?.bonuses?.total > 0 && (
+                    <span className="text-emerald-400" title={`Daily: +${marketData.unicornScore.bonuses.dailyConfluence || 0}, Consensus: +${marketData.unicornScore.bonuses.consensusAlignment || 0}, Vol: +${marketData.unicornScore.bonuses.volumeBreakout || 0}`}>
+                      (+{marketData.unicornScore.bonuses.total})
+                    </span>
+                  )}
+                  {/* Show GATED warning */}
+                  {marketData.unicornScore?.bonuses?.gated && (
+                    <span className="text-amber-400" title={marketData.unicornScore.bonuses.gateReason || 'Daily confluence not met'}>
+                      ⛔
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
