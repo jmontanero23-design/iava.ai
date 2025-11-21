@@ -23,6 +23,7 @@ export function MarketDataProvider({ children }) {
     consensusBonus: false,
     consensus: null,
     account: null,
+    unicornScore: null,  // Ultra Unicorn Score (50% tech + 25% sentiment + 25% forecast)
     updatedAt: null
   })
 

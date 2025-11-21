@@ -342,7 +342,37 @@ export default function AITradeCopilot({ onClose }) {
         }
       }
 
-      // PhD++ Alert 5: RSI Divergence Warning - NOW USES FRESH DATA!
+      // PhD++ Alert 5: AI vs Technical Score Divergence
+      // IMPORTANT: When sentiment/forecast conflicts with technicals
+      if (marketData.unicornScore?.ultraUnicornScore && marketData.symbol === symbol) {
+        const techScore = scoreData?.score || 0
+        const aiScore = marketData.unicornScore.ultraUnicornScore
+        const divergence = Math.abs(techScore - aiScore)
+
+        // Alert if AI score and technical score differ by more than 25 points
+        if (divergence > 25) {
+          const techBullish = techScore >= 60
+          const aiBullish = aiScore >= 60
+
+          // Only alert if they're on different sides
+          if (techBullish !== aiBullish) {
+            newAlerts.push({
+              id: `divergence-${symbol}-${currentTime}`,
+              type: 'warning',
+              priority: 'high',
+              symbol,
+              title: '⚠️ AI vs Technical Divergence',
+              message: `Tech: ${techScore.toFixed(0)} vs AI: ${aiScore.toFixed(0)} - ${techBullish ? 'Tech bullish but AI bearish' : 'AI bullish but Tech bearish'}`,
+              action: techBullish
+                ? 'AI sentiment/forecast is bearish - consider caution on longs'
+                : 'AI sentiment/forecast is bullish - technicals may catch up',
+              timestamp: currentTime
+            })
+          }
+        }
+      }
+
+      // PhD++ Alert 6: RSI Divergence Warning - NOW USES FRESH DATA!
       if (scoreData?.signalState?.rsi) {
         const rsi = scoreData.signalState.rsi
 
@@ -491,7 +521,11 @@ export default function AITradeCopilot({ onClose }) {
       if (dailyStats.tradesCount >= riskConfig.dailyMaxTrades) return
 
       // Perfect Unicorn Setup (score > 85) with Risk Validation
-      if (state.score >= 85 && state.rawScore >= 85 && currentPrice) {
+      // PhD++ FIX: Use AI score when available, fallback to technical
+      const effectiveScore = marketData.unicornScore?.ultraUnicornScore || state.score
+      const scoreLabel = marketData.unicornScore ? 'AI' : 'Tech'
+
+      if (effectiveScore >= 80 && state.rawScore >= 75 && currentPrice) {
         // Calculate estimated stop based on SATY levels
         const satyStop = state.saty?.support || (currentPrice * 0.985) // Fallback to 1.5% stop
 
@@ -510,7 +544,7 @@ export default function AITradeCopilot({ onClose }) {
             priority: 'high',
             symbol,
             title: '🦄 PERFECT UNICORN SETUP!',
-            message: `${symbol} Unicorn Score: ${state.score.toFixed(0)}/100 - ALL indicators aligned.${riskMsg}`,
+            message: `${symbol} ${scoreLabel} Score: ${effectiveScore.toFixed(0)}/100 - ALL indicators aligned.${riskMsg}`,
             action: 'Consider entering LONG position',
             timestamp: currentTime,
             suggestedEntry: currentPrice,
@@ -555,8 +589,8 @@ export default function AITradeCopilot({ onClose }) {
         })
       }
 
-      // Bearish Perfect Setup (score < 15)
-      if (state.score <= 15 && state.rawScore <= -85) {
+      // Bearish Perfect Setup (score < 20)
+      if (effectiveScore <= 20 && state.rawScore <= -75) {
         setAlerts(prev => {
           if (prev.some(a => a.id.includes(`bear-perfect-${symbol}`))) return prev
 
@@ -566,7 +600,7 @@ export default function AITradeCopilot({ onClose }) {
             priority: 'high',
             symbol,
             title: '🐻 PERFECT BEARISH SETUP!',
-            message: `${symbol} Unicorn Score: ${state.score.toFixed(0)}/100 - Strong bearish alignment`,
+            message: `${symbol} ${scoreLabel} Score: ${effectiveScore.toFixed(0)}/100 - Strong bearish alignment`,
             action: 'Consider entering SHORT position or exiting longs',
             timestamp: currentTime
           }, ...prev].slice(0, 10)
@@ -858,16 +892,31 @@ export default function AITradeCopilot({ onClose }) {
               <div className="text-slate-400">
                 {marketData.symbol}: <span className="text-slate-200">${marketData.currentPrice?.toFixed(2) || 'N/A'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-400">Unicorn Score:</span>
-                <span className={`font-bold ${
-                  (marketData.signalState.score || 0) >= 70 ? 'text-emerald-400' :
-                  (marketData.signalState.score || 0) >= 50 ? 'text-cyan-400' :
-                  (marketData.signalState.score || 0) >= 35 ? 'text-amber-400' :
-                  'text-red-400'
-                }`}>
-                  {(marketData.signalState.score || 0).toFixed(0)}/100
-                </span>
+              <div className="flex items-center gap-3">
+                {/* Technical Score */}
+                <div className="flex items-center gap-1">
+                  <span className="text-slate-500">Tech:</span>
+                  <span className={`font-bold ${
+                    (marketData.signalState.score || 0) >= 70 ? 'text-emerald-400' :
+                    (marketData.signalState.score || 0) >= 50 ? 'text-cyan-400' :
+                    (marketData.signalState.score || 0) >= 35 ? 'text-amber-400' :
+                    'text-red-400'
+                  }`}>
+                    {(marketData.signalState.score || 0).toFixed(0)}
+                  </span>
+                </div>
+                {/* Ultra Unicorn Score (AI-powered) */}
+                <div className="flex items-center gap-1">
+                  <span className="text-slate-500">🦄 AI:</span>
+                  <span className={`font-bold ${
+                    (marketData.unicornScore?.ultraUnicornScore || 0) >= 70 ? 'text-emerald-400' :
+                    (marketData.unicornScore?.ultraUnicornScore || 0) >= 50 ? 'text-cyan-400' :
+                    (marketData.unicornScore?.ultraUnicornScore || 0) >= 35 ? 'text-amber-400' :
+                    'text-red-400'
+                  }`}>
+                    {marketData.unicornScore?.ultraUnicornScore?.toFixed(0) || '--'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

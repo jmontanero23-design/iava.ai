@@ -382,7 +382,8 @@ export default function App() {
       consensusBonus,
       consensus,
       account,
-      usingSample
+      usingSample,
+      unicornScore: aiScore  // Ultra Unicorn Score (50% tech + 25% sentiment + 25% forecast)
     })
 
     // Notify components that symbol has loaded
@@ -391,7 +392,7 @@ export default function App() {
     }))
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bars, signalState, dailyState, overlays, threshold, enforceDaily, consensusBonus, consensus, account, usingSample])
+  }, [bars, signalState, dailyState, overlays, threshold, enforceDaily, consensusBonus, consensus, account, usingSample, aiScore])
 
   const stale = useMemo(() => {
     if (!bars?.length) return true
