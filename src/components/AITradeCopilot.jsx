@@ -32,17 +32,19 @@ export default function AITradeCopilot({ onClose }) {
   const [watchlist, setWatchlist] = useState(['SPY', 'QQQ', 'AAPL', 'TSLA', 'NVDA']) // PhD++: Multi-symbol monitoring
   const [validatedSymbols, setValidatedSymbols] = useState(new Set()) // Cache of validated symbols
   const [lastConfluence, setLastConfluence] = useState(null) // Track confluence changes
-  const [alertCooldowns, setAlertCooldowns] = useState({}) // PhD++ Track cooldowns per alert type
+
+  // PhD++ ALERT COOLDOWN: Use ref instead of state for synchronous checks
+  const alertCooldownsRef = useRef({})
 
   // PhD++ ALERT COOLDOWN: Check if an alert type is on cooldown (60 seconds default)
   const isOnCooldown = (alertKey, cooldownMs = 60000) => {
-    const lastTime = alertCooldowns[alertKey]
+    const lastTime = alertCooldownsRef.current[alertKey]
     return lastTime && (Date.now() - lastTime) < cooldownMs
   }
 
-  // PhD++ Mark an alert type as recently fired
+  // PhD++ Mark an alert type as recently fired (synchronous - no state delay)
   const markAlertFired = (alertKey) => {
-    setAlertCooldowns(prev => ({ ...prev, [alertKey]: Date.now() }))
+    alertCooldownsRef.current[alertKey] = Date.now()
   }
 
   // PhD++ POSITION-AWARE HELPERS: Get position info for smart alerts
