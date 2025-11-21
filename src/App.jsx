@@ -33,6 +33,7 @@ import MultiSymbolAnalysis from './components/MultiSymbolAnalysis.jsx'
 import StrategyBuilder from './components/StrategyBuilder.jsx'
 import RiskControlsPanel from './components/RiskControlsPanel.jsx'
 import MultiTimeframePanel from './components/MultiTimeframePanel.jsx'
+import ChronosForecast from './components/ChronosForecast.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -114,10 +115,10 @@ export default function App() {
         return
       }
 
-      // Number keys (1-7) to switch tabs
-      if (e.key >= '1' && e.key <= '7') {
+      // Number keys (1-8) to switch tabs
+      if (e.key >= '1' && e.key <= '8') {
         e.preventDefault()
-        const tabs = ['chart', 'ai-features', 'ai-chat', 'monitoring', 'nlp-scanner', 'market-sentiment', 'multi-timeframe']
+        const tabs = ['chart', 'ai-features', 'ai-chat', 'monitoring', 'nlp-scanner', 'market-sentiment', 'multi-timeframe', 'chronos-forecast']
         setActiveTab(tabs[parseInt(e.key) - 1])
       }
 
@@ -293,6 +294,20 @@ export default function App() {
               <span>Multi-TF</span>
               <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">7</kbd>
             </button>
+            <button
+              onClick={() => setActiveTab('chronos-forecast')}
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
+                activeTab === 'chronos-forecast'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-500 text-white shadow-lg shadow-indigo-500/30'
+                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
+              }`}
+              title="Chronos AI Forecast - PhD++ Time Series Predictions (Press 8)"
+              aria-label="Switch to Chronos AI Forecast tab"
+            >
+              <span className="text-xl">🔮</span>
+              <span>Forecast</span>
+              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">8</kbd>
+            </button>
 
             {/* User Profile, Mode Toggle & Feature Status - Always visible on right side */}
             <div className="ml-auto flex items-center gap-3">
@@ -362,6 +377,10 @@ export default function App() {
 
         {activeTab === 'multi-timeframe' && (
           <MultiTFPanelWrapper setActiveTab={setActiveTab} />
+        )}
+
+        {activeTab === 'chronos-forecast' && (
+          <ChronosForecast />
         )}
 
         {activeTab === 'smart-watchlist' && (
