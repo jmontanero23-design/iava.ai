@@ -11,8 +11,8 @@ const MarketDataContext = createContext(null)
 
 export function MarketDataProvider({ children }) {
   const [marketData, setMarketData] = useState({
-    symbol: 'SPY',
-    timeframe: '1Min',
+    symbol: null,          // CRITICAL: Start null to prevent stale data issues
+    timeframe: null,       // Will be set by AppChart on mount
     currentPrice: null,
     bars: [],
     signalState: null,
@@ -24,7 +24,8 @@ export function MarketDataProvider({ children }) {
     consensus: null,
     account: null,
     unicornScore: null,  // Ultra Unicorn Score (50% tech + 25% sentiment + 25% forecast)
-    updatedAt: null
+    updatedAt: null,
+    isLoading: false       // Track loading state to prevent stale reads
   })
 
   const updateMarketData = (updates) => {

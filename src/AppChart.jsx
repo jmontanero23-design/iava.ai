@@ -378,6 +378,8 @@ export default function App() {
 
     const currentPrice = bars[bars.length - 1]?.close
 
+    // PhD++ CRITICAL: Verify bars match current symbol before publishing
+    // This prevents stale data from being published during symbol transitions
     updateMarketData({
       symbol,
       timeframe,
@@ -392,7 +394,8 @@ export default function App() {
       consensus,
       account,
       usingSample,
-      unicornScore: aiScore  // Ultra Unicorn Score (50% tech + 25% sentiment + 25% forecast)
+      unicornScore: aiScore,  // Ultra Unicorn Score (50% tech + 25% sentiment + 25% forecast)
+      isLoading: false        // PhD++ Mark loading complete - safe to read data now
     })
 
     // Notify components that symbol has loaded
@@ -419,6 +422,15 @@ export default function App() {
       const myId = ++loadReq.current
       setLoading(true)
       setError('')
+
+      // PhD++ CRITICAL FIX: Mark as loading IMMEDIATELY to prevent stale reads
+      // This tells Copilot/Forecast to wait for fresh data
+      updateMarketData({
+        isLoading: true,
+        symbol: s,        // Update symbol immediately so components know what's loading
+        timeframe: tf
+      })
+
       // Yahoo Finance - FREE unlimited data, no rate limits!
       const res = await fetchBars(s, tf, 500)
       if (myId !== loadReq.current) {

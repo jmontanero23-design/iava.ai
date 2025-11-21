@@ -21,14 +21,29 @@ export default function ChronosForecast() {
   const [isLoading, setIsLoading] = useState(false)
   const [lastUpdate, setLastUpdate] = useState(null)
   const [error, setError] = useState(null)
+  const [lastSymbol, setLastSymbol] = useState(null) // PhD++ Track last symbol to detect changes
+
+  // PhD++ CRITICAL: Check if marketData is loading - prevents stale data usage
+  const isDataLoading = marketData.isLoading || !marketData.symbol
 
   // Get current symbol and price data
-  const symbol = marketData.symbol || 'SPY'
+  const symbol = marketData.symbol || null  // PhD++ Don't default to SPY - wait for real data
   const bars = marketData.bars || []
   const currentPrice = bars.length > 0 ? bars[bars.length - 1]?.close : null
 
   // Run forecast
   const runForecast = async () => {
+    // PhD++ CRITICAL: Don't run with stale/loading data
+    if (isDataLoading) {
+      console.log('[Forecast] Waiting for data to load...')
+      return
+    }
+
+    if (!symbol) {
+      setError('No symbol loaded')
+      return
+    }
+
     if (!bars || bars.length < 10) {
       setError('Need at least 10 price bars for forecasting')
       return
@@ -36,6 +51,7 @@ export default function ChronosForecast() {
 
     setIsLoading(true)
     setError(null)
+    setLastSymbol(symbol) // Track which symbol we're forecasting
 
     try {
       // Extract close prices for forecasting
@@ -75,10 +91,21 @@ export default function ChronosForecast() {
 
   // Auto-run forecast when symbol changes
   useEffect(() => {
-    if (bars && bars.length >= 10) {
+    // PhD++ CRITICAL: Clear old forecast when symbol changes
+    if (symbol !== lastSymbol && lastSymbol !== null) {
+      setForecast(null)
+      setError(null)
+    }
+
+    // PhD++ Don't auto-run if data is still loading
+    if (isDataLoading) {
+      return
+    }
+
+    if (bars && bars.length >= 10 && symbol) {
       runForecast()
     }
-  }, [symbol, bars?.length])
+  }, [symbol, bars?.length, isDataLoading])
 
   // Get direction color
   const getDirectionColor = (direction) => {
@@ -119,20 +146,28 @@ export default function ChronosForecast() {
             🔮 Chronos AI Forecast
           </h1>
           <p className="text-slate-400 text-sm mt-1">
-            {symbol} • {lastUpdate ? `Updated ${lastUpdate.toLocaleTimeString()}` : 'Not yet loaded'}
+            {isDataLoading ? (
+              <span className="text-amber-400 animate-pulse">Loading market data...</span>
+            ) : symbol ? (
+              <>
+                {symbol} • {lastUpdate ? `Updated ${lastUpdate.toLocaleTimeString()}` : 'Ready to forecast'}
+              </>
+            ) : (
+              'No symbol loaded'
+            )}
           </p>
         </div>
 
         <button
           onClick={runForecast}
-          disabled={isLoading}
+          disabled={isLoading || isDataLoading || !symbol}
           className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-            isLoading
+            isLoading || isDataLoading || !symbol
               ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
               : 'bg-indigo-600 hover:bg-indigo-500 text-white'
           }`}
         >
-          {isLoading ? '🔄 Forecasting...' : '🔄 Refresh Forecast'}
+          {isLoading ? '🔄 Forecasting...' : isDataLoading ? '⏳ Loading...' : '🔄 Refresh Forecast'}
         </button>
       </div>
 
@@ -145,16 +180,20 @@ export default function ChronosForecast() {
       )}
 
       {/* Loading State */}
-      {isLoading && (
+      {(isLoading || isDataLoading) && (
         <div className="bg-slate-800/50 rounded-xl p-8 text-center mb-6">
           <div className="text-4xl mb-4 animate-pulse">🔮</div>
-          <div className="text-slate-300 font-semibold">Running Chronos-T5-Base Forecast...</div>
-          <div className="text-slate-500 text-sm mt-2">Analyzing {bars.length} price bars</div>
+          <div className="text-slate-300 font-semibold">
+            {isDataLoading ? 'Loading market data...' : 'Running Chronos-T5-Base Forecast...'}
+          </div>
+          <div className="text-slate-500 text-sm mt-2">
+            {isDataLoading ? `Symbol: ${symbol || 'loading...'}` : `Analyzing ${bars.length} price bars for ${symbol}`}
+          </div>
         </div>
       )}
 
       {/* Forecast Results */}
-      {forecast && !isLoading && (
+      {forecast && !isLoading && !isDataLoading && (
         <div className="space-y-6">
           {/* Main Direction Card */}
           <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
@@ -318,19 +357,25 @@ export default function ChronosForecast() {
       )}
 
       {/* Empty State */}
-      {!forecast && !isLoading && !error && (
+      {!forecast && !isLoading && !isDataLoading && !error && (
         <div className="bg-slate-800/50 rounded-xl p-8 text-center">
           <div className="text-4xl mb-4">🔮</div>
-          <div className="text-slate-300 font-semibold">No Forecast Data</div>
-          <div className="text-slate-500 text-sm mt-2">
-            Load a symbol with price data to see AI predictions
+          <div className="text-slate-300 font-semibold">
+            {symbol ? 'Ready to Forecast' : 'No Symbol Loaded'}
           </div>
-          <button
-            onClick={runForecast}
-            className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold transition-all"
-          >
-            Run Forecast
-          </button>
+          <div className="text-slate-500 text-sm mt-2">
+            {symbol
+              ? `Click below to run AI forecast for ${symbol}`
+              : 'Load a symbol on the chart to see AI predictions'}
+          </div>
+          {symbol && (
+            <button
+              onClick={runForecast}
+              className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold transition-all"
+            >
+              Run Forecast for {symbol}
+            </button>
+          )}
         </div>
       )}
     </div>

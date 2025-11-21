@@ -33,8 +33,14 @@ export default function AITradeCopilot({ onClose }) {
   const [validatedSymbols, setValidatedSymbols] = useState(new Set()) // Cache of validated symbols
   const [lastConfluence, setLastConfluence] = useState(null) // Track confluence changes
 
+  // PhD++ CRITICAL: Check if marketData is still loading (prevents stale data usage)
+  const isDataLoading = marketData.isLoading || !marketData.symbol
+
   // PhD++ CONFLUENCE CALCULATOR: Calculate current multi-TF confluence status
   const getConfluenceStatus = () => {
+    // Don't calculate if data is loading
+    if (isDataLoading) return { status: 'loading', direction: 'neutral', count: 0 }
+
     const primary = marketData.signalState?.pivotNow
     const daily = marketData.dailyState?.pivotNow
     const secondary = marketData.consensus?.secondary?.pivotNow
@@ -578,7 +584,8 @@ export default function AITradeCopilot({ onClose }) {
 
   // PhD++ OPPORTUNITY SCANNER with RISK VALIDATION
   const scanForOpportunities = async () => {
-    if (!marketData.symbol) return
+    // PhD++ CRITICAL: Don't scan with stale/loading data
+    if (!marketData.symbol || marketData.isLoading) return
 
     try {
       const state = marketData.signalState
@@ -1169,50 +1176,56 @@ export default function AITradeCopilot({ onClose }) {
         </div>
 
         {/* Market Status */}
-        {marketData.symbol && marketData.signalState && (
+        {marketData.symbol && (
           <div className="bg-slate-800/30 px-3 py-2 border-t border-slate-700/50">
             <div className="flex items-center justify-between text-xs">
               <div className="text-slate-400">
-                {marketData.symbol}: <span className="text-slate-200">${marketData.currentPrice?.toFixed(2) || 'N/A'}</span>
+                {marketData.symbol}: {marketData.isLoading ? (
+                  <span className="text-amber-400 animate-pulse">Loading...</span>
+                ) : (
+                  <span className="text-slate-200">${marketData.currentPrice?.toFixed(2) || 'N/A'}</span>
+                )}
               </div>
-              <div className="flex items-center gap-3">
-                {/* Technical Score */}
-                <div className="flex items-center gap-1">
-                  <span className="text-slate-500">Tech:</span>
-                  <span className={`font-bold ${
-                    (marketData.signalState.score || 0) >= 70 ? 'text-emerald-400' :
-                    (marketData.signalState.score || 0) >= 50 ? 'text-cyan-400' :
-                    (marketData.signalState.score || 0) >= 35 ? 'text-amber-400' :
-                    'text-red-400'
-                  }`}>
-                    {(marketData.signalState.score || 0).toFixed(0)}
-                  </span>
-                </div>
-                {/* Ultra Unicorn Score (AI-powered with bonuses) */}
-                <div className="flex items-center gap-1">
-                  <span className="text-slate-500">🦄 AI:</span>
-                  <span className={`font-bold ${
-                    (marketData.unicornScore?.ultraUnicornScore || 0) >= 70 ? 'text-emerald-400' :
-                    (marketData.unicornScore?.ultraUnicornScore || 0) >= 50 ? 'text-cyan-400' :
-                    (marketData.unicornScore?.ultraUnicornScore || 0) >= 35 ? 'text-amber-400' :
-                    'text-red-400'
-                  }`}>
-                    {marketData.unicornScore?.ultraUnicornScore?.toFixed(0) || '--'}
-                  </span>
-                  {/* Show bonus breakdown if bonuses applied */}
-                  {marketData.unicornScore?.bonuses?.total > 0 && (
-                    <span className="text-emerald-400" title={`Daily: +${marketData.unicornScore.bonuses.dailyConfluence || 0}, Consensus: +${marketData.unicornScore.bonuses.consensusAlignment || 0}, Vol: +${marketData.unicornScore.bonuses.volumeBreakout || 0}`}>
-                      (+{marketData.unicornScore.bonuses.total})
+              {!marketData.isLoading && marketData.signalState && (
+                <div className="flex items-center gap-3">
+                  {/* Technical Score */}
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-500">Tech:</span>
+                    <span className={`font-bold ${
+                      (marketData.signalState.score || 0) >= 70 ? 'text-emerald-400' :
+                      (marketData.signalState.score || 0) >= 50 ? 'text-cyan-400' :
+                      (marketData.signalState.score || 0) >= 35 ? 'text-amber-400' :
+                      'text-red-400'
+                    }`}>
+                      {(marketData.signalState.score || 0).toFixed(0)}
                     </span>
-                  )}
-                  {/* Show GATED warning */}
-                  {marketData.unicornScore?.bonuses?.gated && (
-                    <span className="text-amber-400" title={marketData.unicornScore.bonuses.gateReason || 'Daily confluence not met'}>
-                      ⛔
+                  </div>
+                  {/* Ultra Unicorn Score (AI-powered with bonuses) */}
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-500">🦄 AI:</span>
+                    <span className={`font-bold ${
+                      (marketData.unicornScore?.ultraUnicornScore || 0) >= 70 ? 'text-emerald-400' :
+                      (marketData.unicornScore?.ultraUnicornScore || 0) >= 50 ? 'text-cyan-400' :
+                      (marketData.unicornScore?.ultraUnicornScore || 0) >= 35 ? 'text-amber-400' :
+                      'text-red-400'
+                    }`}>
+                      {marketData.unicornScore?.ultraUnicornScore?.toFixed(0) || '--'}
                     </span>
-                  )}
+                    {/* Show bonus breakdown if bonuses applied */}
+                    {marketData.unicornScore?.bonuses?.total > 0 && (
+                      <span className="text-emerald-400" title={`Daily: +${marketData.unicornScore.bonuses.dailyConfluence || 0}, Consensus: +${marketData.unicornScore.bonuses.consensusAlignment || 0}, Vol: +${marketData.unicornScore.bonuses.volumeBreakout || 0}`}>
+                        (+{marketData.unicornScore.bonuses.total})
+                      </span>
+                    )}
+                    {/* Show GATED warning */}
+                    {marketData.unicornScore?.bonuses?.gated && (
+                      <span className="text-amber-400" title={marketData.unicornScore.bonuses.gateReason || 'Daily confluence not met'}>
+                        ⛔
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}
