@@ -42,12 +42,18 @@ export default function AITradeCopilot({ onClose }) {
     if (isDataLoading) return { status: 'loading', direction: 'neutral', count: 0 }
 
     const primary = marketData.signalState?.pivotNow
-    const daily = marketData.dailyState?.pivotNow
+    // Only include daily if NOT already on Daily timeframe (avoid double-counting)
+    const daily = marketData.timeframe !== '1Day' ? marketData.dailyState?.pivotNow : null
     const secondary = marketData.consensus?.secondary?.pivotNow
 
     const directions = [primary, daily, secondary].filter(d => d && d !== 'neutral')
     const bullishCount = directions.filter(d => d === 'bullish').length
     const bearishCount = directions.filter(d => d === 'bearish').length
+
+    // On Daily with no secondary, just return the primary direction
+    if (directions.length < 2) {
+      return { status: 'single', direction: primary || 'neutral', count: 1 }
+    }
 
     const allAligned = bullishCount === directions.length || bearishCount === directions.length
 
@@ -972,9 +978,12 @@ export default function AITradeCopilot({ onClose }) {
         )}
 
         {/* PhD++ Multi-TF Confluence Indicator */}
-        {marketData.signalState && (
+        {(marketData.signalState || isDataLoading) && (
           <div className="bg-slate-900/30 px-3 py-2 border-b border-slate-700/50">
             <div className="text-xs text-slate-500 font-semibold mb-1.5">MULTI-TF CONFLUENCE</div>
+            {isDataLoading ? (
+              <div className="text-xs text-amber-400 animate-pulse">Loading timeframe data...</div>
+            ) : (
             <div className="flex items-center gap-2">
               {/* Current Timeframe */}
               <div className={`px-2 py-1 rounded text-xs font-semibold ${
@@ -989,8 +998,8 @@ export default function AITradeCopilot({ onClose }) {
                 </span>
               </div>
 
-              {/* Daily Timeframe */}
-              {marketData.dailyState && (
+              {/* Daily Timeframe - ONLY show if NOT already on Daily timeframe */}
+              {marketData.dailyState && marketData.timeframe !== '1Day' && (
                 <>
                   <span className="text-slate-600">+</span>
                   <div className={`px-2 py-1 rounded text-xs font-semibold ${
@@ -1029,7 +1038,8 @@ export default function AITradeCopilot({ onClose }) {
               <div className="ml-auto flex items-center gap-1.5">
                 {(() => {
                   const primary = marketData.signalState?.pivotNow
-                  const daily = marketData.dailyState?.pivotNow
+                  // Only include daily if NOT already on Daily timeframe (avoid double-counting)
+                  const daily = marketData.timeframe !== '1Day' ? marketData.dailyState?.pivotNow : null
                   const secondary = marketData.consensus?.secondary?.pivotNow
 
                   // Count alignments
@@ -1039,6 +1049,18 @@ export default function AITradeCopilot({ onClose }) {
 
                   const allAligned = bullishCount === directions.length || bearishCount === directions.length
                   const partialAlign = bullishCount >= 2 || bearishCount >= 2
+
+                  // On Daily with no secondary, just show the primary direction
+                  if (directions.length < 2) {
+                    const direction = primary === 'bullish' ? 'BULLISH' : primary === 'bearish' ? 'BEARISH' : 'NEUTRAL'
+                    const color = primary === 'bullish' ? 'text-emerald-400' : primary === 'bearish' ? 'text-red-400' : 'text-slate-500'
+                    return (
+                      <span className={`text-xs font-medium ${color} flex items-center gap-1`}>
+                        <span className={`w-2 h-2 rounded-full ${primary === 'bullish' ? 'bg-emerald-500' : primary === 'bearish' ? 'bg-red-500' : 'bg-slate-600'}`} />
+                        {direction}
+                      </span>
+                    )
+                  }
 
                   if (allAligned && directions.length >= 2) {
                     return (
@@ -1065,6 +1087,7 @@ export default function AITradeCopilot({ onClose }) {
                 })()}
               </div>
             </div>
+            )}
           </div>
         )}
 
