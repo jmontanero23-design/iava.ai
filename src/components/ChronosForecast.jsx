@@ -13,7 +13,6 @@
 
 import { useState, useEffect } from 'react'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
-import { ChronosForecasting } from '../services/ai/ultraEliteModels_v2_SIMPLIFIED.js'
 
 export default function ChronosForecast() {
   const { marketData } = useMarketData()
@@ -44,8 +43,23 @@ export default function ChronosForecast() {
 
       console.log(`🔮 Running Chronos forecast for ${symbol} with ${prices.length} data points...`)
 
-      // Run the forecast
-      const result = await ChronosForecasting.forecast(prices, 24)
+      // Call backend API (which has access to Modal)
+      const response = await fetch('/api/forecast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prices,
+          horizon: 24,
+          symbol
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `API error: ${response.status}`)
+      }
+
+      const result = await response.json()
 
       setForecast(result)
       setLastUpdate(new Date())
