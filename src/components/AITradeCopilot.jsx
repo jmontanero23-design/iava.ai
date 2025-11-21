@@ -32,6 +32,49 @@ export default function AITradeCopilot({ onClose }) {
   const [watchlist, setWatchlist] = useState(['SPY', 'QQQ', 'AAPL', 'TSLA', 'NVDA']) // PhD++: Multi-symbol monitoring
   const [validatedSymbols, setValidatedSymbols] = useState(new Set()) // Cache of validated symbols
   const [lastConfluence, setLastConfluence] = useState(null) // Track confluence changes
+  const [alertCooldowns, setAlertCooldowns] = useState({}) // PhD++ Track cooldowns per alert type
+
+  // PhD++ ALERT COOLDOWN: Check if an alert type is on cooldown (60 seconds default)
+  const isOnCooldown = (alertKey, cooldownMs = 60000) => {
+    const lastTime = alertCooldowns[alertKey]
+    return lastTime && (Date.now() - lastTime) < cooldownMs
+  }
+
+  // PhD++ Mark an alert type as recently fired
+  const markAlertFired = (alertKey) => {
+    setAlertCooldowns(prev => ({ ...prev, [alertKey]: Date.now() }))
+  }
+
+  // PhD++ POSITION-AWARE HELPERS: Get position info for smart alerts
+  const getPosition = (symbol) => positions.find(p => p.symbol === symbol)
+  const getPositionSide = (symbol) => getPosition(symbol)?.side || null
+  const hasPosition = (symbol) => !!getPosition(symbol)
+
+  // PhD++ Check if signal conflicts with position (BEARISH signal + LONG position = conflict)
+  const hasPositionConflict = (symbol, signalDirection) => {
+    const side = getPositionSide(symbol)
+    if (!side) return false // No position = no conflict
+    // Conflict: bullish signal + short position OR bearish signal + long position
+    return (signalDirection === 'bullish' && side === 'short') ||
+           (signalDirection === 'bearish' && side === 'long')
+  }
+
+  // PhD++ Check if signal aligns with position (BULLISH signal + LONG position = aligned)
+  const hasPositionAlignment = (symbol, signalDirection) => {
+    const side = getPositionSide(symbol)
+    if (!side) return false // No position = no alignment
+    return (signalDirection === 'bullish' && side === 'long') ||
+           (signalDirection === 'bearish' && side === 'short')
+  }
+
+  // PhD++ Get position info string for alert badges
+  const getPositionBadge = (symbol) => {
+    const pos = getPosition(symbol)
+    if (!pos) return null
+    const qty = parseFloat(pos.qty)
+    const side = pos.side.toUpperCase()
+    return `📍 ${side} ${qty} shares`
+  }
 
   // PhD++ CRITICAL: Check if marketData is still loading (prevents stale data usage)
   const isDataLoading = marketData.isLoading || !marketData.symbol
@@ -281,11 +324,14 @@ export default function AITradeCopilot({ onClose }) {
       if (scoreData) {
         const score = scoreData.score
 
-        if (side === 'long' && score < 40) {
+        // PhD++ STABLE ID + COOLDOWN: Prevents duplicate alerts
+        const scoreAlertKey = `score-${symbol}-${side}`
+        if (side === 'long' && score < 40 && !isOnCooldown(scoreAlertKey)) {
+          markAlertFired(scoreAlertKey)
           newAlerts.push({
-            id: `score-${symbol}-${currentTime}`,
+            id: scoreAlertKey,
             type: 'danger',
-            priority: 'high', // Elevated from medium - this is REAL-TIME fresh data!
+            priority: 'high',
             symbol,
             title: 'Unicorn Score Deteriorating',
             message: `${symbol} Unicorn Score: ${score.toFixed(0)}/100 (BEARISH) - Fresh data!`,
@@ -294,9 +340,10 @@ export default function AITradeCopilot({ onClose }) {
           })
         }
 
-        if (side === 'short' && score > 70) {
+        if (side === 'short' && score > 70 && !isOnCooldown(scoreAlertKey)) {
+          markAlertFired(scoreAlertKey)
           newAlerts.push({
-            id: `score-${symbol}-${currentTime}`,
+            id: scoreAlertKey,
             type: 'danger',
             priority: 'high',
             symbol,
@@ -307,11 +354,13 @@ export default function AITradeCopilot({ onClose }) {
           })
         }
 
-        // PhD++ NEW: Position Health Alert
+        // PhD++ NEW: Position Health Alert (with cooldown)
         const health = calculatePositionHealth(position, scoreData)
-        if (health.score < 35) {
+        const healthAlertKey = `health-critical-${symbol}`
+        if (health.score < 35 && !isOnCooldown(healthAlertKey)) {
+          markAlertFired(healthAlertKey)
           newAlerts.push({
-            id: `health-critical-${symbol}-${currentTime}`,
+            id: healthAlertKey,
             type: 'danger',
             priority: 'high',
             symbol,
@@ -323,15 +372,17 @@ export default function AITradeCopilot({ onClose }) {
         }
       }
 
-      // Alert 2: Large Price Move
+      // Alert 2: Large Price Move (with cooldown)
       const priceChange = side === 'long' ?
         ((currentPrice - entry) / entry) * 100 :
         ((entry - currentPrice) / entry) * 100
 
-      if (Math.abs(priceChange) > 5) {
+      const moveAlertKey = `move-${symbol}-${side}`
+      if (Math.abs(priceChange) > 5 && !isOnCooldown(moveAlertKey)) {
+        markAlertFired(moveAlertKey)
         const isProfit = priceChange > 0
         newAlerts.push({
-          id: `move-${symbol}-${currentTime}`,
+          id: moveAlertKey,
           type: isProfit ? 'success' : 'warning',
           priority: 'medium',
           symbol,
@@ -342,7 +393,7 @@ export default function AITradeCopilot({ onClose }) {
         })
       }
 
-      // PhD++ Alert 3: SATY-Based Stop Loss Recommendation
+      // PhD++ Alert 3: SATY-Based Stop Loss Recommendation (with cooldown)
       if (marketData.symbol === symbol && marketData.overlays?.saty) {
         const saty = marketData.overlays.saty
         const stopLevel = side === 'long' ? saty.levels?.t0236?.dn : saty.levels?.t0236?.up
@@ -351,9 +402,11 @@ export default function AITradeCopilot({ onClose }) {
           const distanceToSATY = Math.abs(currentPrice - stopLevel) / currentPrice * 100
 
           // Alert if price is near SATY level (good stop location)
-          if (distanceToSATY < 1) {
+          const satyStopKey = `saty-stop-${symbol}`
+          if (distanceToSATY < 1 && !isOnCooldown(satyStopKey)) {
+            markAlertFired(satyStopKey)
             newAlerts.push({
-              id: `saty-stop-${symbol}-${currentTime}`,
+              id: satyStopKey,
               type: 'info',
               priority: 'high',
               symbol,
@@ -365,10 +418,12 @@ export default function AITradeCopilot({ onClose }) {
           }
 
           // Alert if price breaks below/above stop level
+          const satyBrokenKey = `saty-broken-${symbol}`
           const stopBroken = side === 'long' ? currentPrice < stopLevel : currentPrice > stopLevel
-          if (stopBroken) {
+          if (stopBroken && !isOnCooldown(satyBrokenKey)) {
+            markAlertFired(satyBrokenKey)
             newAlerts.push({
-              id: `saty-broken-${symbol}-${currentTime}`,
+              id: satyBrokenKey,
               type: 'danger',
               priority: 'high',
               symbol,
@@ -385,9 +440,11 @@ export default function AITradeCopilot({ onClose }) {
         if (targetLevel) {
           const distanceToTarget = Math.abs(currentPrice - targetLevel) / currentPrice * 100
 
-          if (distanceToTarget < 2) {
+          const satyTargetKey = `saty-target-${symbol}`
+          if (distanceToTarget < 2 && !isOnCooldown(satyTargetKey)) {
+            markAlertFired(satyTargetKey)
             newAlerts.push({
-              id: `saty-target-${symbol}-${currentTime}`,
+              id: satyTargetKey,
               type: 'success',
               priority: 'high',
               symbol,
@@ -400,15 +457,17 @@ export default function AITradeCopilot({ onClose }) {
         }
       }
 
-      // PhD++ Alert 4: Regime Change Warning - NOW USES FRESH DATA!
+      // PhD++ Alert 4: Regime Change Warning - NOW USES FRESH DATA! (with cooldown)
       if (scoreData?.signalState?.regime) {
         const regime = scoreData.signalState.regime
         const regimeScore = scoreData.signalState.rawScore || 0
+        const regimeAlertKey = `regime-${symbol}-${side}`
 
         // Alert if holding long position but regime turned bearish
-        if (side === 'long' && regimeScore < -35) {
+        if (side === 'long' && regimeScore < -35 && !isOnCooldown(regimeAlertKey)) {
+          markAlertFired(regimeAlertKey)
           newAlerts.push({
-            id: `regime-${symbol}-${currentTime}`,
+            id: regimeAlertKey,
             type: 'danger',
             priority: 'high',
             symbol,
@@ -420,9 +479,10 @@ export default function AITradeCopilot({ onClose }) {
         }
 
         // Alert if holding short position but regime turned bullish
-        if (side === 'short' && regimeScore > 35) {
+        if (side === 'short' && regimeScore > 35 && !isOnCooldown(regimeAlertKey)) {
+          markAlertFired(regimeAlertKey)
           newAlerts.push({
-            id: `regime-${symbol}-${currentTime}`,
+            id: regimeAlertKey,
             type: 'danger',
             priority: 'high',
             symbol,
@@ -434,22 +494,24 @@ export default function AITradeCopilot({ onClose }) {
         }
       }
 
-      // PhD++ Alert 5: AI vs Technical Score Divergence
+      // PhD++ Alert 5: AI vs Technical Score Divergence (with cooldown)
       // IMPORTANT: When sentiment/forecast conflicts with technicals
       if (marketData.unicornScore?.ultraUnicornScore && marketData.symbol === symbol) {
         const techScore = scoreData?.score || 0
         const aiScore = marketData.unicornScore.ultraUnicornScore
         const divergence = Math.abs(techScore - aiScore)
+        const divergenceAlertKey = `divergence-${symbol}`
 
         // Alert if AI score and technical score differ by more than 25 points
-        if (divergence > 25) {
+        if (divergence > 25 && !isOnCooldown(divergenceAlertKey)) {
           const techBullish = techScore >= 60
           const aiBullish = aiScore >= 60
 
           // Only alert if they're on different sides
           if (techBullish !== aiBullish) {
+            markAlertFired(divergenceAlertKey)
             newAlerts.push({
-              id: `divergence-${symbol}-${currentTime}`,
+              id: divergenceAlertKey,
               type: 'warning',
               priority: 'high',
               symbol,
@@ -464,14 +526,16 @@ export default function AITradeCopilot({ onClose }) {
         }
       }
 
-      // PhD++ Alert 6: RSI Divergence Warning - NOW USES FRESH DATA!
+      // PhD++ Alert 6: RSI Divergence Warning - NOW USES FRESH DATA! (with cooldown)
       if (scoreData?.signalState?.rsi) {
         const rsi = scoreData.signalState.rsi
 
         // Overbought warning for longs
-        if (side === 'long' && rsi > 80) {
+        const rsiOBKey = `rsi-ob-${symbol}`
+        if (side === 'long' && rsi > 80 && !isOnCooldown(rsiOBKey)) {
+          markAlertFired(rsiOBKey)
           newAlerts.push({
-            id: `rsi-ob-${symbol}-${currentTime}`,
+            id: rsiOBKey,
             type: 'warning',
             priority: 'medium',
             symbol,
@@ -483,9 +547,11 @@ export default function AITradeCopilot({ onClose }) {
         }
 
         // Oversold warning for shorts
-        if (side === 'short' && rsi < 20) {
+        const rsiOSKey = `rsi-os-${symbol}`
+        if (side === 'short' && rsi < 20 && !isOnCooldown(rsiOSKey)) {
+          markAlertFired(rsiOSKey)
           newAlerts.push({
-            id: `rsi-os-${symbol}-${currentTime}`,
+            id: rsiOSKey,
             type: 'warning',
             priority: 'medium',
             symbol,
@@ -550,29 +616,35 @@ export default function AITradeCopilot({ onClose }) {
         const position = positions.find(p => p.symbol === symbol)
         if (!position) continue
 
-        // Alert if news sentiment contradicts position
+        // Alert if news sentiment contradicts position (with cooldown)
         const isBearishNews = sentiment === 'negative' && score < -0.3
         const isBullishNews = sentiment === 'positive' && score > 0.3
 
+        const newsAlertKey = `news-${symbol}-${position.side}`
         if ((position.side === 'long' && isBearishNews) || (position.side === 'short' && isBullishNews)) {
-          const currentTime = Date.now()
-          setAlerts(prev => [{
-            id: `news-${symbol}-${currentTime}`,
-            type: 'warning',
-            priority: 'high',
-            symbol,
-            title: `📰 Breaking News Alert`,
-            message: `${sentiment.toUpperCase()} news: "${latestNews.headline.slice(0, 80)}..."`,
-            action: `Review your ${position.side} position - news sentiment: ${(score * 100).toFixed(0)}%`,
-            timestamp: currentTime
-          }, ...prev].slice(0, 10))
+          if (!isOnCooldown(newsAlertKey, 120000)) { // 2 min cooldown for news
+            markAlertFired(newsAlertKey)
+            const currentTime = Date.now()
+            setAlerts(prev => [{
+              id: newsAlertKey,
+              type: 'warning',
+              priority: 'high',
+              symbol,
+              title: `📰 Breaking News Alert`,
+              message: `${sentiment.toUpperCase()} news: "${latestNews.headline.slice(0, 80)}..."`,
+              action: `Review your ${position.side} position - news sentiment: ${(score * 100).toFixed(0)}%`,
+              timestamp: currentTime
+            }, ...prev].slice(0, 10))
+          }
         }
 
-        // Alert on very strong news regardless of position
-        if (Math.abs(score) > 0.7) {
+        // Alert on very strong news regardless of position (with cooldown)
+        const strongNewsKey = `news-strong-${symbol}`
+        if (Math.abs(score) > 0.7 && !isOnCooldown(strongNewsKey, 120000)) {
+          markAlertFired(strongNewsKey)
           const currentTime = Date.now()
           setAlerts(prev => [{
-            id: `news-strong-${symbol}-${currentTime}`,
+            id: strongNewsKey,
             type: 'info',
             priority: 'medium',
             symbol,
@@ -618,84 +690,172 @@ export default function AITradeCopilot({ onClose }) {
       const effectiveScore = marketData.unicornScore?.ultraUnicornScore || state.score
       const scoreLabel = marketData.unicornScore ? 'AI' : 'Tech'
 
-      if (effectiveScore >= 80 && state.rawScore >= 75 && currentPrice) {
-        // Calculate estimated stop based on SATY levels
-        const satyStop = state.saty?.support || (currentPrice * 0.985) // Fallback to 1.5% stop
+      // PhD++ Use stable IDs with cooldown for all opportunity alerts
+      // POSITION-AWARE: Different alerts based on current position
+      const unicornKey = `unicorn-perfect-${symbol}`
+      if (effectiveScore >= 80 && state.rawScore >= 75 && currentPrice && !isOnCooldown(unicornKey)) {
+        markAlertFired(unicornKey)
+        const satyStop = state.saty?.support || (currentPrice * 0.985)
+        const positionBadge = getPositionBadge(symbol)
 
-        setAlerts(prev => {
-          // Avoid duplicate alerts
-          if (prev.some(a => a.id.includes(`unicorn-perfect-${symbol}`))) return prev
+        // PhD++ POSITION-AWARE LOGIC
+        let alertType = 'success'
+        let alertTitle = '🦄 PERFECT UNICORN SETUP!'
+        let alertAction = 'Consider entering LONG position'
+        let alertPriority = 'high'
 
-          // Add risk-aware message
+        if (hasPositionAlignment(symbol, 'bullish')) {
+          // Already LONG and bullish signal = great, just hold
+          alertType = 'info'
+          alertTitle = '🦄 UNICORN CONFIRMS LONG!'
+          alertAction = 'Position aligned with setup - hold or consider adding'
+          alertPriority = 'medium'
+        } else if (hasPositionConflict(symbol, 'bullish')) {
+          // SHORT but bullish signal = CONFLICT WARNING
+          alertType = 'danger'
+          alertTitle = '⚠️ BULLISH SETUP vs SHORT POSITION!'
+          alertAction = 'Consider covering short - strong bullish alignment detected'
+          alertPriority = 'high'
+        } else {
+          // No position - standard entry suggestion
           const riskMsg = positions.length >= riskConfig.maxConcurrentPositions
             ? ` ⚠️ Max positions reached (${positions.length}/${riskConfig.maxConcurrentPositions})`
             : ` ✓ Risk controls OK (${dailyStats.tradesCount}/${riskConfig.dailyMaxTrades} trades today)`
+          alertAction = `Consider entering LONG position.${riskMsg}`
+        }
+
+        setAlerts(prev => {
+          if (prev.some(a => a.id === unicornKey)) return prev
 
           return [{
-            id: `unicorn-perfect-${symbol}-${currentTime}`,
-            type: 'success',
-            priority: 'high',
+            id: unicornKey,
+            type: alertType,
+            priority: alertPriority,
             symbol,
-            title: '🦄 PERFECT UNICORN SETUP!',
-            message: `${symbol} ${scoreLabel} Score: ${effectiveScore.toFixed(0)}/100 - ALL indicators aligned.${riskMsg}`,
-            action: 'Consider entering LONG position',
+            title: alertTitle,
+            message: `${symbol} ${scoreLabel} Score: ${effectiveScore.toFixed(0)}/100 - ALL indicators aligned.`,
+            action: alertAction,
             timestamp: currentTime,
             suggestedEntry: currentPrice,
-            suggestedStop: satyStop
+            suggestedStop: satyStop,
+            positionBadge  // PhD++ Add position badge for UI
           }, ...prev].slice(0, 10)
         })
       }
 
-      // Squeeze Fire + Trend Alignment
-      if (state.sq?.fired && state.pivotNow === 'bullish' && state.ichiRegime === 'bullish') {
+      // Squeeze Fire + Trend Alignment - POSITION-AWARE
+      const squeezeKey = `squeeze-fire-${symbol}`
+      if (state.sq?.fired && state.pivotNow === 'bullish' && state.ichiRegime === 'bullish' && !isOnCooldown(squeezeKey)) {
+        markAlertFired(squeezeKey)
+        const squeezeDir = state.sq.dir === 'up' ? 'bullish' : 'bearish'
+        const positionBadge = getPositionBadge(symbol)
+
+        // PhD++ POSITION-AWARE
+        let alertType = 'success'
+        let alertTitle = '💥 Squeeze Fired + Trend Aligned!'
+        let alertAction = `Breakout in progress - consider ${state.sq.dir === 'up' ? 'LONG' : 'SHORT'}`
+
+        if (hasPositionAlignment(symbol, squeezeDir)) {
+          alertType = 'info'
+          alertTitle = '💥 Squeeze Confirms Position!'
+          alertAction = `Breakout supports your ${getPositionSide(symbol)?.toUpperCase()} - momentum building`
+        } else if (hasPositionConflict(symbol, squeezeDir)) {
+          alertType = 'danger'
+          alertTitle = '💥 Squeeze AGAINST Position!'
+          alertAction = `Breakout against your ${getPositionSide(symbol)?.toUpperCase()} - review position immediately`
+        }
+
         setAlerts(prev => {
-          if (prev.some(a => a.id.includes(`squeeze-fire-${symbol}`))) return prev
+          if (prev.some(a => a.id === squeezeKey)) return prev
 
           return [{
-            id: `squeeze-fire-${symbol}-${currentTime}`,
-            type: 'success',
+            id: squeezeKey,
+            type: alertType,
             priority: 'high',
             symbol,
-            title: '💥 Squeeze Fired + Trend Aligned!',
+            title: alertTitle,
             message: `${symbol} squeeze released ${state.sq.dir === 'up' ? 'BULLISH' : 'BEARISH'}`,
-            action: `Breakout in progress - consider ${state.sq.dir === 'up' ? 'LONG' : 'SHORT'}`,
-            timestamp: currentTime
+            action: alertAction,
+            timestamp: currentTime,
+            positionBadge
           }, ...prev].slice(0, 10)
         })
       }
 
-      // High Volume + Strong Momentum + SATY Trigger
-      if (state.relativeVolume > 2.0 && state.rsi > 60 && state.satyDir === 'long') {
+      // High Volume + Strong Momentum + SATY Trigger - POSITION-AWARE
+      const momentumKey = `momentum-${symbol}`
+      if (state.relativeVolume > 2.0 && state.rsi > 60 && state.satyDir === 'long' && !isOnCooldown(momentumKey)) {
+        markAlertFired(momentumKey)
+        const positionBadge = getPositionBadge(symbol)
+
+        // PhD++ POSITION-AWARE
+        let alertType = 'success'
+        let alertAction = 'Strong momentum confirmed - watch for entry'
+
+        if (hasPositionAlignment(symbol, 'bullish')) {
+          alertType = 'info'
+          alertAction = 'Momentum supports your LONG - position strengthening'
+        } else if (hasPositionConflict(symbol, 'bullish')) {
+          alertType = 'warning'
+          alertAction = 'Bullish momentum against your SHORT - monitor closely'
+        }
+
         setAlerts(prev => {
-          if (prev.some(a => a.id.includes(`momentum-${symbol}`))) return prev
+          if (prev.some(a => a.id === momentumKey)) return prev
 
           return [{
-            id: `momentum-${symbol}-${currentTime}`,
-            type: 'success',
+            id: momentumKey,
+            type: alertType,
             priority: 'medium',
             symbol,
             title: '⚡ High Volume Momentum Setup',
             message: `${symbol} - Volume: ${state.relativeVolume.toFixed(1)}x avg, RSI: ${state.rsi.toFixed(0)}`,
-            action: 'Strong momentum confirmed - watch for entry',
-            timestamp: currentTime
+            action: alertAction,
+            timestamp: currentTime,
+            positionBadge
           }, ...prev].slice(0, 10)
         })
       }
 
-      // Bearish Perfect Setup (score < 20)
-      if (effectiveScore <= 20 && state.rawScore <= -75) {
+      // Bearish Perfect Setup (score < 20) - POSITION-AWARE
+      const bearKey = `bear-perfect-${symbol}`
+      if (effectiveScore <= 20 && state.rawScore <= -75 && !isOnCooldown(bearKey)) {
+        markAlertFired(bearKey)
+        const positionBadge = getPositionBadge(symbol)
+
+        // PhD++ POSITION-AWARE LOGIC - Critical for protecting LONG positions!
+        let alertType = 'warning'
+        let alertTitle = '🐻 PERFECT BEARISH SETUP!'
+        let alertAction = 'Consider entering SHORT position'
+        let alertPriority = 'high'
+
+        if (hasPositionConflict(symbol, 'bearish')) {
+          // LONG but bearish signal = CRITICAL EXIT WARNING!
+          alertType = 'danger'
+          alertTitle = '🚨 BEARISH SETUP vs LONG POSITION!'
+          alertAction = 'EXIT LONG NOW - Strong bearish alignment detected against your position'
+          alertPriority = 'critical' // Highest priority
+        } else if (hasPositionAlignment(symbol, 'bearish')) {
+          // Already SHORT and bearish signal = great, just hold
+          alertType = 'info'
+          alertTitle = '🐻 BEARISH CONFIRMS SHORT!'
+          alertAction = 'Position aligned with setup - hold or consider adding'
+          alertPriority = 'medium'
+        }
+
         setAlerts(prev => {
-          if (prev.some(a => a.id.includes(`bear-perfect-${symbol}`))) return prev
+          if (prev.some(a => a.id === bearKey)) return prev
 
           return [{
-            id: `bear-perfect-${symbol}-${currentTime}`,
-            type: 'warning',
-            priority: 'high',
+            id: bearKey,
+            type: alertType,
+            priority: alertPriority,
             symbol,
-            title: '🐻 PERFECT BEARISH SETUP!',
+            title: alertTitle,
             message: `${symbol} ${scoreLabel} Score: ${effectiveScore.toFixed(0)}/100 - Strong bearish alignment`,
-            action: 'Consider entering SHORT position or exiting longs',
-            timestamp: currentTime
+            action: alertAction,
+            timestamp: currentTime,
+            positionBadge
           }, ...prev].slice(0, 10)
         })
       }
@@ -723,7 +883,7 @@ export default function AITradeCopilot({ onClose }) {
     return () => clearInterval(scanInterval)
   }, [marketData])
 
-  // PhD++ CONFLUENCE CHANGE ALERT: Alert when confluence changes to FULL
+  // PhD++ CONFLUENCE CHANGE ALERT: Alert when confluence changes to FULL (with cooldown) - POSITION-AWARE
   useEffect(() => {
     if (!marketData.signalState) return
 
@@ -731,23 +891,46 @@ export default function AITradeCopilot({ onClose }) {
     const symbol = marketData.symbol
 
     // Check for confluence change to FULL
-    if (lastConfluence?.status !== 'full' && currentConfluence.status === 'full' && symbol) {
+    const confluenceKey = `confluence-${symbol}`
+    if (lastConfluence?.status !== 'full' && currentConfluence.status === 'full' && symbol && !isOnCooldown(confluenceKey, 300000)) {
+      markAlertFired(confluenceKey)
       const direction = currentConfluence.direction.toUpperCase()
+      const dirLower = currentConfluence.direction
       const currentTime = Date.now()
+      const positionBadge = getPositionBadge(symbol)
+
+      // PhD++ POSITION-AWARE confluence alerts
+      let alertType = 'success'
+      let alertTitle = `🎯 FULL CONFLUENCE: ${direction}`
+      let alertAction = direction === 'BULLISH' ? 'High-conviction LONG setup' : 'High-conviction SHORT setup'
+      let alertPriority = 'high'
+
+      if (hasPositionAlignment(symbol, dirLower)) {
+        // Confluence aligns with position - great!
+        alertType = 'success'
+        alertTitle = `🎯 CONFLUENCE CONFIRMS ${getPositionSide(symbol)?.toUpperCase()}!`
+        alertAction = `All timeframes aligned with your position - strong conviction hold`
+      } else if (hasPositionConflict(symbol, dirLower)) {
+        // Confluence conflicts with position - DANGER!
+        alertType = 'danger'
+        alertTitle = `🚨 CONFLUENCE AGAINST ${getPositionSide(symbol)?.toUpperCase()} POSITION!`
+        alertAction = `EXIT ${getPositionSide(symbol)?.toUpperCase()} - All timeframes now ${direction}`
+        alertPriority = 'critical'
+      }
 
       setAlerts(prev => {
-        // Avoid duplicate alerts
-        if (prev.some(a => a.id.includes(`confluence-${symbol}`) && Date.now() - a.timestamp < 300000)) return prev
+        if (prev.some(a => a.id === confluenceKey)) return prev
 
         return [{
-          id: `confluence-${symbol}-${currentTime}`,
-          type: 'success',
-          priority: 'high',
+          id: confluenceKey,
+          type: alertType,
+          priority: alertPriority,
           symbol,
-          title: `🎯 FULL CONFLUENCE: ${direction}`,
+          title: alertTitle,
           message: `${symbol} now has ${currentConfluence.count} timeframes aligned ${direction}`,
-          action: direction === 'BULLISH' ? 'High-conviction LONG setup' : 'High-conviction SHORT setup',
-          timestamp: currentTime
+          action: alertAction,
+          timestamp: currentTime,
+          positionBadge
         }, ...prev].slice(0, 10)
       })
     }
@@ -766,100 +949,166 @@ export default function AITradeCopilot({ onClose }) {
     setAlerts([])
   }
 
-  // PhD++ ONE-CLICK EXECUTION: Execute alert recommendation
-  const executeAlert = (alert) => {
+  // PhD++ Track executing state for loading feedback
+  const [executingAlerts, setExecutingAlerts] = useState(new Set())
+  const [snoozedAlerts, setSnoozedAlerts] = useState({}) // Track snoozed alerts with expiry
+  const [showAllPositions, setShowAllPositions] = useState(false) // PhD++ Toggle for all positions
+
+  // PhD++ Snooze an alert for N minutes
+  const snoozeAlert = (alertId, minutes = 15) => {
+    setSnoozedAlerts(prev => ({
+      ...prev,
+      [alertId]: Date.now() + (minutes * 60 * 1000)
+    }))
+    dismissAlert(alertId)
+    window.dispatchEvent(new CustomEvent('iava.toast', {
+      detail: {
+        text: `Alert snoozed for ${minutes} minutes`,
+        type: 'info',
+        ttl: 2000
+      }
+    }))
+  }
+
+  // PhD++ Check if an alert is snoozed
+  const isAlertSnoozed = (alertId) => {
+    const expiry = snoozedAlerts[alertId]
+    return expiry && Date.now() < expiry
+  }
+
+  // PhD++ ONE-CLICK EXECUTION: Execute alert recommendation with loading states
+  const executeAlert = async (alert) => {
     if (!alert.symbol) return
 
-    // Different actions based on alert type
-    if (alert.id.includes('saty-broken') || alert.id.includes('regime')) {
-      // CRITICAL: Exit position immediately
-      const confirmed = window.confirm(
-        `⚠️ CRITICAL ALERT\n\n${alert.title}\n${alert.message}\n\n` +
-        `This will close your ${alert.symbol} position immediately. Continue?`
-      )
+    // Mark as executing
+    setExecutingAlerts(prev => new Set([...prev, alert.id]))
 
-      if (confirmed) {
-        // Dispatch close position event to OrdersPanel
-        window.dispatchEvent(new CustomEvent('iava-close-position', {
-          detail: { symbol: alert.symbol, reason: alert.title }
-        }))
-
-        dismissAlert(alert.id)
-
-        window.dispatchEvent(new CustomEvent('iava.toast', {
-          detail: {
-            text: `Closing ${alert.symbol} position...`,
-            type: 'success',
-            ttl: 3000
+    try {
+      // PhD++ POSITION CONFLICT ALERTS (bearish vs long, confluence against position)
+      if (alert.id.includes('bear-perfect') || alert.id.includes('confluence')) {
+        // Only act if this is a conflict (danger type)
+        if (alert.type === 'danger' || alert.priority === 'critical') {
+          const pos = getPosition(alert.symbol)
+          if (!pos) {
+            setExecutingAlerts(prev => { const n = new Set(prev); n.delete(alert.id); return n })
+            return
           }
-        }))
-      }
-    } else if (alert.id.includes('saty-stop')) {
-      // Set stop loss at SATY level
-      const stopPrice = parseFloat(alert.message.match(/\$([0-9.]+)/)?.[1])
 
-      if (stopPrice) {
-        window.dispatchEvent(new CustomEvent('iava-set-stop', {
-          detail: { symbol: alert.symbol, stopPrice, type: 'saty' }
-        }))
+          const confirmed = window.confirm(
+            `🚨 POSITION CONFLICT DETECTED\n\n${alert.title}\n${alert.message}\n\n` +
+            `Your ${pos.side.toUpperCase()} position is at risk!\n\n` +
+            `OK = Close entire position NOW\n` +
+            `Cancel = I'll manage manually`
+          )
 
-        dismissAlert(alert.id)
+          if (confirmed) {
+            window.dispatchEvent(new CustomEvent('iava-close-position', {
+              detail: { symbol: alert.symbol, reason: alert.title }
+            }))
 
-        window.dispatchEvent(new CustomEvent('iava.toast', {
-          detail: {
-            text: `Setting SATY stop at $${stopPrice.toFixed(2)}`,
-            type: 'success',
-            ttl: 3000
+            dismissAlert(alert.id)
+
+            window.dispatchEvent(new CustomEvent('iava.toast', {
+              detail: {
+                text: `Closing ${alert.symbol} ${pos.side} position...`,
+                type: 'warning',
+                ttl: 3000
+              }
+            }))
           }
-        }))
+        }
       }
-    } else if (alert.id.includes('saty-target')) {
-      // Take profits at target
-      const confirmed = window.confirm(
-        `${alert.title}\n\n${alert.message}\n\n` +
-        `Close 50% of your ${alert.symbol} position to lock in profits?`
-      )
+      // CRITICAL: Exit position immediately (SATY broken, regime change)
+      else if (alert.id.includes('saty-broken') || alert.id.includes('regime')) {
+        const confirmed = window.confirm(
+          `⚠️ CRITICAL ALERT\n\n${alert.title}\n${alert.message}\n\n` +
+          `This will close your ${alert.symbol} position immediately. Continue?`
+        )
 
-      if (confirmed) {
-        window.dispatchEvent(new CustomEvent('iava-take-profits', {
-          detail: { symbol: alert.symbol, percentage: 50, reason: 'SATY target hit' }
-        }))
+        if (confirmed) {
+          window.dispatchEvent(new CustomEvent('iava-close-position', {
+            detail: { symbol: alert.symbol, reason: alert.title }
+          }))
 
-        dismissAlert(alert.id)
+          dismissAlert(alert.id)
 
-        window.dispatchEvent(new CustomEvent('iava.toast', {
-          detail: {
-            text: `Taking 50% profits on ${alert.symbol}`,
-            type: 'success',
-            ttl: 3000
-          }
-        }))
+          window.dispatchEvent(new CustomEvent('iava.toast', {
+            detail: {
+              text: `Closing ${alert.symbol} position...`,
+              type: 'success',
+              ttl: 3000
+            }
+          }))
+        }
+      } else if (alert.id.includes('saty-stop')) {
+        // Set stop loss at SATY level
+        const stopPrice = parseFloat(alert.message.match(/\$([0-9.]+)/)?.[1])
+
+        if (stopPrice) {
+          window.dispatchEvent(new CustomEvent('iava-set-stop', {
+            detail: { symbol: alert.symbol, stopPrice, type: 'saty' }
+          }))
+
+          dismissAlert(alert.id)
+
+          window.dispatchEvent(new CustomEvent('iava.toast', {
+            detail: {
+              text: `Setting SATY stop at $${stopPrice.toFixed(2)}`,
+              type: 'success',
+              ttl: 3000
+            }
+          }))
+        }
+      } else if (alert.id.includes('saty-target')) {
+        // Take profits at target
+        const confirmed = window.confirm(
+          `${alert.title}\n\n${alert.message}\n\n` +
+          `Close 50% of your ${alert.symbol} position to lock in profits?`
+        )
+
+        if (confirmed) {
+          window.dispatchEvent(new CustomEvent('iava-take-profits', {
+            detail: { symbol: alert.symbol, percentage: 50, reason: 'SATY target hit' }
+          }))
+
+          dismissAlert(alert.id)
+
+          window.dispatchEvent(new CustomEvent('iava.toast', {
+            detail: {
+              text: `Taking 50% profits on ${alert.symbol}`,
+              type: 'success',
+              ttl: 3000
+            }
+          }))
+        }
+      } else if (alert.id.includes('health-critical') || alert.id.includes('score-')) {
+        // PhD++ Health/Score deterioration - offer multiple exit options
+        const choice = window.confirm(
+          `⚠️ POSITION AT RISK\n\n${alert.title}\n${alert.message}\n\n` +
+          `Choose action:\n` +
+          `OK = Close 25% (reduce risk)\n` +
+          `Cancel = Do nothing (monitor manually)`
+        )
+
+        if (choice) {
+          window.dispatchEvent(new CustomEvent('iava-take-profits', {
+            detail: { symbol: alert.symbol, percentage: 25, reason: alert.title }
+          }))
+
+          dismissAlert(alert.id)
+
+          window.dispatchEvent(new CustomEvent('iava.toast', {
+            detail: {
+              text: `Reducing ${alert.symbol} position by 25%`,
+              type: 'warning',
+              ttl: 3000
+            }
+          }))
+        }
       }
-    } else if (alert.id.includes('health-critical') || alert.id.includes('score-')) {
-      // PhD++ Health/Score deterioration - offer multiple exit options
-      const choice = window.confirm(
-        `⚠️ POSITION AT RISK\n\n${alert.title}\n${alert.message}\n\n` +
-        `Choose action:\n` +
-        `OK = Close 25% (reduce risk)\n` +
-        `Cancel = Do nothing (monitor manually)`
-      )
-
-      if (choice) {
-        // Partial close - 25%
-        window.dispatchEvent(new CustomEvent('iava-take-profits', {
-          detail: { symbol: alert.symbol, percentage: 25, reason: alert.title }
-        }))
-
-        dismissAlert(alert.id)
-
-        window.dispatchEvent(new CustomEvent('iava.toast', {
-          detail: {
-            text: `Reducing ${alert.symbol} position by 25%`,
-            type: 'warning',
-            ttl: 3000
-          }
-        }))
-      }
+    } finally {
+      // Clear executing state
+      setExecutingAlerts(prev => { const n = new Set(prev); n.delete(alert.id); return n })
     }
   }
 
@@ -931,16 +1180,27 @@ export default function AITradeCopilot({ onClose }) {
           </div>
         </div>
 
-        {/* PhD++ Position Health Cards */}
+        {/* PhD++ Position Health Cards with Show All Toggle */}
         {positions.length > 0 && (
           <div className="bg-slate-900/30 px-3 py-2 border-b border-slate-700/50 space-y-1.5">
-            <div className="text-xs text-slate-500 font-semibold mb-1">POSITION HEALTH</div>
-            {positions.slice(0, 3).map(pos => {
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-xs text-slate-500 font-semibold">POSITION HEALTH ({positions.length})</div>
+              {positions.length > 3 && (
+                <button
+                  onClick={() => setShowAllPositions(!showAllPositions)}
+                  className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                >
+                  {showAllPositions ? 'Show less' : `Show all ${positions.length}`}
+                </button>
+              )}
+            </div>
+            {(showAllPositions ? positions : positions.slice(0, 3)).map(pos => {
               const scoreData = symbolScores[pos.symbol]
               const health = calculatePositionHealth(pos, scoreData)
               const plPct = pos.side === 'long'
                 ? ((parseFloat(pos.current_price) - parseFloat(pos.avg_entry_price)) / parseFloat(pos.avg_entry_price)) * 100
                 : ((parseFloat(pos.avg_entry_price) - parseFloat(pos.current_price)) / parseFloat(pos.avg_entry_price)) * 100
+              const unrealizedPL = parseFloat(pos.unrealized_pl || 0)
 
               return (
                 <div key={pos.symbol} className="flex items-center justify-between bg-slate-800/50 rounded px-2 py-1.5">
@@ -949,11 +1209,17 @@ export default function AITradeCopilot({ onClose }) {
                     <span className={`text-xs ${pos.side === 'long' ? 'text-emerald-400' : 'text-red-400'}`}>
                       {pos.side.toUpperCase()}
                     </span>
+                    <span className="text-xs text-slate-500">{parseFloat(pos.qty)} shs</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`text-xs font-medium ${plPct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {plPct >= 0 ? '+' : ''}{plPct.toFixed(1)}%
-                    </span>
+                    <div className="text-right">
+                      <span className={`text-xs font-medium ${plPct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {plPct >= 0 ? '+' : ''}{plPct.toFixed(1)}%
+                      </span>
+                      <span className={`text-xs ml-1 ${unrealizedPL >= 0 ? 'text-emerald-400/60' : 'text-red-400/60'}`}>
+                        (${unrealizedPL >= 0 ? '+' : ''}{unrealizedPL.toFixed(0)})
+                      </span>
+                    </div>
                     <div className="flex items-center gap-1">
                       <div className={`w-8 h-1.5 rounded-full bg-slate-700 overflow-hidden`}>
                         <div
@@ -971,9 +1237,6 @@ export default function AITradeCopilot({ onClose }) {
                 </div>
               )
             })}
-            {positions.length > 3 && (
-              <div className="text-xs text-slate-500 text-center">+{positions.length - 3} more positions</div>
-            )}
           </div>
         )}
 
@@ -998,25 +1261,7 @@ export default function AITradeCopilot({ onClose }) {
                 </span>
               </div>
 
-              {/* Daily Timeframe - ONLY show if NOT already on Daily timeframe */}
-              {marketData.dailyState && marketData.timeframe !== '1Day' && (
-                <>
-                  <span className="text-slate-600">+</span>
-                  <div className={`px-2 py-1 rounded text-xs font-semibold ${
-                    marketData.dailyState.pivotNow === 'bullish' ? 'bg-emerald-900/50 text-emerald-400' :
-                    marketData.dailyState.pivotNow === 'bearish' ? 'bg-red-900/50 text-red-400' :
-                    'bg-slate-800 text-slate-400'
-                  }`}>
-                    <span className="opacity-60">D</span>
-                    <span className="ml-1">
-                      {marketData.dailyState.pivotNow === 'bullish' ? '↑' :
-                       marketData.dailyState.pivotNow === 'bearish' ? '↓' : '—'}
-                    </span>
-                  </div>
-                </>
-              )}
-
-              {/* Consensus (Secondary TF) */}
+              {/* Secondary/Consensus TF (e.g., 5Min when on 1Min) - show BEFORE Daily */}
               {marketData.consensus && (
                 <>
                   <span className="text-slate-600">+</span>
@@ -1034,6 +1279,24 @@ export default function AITradeCopilot({ onClose }) {
                 </>
               )}
 
+              {/* Daily Timeframe - ONLY show if NOT already on Daily timeframe (last = slowest) */}
+              {marketData.dailyState && marketData.timeframe !== '1Day' && (
+                <>
+                  <span className="text-slate-600">+</span>
+                  <div className={`px-2 py-1 rounded text-xs font-semibold ${
+                    marketData.dailyState.pivotNow === 'bullish' ? 'bg-emerald-900/50 text-emerald-400' :
+                    marketData.dailyState.pivotNow === 'bearish' ? 'bg-red-900/50 text-red-400' :
+                    'bg-slate-800 text-slate-400'
+                  }`}>
+                    <span className="opacity-60">D</span>
+                    <span className="ml-1">
+                      {marketData.dailyState.pivotNow === 'bullish' ? '↑' :
+                       marketData.dailyState.pivotNow === 'bearish' ? '↓' : '—'}
+                    </span>
+                  </div>
+                </>
+              )}
+
               {/* Confluence Status */}
               <div className="ml-auto flex items-center gap-1.5">
                 {(() => {
@@ -1042,16 +1305,20 @@ export default function AITradeCopilot({ onClose }) {
                   const daily = marketData.timeframe !== '1Day' ? marketData.dailyState?.pivotNow : null
                   const secondary = marketData.consensus?.secondary?.pivotNow
 
-                  // Count alignments
-                  const directions = [primary, daily, secondary].filter(d => d && d !== 'neutral')
+                  // Count ALL timeframes shown (including neutrals)
+                  const allTFs = [primary, daily, secondary].filter(d => d !== null && d !== undefined)
+                  // Count only directional (non-neutral) timeframes
+                  const directions = allTFs.filter(d => d !== 'neutral')
                   const bullishCount = directions.filter(d => d === 'bullish').length
                   const bearishCount = directions.filter(d => d === 'bearish').length
+                  const neutralCount = allTFs.filter(d => d === 'neutral').length
 
-                  const allAligned = bullishCount === directions.length || bearishCount === directions.length
-                  const partialAlign = bullishCount >= 2 || bearishCount >= 2
+                  // FULL requires ALL shown TFs to be directional AND aligned (no neutrals)
+                  const allDirectionalAndAligned = neutralCount === 0 && allTFs.length >= 2 &&
+                    (bullishCount === allTFs.length || bearishCount === allTFs.length)
 
-                  // On Daily with no secondary, just show the primary direction
-                  if (directions.length < 2) {
+                  // On single TF, just show the primary direction
+                  if (allTFs.length < 2) {
                     const direction = primary === 'bullish' ? 'BULLISH' : primary === 'bearish' ? 'BEARISH' : 'NEUTRAL'
                     const color = primary === 'bullish' ? 'text-emerald-400' : primary === 'bearish' ? 'text-red-400' : 'text-slate-500'
                     return (
@@ -1062,25 +1329,36 @@ export default function AITradeCopilot({ onClose }) {
                     )
                   }
 
-                  if (allAligned && directions.length >= 2) {
+                  if (allDirectionalAndAligned) {
+                    const dir = bullishCount > 0 ? 'BULLISH' : 'BEARISH'
+                    const color = bullishCount > 0 ? 'text-emerald-400' : 'text-red-400'
+                    const bgColor = bullishCount > 0 ? 'bg-emerald-500' : 'bg-red-500'
                     return (
-                      <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                        FULL CONFLUENCE
+                      <span className={`text-xs font-bold ${color} flex items-center gap-1`}>
+                        <span className={`w-2 h-2 rounded-full ${bgColor} animate-pulse`} />
+                        FULL {dir}
                       </span>
                     )
-                  } else if (partialAlign) {
+                  } else if (bullishCount >= 2 || bearishCount >= 2) {
+                    const dir = bullishCount > bearishCount ? '↑' : '↓'
+                    return (
+                      <span className="text-xs font-medium text-cyan-400 flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-cyan-500" />
+                        {Math.max(bullishCount, bearishCount)}/{allTFs.length} {dir}
+                      </span>
+                    )
+                  } else if (directions.length > 0) {
                     return (
                       <span className="text-xs font-medium text-amber-400 flex items-center gap-1">
                         <span className="w-2 h-2 rounded-full bg-amber-500" />
-                        PARTIAL
+                        MIXED
                       </span>
                     )
                   } else {
                     return (
                       <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
                         <span className="w-2 h-2 rounded-full bg-slate-600" />
-                        MIXED
+                        NEUTRAL
                       </span>
                     )
                   }
@@ -1113,7 +1391,11 @@ export default function AITradeCopilot({ onClose }) {
                 </button>
               </div>
 
-              {alerts.map(alert => {
+              {/* PhD++ PRIORITY SORTING: critical > high > medium > low */}
+              {[...alerts].sort((a, b) => {
+                const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 }
+                return (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2)
+              }).map(alert => {
                 const alertStyles = {
                   success: 'border-emerald-500/30 bg-emerald-500/10',
                   warning: 'border-amber-500/30 bg-amber-500/10',
@@ -1134,25 +1416,41 @@ export default function AITradeCopilot({ onClose }) {
                                     alert.id.includes('saty-stop') ||
                                     alert.id.includes('saty-target') ||
                                     alert.id.includes('health-critical') ||
-                                    alert.id.includes('score-') // Add score deterioration alerts
+                                    alert.id.includes('score-') ||
+                                    alert.id.includes('bear-perfect') ||
+                                    alert.id.includes('confluence') // PhD++ Add conflict alerts
 
                 return (
                   <div
                     key={alert.id}
-                    className={`p-3 rounded-lg border ${alertStyles[alert.type] || alertStyles.info} animate-slide-in-right`}
+                    className={`p-3 rounded-lg border ${alertStyles[alert.type] || alertStyles.info} animate-slide-in-right ${
+                      alert.priority === 'critical' ? 'ring-2 ring-red-500 animate-pulse' : ''
+                    }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <div className="flex items-start gap-2 flex-1">
                         <span className="text-base">{iconMap[alert.type]}</span>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                          <div className="text-sm font-bold text-slate-200 flex items-center gap-2 flex-wrap">
                             <span>{alert.title}</span>
-                            {alert.priority === 'high' && (
+                            {/* PhD++ Priority badges */}
+                            {alert.priority === 'critical' && (
+                              <span className="bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full font-bold animate-pulse">
+                                ⚠️ CRITICAL
+                              </span>
+                            )}
+                            {alert.priority === 'high' && alert.priority !== 'critical' && (
                               <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full font-semibold">
                                 HIGH
                               </span>
                             )}
                           </div>
+                          {/* PhD++ Position Badge */}
+                          {alert.positionBadge && (
+                            <div className="text-xs text-cyan-400 mt-0.5 font-medium">
+                              {alert.positionBadge}
+                            </div>
+                          )}
                           <div className="text-xs text-slate-300 mt-0.5">
                             {alert.message}
                           </div>
@@ -1171,25 +1469,40 @@ export default function AITradeCopilot({ onClose }) {
                       </button>
                     </div>
 
-                    {/* PhD++ ONE-CLICK EXECUTION BUTTONS */}
+                    {/* PhD++ ONE-CLICK EXECUTION BUTTONS with Loading + Snooze */}
                     <div className="flex items-center justify-between mt-2 gap-2">
-                      <div className="text-xs text-slate-400">
-                        {new Date(alert.timestamp).toLocaleTimeString()}
-                      </div>
-                      {isActionable && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-400">
+                          {new Date(alert.timestamp).toLocaleTimeString()}
+                        </span>
+                        {/* PhD++ Snooze button */}
                         <button
-                          onClick={() => executeAlert(alert)}
-                          className={`text-xs px-3 py-1 rounded-lg font-semibold transition-all ${
-                            alert.type === 'danger'
-                              ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/40'
-                              : alert.type === 'success'
-                              ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/40'
-                              : 'bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/40'
-                          }`}
+                          onClick={() => snoozeAlert(alert.id, 15)}
+                          className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                          title="Snooze for 15 minutes"
                         >
-                          ⚡ Execute
+                          💤
                         </button>
-                      )}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {isActionable && (
+                          <button
+                            onClick={() => executeAlert(alert)}
+                            disabled={executingAlerts.has(alert.id)}
+                            className={`text-xs px-3 py-1 rounded-lg font-semibold transition-all ${
+                              executingAlerts.has(alert.id)
+                                ? 'bg-slate-600/50 text-slate-400 cursor-wait'
+                                : alert.type === 'danger' || alert.priority === 'critical'
+                                ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/40'
+                                : alert.type === 'success'
+                                ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/40'
+                                : 'bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/40'
+                            }`}
+                          >
+                            {executingAlerts.has(alert.id) ? '⏳ ...' : '⚡ Execute'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )
