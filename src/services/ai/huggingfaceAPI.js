@@ -219,11 +219,200 @@ export async function analyzeFinGPT(text, task = 'sentiment') {
   return getMockResponse('fingpt', text);
 }
 
+// ============================================================================
+// OPTION 4: WEIGHTED SENTIMENT ANALYSIS (Source + Recency + Keywords)
+// ============================================================================
+
+/**
+ * Source-based weight multipliers
+ * Higher = more credible/impactful source
+ */
+const SOURCE_WEIGHTS = {
+  // Government & Central Banks (highest impact)
+  'federal reserve': 3.0,
+  'fomc': 3.0,
+  'fed': 2.8,
+  'treasury': 2.5,
+  'sec': 2.5,
+  'white house': 2.3,
+
+  // Major Financial News
+  'bloomberg': 2.0,
+  'reuters': 2.0,
+  'wsj': 2.0,
+  'wall street journal': 2.0,
+  'financial times': 1.9,
+  'cnbc': 1.8,
+  'marketwatch': 1.7,
+
+  // Company Official Sources
+  'earnings': 2.5,
+  'earnings call': 2.5,
+  '10-k': 2.3,
+  '10-q': 2.3,
+  'press release': 2.0,
+
+  // Analyst & Research
+  'goldman sachs': 1.8,
+  'morgan stanley': 1.8,
+  'jp morgan': 1.8,
+  'analyst': 1.5,
+  'upgrade': 1.6,
+  'downgrade': 1.6,
+
+  // Social Media (lower weight - more noise)
+  'twitter': 0.6,
+  'x.com': 0.6,
+  'reddit': 0.4,
+  'stocktwits': 0.5,
+  'seeking alpha': 0.8,
+
+  // Default
+  'default': 1.0
+};
+
+/**
+ * Keyword importance boosters
+ * These keywords indicate high-impact news
+ */
+const KEYWORD_BOOSTS = {
+  // Fed & Monetary Policy (highest impact)
+  'fomc': 2.5,
+  'rate hike': 2.3,
+  'rate cut': 2.3,
+  'interest rate': 2.0,
+  'quantitative easing': 2.0,
+  'tightening': 1.8,
+  'pivot': 1.8,
+  'powell': 2.0,
+  'yellen': 1.8,
+
+  // Corporate Actions
+  'bankruptcy': 2.5,
+  'merger': 2.2,
+  'acquisition': 2.2,
+  'buyout': 2.0,
+  'spinoff': 1.8,
+  'ipo': 1.8,
+  'stock split': 1.7,
+  'dividend': 1.5,
+
+  // Earnings & Guidance
+  'earnings beat': 2.0,
+  'earnings miss': 2.0,
+  'guidance': 1.8,
+  'revenue': 1.5,
+  'profit': 1.5,
+  'loss': 1.5,
+
+  // Regulatory & Legal
+  'sec investigation': 2.3,
+  'lawsuit': 1.8,
+  'settlement': 1.6,
+  'fine': 1.5,
+  'fraud': 2.0,
+
+  // Market Events
+  'crash': 2.5,
+  'rally': 1.8,
+  'correction': 1.7,
+  'bear market': 2.0,
+  'bull market': 1.8,
+  'all-time high': 1.6,
+  'record': 1.4
+};
+
+/**
+ * Calculate source weight from article text or source field
+ */
+function getSourceWeight(text, source = '') {
+  const combined = `${source} ${text}`.toLowerCase();
+
+  for (const [key, weight] of Object.entries(SOURCE_WEIGHTS)) {
+    if (key !== 'default' && combined.includes(key)) {
+      return weight;
+    }
+  }
+  return SOURCE_WEIGHTS.default;
+}
+
+/**
+ * Calculate recency weight (exponential decay over 24 hours)
+ * @param {number|string|Date} timestamp - Article timestamp
+ * @returns {number} Weight between 0.1 and 1.0
+ */
+function getRecencyWeight(timestamp) {
+  if (!timestamp) return 0.5; // Unknown time = medium weight
+
+  const articleTime = new Date(timestamp).getTime();
+  const now = Date.now();
+  const hoursOld = (now - articleTime) / (1000 * 60 * 60);
+
+  // Exponential decay: weight = e^(-hours/12)
+  // At 0 hours: 1.0, at 12 hours: 0.37, at 24 hours: 0.14
+  const weight = Math.exp(-hoursOld / 12);
+
+  // Clamp between 0.1 and 1.0
+  return Math.max(0.1, Math.min(1.0, weight));
+}
+
+/**
+ * Calculate keyword importance boost
+ */
+function getKeywordBoost(text) {
+  const lowerText = text.toLowerCase();
+  let maxBoost = 1.0;
+
+  for (const [keyword, boost] of Object.entries(KEYWORD_BOOSTS)) {
+    if (lowerText.includes(keyword)) {
+      maxBoost = Math.max(maxBoost, boost);
+    }
+  }
+
+  return maxBoost;
+}
+
+/**
+ * Calculate combined weight for an article
+ * Final weight = sourceWeight × recencyWeight × keywordBoost
+ */
+function calculateArticleWeight(article) {
+  const text = typeof article === 'string' ? article : (article.text || article.headline || article.title || '');
+  const source = typeof article === 'string' ? '' : (article.source || '');
+  const timestamp = typeof article === 'string' ? null : (article.timestamp || article.date || article.publishedAt);
+
+  const sourceWeight = getSourceWeight(text, source);
+  const recencyWeight = getRecencyWeight(timestamp);
+  const keywordBoost = getKeywordBoost(text);
+
+  const finalWeight = sourceWeight * recencyWeight * keywordBoost;
+
+  return {
+    sourceWeight,
+    recencyWeight,
+    keywordBoost,
+    finalWeight,
+    text
+  };
+}
+
 /**
  * Master sentiment orchestrator - Combines all models
+ * Now supports weighted articles (Option 4)
+ *
+ * @param {string|Array} input - Single text or array of articles
+ *   Articles can be strings or objects with: { text, source, timestamp }
  */
-export async function getUltraEliteSentiment(text) {
-  console.log('🧠 ULTRA ELITE+++ SENTIMENT ANALYSIS');
+export async function getUltraEliteSentiment(input) {
+  console.log('🧠 ULTRA ELITE+++ SENTIMENT ANALYSIS (with Option 4 Weighting)');
+
+  // Handle array of articles (weighted analysis)
+  if (Array.isArray(input) && input.length > 0) {
+    return await analyzeWeightedArticles(input);
+  }
+
+  // Handle single text (original behavior)
+  const text = typeof input === 'string' ? input : (input?.text || input?.headline || String(input));
 
   // Run all sentiment models in parallel for maximum speed
   const [finbert, bertweet, roberta] = await Promise.all([
@@ -233,7 +422,7 @@ export async function getUltraEliteSentiment(text) {
   ]);
 
   // Calculate weighted ensemble score
-  const weights = {
+  const modelWeights = {
     finbert: 0.4,   // Highest weight for financial-specific
     bertweet: 0.3,  // Good for social media
     roberta: 0.3    // Latest and most robust
@@ -241,17 +430,17 @@ export async function getUltraEliteSentiment(text) {
 
   const ensembleScores = {
     positive:
-      (finbert.scores.positive || 0) * weights.finbert +
-      (bertweet.scores.positive || 0) * weights.bertweet +
-      (roberta.scores.positive || 0) * weights.roberta,
+      (finbert.scores.positive || 0) * modelWeights.finbert +
+      (bertweet.scores.positive || 0) * modelWeights.bertweet +
+      (roberta.scores.positive || 0) * modelWeights.roberta,
     negative:
-      (finbert.scores.negative || 0) * weights.finbert +
-      (bertweet.scores.negative || 0) * weights.bertweet +
-      (roberta.scores.negative || 0) * weights.roberta,
+      (finbert.scores.negative || 0) * modelWeights.finbert +
+      (bertweet.scores.negative || 0) * modelWeights.bertweet +
+      (roberta.scores.negative || 0) * modelWeights.roberta,
     neutral:
-      (finbert.scores.neutral || 0) * weights.finbert +
-      (bertweet.scores.neutral || 0) * weights.bertweet +
-      (roberta.scores.neutral || 0) * weights.roberta
+      (finbert.scores.neutral || 0) * modelWeights.finbert +
+      (bertweet.scores.neutral || 0) * modelWeights.bertweet +
+      (roberta.scores.neutral || 0) * modelWeights.roberta
   };
 
   return {
@@ -264,6 +453,88 @@ export async function getUltraEliteSentiment(text) {
       roberta
     },
     quality: 'ULTRA_ELITE_PHD_PLUS',
+    timestamp: Date.now()
+  };
+}
+
+/**
+ * Analyze multiple articles with Option 4 weighting
+ * Source + Recency + Keywords = Final Weight
+ */
+async function analyzeWeightedArticles(articles) {
+  console.log(`📰 Analyzing ${articles.length} articles with weighted importance...`);
+
+  // Calculate weights for all articles
+  const weightedArticles = articles.map(article => calculateArticleWeight(article));
+
+  // Log weight breakdown for transparency
+  weightedArticles.forEach((wa, i) => {
+    console.log(`  [${i + 1}] Weight: ${wa.finalWeight.toFixed(2)} (src: ${wa.sourceWeight.toFixed(1)}, rec: ${wa.recencyWeight.toFixed(2)}, kw: ${wa.keywordBoost.toFixed(1)})`);
+  });
+
+  // Analyze each article (in parallel for speed, but limit to 5 concurrent)
+  const batchSize = 5;
+  const results = [];
+
+  for (let i = 0; i < weightedArticles.length; i += batchSize) {
+    const batch = weightedArticles.slice(i, i + batchSize);
+    const batchResults = await Promise.all(
+      batch.map(async (wa) => {
+        // Use FinBERT only for speed (it's the best for financial text)
+        const sentiment = await analyzeFinBertSentiment(wa.text);
+        return {
+          ...wa,
+          sentiment
+        };
+      })
+    );
+    results.push(...batchResults);
+  }
+
+  // Calculate weighted average scores
+  let totalWeight = 0;
+  let weightedPositive = 0;
+  let weightedNegative = 0;
+  let weightedNeutral = 0;
+
+  results.forEach(r => {
+    const w = r.finalWeight;
+    totalWeight += w;
+    weightedPositive += (r.sentiment.scores?.positive || 0) * w;
+    weightedNegative += (r.sentiment.scores?.negative || 0) * w;
+    weightedNeutral += (r.sentiment.scores?.neutral || 0) * w;
+  });
+
+  // Normalize
+  const ensembleScores = {
+    positive: totalWeight > 0 ? weightedPositive / totalWeight : 0.33,
+    negative: totalWeight > 0 ? weightedNegative / totalWeight : 0.33,
+    neutral: totalWeight > 0 ? weightedNeutral / totalWeight : 0.34
+  };
+
+  // Find the most impactful article
+  const mostImpactful = results.reduce((max, r) =>
+    r.finalWeight > (max?.finalWeight || 0) ? r : max, null);
+
+  console.log(`📊 Weighted Sentiment: ${getSentimentLabel(ensembleScores)} (pos: ${(ensembleScores.positive * 100).toFixed(1)}%, neg: ${(ensembleScores.negative * 100).toFixed(1)}%)`);
+  console.log(`⭐ Most impactful: "${mostImpactful?.text?.substring(0, 50)}..." (weight: ${mostImpactful?.finalWeight?.toFixed(2)})`);
+
+  return {
+    sentiment: getSentimentLabel(ensembleScores),
+    confidence: Math.max(...Object.values(ensembleScores)),
+    ensemble_scores: ensembleScores,
+    weighted_analysis: {
+      totalArticles: articles.length,
+      totalWeight: totalWeight,
+      mostImpactfulArticle: mostImpactful?.text?.substring(0, 100),
+      mostImpactfulWeight: mostImpactful?.finalWeight,
+      articleBreakdown: results.map(r => ({
+        text: r.text.substring(0, 80),
+        weight: r.finalWeight,
+        sentiment: r.sentiment.sentiment
+      }))
+    },
+    quality: 'ULTRA_ELITE_PHD_PLUS_WEIGHTED',
     timestamp: Date.now()
   };
 }
@@ -318,6 +589,9 @@ function getMockResponse(model, input) {
   };
 }
 
+// Export weighting constants for transparency/customization
+export { SOURCE_WEIGHTS, KEYWORD_BOOSTS };
+
 export default {
   analyzeFinBertSentiment,
   analyzeBertweetSentiment,
@@ -325,5 +599,8 @@ export default {
   chronosForcast,
   timesFMForecast,
   analyzeFinGPT,
-  getUltraEliteSentiment
+  getUltraEliteSentiment,
+  // Option 4 weighting exports
+  SOURCE_WEIGHTS,
+  KEYWORD_BOOSTS
 };
