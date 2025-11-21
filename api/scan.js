@@ -51,8 +51,9 @@ export default async function handler(req, res) {
     let dailyBlocked = 0
     let thresholdRejected = 0
     // CRITICAL FIX: Force concurrency limit to prevent Alpaca rate limit errors
-    // Default to 5 concurrent requests if not set (prevents 429/500 errors)
-    const maxConc = parseInt(process.env.SCAN_MAX_CONCURRENCY || '5', 10)
+    // Default to 50 concurrent requests for faster large scans (12K+ stocks)
+    // This balances speed vs rate limits: 50 workers @ ~2s each = 24 stocks/sec = 8min for 12K stocks
+    const maxConc = parseInt(process.env.SCAN_MAX_CONCURRENCY || '50', 10)
     if (Number.isFinite(maxConc) && maxConc > 0) {
       let idx = 0
       async function worker() {

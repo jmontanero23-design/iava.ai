@@ -9,11 +9,10 @@ Setup:
 
 Author: iava.ai
 Date: November 20, 2025
-Version: 1.2 (Upgraded to base model + TimesFM)
+Version: 2.0 (Fixed meta tensor error + Modal 1.0 API)
 """
 
 import modal
-import sys
 
 # Create Modal app
 app = modal.App("iava-chronos-forecasting")
@@ -30,25 +29,52 @@ image = (
     )
 )
 
+# CRITICAL FIX: Cache model in container to avoid reloading
+# This drastically improves performance and reduces costs
+_MODEL_CACHE = {}
+
+def get_chronos_pipeline(model_size: str = "base"):
+    """Load and cache Chronos pipeline"""
+    import torch
+    from chronos import ChronosPipeline
+
+    model_name = f"amazon/chronos-t5-{model_size}"
+
+    if model_name not in _MODEL_CACHE:
+        print(f"[Chronos] Loading {model_name} (one-time load)...")
+
+        # CRITICAL FIX: Use device="cuda" instead of device_map to avoid meta tensor issues
+        pipeline = ChronosPipeline.from_pretrained(
+            model_name,
+            device="cuda",  # Direct CUDA placement (not device_map)
+            torch_dtype=torch.float32,  # Use float32 for stability
+        )
+
+        _MODEL_CACHE[model_name] = pipeline
+        print(f"[Chronos] ✅ {model_name} cached successfully!")
+
+    return _MODEL_CACHE[model_name]
+
+
 @app.function(
     image=image,
     gpu="T4",  # Cheapest GPU: $0.59/hour (~$0.0001639/second)
     timeout=120,  # 2 minutes max
-    container_idle_timeout=300,  # Keep warm for 5 minutes
-    allow_concurrent_inputs=10,  # Handle multiple requests
+    scaledown_window=300,  # FIXED: Renamed from container_idle_timeout
 )
+@modal.concurrent(max_inputs=10)  # FIXED: Handle 10 concurrent requests
 def forecast_chronos(
     time_series: list[float],
     horizon: int = 24,
-    model_size: str = "base"  # tiny (fastest), small, base (recommended), or large
+    model_size: str = "base"  # tiny, small, base (recommended), or large
 ):
     """
-    Run Chronos-2 Bolt forecasting on serverless GPU
+    Run Chronos-2 forecasting on serverless GPU (with model caching)
 
     Args:
         time_series: Historical values (e.g., stock prices)
         horizon: How many steps to forecast
-        model_size: "bolt-tiny", "bolt-base", or "bolt-small"
+        model_size: "tiny", "small", "base" (recommended), or "large"
 
     Returns:
         predictions: List of forecasted values
@@ -58,31 +84,19 @@ def forecast_chronos(
     import numpy as np
 
     try:
-        # Import Chronos (auto-installed from chronos-forecasting package)
-        from chronos import ChronosPipeline
-
-        # Load model (cached after first run for speed)
-        model_name = f"amazon/chronos-t5-{model_size}"
-        print(f"[v1.1] Loading {model_name}...")
-
-        pipeline = ChronosPipeline.from_pretrained(
-            model_name,
-            device_map="cuda",
-            torch_dtype=torch.bfloat16,  # More efficient than float32
-        )
+        # Get cached pipeline (avoids reloading model on every request)
+        pipeline = get_chronos_pipeline(model_size)
 
         # Run forecast
-        print(f"[v1.1] Running forecast for {len(time_series)} data points, horizon={horizon}")
-        context_tensor = torch.tensor(time_series, dtype=torch.float32)
+        print(f"[Chronos] Forecasting {len(time_series)} points, horizon={horizon}")
+        context_tensor = torch.tensor(time_series, dtype=torch.float32).to("cuda")
 
-        # predict() takes positional args: context, prediction_length (v1.1 fix)
-        print(f"[v1.1] Calling predict with context shape: {context_tensor.shape}")
+        # Predict (takes context tensor and horizon)
         forecast = pipeline.predict(context_tensor, horizon)
-        print(f"[v1.1] Forecast complete, shape: {forecast.shape}")
 
         # Extract median and quantiles
         low_quantile, median, high_quantile = np.quantile(
-            forecast[0].numpy(),
+            forecast[0].cpu().numpy(),  # Move to CPU for numpy
             [0.1, 0.5, 0.9],
             axis=0
         )
@@ -92,12 +106,15 @@ def forecast_chronos(
             "confidence_low": low_quantile.tolist(),
             "confidence_high": high_quantile.tolist(),
             "horizon": horizon,
-            "model": model_name,
+            "model": f"amazon/chronos-t5-{model_size}",
             "num_samples": 20,
-            "status": "success"
+            "status": "success",
+            "cached": True  # Indicate we're using cached model
         }
     except Exception as e:
-        print(f"Error in forecast_chronos: {str(e)}")
+        print(f"❌ Error in forecast_chronos: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {
             "error": str(e),
             "status": "failed"
@@ -108,6 +125,7 @@ def forecast_chronos(
     image=image,
     gpu="T4",
     timeout=120,
+    scaledown_window=300,  # FIXED: Renamed from container_idle_timeout
 )
 def forecast_timesfm(
     time_series: list[float],
@@ -117,21 +135,10 @@ def forecast_timesfm(
     Run Google TimesFM forecasting
 
     TimesFM (Time Series Foundation Model) by Google Research
+    Currently using Chronos-base as proxy (TimesFM not yet stable)
     """
-    import torch
-    import numpy as np
-
     try:
-        # TimesFM uses HuggingFace transformers
-        from transformers import AutoModelForCausalLM, AutoTokenizer
-
-        # Load TimesFM model (200M parameters)
-        model_name = "google/timesfm-1.0-200m"
-        print(f"[TimesFM] Loading {model_name}...")
-
-        # TimesFM uses a similar approach to Chronos but with different architecture
-        # For now, use Chronos-base as proxy until TimesFM is properly packaged
-        # (TimesFM doesn't have a stable Python package yet)
+        # TimesFM doesn't have stable package yet, use Chronos-base as high-quality proxy
         print("[TimesFM] Using Chronos-base as high-quality proxy...")
         return forecast_chronos.local(time_series, horizon, "base")
 
@@ -148,12 +155,16 @@ def test():
     # Generate sample time series (like stock prices)
     prices = [100 + i + np.random.randn() * 2 for i in range(100)]
 
-    print("🚀 Testing Chronos-2 Bolt forecasting...")
-    result = forecast_chronos.remote(prices, horizon=10, model_size="bolt-tiny")
+    print("🚀 Testing Chronos-2 forecasting...")
+    result = forecast_chronos.remote(prices, horizon=10, model_size="base")
 
-    print(f"✅ Forecast: {result['predictions'][:5]}...")
-    print(f"📊 Model: {result['model']}")
-    print(f"🎯 Horizon: {result['horizon']}")
+    if result.get("status") == "success":
+        print(f"✅ Forecast: {result['predictions'][:5]}...")
+        print(f"📊 Model: {result['model']}")
+        print(f"🎯 Horizon: {result['horizon']}")
+        print(f"💾 Cached: {result.get('cached', False)}")
+    else:
+        print(f"❌ Error: {result.get('error')}")
 
 
 # Web endpoint for your app (PUBLIC API)
@@ -161,10 +172,10 @@ def test():
     image=image,
     gpu="T4",
     timeout=120,
-    container_idle_timeout=300,
-    allow_concurrent_inputs=10,
+    scaledown_window=300,  # FIXED: Renamed from container_idle_timeout
 )
-@modal.web_endpoint(method="POST", docs=True)
+@modal.concurrent(max_inputs=10)  # FIXED: Handle 10 concurrent requests
+@modal.fastapi_endpoint(method="POST", docs=True)  # FIXED: Renamed from web_endpoint
 def api_forecast(data: dict):
     """
     Public API endpoint for Chronos-2 forecasting
@@ -173,7 +184,7 @@ def api_forecast(data: dict):
     {
         "time_series": [1.0, 2.0, 3.0, ...],  // At least 10 data points
         "horizon": 24,                         // How many steps to forecast
-        "model": "bolt-tiny"                   // bolt-tiny, bolt-base, or bolt-small
+        "model": "base"                        // tiny, small, base, or large
     }
 
     Returns:
@@ -182,8 +193,9 @@ def api_forecast(data: dict):
         "confidence_low": [...],
         "confidence_high": [...],
         "horizon": 24,
-        "model": "amazon/chronos-bolt-tiny",
-        "status": "success"
+        "model": "amazon/chronos-t5-base",
+        "status": "success",
+        "cached": true
     }
     """
     try:
@@ -204,7 +216,7 @@ def api_forecast(data: dict):
         if model not in ["tiny", "small", "base", "large"]:
             return {"error": "Model must be tiny, small, base, or large", "status": "failed"}
 
-        # Run forecast
+        # Run forecast (will use cached model)
         result = forecast_chronos.remote(time_series, horizon, model)
         return result
 
