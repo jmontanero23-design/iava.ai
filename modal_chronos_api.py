@@ -1,15 +1,15 @@
 """
 Modal Deployment: Real Chronos-2 Time Series Forecasting API
 
-Cost: ~$0.002 per forecast (T4 GPU)
+Cost: ~$0.001 per forecast (CPU mode for stability)
 Setup:
   1. pip install modal
   2. modal setup
   3. modal deploy modal_chronos_api.py
 
 Author: iava.ai
-Date: November 20, 2025
-Version: 2.0 (Fixed meta tensor error + Modal 1.0 API)
+Date: November 21, 2025
+Version: 3.0 (CPU-only mode for stability - fixes device mismatch errors)
 """
 
 import modal
@@ -17,7 +17,7 @@ import modal
 # Create Modal app
 app = modal.App("iava-chronos-forecasting")
 
-# Define image with Chronos dependencies (TimesFM coming soon - package still unstable)
+# Define image with Chronos dependencies
 image = (
     modal.Image.debian_slim()
     .pip_install(
@@ -35,48 +35,48 @@ image = (
 _MODEL_CACHE = {}
 
 def get_chronos_pipeline(model_size: str = "base"):
-    """Load and cache Chronos pipeline"""
+    """Load and cache Chronos pipeline - CPU mode for stability"""
     import torch
     from chronos import ChronosPipeline
+    import os
+
+    # FORCE CPU: Disable CUDA entirely
+    os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
     model_name = f"amazon/chronos-t5-{model_size}"
 
     if model_name not in _MODEL_CACHE:
-        print(f"[Chronos] Loading {model_name} (one-time load)...")
+        print(f"[Chronos] Loading {model_name} (one-time load, CPU mode)...")
+        print(f"[Chronos] CUDA available: {torch.cuda.is_available()}")
 
-        # FIX: Load on CPU first, then move to CUDA
-        # This avoids the meta tensor issue with device_map
+        # CPU-ONLY MODE: Don't specify device_map, defaults to CPU
+        # This avoids device mismatch with internal boundaries tensor
         pipeline = ChronosPipeline.from_pretrained(
             model_name,
             torch_dtype=torch.float32,   # Use float32 for stability
         )
 
-        # Move model to GPU after loading
-        if hasattr(pipeline, 'model'):
-            pipeline.model = pipeline.model.cuda()
-        if hasattr(pipeline, 'device'):
-            pipeline.device = torch.device("cuda")
-
         _MODEL_CACHE[model_name] = pipeline
-        print(f"[Chronos] ✅ {model_name} cached and moved to CUDA!")
+        print(f"[Chronos] ✅ {model_name} cached on CPU!")
 
     return _MODEL_CACHE[model_name]
 
 
 @app.function(
     image=image,
-    gpu="T4",  # Cheapest GPU: $0.59/hour (~$0.0001639/second)
-    timeout=120,  # 2 minutes max
-    scaledown_window=300,  # FIXED: Renamed from container_idle_timeout
+    cpu=4,             # Use 4 CPUs for faster inference (no GPU needed)
+    memory=8192,       # 8GB RAM for model
+    timeout=120,       # 2 minutes max
+    scaledown_window=300,
 )
-@modal.concurrent(max_inputs=10)  # FIXED: Handle 10 concurrent requests
+@modal.concurrent(max_inputs=10)  # Handle 10 concurrent requests
 def forecast_chronos(
     time_series: list[float],
     horizon: int = 24,
     model_size: str = "base"  # tiny, small, base (recommended), or large
 ):
     """
-    Run Chronos-2 forecasting on serverless GPU (with model caching)
+    Run Chronos-2 forecasting (CPU mode for stability)
 
     Args:
         time_series: Historical values (e.g., stock prices)
@@ -97,15 +97,15 @@ def forecast_chronos(
         # Run forecast
         print(f"[Chronos] Forecasting {len(time_series)} points, horizon={horizon}")
 
-        # Create input tensor and move to CUDA (same device as model)
-        context_tensor = torch.tensor(time_series, dtype=torch.float32).cuda()
+        # Create input tensor on CPU (matches model device)
+        context_tensor = torch.tensor(time_series, dtype=torch.float32)
 
         # Predict (takes context tensor and horizon)
         forecast = pipeline.predict(context_tensor, horizon)
 
         # Extract median and quantiles
         low_quantile, median, high_quantile = np.quantile(
-            forecast[0].cpu().numpy(),  # Move to CPU for numpy
+            forecast[0].numpy(),  # Already on CPU
             [0.1, 0.5, 0.9],
             axis=0
         )
@@ -115,7 +115,7 @@ def forecast_chronos(
             "confidence_low": low_quantile.tolist(),
             "confidence_high": high_quantile.tolist(),
             "horizon": horizon,
-            "model": f"amazon/chronos-t5-{model_size}",
+            "model": f"amazon/chronos-t5-{model_size} (REAL)",
             "num_samples": 20,
             "status": "success",
             "cached": True  # Indicate we're using cached model
@@ -132,7 +132,8 @@ def forecast_chronos(
 
 @app.function(
     image=image,
-    gpu="T4",
+    cpu=4,
+    memory=8192,
     timeout=120,
     scaledown_window=300,
 )
