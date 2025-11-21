@@ -32,6 +32,50 @@ export default function AITradeCopilot({ onClose }) {
   const [watchlist, setWatchlist] = useState(['SPY', 'QQQ', 'AAPL', 'TSLA', 'NVDA']) // PhD++: Multi-symbol monitoring
   const [validatedSymbols, setValidatedSymbols] = useState(new Set()) // Cache of validated symbols
 
+  // PhD++ POSITION HEALTH SCORE: Calculate comprehensive health for a position
+  const calculatePositionHealth = (position, scoreData) => {
+    if (!position || !scoreData) return { score: 50, label: 'Unknown', color: 'text-slate-400' }
+
+    const { side, avg_entry_price, current_price } = position
+    const entry = parseFloat(avg_entry_price)
+    const price = parseFloat(current_price)
+    const techScore = scoreData?.score || 50
+
+    // Component 1: Technical Alignment (40%)
+    // For longs: higher score = healthier, for shorts: lower score = healthier
+    let techHealth = side === 'long' ? techScore : (100 - techScore)
+
+    // Component 2: P&L Position (30%)
+    const plPct = side === 'long'
+      ? ((price - entry) / entry) * 100
+      : ((entry - price) / entry) * 100
+    // Map P&L to 0-100 scale: -5% = 0, +5% = 100
+    let plHealth = Math.max(0, Math.min(100, 50 + (plPct * 10)))
+
+    // Component 3: R-Value / Risk Position (30%)
+    // Ideal R is 1.0-2.0 (winning), penalize losses (negative R)
+    const estimatedRisk = entry * 0.02 // Assume 2% stop
+    const currentR = plPct > 0 ? plPct / 2 : plPct / 2 // Simplified R calculation
+    let rHealth = currentR >= 2 ? 100 : currentR >= 1 ? 80 : currentR >= 0.5 ? 65 : currentR >= 0 ? 50 : Math.max(0, 50 + currentR * 25)
+
+    // Weighted final score
+    const healthScore = Math.round(
+      (techHealth * 0.40) +
+      (plHealth * 0.30) +
+      (rHealth * 0.30)
+    )
+
+    // Determine label and color
+    let label, color
+    if (healthScore >= 80) { label = 'Excellent'; color = 'text-emerald-400' }
+    else if (healthScore >= 65) { label = 'Good'; color = 'text-cyan-400' }
+    else if (healthScore >= 50) { label = 'Fair'; color = 'text-amber-400' }
+    else if (healthScore >= 35) { label = 'Weak'; color = 'text-orange-400' }
+    else { label = 'Critical'; color = 'text-red-400' }
+
+    return { score: healthScore, label, color, techHealth, plHealth, rHealth }
+  }
+
   // PhD++ CRITICAL: Validate if symbol is a real ticker (prevents SATY, LEVEL, etc.)
   const validateSymbol = async (symbol) => {
     if (!symbol || symbol.length < 1 || symbol.length > 5) return false
@@ -226,6 +270,21 @@ export default function AITradeCopilot({ onClose }) {
             title: 'Unicorn Score Rising',
             message: `${symbol} Unicorn Score: ${score.toFixed(0)}/100 (BULLISH) - Fresh data!`,
             action: 'Cover short or tighten stop',
+            timestamp: currentTime
+          })
+        }
+
+        // PhD++ NEW: Position Health Alert
+        const health = calculatePositionHealth(position, scoreData)
+        if (health.score < 35) {
+          newAlerts.push({
+            id: `health-critical-${symbol}-${currentTime}`,
+            type: 'danger',
+            priority: 'high',
+            symbol,
+            title: `🏥 Position Health Critical: ${health.score}/100`,
+            message: `${symbol} health is ${health.label}. Tech: ${Math.round(health.techHealth)}%, P&L: ${Math.round(health.plHealth)}%, Risk: ${Math.round(health.rHealth)}%`,
+            action: 'Consider exiting or tightening stop immediately',
             timestamp: currentTime
           })
         }
@@ -709,6 +768,31 @@ export default function AITradeCopilot({ onClose }) {
           }
         }))
       }
+    } else if (alert.id.includes('health-critical') || alert.id.includes('score-')) {
+      // PhD++ Health/Score deterioration - offer multiple exit options
+      const choice = window.confirm(
+        `⚠️ POSITION AT RISK\n\n${alert.title}\n${alert.message}\n\n` +
+        `Choose action:\n` +
+        `OK = Close 25% (reduce risk)\n` +
+        `Cancel = Do nothing (monitor manually)`
+      )
+
+      if (choice) {
+        // Partial close - 25%
+        window.dispatchEvent(new CustomEvent('iava-take-profits', {
+          detail: { symbol: alert.symbol, percentage: 25, reason: alert.title }
+        }))
+
+        dismissAlert(alert.id)
+
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: {
+            text: `Reducing ${alert.symbol} position by 25%`,
+            type: 'warning',
+            ttl: 3000
+          }
+        }))
+      }
     }
   }
 
@@ -780,6 +864,52 @@ export default function AITradeCopilot({ onClose }) {
           </div>
         </div>
 
+        {/* PhD++ Position Health Cards */}
+        {positions.length > 0 && (
+          <div className="bg-slate-900/30 px-3 py-2 border-b border-slate-700/50 space-y-1.5">
+            <div className="text-xs text-slate-500 font-semibold mb-1">POSITION HEALTH</div>
+            {positions.slice(0, 3).map(pos => {
+              const scoreData = symbolScores[pos.symbol]
+              const health = calculatePositionHealth(pos, scoreData)
+              const plPct = pos.side === 'long'
+                ? ((parseFloat(pos.current_price) - parseFloat(pos.avg_entry_price)) / parseFloat(pos.avg_entry_price)) * 100
+                : ((parseFloat(pos.avg_entry_price) - parseFloat(pos.current_price)) / parseFloat(pos.avg_entry_price)) * 100
+
+              return (
+                <div key={pos.symbol} className="flex items-center justify-between bg-slate-800/50 rounded px-2 py-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white text-xs">{pos.symbol}</span>
+                    <span className={`text-xs ${pos.side === 'long' ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {pos.side.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-xs font-medium ${plPct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {plPct >= 0 ? '+' : ''}{plPct.toFixed(1)}%
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <div className={`w-8 h-1.5 rounded-full bg-slate-700 overflow-hidden`}>
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            health.score >= 65 ? 'bg-emerald-500' :
+                            health.score >= 50 ? 'bg-amber-500' :
+                            'bg-red-500'
+                          }`}
+                          style={{ width: `${health.score}%` }}
+                        />
+                      </div>
+                      <span className={`text-xs font-bold ${health.color}`}>{health.score}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+            {positions.length > 3 && (
+              <div className="text-xs text-slate-500 text-center">+{positions.length - 3} more positions</div>
+            )}
+          </div>
+        )}
+
         {/* Alerts */}
         <div className="max-h-96 overflow-y-auto p-3 space-y-2">
           {alerts.length === 0 ? (
@@ -821,7 +951,9 @@ export default function AITradeCopilot({ onClose }) {
                 const isActionable = alert.id.includes('saty-broken') ||
                                     alert.id.includes('regime') ||
                                     alert.id.includes('saty-stop') ||
-                                    alert.id.includes('saty-target')
+                                    alert.id.includes('saty-target') ||
+                                    alert.id.includes('health-critical') ||
+                                    alert.id.includes('score-') // Add score deterioration alerts
 
                 return (
                   <div
