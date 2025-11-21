@@ -44,13 +44,23 @@ export const ChronosForecasting = {
 
         if (response.ok) {
           const result = await response.json();
+
+          // FIX: Calculate DIRECTIONAL score from predictions
+          const lastPrice = data[data.length - 1];
+          const forecastScore = this.calculateForecastScore(lastPrice, result.predictions);
+
+          console.log(`📈 Chronos Forecast: ${forecastScore.direction} (${forecastScore.score}/100, ${forecastScore.percentChange.toFixed(2)}% change)`);
+
           return {
             predictions: result.predictions,
             confidence_low: result.confidence_low,
             confidence_high: result.confidence_high,
             horizon: horizon,
             model: 'Chronos-2-Bolt (REAL)',
-            accuracy_score: 0.95
+            // NEW: Directional score instead of static 95%
+            direction: forecastScore.direction,
+            percentChange: forecastScore.percentChange,
+            accuracy_score: forecastScore.score / 100  // 0-1 scale for scoring
           };
         }
       } catch (error) {
@@ -60,6 +70,58 @@ export const ChronosForecasting = {
 
     // Fallback: Use local trend-based forecast
     return this.generateSmartForecast(data, horizon);
+  },
+
+  /**
+   * Calculate directional score from predictions
+   * @param {number} lastPrice - Current price
+   * @param {Array} predictions - Array of predicted future prices
+   * @returns {{ score: number, direction: string, percentChange: number }}
+   */
+  calculateForecastScore(lastPrice, predictions) {
+    if (!predictions || predictions.length === 0 || !lastPrice) {
+      return { score: 50, direction: 'neutral', percentChange: 0 };
+    }
+
+    // Calculate predicted change (average of all predictions vs current price)
+    const avgPrediction = predictions.reduce((a, b) => a + b, 0) / predictions.length;
+    const endPrediction = predictions[predictions.length - 1];
+
+    // Use end prediction for direction, avg for confidence
+    const percentChange = ((endPrediction - lastPrice) / lastPrice) * 100;
+
+    // Convert percent change to 0-100 score
+    // -5% or worse = 0, +5% or better = 100, 0% = 50
+    let score;
+    if (percentChange >= 5) {
+      score = 100;  // Strong bullish
+    } else if (percentChange >= 2) {
+      score = 70 + (percentChange - 2) * 10;  // Bullish (70-100)
+    } else if (percentChange >= 0.5) {
+      score = 55 + (percentChange - 0.5) * 10;  // Slightly bullish (55-70)
+    } else if (percentChange >= -0.5) {
+      score = 45 + percentChange * 20;  // Neutral (45-55)
+    } else if (percentChange >= -2) {
+      score = 30 + (percentChange + 2) * 10;  // Slightly bearish (30-45)
+    } else if (percentChange >= -5) {
+      score = 0 + (percentChange + 5) * 10;  // Bearish (0-30)
+    } else {
+      score = 0;  // Strong bearish
+    }
+
+    // Determine direction label
+    let direction;
+    if (score >= 70) direction = 'BULLISH';
+    else if (score >= 55) direction = 'slightly bullish';
+    else if (score >= 45) direction = 'NEUTRAL';
+    else if (score >= 30) direction = 'slightly bearish';
+    else direction = 'BEARISH';
+
+    return {
+      score: Math.max(0, Math.min(100, Math.round(score))),
+      direction,
+      percentChange
+    };
   },
 
   generateSmartForecast(timeseries, horizon) {
@@ -75,12 +137,17 @@ export const ChronosForecasting = {
       predictions.push(trendComponent + noise);
     }
 
+    // Calculate directional score for fallback too
+    const forecastScore = this.calculateForecastScore(lastValue, predictions);
+
     return {
       predictions,
       horizon,
       model: 'Smart Trend (Fallback)',
       trend: trend > 0 ? 'upward' : 'downward',
-      accuracy_score: 0.70
+      direction: forecastScore.direction,
+      percentChange: forecastScore.percentChange,
+      accuracy_score: forecastScore.score / 100  // Now directional, not static!
     };
   },
 
