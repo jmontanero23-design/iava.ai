@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
+import { GestureHandler, GESTURES } from '../utils/advancedGestures.js'
 
 /**
- * Mobile Gestures Controller
- * Advanced touch interactions for mobile trading
+ * Mobile Gestures Controller - Elite PhD Level
+ * Advanced touch interactions with 20+ gesture types
  */
 export default function MobileGestures({
   children,
@@ -24,8 +25,10 @@ export default function MobileGestures({
   const [pullDistance, setPullDistance] = useState(0)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [gestureIndicator, setGestureIndicator] = useState(null)
+  const [gestureHistory, setGestureHistory] = useState([])
   const longPressTimer = useRef(null)
   const lastTap = useRef(0)
+  const gestureHandlerRef = useRef(null)
 
   // Minimum swipe distance (px)
   const minSwipeDistance = 50
@@ -248,6 +251,150 @@ export default function MobileGestures({
     setTimeout(() => setGestureIndicator(null), 1000)
   }, [onDoubleTap])
 
+  // Initialize advanced gesture handler
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const gestureCallbacks = {
+      // Diagonal swipes for trading
+      [GESTURES.DIAGONAL_UP_RIGHT]: () => {
+        setGestureIndicator({ type: 'trade', message: '📈 Quick Long Position' })
+        window.dispatchEvent(new CustomEvent('iava.quickTrade', {
+          detail: { action: 'long', symbol, quick: true }
+        }))
+        setTimeout(() => setGestureIndicator(null), 2000)
+      },
+      [GESTURES.DIAGONAL_DOWN_LEFT]: () => {
+        setGestureIndicator({ type: 'trade', message: '📉 Quick Short Position' })
+        window.dispatchEvent(new CustomEvent('iava.quickTrade', {
+          detail: { action: 'short', symbol, quick: true }
+        }))
+        setTimeout(() => setGestureIndicator(null), 2000)
+      },
+      [GESTURES.DIAGONAL_UP_LEFT]: () => {
+        setGestureIndicator({ type: 'order', message: '🛡️ Set Stop Loss' })
+        window.dispatchEvent(new CustomEvent('iava.setStopLoss', { detail: { symbol } }))
+        setTimeout(() => setGestureIndicator(null), 2000)
+      },
+      [GESTURES.DIAGONAL_DOWN_RIGHT]: () => {
+        setGestureIndicator({ type: 'order', message: '🎯 Set Take Profit' })
+        window.dispatchEvent(new CustomEvent('iava.setTakeProfit', { detail: { symbol } }))
+        setTimeout(() => setGestureIndicator(null), 2000)
+      },
+
+      // Multi-finger gestures
+      [GESTURES.TWO_FINGER_TAP]: () => {
+        setGestureIndicator({ type: 'stats', message: '📊 Quick Stats' })
+        window.dispatchEvent(new CustomEvent('iava.showQuickStats'))
+        setTimeout(() => setGestureIndicator(null), 2000)
+      },
+      [GESTURES.THREE_FINGER_TAP]: () => {
+        setGestureIndicator({ type: 'command', message: '🎮 Command Palette' })
+        window.dispatchEvent(new CustomEvent('iava.openCommandPalette'))
+        setTimeout(() => setGestureIndicator(null), 1500)
+      },
+      [GESTURES.FOUR_FINGER_TAP]: () => {
+        setGestureIndicator({ type: 'emergency', message: '🚨 CLOSE ALL POSITIONS' })
+        if (confirm('Emergency close all positions?')) {
+          window.dispatchEvent(new CustomEvent('iava.emergencyCloseAll'))
+        }
+        setTimeout(() => setGestureIndicator(null), 3000)
+      },
+
+      // Pattern gestures
+      [GESTURES.CIRCLE]: () => {
+        setGestureIndicator({ type: 'refresh', message: '🔄 Refreshing Data' })
+        handlePullToRefresh()
+      },
+      [GESTURES.ZIGZAG]: () => {
+        setGestureIndicator({ type: 'toggle', message: '📐 Toggle Indicators' })
+        window.dispatchEvent(new CustomEvent('iava.toggleIndicators'))
+        setTimeout(() => setGestureIndicator(null), 1500)
+      },
+      [GESTURES.DRAW_UP_ARROW]: () => {
+        setGestureIndicator({ type: 'trade', message: '⬆️ Buy Order' })
+        window.dispatchEvent(new CustomEvent('iava.placeBuyOrder', { detail: { symbol } }))
+        setTimeout(() => setGestureIndicator(null), 2000)
+      },
+      [GESTURES.DRAW_DOWN_ARROW]: () => {
+        setGestureIndicator({ type: 'trade', message: '⬇️ Sell Order' })
+        window.dispatchEvent(new CustomEvent('iava.placeSellOrder', { detail: { symbol } }))
+        setTimeout(() => setGestureIndicator(null), 2000)
+      },
+      [GESTURES.DRAW_HORIZONTAL_LINE]: () => {
+        setGestureIndicator({ type: 'alert', message: '🔔 Set Price Alert' })
+        window.dispatchEvent(new CustomEvent('iava.setPriceAlert', { detail: { symbol } }))
+        setTimeout(() => setGestureIndicator(null), 2000)
+      },
+      [GESTURES.DRAW_X]: () => {
+        setGestureIndicator({ type: 'cancel', message: '❌ Cancel Orders' })
+        window.dispatchEvent(new CustomEvent('iava.cancelOrders', { detail: { symbol } }))
+        setTimeout(() => setGestureIndicator(null), 2000)
+      },
+
+      // Shake to undo
+      [GESTURES.SHAKE]: () => {
+        setGestureIndicator({ type: 'undo', message: '↩️ Undo Last Action' })
+        window.dispatchEvent(new CustomEvent('iava.undo'))
+        setTimeout(() => setGestureIndicator(null), 1500)
+      },
+
+      // Triple tap for fullscreen
+      [GESTURES.TRIPLE_TAP]: () => {
+        setGestureIndicator({ type: 'fullscreen', message: '🖥️ Toggle Fullscreen' })
+        window.dispatchEvent(new CustomEvent('iava.toggleFullscreen'))
+        setTimeout(() => setGestureIndicator(null), 1000)
+      },
+
+      // Edge swipes
+      [GESTURES.EDGE_SWIPE_RIGHT]: () => {
+        setGestureIndicator({ type: 'menu', message: '☰ Opening Menu' })
+        window.dispatchEvent(new CustomEvent('iava.openSidebar'))
+        setTimeout(() => setGestureIndicator(null), 1000)
+      },
+      [GESTURES.EDGE_SWIPE_LEFT]: () => {
+        setGestureIndicator({ type: 'notifications', message: '🔔 Notifications' })
+        window.dispatchEvent(new CustomEvent('iava.openNotifications'))
+        setTimeout(() => setGestureIndicator(null), 1000)
+      },
+
+      // Two finger swipes for chart control
+      [GESTURES.TWO_FINGER_SWIPE_UP]: () => {
+        setGestureIndicator({ type: 'chart', message: '📈 Maximize Chart' })
+        window.dispatchEvent(new CustomEvent('iava.maximizeChart'))
+        setTimeout(() => setGestureIndicator(null), 1000)
+      },
+      [GESTURES.TWO_FINGER_SWIPE_DOWN]: () => {
+        setGestureIndicator({ type: 'chart', message: '📉 Minimize Chart' })
+        window.dispatchEvent(new CustomEvent('iava.minimizeChart'))
+        setTimeout(() => setGestureIndicator(null), 1000)
+      },
+
+      // Three finger swipe for workspace
+      [GESTURES.THREE_FINGER_SWIPE]: (data) => {
+        const direction = data.direction === 'right' ? 'Next' : 'Previous'
+        setGestureIndicator({ type: 'workspace', message: `🖥️ ${direction} Workspace` })
+        window.dispatchEvent(new CustomEvent('iava.switchWorkspace', {
+          detail: { direction: data.direction }
+        }))
+        setTimeout(() => setGestureIndicator(null), 1500)
+      },
+
+      // Generic callback to track all gestures
+      onGesture: (type, data) => {
+        setGestureHistory(prev => [...prev.slice(-9), { type, data, time: Date.now() }])
+      }
+    }
+
+    gestureHandlerRef.current = new GestureHandler(containerRef.current, gestureCallbacks)
+
+    return () => {
+      if (gestureHandlerRef.current) {
+        gestureHandlerRef.current.destroy()
+      }
+    }
+  }, [symbol, handlePullToRefresh])
+
   // Handle pinch zoom
   useEffect(() => {
     let initialDistance = null
@@ -337,14 +484,28 @@ export default function MobileGestures({
         </div>
       )}
 
-      {/* Mobile Navigation Hint (bottom) */}
+      {/* Mobile Navigation Hint (bottom) - Shows advanced gestures */}
       <div className="fixed bottom-20 left-0 right-0 flex justify-center pointer-events-none md:hidden">
-        <div className="flex items-center gap-3 px-4 py-2 bg-slate-900/80 backdrop-blur-sm rounded-full border border-slate-700/50 text-xs text-slate-400">
-          <span>← Swipe →</span>
-          <span className="text-slate-600">|</span>
-          <span>↓ Buy</span>
-          <span className="text-slate-600">|</span>
-          <span>↑ Sell</span>
+        <div className="max-w-sm mx-4">
+          <div className="flex flex-col gap-1 px-4 py-2 bg-slate-900/90 backdrop-blur-sm rounded-lg border border-slate-700/50">
+            <div className="flex items-center justify-center gap-3 text-xs text-slate-400">
+              <span>← Swipe → Tabs</span>
+              <span className="text-slate-600">|</span>
+              <span>↓ Buy ↑ Sell</span>
+            </div>
+            <div className="flex items-center justify-center gap-2 text-xs text-purple-400">
+              <span>↗ Long</span>
+              <span className="text-slate-600">|</span>
+              <span>↙ Short</span>
+              <span className="text-slate-600">|</span>
+              <span>2👆 Stats</span>
+              <span className="text-slate-600">|</span>
+              <span>3👆 Cmd</span>
+            </div>
+            <div className="text-center text-xs text-slate-500">
+              Draw: ⬆ Buy | ⬇ Sell | — Alert | ✕ Cancel
+            </div>
+          </div>
         </div>
       </div>
 

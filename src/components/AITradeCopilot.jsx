@@ -20,6 +20,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
 import { fetchBars } from '../services/yahooFinance.js'
 import { computeStates } from '../utils/indicators.js'
+import { speakAlert, speakGuidance, voiceQueue } from '../utils/voiceSynthesis.js'
 
 export default function AITradeCopilot({ onClose }) {
   const { marketData } = useMarketData()
@@ -711,6 +712,18 @@ export default function AITradeCopilot({ onClose }) {
           markAlertAdded(a.id)
           return true
         })
+
+        // Speak high priority alerts using voice synthesis
+        uniqueNew.forEach(alert => {
+          if (alert.priority === 'high') {
+            const voiceMessage = `${alert.title}. ${alert.symbol}. ${alert.action}`
+            speakAlert(voiceMessage, 'high')
+          } else if (alert.priority === 'medium') {
+            const voiceMessage = `${alert.symbol} alert: ${alert.message}`
+            speakAlert(voiceMessage, 'normal')
+          }
+        })
+
         return [...uniqueNew, ...prev].slice(0, 10) // Keep last 10 alerts
       })
     }

@@ -1,8 +1,8 @@
 /**
- * Pattern Recognition System
- * AI-powered chart pattern detection using technical analysis
+ * Pattern Recognition System - Elite PhD Level
+ * AI-powered chart pattern detection with harmonic patterns
  *
- * Detects:
+ * Classic Patterns:
  * - Head & Shoulders (reversal)
  * - Double Top/Bottom (reversal)
  * - Triangles (continuation/reversal)
@@ -10,10 +10,21 @@
  * - Flags & Pennants (continuation)
  * - Cup & Handle (continuation)
  * - Support/Resistance breaks
+ *
+ * Harmonic Patterns (NEW):
+ * - Gartley 222
+ * - Butterfly
+ * - Bat
+ * - Crab
+ * - Shark
+ * - Cypher
+ * - ABCD
+ * - Three Drives
  */
 
 import { useState, useEffect } from 'react'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
+import { scanForHarmonicPatterns, getHarmonicDescription, detectThreeDrives } from '../utils/harmonicPatterns.js'
 
 export default function PatternRecognition() {
   const { marketData } = useMarketData()
@@ -65,6 +76,38 @@ export default function PatternRecognition() {
       // Pattern 6: Bullish/Bearish Engulfing
       const engulfing = detectEngulfing(chart)
       if (engulfing) patterns.push(engulfing)
+
+      // Pattern 7-14: HARMONIC PATTERNS (Elite Level)
+      const harmonicPatterns = scanForHarmonicPatterns(chart)
+      harmonicPatterns.forEach(harmonic => {
+        const desc = getHarmonicDescription(harmonic)
+        patterns.push({
+          type: harmonic.type === 'bullish' ? 'success' : 'danger',
+          pattern: desc.title,
+          description: desc.description,
+          confidence: harmonic.confidence,
+          action: desc.action,
+          implication: 'harmonic',
+          details: desc.ratios,
+          elite: true // Mark as elite pattern
+        })
+      })
+
+      // Pattern 15: Three Drives Pattern
+      const threeDrives = detectThreeDrives(chart)
+      if (threeDrives) {
+        patterns.push({
+          type: threeDrives.type === 'bullish' ? 'success' : 'danger',
+          pattern: threeDrives.pattern,
+          description: threeDrives.description,
+          confidence: threeDrives.confidence,
+          action: threeDrives.type === 'bullish' ?
+            'Exhaustion pattern - prepare for reversal up' :
+            'Exhaustion pattern - prepare for reversal down',
+          implication: 'harmonic',
+          elite: true
+        })
+      }
 
       setDetectedPatterns(patterns.length > 0 ? patterns : [{
         type: 'info',
@@ -434,7 +477,14 @@ export default function PatternRecognition() {
                     <span className="text-2xl">{getPatternIcon(pattern.type)}</span>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <div className="font-bold text-slate-200">{pattern.pattern}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-bold text-slate-200">{pattern.pattern}</div>
+                          {pattern.elite && (
+                            <span className="px-2 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded text-xs font-bold text-white">
+                              ELITE
+                            </span>
+                          )}
+                        </div>
                         {pattern.confidence > 0 && (
                           <div className="text-xs text-slate-400">
                             {pattern.confidence}% confidence
@@ -444,6 +494,11 @@ export default function PatternRecognition() {
                       <div className="text-sm text-slate-300 mb-2">
                         {pattern.description}
                       </div>
+                      {pattern.details && (
+                        <div className="text-xs text-purple-400 mb-2 font-mono">
+                          {pattern.details}
+                        </div>
+                      )}
                       {pattern.action && (
                         <div className="text-sm text-indigo-300 font-semibold">
                           → {pattern.action}
@@ -465,7 +520,7 @@ export default function PatternRecognition() {
         {/* Pattern Legend */}
         <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/50">
           <div className="text-xs text-slate-400 font-semibold mb-3">PATTERN TYPES</div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="grid grid-cols-2 gap-2 text-xs mb-3">
             <div>
               <span className="text-emerald-400 font-semibold">Reversal:</span>
               <span className="text-slate-400"> Trend change expected</span>
@@ -481,6 +536,18 @@ export default function PatternRecognition() {
             <div>
               <span className="text-amber-400 font-semibold">Trend:</span>
               <span className="text-slate-400"> Directional movement</span>
+            </div>
+          </div>
+          <div className="pt-3 border-t border-slate-700/50">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-2 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded text-xs font-bold text-white">
+                ELITE
+              </span>
+              <span className="text-xs text-pink-400 font-semibold">Harmonic Patterns</span>
+            </div>
+            <div className="text-xs text-slate-400">
+              Advanced Fibonacci-based patterns with precise price targets and stop levels.
+              Includes Gartley, Butterfly, Bat, Crab, Shark, Cypher, ABCD, and Three Drives.
             </div>
           </div>
         </div>

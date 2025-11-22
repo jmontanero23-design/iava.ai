@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
+import { speakAnalysis, speakGuidance, voiceQueue } from '../utils/voiceSynthesis.js'
 
 /**
  * AVA Mind - AI Digital Twin
@@ -182,6 +183,10 @@ export default function AVAMind({ onClose }) {
       const suggestion = generateSuggestion(analysis)
       if (suggestion) {
         setSuggestions(prev => [suggestion, ...prev.slice(0, 4)])
+
+        // Speak the suggestion using voice synthesis
+        const voiceMessage = `AVA Mind suggests ${suggestion.action} ${suggestion.symbol}. Confidence ${suggestion.confidence} percent. ${suggestion.reasoning}`
+        speakAnalysis(voiceMessage)
       }
       setMindState('suggesting')
     }, 1500)
@@ -249,13 +254,19 @@ export default function AVAMind({ onClose }) {
   // Execute autonomous trade (if permitted)
   const executeTrade = (suggestion) => {
     if (autonomyLevel < 3) {
+      const warningMessage = 'Autonomy level too low. Increase to level 3 or higher for auto-trading'
       window.dispatchEvent(new CustomEvent('iava.toast', {
-        detail: { text: 'Autonomy level too low. Increase to level 3+ for auto-trading', type: 'warning' }
+        detail: { text: warningMessage, type: 'warning' }
       }))
+      speakGuidance(warningMessage)
       return
     }
 
     setMindState('executing')
+
+    // Speak execution announcement
+    const executionMessage = `Executing ${suggestion.action} order for ${suggestion.symbol}`
+    speakGuidance(executionMessage)
 
     // Simulate trade execution
     setTimeout(() => {
@@ -267,9 +278,12 @@ export default function AVAMind({ onClose }) {
         }
       }))
 
+      const successMessage = `AVA Mind executed: ${suggestion.action} ${suggestion.symbol}`
       window.dispatchEvent(new CustomEvent('iava.toast', {
-        detail: { text: `AVA Mind executed: ${suggestion.action} ${suggestion.symbol}`, type: 'success' }
+        detail: { text: successMessage, type: 'success' }
       }))
+
+      speakGuidance(`Trade executed successfully. ${suggestion.action} ${suggestion.symbol}`)
 
       setMindState('thinking')
     }, 1000)

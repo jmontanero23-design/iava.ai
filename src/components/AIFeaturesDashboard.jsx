@@ -6,6 +6,10 @@
  */
 
 import { useState, useEffect } from 'react'
+import OptionsGreeksCalculator from './OptionsGreeksCalculator.jsx'
+import Level2MarketDepth from './Level2MarketDepth.jsx'
+import VolumeProfile from './VolumeProfile.jsx'
+import PortfolioAnalytics from './PortfolioAnalytics.jsx'
 
 export default function AIFeaturesDashboard({ onFeatureSelect }) {
   const [metrics, setMetrics] = useState(null)
@@ -21,7 +25,7 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
         signalsTracked: signalQualityData.signals?.length || 0,
         tradesLogged: tradeJournalData.trades?.length || 0,
         lessonsCompleted: learningData.completed?.length || 0,
-        featuresActive: 12
+        featuresActive: 16
       })
     }
 
@@ -162,6 +166,54 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
       glowColor: 'lime',
       requiresAPI: false,
       category: 'Core'
+    },
+    {
+      id: 'options_greeks',
+      name: 'Options Greeks Calculator',
+      description: 'Real-time Black-Scholes analytics',
+      detail: 'Delta, Gamma, Theta, Vega, Rho with strategy analysis and IV calculation',
+      icon: 'Δ',
+      gradient: 'from-purple-600 via-indigo-500 to-blue-500',
+      glowColor: 'indigo',
+      requiresAPI: false,
+      category: 'Professional',
+      component: OptionsGreeksCalculator
+    },
+    {
+      id: 'level2_depth',
+      name: 'Level 2 Market Depth',
+      description: 'Order book microstructure',
+      detail: 'Real-time bid/ask levels, liquidity heatmap, order flow, imbalance detection',
+      icon: '📊',
+      gradient: 'from-cyan-600 via-teal-500 to-emerald-500',
+      glowColor: 'teal',
+      requiresAPI: false,
+      category: 'Professional',
+      component: Level2MarketDepth
+    },
+    {
+      id: 'volume_profile',
+      name: 'Volume Profile',
+      description: 'TPO, VWAP, POC analysis',
+      detail: 'Market Profile, Value Area, Volume Nodes, CVD, institutional order flow',
+      icon: '📈',
+      gradient: 'from-pink-600 via-purple-500 to-indigo-500',
+      glowColor: 'purple',
+      requiresAPI: false,
+      category: 'Professional',
+      component: VolumeProfile
+    },
+    {
+      id: 'portfolio_analytics',
+      name: 'Portfolio Analytics',
+      description: 'Risk & performance dashboard',
+      detail: 'Sharpe/Sortino, VaR, correlation matrix, concentration analysis, alpha tracking',
+      icon: '💼',
+      gradient: 'from-amber-600 via-orange-500 to-red-500',
+      glowColor: 'orange',
+      requiresAPI: false,
+      category: 'Professional',
+      component: PortfolioAnalytics
     }
   ]
 
@@ -294,7 +346,7 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
         {features.map((feature) => (
           <button
             key={feature.id}
-            onClick={() => onFeatureSelect?.(feature.id)}
+            onClick={() => onFeatureSelect?.(feature.component || feature.id)}
             className="group relative text-left transition-all duration-300 hover:scale-[1.02]"
           >
             {/* Glow effect on hover */}

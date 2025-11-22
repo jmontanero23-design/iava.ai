@@ -122,10 +122,10 @@ export default function App() {
         return
       }
 
-      // Number keys (1-4) to switch tabs
-      if (e.key >= '1' && e.key <= '4') {
+      // Number keys (1-5) to switch tabs
+      if (e.key >= '1' && e.key <= '5') {
         e.preventDefault()
-        const tabs = ['chart', 'ai-hub', 'scanner', 'portfolio']
+        const tabs = ['chart', 'ai-hub', 'scanner', 'portfolio', 'ava-mind']
         setActiveTab(tabs[parseInt(e.key) - 1])
       }
 
@@ -263,13 +263,13 @@ function AppWithGestures({
     <MobileGestures
       symbol={symbol}
       onSwipeLeft={() => {
-        const tabs = ['chart', 'ai-hub', 'scanner', 'portfolio']
+        const tabs = ['chart', 'ai-hub', 'scanner', 'portfolio', 'ava-mind']
         const currentIndex = tabs.indexOf(activeTab)
         const nextIndex = (currentIndex + 1) % tabs.length
         setActiveTab(tabs[nextIndex])
       }}
       onSwipeRight={() => {
-        const tabs = ['chart', 'ai-hub', 'scanner', 'portfolio']
+        const tabs = ['chart', 'ai-hub', 'scanner', 'portfolio', 'ava-mind']
         const currentIndex = tabs.indexOf(activeTab)
         const prevIndex = currentIndex === 0 ? tabs.length - 1 : currentIndex - 1
         setActiveTab(tabs[prevIndex])
@@ -334,21 +334,22 @@ function AppWithGestures({
               <span>Portfolio</span>
               <kbd className="hidden md:inline text-xs opacity-60 ml-1">⌘4</kbd>
             </button>
+            <button
+              onClick={() => setActiveTab('ava-mind')}
+              className={`px-5 py-3 rounded-lg text-sm font-semibold transition-all flex items-center gap-2.5 ${
+                activeTab === 'ava-mind'
+                  ? 'bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-purple-300 border border-purple-500/30 shadow-lg shadow-purple-500/20'
+                  : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-slate-200'
+              }`}
+              title="AVA Mind - AI Twin (⌘5)"
+            >
+              <span className="text-lg">🧠</span>
+              <span>AVA Mind</span>
+              <kbd className="hidden md:inline text-xs opacity-60 ml-1">⌘5</kbd>
+            </button>
 
             {/* Next-Gen Features */}
             <div className="ml-auto flex items-center gap-2">
-              {/* AVA Mind Button */}
-              <button
-                onClick={() => setShowAVAMind(!showAVAMind)}
-                className={`p-2.5 rounded-lg transition-all ${
-                  showAVAMind
-                    ? 'bg-gradient-to-r from-purple-500/30 to-cyan-500/30 text-purple-300 border border-purple-500/30 animate-pulse'
-                    : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-purple-300'
-                }`}
-                title="AVA Mind - AI Twin"
-              >
-                <span className="text-lg">🧠</span>
-              </button>
 
               {/* Social Rooms Button */}
               <button
@@ -389,6 +390,10 @@ function AppWithGestures({
           <Portfolio />
         )}
 
+        {activeTab === 'ava-mind' && (
+          <AVAMind />
+        )}
+
         {activeTab !== 'chart' && <BuildInfoFooter />}
         </div>
 
@@ -405,10 +410,6 @@ function AppWithGestures({
           <AITradeCopilot onClose={() => setShowCopilot(false)} />
         )}
 
-        {/* AVA Mind - AI Digital Twin */}
-        {showAVAMind && (
-          <AVAMind onClose={() => setShowAVAMind(false)} />
-        )}
 
         {/* Social Trading Rooms */}
         {showSocialRooms && (
