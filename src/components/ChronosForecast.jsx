@@ -1,9 +1,9 @@
 /**
- * Chronos AI Forecast Dashboard
+ * AVA Forecast Dashboard
  * PhD++ Quality Time Series Forecasting Visualization
  *
  * Features:
- * - Real Chronos-T5-Base predictions via Modal GPU
+ * - Real AI predictions via AVA Cloud
  * - Price prediction chart with confidence bands
  * - Directional scoring (BULLISH/NEUTRAL/BEARISH)
  * - Percent change prediction
@@ -91,7 +91,7 @@ export default function ChronosForecast() {
       const shortMomentum = (shortTrend[shortTrend.length - 1] - shortTrend[0]) / shortTrend[0] * 100
       const longMomentum = longTrend.length >= 20 ? (longTrend[longTrend.length - 1] - longTrend[0]) / longTrend[0] * 100 : shortMomentum
 
-      console.log(`🔮 Running Chronos forecast for ${symbol} with ${prices.length} data points...`)
+      console.log(`🔮 Running AVA forecast for ${symbol} with ${prices.length} data points...`)
       console.log(`📊 Context: RSI=${rsi.toFixed(1)}, Vol=${volatility.toFixed(2)}%, Momentum=${shortMomentum.toFixed(2)}%`)
 
       // Call backend API (which has access to Modal)
@@ -195,7 +195,7 @@ export default function ChronosForecast() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            🔮 Chronos AI Forecast
+            🔮 AVA Forecast
           </h1>
           <p className="text-slate-400 text-sm mt-1">
             {isDataLoading ? (
@@ -236,7 +236,7 @@ export default function ChronosForecast() {
         <div className="bg-slate-800/50 rounded-xl p-8 text-center mb-6">
           <div className="text-4xl mb-4 animate-pulse">🔮</div>
           <div className="text-slate-300 font-semibold">
-            {isDataLoading ? 'Loading market data...' : 'Running Chronos-T5-Base Forecast...'}
+            {isDataLoading ? 'Loading market data...' : 'Running AVA Forecast Engine...'}
           </div>
           <div className="text-slate-500 text-sm mt-2">
             {isDataLoading ? `Symbol: ${symbol || 'loading...'}` : `Analyzing ${bars.length} price bars for ${symbol}`}
@@ -402,10 +402,10 @@ export default function ChronosForecast() {
                   <div className="font-semibold text-white">{forecast.model || 'Unknown Model'}</div>
                   <div className="text-slate-500 text-sm">
                     {forecast.model?.includes('Ensemble')
-                      ? 'Combining Chronos ML + Context-Aware Analysis'
+                      ? 'AVA Ensemble: ML + Context-Aware Analysis'
                       : forecast.model?.includes('REAL')
-                        ? 'Using Amazon Chronos-T5-Base on Modal GPU'
-                        : 'Using algorithmic fallback (Modal unavailable)'
+                        ? 'AVA Cloud Neural Network'
+                        : 'AVA Algorithmic Fallback'
                     }
                   </div>
                 </div>
@@ -427,7 +427,7 @@ export default function ChronosForecast() {
                     <span className="text-slate-400">Weights:</span>
                     {forecast.ensemble.chronosAvailable && (
                       <span className="text-cyan-400">
-                        {(forecast.ensemble.weights.chronos * 100).toFixed(0)}% Chronos
+                        {(forecast.ensemble.weights.chronos * 100).toFixed(0)}% AVA ML
                       </span>
                     )}
                     <span className="text-amber-400">

@@ -31,7 +31,7 @@ import WatchlistNavigator from './components/WatchlistNavigator.jsx'
 import ScannerPanel from './components/ScannerPanel.jsx'
 import CommandPalette from './components/CommandPalette.jsx'
 import AIInsightsPanel from './components/AIInsightsPanel.jsx'
-import QueueMonitor from './components/QueueMonitor.jsx'
+// QueueMonitor removed - dev tool not needed for users
 
 function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*3600, step = 3600) {
   const out = []
@@ -336,7 +336,7 @@ export default function App() {
       }
     }
 
-    // Call backend API to calculate AI score (HuggingFace API key available there)
+    // Call backend API to calculate AI score (AVA Sentiment engine)
     const calculateAI = async () => {
       try {
         const aiData = prepareAIData()
@@ -1079,7 +1079,6 @@ export default function App() {
           applyPreset={applyPreset}
         />
         <BuildInfoFooter />
-        <QueueMonitor />
       </div>
     </div>
   )

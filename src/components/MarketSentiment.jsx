@@ -1,11 +1,11 @@
 /**
  * Market Sentiment Dashboard
- * Elite AI-powered market sentiment analysis using HuggingFace NLP
+ * Elite AI-powered market sentiment analysis using AVA Sentiment Engine
  *
  * Features:
  * - Real-time sentiment gauge (Fear & Greed)
  * - Symbol-specific sentiment analysis
- * - News headline sentiment (HuggingFace DistilBERT)
+ * - News headline sentiment (AVA NLP)
  * - Market regime detection (Bull/Bear/Neutral)
  * - Sector rotation indicators
  * - Social sentiment aggregation
@@ -419,14 +419,14 @@ export default function MarketSentiment() {
           <div className="flex items-center justify-between mb-3">
             <div className="text-xs text-slate-400 font-semibold">NEWS SENTIMENT (AI ANALYZED)</div>
             <div className="flex items-center gap-2">
-              <span className="text-indigo-400 text-xs">🤖 HuggingFace</span>
+              <span className="text-indigo-400 text-xs">🤖 AVA Sentiment</span>
               <span className="px-2 py-0.5 rounded text-xs bg-indigo-600/20 border border-indigo-500/30 text-indigo-300">
-                PhD++ Multi-Model
+                Multi-Model Consensus
               </span>
             </div>
           </div>
           <div className="text-xs text-slate-400 mb-3">
-            Using FinBERT (financial), BERTweet (social), and DistilBERT (general) models for consensus analysis
+            Analyzing news with financial, social, and general sentiment models
           </div>
 
           {isLoading ? (
@@ -489,12 +489,8 @@ export default function MarketSentiment() {
                         </span>
                       )}
 
-                      {/* HuggingFace Model Used */}
-                      {item.model && !item.error && (
-                        <span className="text-xs text-slate-600">
-                          • {item.model}
-                        </span>
-                      )}
+                      {/* Model indicator - hidden from UI to protect tech stack */}
+                      {/* item.model shows which model was used but we hide it */}
 
                       {/* Error/Fallback Indicator */}
                       {(item.error || item.fallback) && (

@@ -301,8 +301,8 @@ export default function App() {
                   ? 'bg-gradient-to-r from-indigo-600 to-purple-500 text-white shadow-lg shadow-indigo-500/30'
                   : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
               }`}
-              title="Chronos AI Forecast - PhD++ Time Series Predictions (Press 8)"
-              aria-label="Switch to Chronos AI Forecast tab"
+              title="AVA Forecast - Time Series Predictions (Press 8)"
+              aria-label="Switch to AVA Forecast tab"
             >
               <span className="text-xl">🔮</span>
               <span>Forecast</span>

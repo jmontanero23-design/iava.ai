@@ -104,7 +104,7 @@ export default function TradeJournalAIPanel() {
     }
   }
 
-  // ELITE: Analyze trade sentiment with HuggingFace AI
+  // ELITE: Analyze trade sentiment with AVA Sentiment Engine
   const analyzeTradeSentiment = async (notes) => {
     if (!notes || notes.trim().length < 10) {
       return {

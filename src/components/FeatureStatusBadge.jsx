@@ -14,7 +14,7 @@ export default function FeatureStatusBadge({ onClick }) {
   // Count features by status
   const features = {
     clientSide: 9,  // Always active
-    apiRequired: 3,  // Need OpenAI API key
+    apiRequired: 3,  // Need AI API key
     total: 12
   }
 
@@ -178,21 +178,10 @@ export default function FeatureStatusBadge({ onClick }) {
                       </li>
                     </ul>
                     <div className="pt-3 space-y-2 border-t border-slate-700/50">
-                      <p className="text-amber-300 text-xs font-semibold">Quick Setup:</p>
-                      <ol className="space-y-1 text-xs text-slate-400 ml-1">
-                        <li className="flex gap-2">
-                          <span className="text-amber-400 font-bold">1.</span>
-                          <span>Get key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" className="text-indigo-400 hover:text-indigo-300 underline">OpenAI</a></span>
-                        </li>
-                        <li className="flex gap-2">
-                          <span className="text-amber-400 font-bold">2.</span>
-                          <span>Add OPENAI_API_KEY to Vercel</span>
-                        </li>
-                        <li className="flex gap-2">
-                          <span className="text-amber-400 font-bold">3.</span>
-                          <span>Redeploy your app</span>
-                        </li>
-                      </ol>
+                      <p className="text-amber-300 text-xs font-semibold">Contact Support:</p>
+                      <p className="text-xs text-slate-400">
+                        Advanced AI features require additional configuration. Contact your administrator for setup.
+                      </p>
                     </div>
                   </div>
                 )}

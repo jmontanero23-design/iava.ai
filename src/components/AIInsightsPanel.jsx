@@ -309,11 +309,11 @@ export default function AIInsightsPanel({
                 {aiScore.scores.ai?.components?.forecast !== undefined && (
                   <div className="pl-4 flex justify-between text-[11px] text-purple-200/70">
                     <div className="flex items-center gap-1">
-                      <span className="text-purple-400">↳ Chronos Forecast</span>
+                      <span className="text-purple-400">↳ AVA Forecast</span>
                       {aiScore.breakdown?.forecastModel === 'Chronos-2-Bolt (REAL)' ? (
-                        <span className="text-emerald-400 text-[10px]" title="Using Modal GPU">🚀</span>
+                        <span className="text-emerald-400 text-[10px]" title="AVA Cloud">🚀</span>
                       ) : (
-                        <span className="text-yellow-400 text-[10px]" title="Fallback forecast">⚠️</span>
+                        <span className="text-yellow-400 text-[10px]" title="Fallback mode">⚠️</span>
                       )}
                     </div>
                     <span className="text-white font-medium">
