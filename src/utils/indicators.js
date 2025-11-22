@@ -430,28 +430,31 @@ export function computeStates(bars) {
   let score = 0
   const components = {}
 
-  // Helper to add bidirectional score
-  const add = (k, bullishValue, bearishValue) => {
-    const value = pivotNow === 'bullish' ? bullishValue :
-                  pivotNow === 'bearish' ? bearishValue : 0
+  // PhD+++ Helper to add bidirectional score with NEUTRAL FLOOR
+  // When neutral, contribute 40% of weight instead of 0 - prevents score cliffs
+  const add = (k, state, weight) => {
+    let value
+    if (state === 'bullish' || state === 'long') {
+      value = weight
+    } else if (state === 'bearish' || state === 'short') {
+      value = -weight
+    } else {
+      // PhD+++ NEUTRAL: Contribute 40% of weight toward slight positive (holding bias)
+      // This prevents wild swings from 60→5 when market becomes neutral
+      // Score will drop from 60 to ~25 instead of 60 to ~0
+      value = weight * 0.4
+    }
     components[k] = value
     score += value
   }
 
-  // Core trend indicators (bidirectional)
-  add('pivotRibbon',
-    pivotNow === 'bullish' ? UNICORN_WEIGHTS.pivotRibbon : 0,
-    pivotNow === 'bearish' ? -UNICORN_WEIGHTS.pivotRibbon : 0
-  )
-
-  add('ripster3450',
-    rip.bias === 'bullish' ? UNICORN_WEIGHTS.ripster3450 : 0,
-    rip.bias === 'bearish' ? -UNICORN_WEIGHTS.ripster3450 : 0
-  )
-
+  // Core trend indicators (bidirectional) - PhD+++ now with proper neutral handling
+  add('pivotRibbon', pivotNow, UNICORN_WEIGHTS.pivotRibbon)
+  add('ripster3450', rip.bias, UNICORN_WEIGHTS.ripster3450)
   add('satyTrigger',
-    (satyDir === 'long' && pivotNow === 'bullish') ? UNICORN_WEIGHTS.satyTrigger : 0,
-    (satyDir === 'short' && pivotNow === 'bearish') ? -UNICORN_WEIGHTS.satyTrigger : 0
+    (satyDir === 'long' && pivotNow === 'bullish') ? 'bullish' :
+    (satyDir === 'short' && pivotNow === 'bearish') ? 'bearish' : 'neutral',
+    UNICORN_WEIGHTS.satyTrigger
   )
 
   // Squeeze scoring (bidirectional)
@@ -479,11 +482,8 @@ export function computeStates(bars) {
   components.squeeze = squeezeScore
   score += squeezeScore
 
-  // Ichimoku (bidirectional)
-  const ichiScore = ichiRegime === 'bullish' ? UNICORN_WEIGHTS.ichimoku :
-                    ichiRegime === 'bearish' ? -UNICORN_WEIGHTS.ichimoku : 0
-  components.ichimoku = ichiScore
-  score += ichiScore
+  // Ichimoku (bidirectional) - PhD+++ with neutral floor
+  add('ichimoku', ichiRegime, UNICORN_WEIGHTS.ichimoku)
 
   // PhD++ ENHANCEMENTS:
 

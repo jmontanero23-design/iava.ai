@@ -54,10 +54,45 @@ export default function ChronosForecast() {
     setLastSymbol(symbol) // Track which symbol we're forecasting
 
     try {
-      // Extract close prices for forecasting
+      // PhD++ Extract FULL OHLCV data for rich context
       const prices = bars.map(b => b.close)
+      const ohlcv = bars.map(b => ({
+        o: b.open,
+        h: b.high,
+        l: b.low,
+        c: b.close,
+        v: b.volume || 0,
+        t: b.time || b.timestamp
+      }))
+
+      // PhD++ Calculate key indicators for context
+      const recentPrices = prices.slice(-20)
+      const sma20 = recentPrices.reduce((a, b) => a + b, 0) / recentPrices.length
+      const volatility = Math.sqrt(
+        recentPrices.reduce((sum, p) => sum + Math.pow(p - sma20, 2), 0) / recentPrices.length
+      ) / sma20 * 100 // As percentage
+
+      // PhD++ RSI calculation (simplified)
+      const rsiPeriod = Math.min(14, prices.length - 1)
+      let gains = 0, losses = 0
+      for (let i = prices.length - rsiPeriod; i < prices.length; i++) {
+        const change = prices[i] - prices[i - 1]
+        if (change > 0) gains += change
+        else losses -= change
+      }
+      const avgGain = gains / rsiPeriod
+      const avgLoss = losses / rsiPeriod
+      const rs = avgLoss === 0 ? 100 : avgGain / avgLoss
+      const rsi = 100 - (100 / (1 + rs))
+
+      // PhD++ Trend detection
+      const shortTrend = prices.slice(-5)
+      const longTrend = prices.slice(-20)
+      const shortMomentum = (shortTrend[shortTrend.length - 1] - shortTrend[0]) / shortTrend[0] * 100
+      const longMomentum = longTrend.length >= 20 ? (longTrend[longTrend.length - 1] - longTrend[0]) / longTrend[0] * 100 : shortMomentum
 
       console.log(`🔮 Running Chronos forecast for ${symbol} with ${prices.length} data points...`)
+      console.log(`📊 Context: RSI=${rsi.toFixed(1)}, Vol=${volatility.toFixed(2)}%, Momentum=${shortMomentum.toFixed(2)}%`)
 
       // Call backend API (which has access to Modal)
       const response = await fetch('/api/forecast', {
@@ -65,8 +100,22 @@ export default function ChronosForecast() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prices,
+          ohlcv: ohlcv.slice(-100), // Last 100 bars for context
           horizon: 24,
-          symbol
+          symbol,
+          // PhD++ Rich context injection
+          context: {
+            rsi,
+            volatility,
+            sma20,
+            shortMomentum,
+            longMomentum,
+            currentPrice: prices[prices.length - 1],
+            priceRange: {
+              high: Math.max(...recentPrices),
+              low: Math.min(...recentPrices)
+            }
+          }
         })
       })
 
@@ -134,8 +183,11 @@ export default function ChronosForecast() {
     return 'bg-red-500'
   }
 
-  // Calculate predicted price
-  const predictedPrice = forecast?.predictions?.[forecast.predictions.length - 1]
+  // Calculate predicted price with NaN protection
+  const rawPredictedPrice = forecast?.predictions?.[forecast.predictions.length - 1]
+  const predictedPrice = (typeof rawPredictedPrice === 'number' && !isNaN(rawPredictedPrice) && isFinite(rawPredictedPrice))
+    ? rawPredictedPrice
+    : null
 
   return (
     <div className="h-full bg-slate-900 p-6 overflow-y-auto">
@@ -262,26 +314,44 @@ export default function ChronosForecast() {
                 ${predictedPrice?.toFixed(2) || '---'}
               </div>
               <div className="text-slate-500 text-sm mt-1">
-                {forecast.percentChange >= 0 ? '↑' : '↓'} ${Math.abs(predictedPrice - currentPrice)?.toFixed(2) || '0'} change
+                {(() => {
+                  // PhD++ NaN-safe price change calculation
+                  if (predictedPrice === null || currentPrice === null) return '---'
+                  const change = Math.abs(predictedPrice - currentPrice)
+                  if (isNaN(change) || !isFinite(change)) return '---'
+                  return `${forecast.percentChange >= 0 ? '↑' : '↓'} $${change.toFixed(2)} change`
+                })()}
               </div>
             </div>
 
             {/* Confidence Range */}
             <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
               <div className="text-slate-400 text-sm font-semibold mb-1">CONFIDENCE RANGE</div>
-              {forecast.confidence_low && forecast.confidence_high ? (
-                <>
-                  <div className="text-xl font-bold text-cyan-400">
-                    ${forecast.confidence_low[forecast.confidence_low.length - 1]?.toFixed(2)} - ${forecast.confidence_high[forecast.confidence_high.length - 1]?.toFixed(2)}
-                  </div>
-                  <div className="text-slate-500 text-sm mt-1">90% confidence interval</div>
-                </>
-              ) : (
-                <>
-                  <div className="text-xl font-bold text-slate-500">N/A</div>
-                  <div className="text-slate-500 text-sm mt-1">Fallback mode</div>
-                </>
-              )}
+              {(() => {
+                // PhD++ NaN-safe confidence range extraction
+                const lowVal = forecast.confidence_low?.[forecast.confidence_low.length - 1]
+                const highVal = forecast.confidence_high?.[forecast.confidence_high.length - 1]
+                const isValidLow = typeof lowVal === 'number' && !isNaN(lowVal) && isFinite(lowVal)
+                const isValidHigh = typeof highVal === 'number' && !isNaN(highVal) && isFinite(highVal)
+
+                if (isValidLow && isValidHigh) {
+                  return (
+                    <>
+                      <div className="text-xl font-bold text-cyan-400">
+                        ${lowVal.toFixed(2)} - ${highVal.toFixed(2)}
+                      </div>
+                      <div className="text-slate-500 text-sm mt-1">90% confidence interval</div>
+                    </>
+                  )
+                } else {
+                  return (
+                    <>
+                      <div className="text-xl font-bold text-slate-500">N/A</div>
+                      <div className="text-slate-500 text-sm mt-1">Fallback mode</div>
+                    </>
+                  )
+                }
+              })()}
             </div>
           </div>
 
@@ -331,9 +401,11 @@ export default function ChronosForecast() {
                 <div>
                   <div className="font-semibold text-white">{forecast.model || 'Unknown Model'}</div>
                   <div className="text-slate-500 text-sm">
-                    {forecast.model?.includes('REAL')
-                      ? 'Using Amazon Chronos-T5-Base on Modal GPU'
-                      : 'Using algorithmic fallback (Modal unavailable)'
+                    {forecast.model?.includes('Ensemble')
+                      ? 'Combining Chronos ML + Context-Aware Analysis'
+                      : forecast.model?.includes('REAL')
+                        ? 'Using Amazon Chronos-T5-Base on Modal GPU'
+                        : 'Using algorithmic fallback (Modal unavailable)'
                     }
                   </div>
                 </div>
@@ -343,9 +415,58 @@ export default function ChronosForecast() {
                   ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-500/30'
                   : 'bg-amber-900/50 text-amber-400 border border-amber-500/30'
               }`}>
-                {forecast.model?.includes('REAL') ? 'REAL AI' : 'FALLBACK'}
+                {forecast.model?.includes('REAL') ? 'ENSEMBLE AI' : 'FALLBACK'}
               </div>
             </div>
+
+            {/* PhD++ Ensemble breakdown */}
+            {forecast.ensemble && (
+              <div className="mt-3 pt-3 border-t border-slate-700">
+                <div className="flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400">Weights:</span>
+                    {forecast.ensemble.chronosAvailable && (
+                      <span className="text-cyan-400">
+                        {(forecast.ensemble.weights.chronos * 100).toFixed(0)}% Chronos
+                      </span>
+                    )}
+                    <span className="text-amber-400">
+                      {(forecast.ensemble.weights.smart * 100).toFixed(0)}% Smart
+                    </span>
+                  </div>
+                  {forecast.ensemble.smartReason && (
+                    <div className="text-slate-500">
+                      Strategy: {forecast.ensemble.smartReason}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* PhD++ Context insights */}
+            {forecast.contextInsights && (
+              <div className="mt-3 pt-3 border-t border-slate-700">
+                <div className="flex items-center gap-4 text-xs">
+                  <span className={`px-2 py-0.5 rounded ${
+                    forecast.contextInsights.rsi > 70 ? 'bg-red-900/50 text-red-400' :
+                    forecast.contextInsights.rsi < 30 ? 'bg-emerald-900/50 text-emerald-400' :
+                    'bg-slate-700 text-slate-300'
+                  }`}>
+                    RSI: {forecast.contextInsights.rsi?.toFixed(1)}
+                  </span>
+                  <span className="text-slate-400">
+                    Volatility: {forecast.contextInsights.volatility?.toFixed(2)}%
+                  </span>
+                  <span className={`px-2 py-0.5 rounded ${
+                    forecast.contextInsights.regime === 'overbought' ? 'bg-red-900/50 text-red-400' :
+                    forecast.contextInsights.regime === 'oversold' ? 'bg-emerald-900/50 text-emerald-400' :
+                    'bg-slate-700 text-slate-300'
+                  }`}>
+                    {forecast.contextInsights.regime?.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Info Footer */}

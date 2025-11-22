@@ -207,14 +207,25 @@ export default function MarketSentiment() {
 
       setNewsItems(analyzedNews)
 
-      // Calculate overall sentiment from news using OPTION 4 WEIGHTED AVERAGE
+      // PhD+++ Calculate overall sentiment from news using WEIGHTED AVERAGE
       // Important news (crash, FOMC, VIX) has MORE weight than generic articles
+      // ALSO: Include model confidence in the weighting!
       let totalWeight = 0
       let weightedSentimentSum = 0
+      let weightedConfidenceSum = 0
 
       analyzedNews.forEach(item => {
         // Calculate keyword-based importance weight
-        const weight = getHeadlineWeight(item.headline)
+        const keywordWeight = getHeadlineWeight(item.headline)
+
+        // Get model confidence (0-1 scale, default 0.5 for errors)
+        const modelConfidence = item.error || item.fallback
+          ? 0.5
+          : (item.confidence || 0.5)
+
+        // PhD+++ Combined weight = keyword importance × model confidence
+        // High-confidence important news weighs more than low-confidence generic news
+        const combinedWeight = keywordWeight * modelConfidence
 
         // Convert -1 to +1 scale to 0 to 100 scale
         // -1 (bearish) = 0, 0 (neutral) = 50, +1 (bullish) = 100
@@ -222,25 +233,30 @@ export default function MarketSentiment() {
           ? 50 // Neutral for errors/fallbacks
           : ((item.score + 1) / 2) * 100
 
-        // Store weight on item for UI display
-        item.weight = weight
+        // Store weights on item for UI display
+        item.weight = keywordWeight
+        item.combinedWeight = combinedWeight
 
-        // Accumulate weighted score
-        totalWeight += weight
-        weightedSentimentSum += score * weight
+        // Accumulate weighted scores AND confidence
+        totalWeight += combinedWeight
+        weightedSentimentSum += score * combinedWeight
+        weightedConfidenceSum += modelConfidence * combinedWeight
 
         // Log high-impact news
-        if (weight > 1.5) {
-          console.log(`📊 High-impact news (${weight.toFixed(1)}x): "${item.headline.substring(0, 50)}..."`)
+        if (keywordWeight > 1.5) {
+          console.log(`📊 High-impact news (${keywordWeight.toFixed(1)}x, ${(modelConfidence * 100).toFixed(0)}% conf): "${item.headline.substring(0, 50)}..."`)
         }
       })
 
-      // Calculate weighted average (instead of simple average)
+      // Calculate weighted averages (sentiment AND confidence)
       const avgSentiment = totalWeight > 0
         ? weightedSentimentSum / totalWeight
         : 50
+      const avgConfidence = totalWeight > 0
+        ? weightedConfidenceSum / totalWeight
+        : 0.5
 
-      console.log(`📰 Sentiment: ${analyzedNews.length} articles, total weight: ${totalWeight.toFixed(1)}, weighted avg: ${avgSentiment.toFixed(1)}`)
+      console.log(`📰 Sentiment: ${analyzedNews.length} articles, weighted avg: ${avgSentiment.toFixed(1)}, confidence: ${(avgConfidence * 100).toFixed(0)}%`)
 
       // Blend with technical sentiment
       const regime = getMarketRegime()
@@ -254,7 +270,8 @@ export default function MarketSentiment() {
         symbol,
         score: Math.round(blendedSentiment),
         regime: regime.regime,
-        confidence: regime.confidence
+        // PhD+++ Use REAL aggregated confidence from HuggingFace, not hardcoded regime!
+        confidence: Math.round(avgConfidence * 100)
       })
 
       setLastUpdate(new Date())

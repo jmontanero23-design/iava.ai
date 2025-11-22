@@ -255,12 +255,24 @@ export class UltraEliteAI {
       breakdown.contributions.technicals = techContribution;
       breakdown.modelsUsed.push('Traditional Indicators');
 
-      // Sentiment component (0-25 points)
+      // PhD+++ Sentiment component (0-25 points) - DIRECTIONAL SCORING
+      // 100 = strongly bullish, 50 = neutral, 0 = strongly bearish
       let sentimentContribution = 0;
       const sentimentScore = signals?.sentiment?.ensemble_scores;
       if (sentimentScore) {
         const positiveWeight = sentimentScore.positive || 0;
-        sentimentContribution = weights.sentiment * (positiveWeight * 100);
+        const negativeWeight = sentimentScore.negative || 0;
+        const confidence = signals?.sentiment?.confidence || 0.5;
+
+        // PhD+++ Directional Score: 50 = neutral, 100 = bullish, 0 = bearish
+        // Formula: 50 + ((positive - negative) * 50)
+        // Examples: pos=0.8, neg=0.1 → 85 | pos=0.1, neg=0.8 → 15 | pos=0.4, neg=0.4 → 50
+        const directionalSentiment = 50 + ((positiveWeight - negativeWeight) * 50);
+
+        // Scale by confidence: uncertain predictions pull toward neutral (50)
+        const confidenceScaled = 50 + ((directionalSentiment - 50) * confidence);
+
+        sentimentContribution = weights.sentiment * confidenceScaled;
 
         // Track which models worked
         if (signals.sentiment.individual_models) {
@@ -269,6 +281,15 @@ export class UltraEliteAI {
         } else {
           breakdown.modelsUsed.push('Sentiment Analysis');
         }
+
+        // PhD+++ Store raw values for transparency
+        breakdown.sentimentDetails = {
+          positive: positiveWeight,
+          negative: negativeWeight,
+          directional: directionalSentiment,
+          confidence: confidence,
+          final: confidenceScaled
+        };
       } else {
         sentimentContribution = weights.sentiment * 50; // Neutral fallback
         breakdown.modelsFailed.push('Sentiment Analysis');
