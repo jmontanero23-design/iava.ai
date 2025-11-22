@@ -10,6 +10,8 @@ import BuildInfoFooter from './components/BuildInfoFooter.jsx'
 import { MarketDataProvider, useMarketData } from './contexts/MarketDataContext.jsx'
 import AIFeaturesDashboard from './components/AIFeaturesDashboard.jsx'
 import MobileGestures from './components/MobileGestures.jsx'
+import AIHub from './components/AIHub.jsx'
+import Portfolio from './components/Portfolio.jsx'
 import AIChat from './components/AIChat.jsx'
 import NaturalLanguageScanner from './components/NaturalLanguageScanner.jsx'
 import ModelMonitoring from './components/ModelMonitoring.jsx'
@@ -116,10 +118,10 @@ export default function App() {
         return
       }
 
-      // Number keys (1-8) to switch tabs
-      if (e.key >= '1' && e.key <= '8') {
+      // Number keys (1-4) to switch tabs
+      if (e.key >= '1' && e.key <= '4') {
         e.preventDefault()
-        const tabs = ['chart', 'ai-features', 'ai-chat', 'monitoring', 'nlp-scanner', 'market-sentiment', 'multi-timeframe', 'chronos-forecast']
+        const tabs = ['chart', 'ai-hub', 'scanner', 'portfolio']
         setActiveTab(tabs[parseInt(e.key) - 1])
       }
 
@@ -129,16 +131,22 @@ export default function App() {
         setActiveTab('chart')
       }
 
-      // Alt+A for AI Features
+      // Alt+A for AI Hub
       if (e.altKey && e.key === 'a') {
         e.preventDefault()
-        setActiveTab('ai-features')
+        setActiveTab('ai-hub')
       }
 
-      // Alt+T for AI Chat
-      if (e.altKey && e.key === 't') {
+      // Alt+S for Scanner
+      if (e.altKey && e.key === 's') {
         e.preventDefault()
-        setActiveTab('ai-chat')
+        setActiveTab('scanner')
+      }
+
+      // Alt+P for Portfolio
+      if (e.altKey && e.key === 'p') {
+        e.preventDefault()
+        setActiveTab('portfolio')
       }
 
       // ? for help/tour
@@ -224,13 +232,13 @@ function AppWithGestures({
     <MobileGestures
       symbol={symbol}
       onSwipeLeft={() => {
-        const tabs = ['chart', 'ai-features', 'ai-chat', 'nlp-scanner', 'multi-timeframe']
+        const tabs = ['chart', 'ai-hub', 'scanner', 'portfolio']
         const currentIndex = tabs.indexOf(activeTab)
         const nextIndex = (currentIndex + 1) % tabs.length
         setActiveTab(tabs[nextIndex])
       }}
       onSwipeRight={() => {
-        const tabs = ['chart', 'ai-features', 'ai-chat', 'nlp-scanner', 'multi-timeframe']
+        const tabs = ['chart', 'ai-hub', 'scanner', 'portfolio']
         const currentIndex = tabs.indexOf(activeTab)
         const prevIndex = currentIndex === 0 ? tabs.length - 1 : currentIndex - 1
         setActiveTab(tabs[prevIndex])
@@ -240,120 +248,61 @@ function AppWithGestures({
         <div className="max-w-7xl mx-auto p-6 space-y-6 pb-16">
           <Hero />
 
-        {/* Tab Navigation with Logo */}
+        {/* Streamlined Navigation - 4 Main Views */}
         <nav className="glass-panel p-3">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setActiveTab('chart')}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
+              className={`px-5 py-3 rounded-lg text-sm font-semibold transition-all flex items-center gap-2.5 ${
                 activeTab === 'chart'
-                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30'
-                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
+                  ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border border-cyan-500/30 shadow-lg shadow-cyan-500/20'
+                  : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-slate-200'
               }`}
-              title="Trading Chart (Alt+C or press 1)"
-              aria-label="Switch to Trading Chart tab"
+              title="Trading Chart (⌘1)"
             >
-              <img src="/logo.svg" className="w-6 h-6 scale-hover" alt="" />
-              <span>Trading Chart</span>
-              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">1</kbd>
+              <span className="text-lg">📊</span>
+              <span>Chart</span>
+              <kbd className="hidden md:inline text-xs opacity-60 ml-1">⌘1</kbd>
             </button>
             <button
-              onClick={() => setActiveTab('ai-features')}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
-                activeTab === 'ai-features'
-                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30'
-                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
+              onClick={() => setActiveTab('ai-hub')}
+              className={`px-5 py-3 rounded-lg text-sm font-semibold transition-all flex items-center gap-2.5 ${
+                activeTab === 'ai-hub'
+                  ? 'bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-purple-300 border border-purple-500/30 shadow-lg shadow-purple-500/20'
+                  : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-slate-200'
               }`}
-              title="AI Dashboard with 12 Features (Alt+A or press 2)"
-              aria-label="Switch to AI Dashboard tab"
+              title="AI Command Center (⌘2)"
             >
-              <img src="/logo.svg" className="w-6 h-6 scale-hover" alt="" />
-              <span>AI Dashboard</span>
-              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">2</kbd>
+              <span className="text-lg">🤖</span>
+              <span>AI Hub</span>
+              <kbd className="hidden md:inline text-xs opacity-60 ml-1">⌘2</kbd>
+              <FeatureStatusBadge />
             </button>
             <button
-              onClick={() => setActiveTab('ai-chat')}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
-                activeTab === 'ai-chat'
-                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30'
-                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
+              onClick={() => setActiveTab('scanner')}
+              className={`px-5 py-3 rounded-lg text-sm font-semibold transition-all flex items-center gap-2.5 ${
+                activeTab === 'scanner' || activeTab === 'nlp-scanner'
+                  ? 'bg-gradient-to-r from-teal-500/20 to-emerald-500/20 text-teal-300 border border-teal-500/30 shadow-lg shadow-teal-500/20'
+                  : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-slate-200'
               }`}
-              title="AI Chat Assistant (Alt+T or press 3)"
-              aria-label="Switch to AI Chat tab"
+              title="Market Scanner (⌘3)"
             >
-              <img src="/logo.svg" className="w-6 h-6 scale-hover" alt="" />
-              <span>AI Chat</span>
-              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">3</kbd>
+              <span className="text-lg">🔍</span>
+              <span>Scanner</span>
+              <kbd className="hidden md:inline text-xs opacity-60 ml-1">⌘3</kbd>
             </button>
             <button
-              onClick={() => setActiveTab('monitoring')}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
-                activeTab === 'monitoring'
-                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30'
-                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
+              onClick={() => setActiveTab('portfolio')}
+              className={`px-5 py-3 rounded-lg text-sm font-semibold transition-all flex items-center gap-2.5 ${
+                activeTab === 'portfolio'
+                  ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/30 shadow-lg shadow-amber-500/20'
+                  : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-slate-200'
               }`}
-              title="System Health Monitoring (Press 4)"
-              aria-label="Switch to System Health tab"
+              title="Portfolio & Journal (⌘4)"
             >
-              <img src="/logo.svg" className="w-6 h-6 scale-hover" alt="" />
-              <span>System Health</span>
-              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">4</kbd>
-            </button>
-            <button
-              onClick={() => setActiveTab('nlp-scanner')}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
-                activeTab === 'nlp-scanner'
-                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30'
-                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
-              }`}
-              title="Natural Language Scanner (Press 5)"
-              aria-label="Switch to NLP Scanner tab"
-            >
-              <img src="/logo.svg" className="w-6 h-6 scale-hover" alt="" />
-              <span>NLP Scanner</span>
-              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">5</kbd>
-            </button>
-            <button
-              onClick={() => setActiveTab('market-sentiment')}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
-                activeTab === 'market-sentiment'
-                  ? 'bg-gradient-to-r from-emerald-600 to-cyan-500 text-white shadow-lg shadow-emerald-500/30'
-                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
-              }`}
-              title="Market Sentiment Dashboard (Press 6)"
-              aria-label="Switch to Market Sentiment tab"
-            >
-              <span className="text-xl">📊</span>
-              <span>Sentiment</span>
-              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">6</kbd>
-            </button>
-            <button
-              onClick={() => setActiveTab('multi-timeframe')}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
-                activeTab === 'multi-timeframe'
-                  ? 'bg-gradient-to-r from-cyan-600 to-blue-500 text-white shadow-lg shadow-cyan-500/30'
-                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
-              }`}
-              title="Multi-Timeframe Analysis - PhD++ Professional (Press 7)"
-              aria-label="Switch to Multi-Timeframe Analysis tab"
-            >
-              <span className="text-xl">📊</span>
-              <span>Multi-TF</span>
-              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">7</kbd>
-            </button>
-            <button
-              onClick={() => setActiveTab('chronos-forecast')}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2.5 glow-on-hover touch-ripple ${
-                activeTab === 'chronos-forecast'
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-500 text-white shadow-lg shadow-indigo-500/30'
-                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white'
-              }`}
-              title="AVA Forecast - Time Series Predictions (Press 8)"
-              aria-label="Switch to AVA Forecast tab"
-            >
-              <span className="text-xl">🔮</span>
-              <span>Forecast</span>
-              <kbd className="hidden md:inline-block text-xs opacity-50 px-1.5 py-0.5 bg-slate-900/50 rounded border border-slate-700">8</kbd>
+              <span className="text-lg">💼</span>
+              <span>Portfolio</span>
+              <kbd className="hidden md:inline text-xs opacity-60 ml-1">⌘4</kbd>
             </button>
 
             {/* User Profile, Mode Toggle & Feature Status - Always visible on right side */}
@@ -370,84 +319,16 @@ function AppWithGestures({
           <AppChart />
         )}
 
-        {activeTab === 'ai-features' && (
-          <AIFeaturesDashboard onFeatureSelect={handleFeatureSelect} />
+        {activeTab === 'ai-hub' && (
+          <AIHub />
         )}
 
-        {activeTab === 'ai-chat' && (
-          <AIChat />
-        )}
-
-        {activeTab === 'nlp-scanner' && (
+        {activeTab === 'scanner' && (
           <NaturalLanguageScanner />
         )}
 
-        {activeTab === 'market-sentiment' && (
-          <MarketSentiment />
-        )}
-
-        {activeTab === 'pattern-recognition' && (
-          <PatternRecognition />
-        )}
-
-        {activeTab === 'multi-symbol' && (
-          <MultiSymbolAnalysis />
-        )}
-
-        {activeTab === 'strategy-builder' && (
-          <StrategyBuilder />
-        )}
-
-        {activeTab === 'monitoring' && (
-          <ModelMonitoring />
-        )}
-
-        {activeTab === 'signal-quality' && (
-          <SignalQualityScorerPanel />
-        )}
-
-        {activeTab === 'risk-advisor' && (
-          <RiskAdvisorPanel />
-        )}
-
-        {activeTab === 'trade-journal' && (
-          <TradeJournalAIPanel />
-        )}
-
-        {activeTab === 'market-regime' && (
-          <MarketRegimeDetectorPanel />
-        )}
-
-        {activeTab === 'anomaly-detector' && (
-          <AnomalyDetectorPanel />
-        )}
-
-        {activeTab === 'multi-timeframe' && (
-          <MultiTFPanelWrapper setActiveTab={setActiveTab} />
-        )}
-
-        {activeTab === 'chronos-forecast' && (
-          <ChronosForecast />
-        )}
-
-        {activeTab === 'smart-watchlist' && (
-          <SmartWatchlistBuilderPanel />
-        )}
-
-        {activeTab === 'predictive-confidence' && (
-          <PredictiveConfidencePanel />
-        )}
-
-        {activeTab === 'personalized-learning' && (
-          <PersonalizedLearningPanel />
-        )}
-
-        {activeTab === 'genetic-optimizer' && (
-          <GeneticOptimizerPanel />
-        )}
-
-        {activeTab === 'risk-controls' && (
-          <RiskControlsPanel />
+        {activeTab === 'portfolio' && (
+          <Portfolio />
         )}
 
         {activeTab !== 'chart' && <BuildInfoFooter />}
