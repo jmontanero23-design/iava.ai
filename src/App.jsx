@@ -230,6 +230,10 @@ export default function App() {
         setShowTour={setShowTour}
         showCopilot={showCopilot}
         setShowCopilot={setShowCopilot}
+        showAVAMind={showAVAMind}
+        setShowAVAMind={setShowAVAMind}
+        showSocialRooms={showSocialRooms}
+        setShowSocialRooms={setShowSocialRooms}
         handleFeatureSelect={handleFeatureSelect}
       />
     </MarketDataProvider>
@@ -246,6 +250,10 @@ function AppWithGestures({
   setShowTour,
   showCopilot,
   setShowCopilot,
+  showAVAMind,
+  setShowAVAMind,
+  showSocialRooms,
+  setShowSocialRooms,
   handleFeatureSelect
 }) {
   const { marketData } = useMarketData()
