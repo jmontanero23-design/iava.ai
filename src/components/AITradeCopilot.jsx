@@ -1409,54 +1409,48 @@ export default function AITradeCopilot({ onClose }) {
             {isDataLoading ? (
               <div className="text-xs text-amber-400 animate-pulse">Loading timeframe data...</div>
             ) : (
-            <div className="flex items-center gap-2">
-              {/* Current Timeframe */}
-              <div className={`px-2 py-1 rounded text-xs font-semibold ${
-                marketData.signalState.pivotNow === 'bullish' ? 'bg-emerald-900/50 text-emerald-400' :
-                marketData.signalState.pivotNow === 'bearish' ? 'bg-red-900/50 text-red-400' :
-                'bg-slate-800 text-slate-400'
-              }`}>
-                <span className="opacity-60">{marketData.timeframe || '5m'}</span>
-                <span className="ml-1">
+            <div className="flex items-center gap-3">
+              {/* Primary Timeframe */}
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-slate-500">Primary:</span>
+                <span className={`text-xs font-semibold ${
+                  marketData.signalState.pivotNow === 'bullish' ? 'text-emerald-400' :
+                  marketData.signalState.pivotNow === 'bearish' ? 'text-red-400' :
+                  'text-slate-400'
+                }`}>
                   {marketData.signalState.pivotNow === 'bullish' ? '↑' :
                    marketData.signalState.pivotNow === 'bearish' ? '↓' : '—'}
                 </span>
               </div>
 
-              {/* Secondary/Consensus TF (e.g., 5Min when on 1Min) - show BEFORE Daily */}
-              {marketData.consensus && (
-                <>
-                  <span className="text-slate-600">+</span>
-                  <div className={`px-2 py-1 rounded text-xs font-semibold ${
-                    marketData.consensus.secondary?.pivotNow === 'bullish' ? 'bg-emerald-900/50 text-emerald-400' :
-                    marketData.consensus.secondary?.pivotNow === 'bearish' ? 'bg-red-900/50 text-red-400' :
-                    'bg-slate-800 text-slate-400'
+              {/* Higher Timeframe */}
+              {marketData.consensus?.secondary && (
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-slate-500">Higher:</span>
+                  <span className={`text-xs font-semibold ${
+                    marketData.consensus.secondary.pivotNow === 'bullish' ? 'text-emerald-400' :
+                    marketData.consensus.secondary.pivotNow === 'bearish' ? 'text-red-400' :
+                    'text-slate-400'
                   }`}>
-                    <span className="opacity-60">{marketData.consensus.secTf || '15m'}</span>
-                    <span className="ml-1">
-                      {marketData.consensus.secondary?.pivotNow === 'bullish' ? '↑' :
-                       marketData.consensus.secondary?.pivotNow === 'bearish' ? '↓' : '—'}
-                    </span>
-                  </div>
-                </>
+                    {marketData.consensus.secondary.pivotNow === 'bullish' ? '↑' :
+                     marketData.consensus.secondary.pivotNow === 'bearish' ? '↓' : '—'}
+                  </span>
+                </div>
               )}
 
-              {/* Daily Timeframe - ONLY show if NOT already on Daily timeframe (last = slowest) */}
+              {/* Daily Timeframe */}
               {marketData.dailyState && marketData.timeframe !== '1Day' && (
-                <>
-                  <span className="text-slate-600">+</span>
-                  <div className={`px-2 py-1 rounded text-xs font-semibold ${
-                    marketData.dailyState.pivotNow === 'bullish' ? 'bg-emerald-900/50 text-emerald-400' :
-                    marketData.dailyState.pivotNow === 'bearish' ? 'bg-red-900/50 text-red-400' :
-                    'bg-slate-800 text-slate-400'
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-slate-500">Daily:</span>
+                  <span className={`text-xs font-semibold ${
+                    marketData.dailyState.pivotNow === 'bullish' ? 'text-emerald-400' :
+                    marketData.dailyState.pivotNow === 'bearish' ? 'text-red-400' :
+                    'text-slate-400'
                   }`}>
-                    <span className="opacity-60">D</span>
-                    <span className="ml-1">
-                      {marketData.dailyState.pivotNow === 'bullish' ? '↑' :
-                       marketData.dailyState.pivotNow === 'bearish' ? '↓' : '—'}
-                    </span>
-                  </div>
-                </>
+                    {marketData.dailyState.pivotNow === 'bullish' ? '↑' :
+                     marketData.dailyState.pivotNow === 'bearish' ? '↓' : '—'}
+                  </span>
+                </div>
               )}
 
               {/* Confluence Status */}

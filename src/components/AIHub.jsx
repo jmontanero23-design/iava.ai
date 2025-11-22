@@ -53,7 +53,7 @@ export default function AIHub() {
           </h2>
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-500">
-              {features.length} AI Features Active
+              {features.filter(f => f.id !== 'dashboard').length} AI Features Active
             </span>
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
           </div>

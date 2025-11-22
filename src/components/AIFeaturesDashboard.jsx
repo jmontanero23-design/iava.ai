@@ -286,53 +286,6 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
               </div>
             </div>
           )}
-          {/* Superpower Rail */}
-          <div className="mt-5 flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="pill-chip text-xs text-slate-100"
-              onClick={() => onFeatureSelect?.('signal_quality')}
-            >
-              <span className="pill-dot" />
-              <span className="font-semibold">Understand Setups</span>
-              <span className="hidden sm:inline text-[11px] text-slate-300/80">
-                Signals · Regime · Confidence
-              </span>
-            </button>
-            <button
-              type="button"
-              className="pill-chip text-xs text-slate-100"
-              onClick={() => onFeatureSelect?.('nlp_scanner')}
-            >
-              <span className="pill-dot" />
-              <span className="font-semibold">Scan & Discover</span>
-              <span className="hidden sm:inline text-[11px] text-slate-300/80">
-                NLP Scanner · Smart Watchlists
-              </span>
-            </button>
-            <button
-              type="button"
-              className="pill-chip text-xs text-slate-100"
-              onClick={() => onFeatureSelect?.('risk_advisor')}
-            >
-              <span className="pill-dot" />
-              <span className="font-semibold">Tune & Manage Risk</span>
-              <span className="hidden sm:inline text-[11px] text-slate-300/80">
-                Sizing · Limits · Stress-tests
-              </span>
-            </button>
-            <button
-              type="button"
-              className="pill-chip text-xs text-slate-100"
-              onClick={() => onFeatureSelect?.('personalized_learning')}
-            >
-              <span className="pill-dot" />
-              <span className="font-semibold">Learn & Evolve</span>
-              <span className="hidden sm:inline text-[11px] text-slate-300/80">
-                Journal · Lessons · Coaching
-              </span>
-            </button>
-          </div>
         </div>
       </div>
 

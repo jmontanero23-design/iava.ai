@@ -307,7 +307,6 @@ function AppWithGestures({
               <span className="text-lg">🤖</span>
               <span>AI Hub</span>
               <kbd className="hidden md:inline text-xs opacity-60 ml-1">⌘2</kbd>
-              <FeatureStatusBadge />
             </button>
             <button
               onClick={() => setActiveTab('scanner')}
