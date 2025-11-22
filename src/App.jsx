@@ -9,6 +9,7 @@ import ToastHub from './components/ToastHub.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
 import { MarketDataProvider, useMarketData } from './contexts/MarketDataContext.jsx'
 import AIFeaturesDashboard from './components/AIFeaturesDashboard.jsx'
+import MobileGestures from './components/MobileGestures.jsx'
 import AIChat from './components/AIChat.jsx'
 import NaturalLanguageScanner from './components/NaturalLanguageScanner.jsx'
 import ModelMonitoring from './components/ModelMonitoring.jsx'
@@ -189,6 +190,52 @@ export default function App() {
 
   return (
     <MarketDataProvider>
+      <AppWithGestures
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        selectedFeature={selectedFeature}
+        setSelectedFeature={setSelectedFeature}
+        showTour={showTour}
+        setShowTour={setShowTour}
+        showCopilot={showCopilot}
+        setShowCopilot={setShowCopilot}
+        handleFeatureSelect={handleFeatureSelect}
+      />
+    </MarketDataProvider>
+  )
+}
+
+// Inner component that has access to market data and can use MobileGestures
+function AppWithGestures({
+  activeTab,
+  setActiveTab,
+  selectedFeature,
+  setSelectedFeature,
+  showTour,
+  setShowTour,
+  showCopilot,
+  setShowCopilot,
+  handleFeatureSelect
+}) {
+  const { marketData } = useMarketData()
+  const symbol = marketData?.symbol || 'SPY'
+
+  return (
+    <MobileGestures
+      symbol={symbol}
+      onSwipeLeft={() => {
+        const tabs = ['chart', 'ai-features', 'ai-chat', 'nlp-scanner', 'multi-timeframe']
+        const currentIndex = tabs.indexOf(activeTab)
+        const nextIndex = (currentIndex + 1) % tabs.length
+        setActiveTab(tabs[nextIndex])
+      }}
+      onSwipeRight={() => {
+        const tabs = ['chart', 'ai-features', 'ai-chat', 'nlp-scanner', 'multi-timeframe']
+        const currentIndex = tabs.indexOf(activeTab)
+        const prevIndex = currentIndex === 0 ? tabs.length - 1 : currentIndex - 1
+        setActiveTab(tabs[prevIndex])
+      }}
+    >
       <div className="min-h-screen bg-transparent text-slate-100 bg-grid">
         <div className="max-w-7xl mx-auto p-6 space-y-6 pb-16">
           <Hero />
@@ -422,6 +469,6 @@ export default function App() {
         {/* Enhanced Status Bar - Fixed at bottom */}
         <EnhancedStatusBar />
       </div>
-    </MarketDataProvider>
+    </MobileGestures>
   )
 }
