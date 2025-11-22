@@ -9,7 +9,9 @@
     "preview": "vite preview --port 4173",
     "backtest": "node scripts/backtest.mjs",
     "package:zip": "node scripts/package-zip.mjs",
-    "generate:icons": "node scripts/generate-icons.js"
+    "generate:icons": "node scripts/generate-icons.js",
+    "test:api": "node test-api-endpoints.mjs",
+    "test:api:prod": "VERCEL_URL=https://app.iava.ai node test-api-endpoints.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.65",
