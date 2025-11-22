@@ -50,10 +50,29 @@ function generateSampleOHLC(n = 200, start = Math.floor(Date.now()/1000) - n*360
   return out
 }
 
+// PhD++ FIX: Get saved symbol from localStorage immediately (prevents AAPL default flash)
+const getInitialSymbol = () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem('iava.settings') || '{}')
+    return saved.symbol || 'SPY' // Default to SPY if nothing saved (market index)
+  } catch {
+    return 'SPY'
+  }
+}
+
+const getInitialTimeframe = () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem('iava.settings') || '{}')
+    return saved.timeframe || '1Min'
+  } catch {
+    return '1Min'
+  }
+}
+
 export default function App() {
   const { updateMarketData } = useMarketData()
-  const [symbol, setSymbol] = useState('AAPL')
-  const [timeframe, setTimeframe] = useState('1Min')
+  const [symbol, setSymbol] = useState(getInitialSymbol)
+  const [timeframe, setTimeframe] = useState(getInitialTimeframe)
   const [bars, setBars] = useState(() => generateSampleOHLC())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -492,11 +511,12 @@ export default function App() {
 
   useEffect(() => {
     // Load persisted settings
+    // PhD++ NOTE: symbol & timeframe are now read at initialization (getInitialSymbol/getInitialTimeframe)
+    // This prevents the "flash" where AAPL loads first before localStorage value is applied
     try {
       const saved = JSON.parse(localStorage.getItem('iava.settings') || '{}')
       const qp = readParams()
-      if (saved.symbol) setSymbol(saved.symbol)
-      if (saved.timeframe) setTimeframe(saved.timeframe)
+      // Symbol & timeframe already initialized from localStorage, only override with URL params
       if (typeof saved.autoRefresh === 'boolean') setAutoRefresh(saved.autoRefresh)
       if (typeof saved.refreshSec === 'number') setRefreshSec(saved.refreshSec)
       if (typeof saved.streaming === 'boolean') setStreaming(saved.streaming)

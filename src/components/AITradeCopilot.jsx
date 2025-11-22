@@ -45,6 +45,9 @@ export default function AITradeCopilot({ onClose }) {
   // PhD++ FIX: Lock to prevent concurrent analyzePositions calls (async race condition fix)
   const analyzeInProgressRef = useRef(false)
 
+  // PhD++ FIX: Track last known price per symbol to detect price discontinuities
+  const lastKnownPriceRef = useRef({})
+
   // PhD++ ALERT COOLDOWN: Check if an alert type is on cooldown (60 seconds default)
   const isOnCooldown = (alertKey, cooldownMs = 60000) => {
     const lastTime = alertCooldownsRef.current[alertKey]
@@ -137,6 +140,65 @@ export default function AITradeCopilot({ onClose }) {
   if (!marketData.isLoading && marketData.symbol) {
     prevSymbolRef.current = marketData.symbol
   }
+
+  // PhD++ FIX: Detect price discontinuity (>10% jump) and clear stale alerts
+  // This catches cases where price data switches sources (extended hours vs regular, data refresh, etc.)
+  useEffect(() => {
+    if (!marketData.symbol || !marketData.currentPrice || marketData.isLoading) return
+
+    const symbol = marketData.symbol
+    const currentPrice = marketData.currentPrice
+    const lastPrice = lastKnownPriceRef.current[symbol]
+
+    if (lastPrice && currentPrice) {
+      const pctChange = Math.abs((currentPrice - lastPrice) / lastPrice) * 100
+
+      // If price jumped by more than 10%, clear alerts for this symbol
+      // This threshold catches data source switches but allows normal volatility
+      if (pctChange > 10) {
+        console.log(`[Copilot] ⚠️ Price discontinuity detected for ${symbol}: $${lastPrice.toFixed(2)} → $${currentPrice.toFixed(2)} (${pctChange.toFixed(1)}% jump)`)
+        console.log(`[Copilot] Clearing stale alerts that may reference outdated price context`)
+
+        // Clear alerts for this symbol that may have stale price references
+        setAlerts(prev => prev.filter(alert => {
+          // Keep alerts that are NOT for this symbol
+          if (alert.symbol !== symbol) return true
+
+          // Clear SATY-based alerts (they reference specific price levels)
+          if (alert.id.includes('saty-')) {
+            console.log(`[Copilot] Clearing stale SATY alert: ${alert.id}`)
+            return false
+          }
+
+          // Clear momentum/opportunity alerts (they reference current price context)
+          if (alert.id.includes('momentum') || alert.id.includes('unicorn') || alert.id.includes('squeeze')) {
+            console.log(`[Copilot] Clearing stale opportunity alert: ${alert.id}`)
+            return false
+          }
+
+          // Keep other alerts (like position health, regime changes - these are still relevant)
+          return true
+        }))
+
+        // Clear cooldowns for this symbol so fresh alerts can be generated
+        Object.keys(alertCooldownsRef.current).forEach(key => {
+          if (key.includes(symbol) && (key.includes('saty') || key.includes('momentum') || key.includes('unicorn'))) {
+            delete alertCooldownsRef.current[key]
+          }
+        })
+
+        // Clear from global tracker too
+        addedAlertIdsRef.current = new Set(
+          [...addedAlertIdsRef.current].filter(id =>
+            !id.includes(symbol) || (!id.includes('saty') && !id.includes('momentum') && !id.includes('unicorn'))
+          )
+        )
+      }
+    }
+
+    // Update last known price for this symbol
+    lastKnownPriceRef.current[symbol] = currentPrice
+  }, [marketData.symbol, marketData.currentPrice, marketData.isLoading])
 
   // PhD++ CONFLUENCE CALCULATOR: Calculate current multi-TF confluence status
   const getConfluenceStatus = () => {
