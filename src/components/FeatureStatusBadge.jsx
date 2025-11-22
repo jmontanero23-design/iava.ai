@@ -193,7 +193,7 @@ export default function FeatureStatusBadge({ onClick }) {
                       <span className="font-semibold">All Features Active</span>
                     </div>
                     <p className="text-slate-400 text-xs mt-2">
-                      Using GPT-5 for world-class AI insights
+                      AVA Intelligence powering all AI features
                     </p>
                   </div>
                 )}

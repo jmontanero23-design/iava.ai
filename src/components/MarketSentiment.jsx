@@ -190,14 +190,14 @@ export default function MarketSentiment() {
 
       const analyzedNews = await Promise.all(sentimentPromises)
 
-      // PhD++ DIAGNOSTIC: Check if we're using fallback data (no real HF models)
+      // PhD++ DIAGNOSTIC: Check if we're using fallback data (no real models)
       const fallbackCount = analyzedNews.filter(item => item.fallback || item.error).length
       if (fallbackCount > 0) {
         console.warn(`[Sentiment] ⚠️ WARNING: ${fallbackCount}/${analyzedNews.length} items using fallback data!`)
-        console.warn('[Sentiment] HuggingFace API key likely not configured - sentiment scores are GENERIC')
+        console.warn('[Sentiment] AVA Sentiment API not fully configured - using fallback scores')
         window.dispatchEvent(new CustomEvent('iava.toast', {
           detail: {
-            text: `⚠️ Sentiment analysis using fallback data - add HUGGINGFACE_API_KEY for real PhD++ analysis`,
+            text: `⚠️ AVA Sentiment using fallback mode - contact admin for full AI features`,
             type: 'warning',
             duration: 8000
           }
