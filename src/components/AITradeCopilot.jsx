@@ -103,6 +103,36 @@ export default function AITradeCopilot({ onClose }) {
   const symbolChanged = prevSymbolRef.current !== null && prevSymbolRef.current !== marketData.symbol
   const isDataLoading = marketData.isLoading || !marketData.symbol || symbolChanged
 
+  // PhD++ FIX: Clear stale alerts when chart symbol changes (prevents wrong data alerts)
+  useEffect(() => {
+    if (symbolChanged && prevSymbolRef.current && marketData.symbol) {
+      console.log(`[Copilot] Symbol changed from ${prevSymbolRef.current} to ${marketData.symbol} - clearing stale alerts`)
+
+      // Clear alerts that are for the OLD symbol (keep position alerts for other symbols)
+      setAlerts(prev => prev.filter(alert => {
+        // Keep alerts that are NOT from the old chart symbol
+        // Position-based alerts use the position's symbol, not chart symbol
+        // But opportunity/confluence alerts use chart symbol
+        const isOldSymbolAlert = alert.symbol === prevSymbolRef.current
+        return !isOldSymbolAlert
+      }))
+
+      // Clear cooldowns and global tracker for the old symbol
+      // This allows fresh alerts when switching back to that symbol later
+      const oldSymbol = prevSymbolRef.current
+      Object.keys(alertCooldownsRef.current).forEach(key => {
+        if (key.includes(oldSymbol)) {
+          delete alertCooldownsRef.current[key]
+        }
+      })
+
+      // Clear the global tracker entries for old symbol
+      addedAlertIdsRef.current = new Set(
+        [...addedAlertIdsRef.current].filter(id => !id.includes(oldSymbol))
+      )
+    }
+  }, [symbolChanged, marketData.symbol])
+
   // Update previous symbol ref (after render, price should be correct)
   if (!marketData.isLoading && marketData.symbol) {
     prevSymbolRef.current = marketData.symbol
