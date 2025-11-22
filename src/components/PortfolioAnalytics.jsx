@@ -199,6 +199,13 @@ export default function PortfolioAnalytics() {
     // Maximum Drawdown (simulated)
     const maxDrawdown = -Math.abs(Math.min(...returns) * totalValue)
 
+    // Calculate volatility for risk score
+    const pnlReturns = positions.map(pos => pos.pnlPercent)
+    const avgPnLReturn = pnlReturns.reduce((a, b) => a + b, 0) / pnlReturns.length
+    const volatility = Math.sqrt(
+      pnlReturns.reduce((sum, r) => sum + Math.pow(r - avgPnLReturn, 2), 0) / pnlReturns.length
+    )
+
     // Beta calculation (simplified - against SPY)
     const marketReturn = 0.10 // Assumed 10% market return
     const beta = positions.reduce((sum, pos) => {
