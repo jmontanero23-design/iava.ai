@@ -13,6 +13,8 @@ import MobileGestures from './components/MobileGestures.jsx'
 import AIHub from './components/AIHub.jsx'
 import Portfolio from './components/Portfolio.jsx'
 import AIChat from './components/AIChat.jsx'
+import AVAMind from './components/AVAMind.jsx'
+import SocialTradingRooms from './components/SocialTradingRooms.jsx'
 import NaturalLanguageScanner from './components/NaturalLanguageScanner.jsx'
 import ModelMonitoring from './components/ModelMonitoring.jsx'
 import FeatureStatusBadge from './components/FeatureStatusBadge.jsx'
@@ -66,6 +68,8 @@ export default function App() {
   const [selectedFeature, setSelectedFeature] = useState(null)
   const [showTour, setShowTour] = useState(false)
   const [showCopilot, setShowCopilot] = useState(true) // AI Copilot visible by default
+  const [showAVAMind, setShowAVAMind] = useState(false) // AVA Mind AI Twin
+  const [showSocialRooms, setShowSocialRooms] = useState(false) // Social Trading Rooms
 
   // CRITICAL FIX: Listen for symbol loading from AI Chat
   useEffect(() => {
@@ -305,8 +309,36 @@ function AppWithGestures({
               <kbd className="hidden md:inline text-xs opacity-60 ml-1">⌘4</kbd>
             </button>
 
-            {/* User Profile, Mode Toggle & Feature Status - Always visible on right side */}
-            <div className="ml-auto flex items-center gap-3">
+            {/* Next-Gen Features */}
+            <div className="ml-auto flex items-center gap-2">
+              {/* AVA Mind Button */}
+              <button
+                onClick={() => setShowAVAMind(!showAVAMind)}
+                className={`p-2.5 rounded-lg transition-all ${
+                  showAVAMind
+                    ? 'bg-gradient-to-r from-purple-500/30 to-cyan-500/30 text-purple-300 border border-purple-500/30 animate-pulse'
+                    : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-purple-300'
+                }`}
+                title="AVA Mind - AI Twin"
+              >
+                <span className="text-lg">🧠</span>
+              </button>
+
+              {/* Social Rooms Button */}
+              <button
+                onClick={() => setShowSocialRooms(!showSocialRooms)}
+                className={`p-2.5 rounded-lg transition-all ${
+                  showSocialRooms
+                    ? 'bg-gradient-to-r from-cyan-500/30 to-blue-500/30 text-cyan-300 border border-cyan-500/30'
+                    : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-cyan-300'
+                }`}
+                title="Social Trading Rooms"
+              >
+                <span className="text-lg">👥</span>
+              </button>
+
+              <div className="w-px h-8 bg-slate-700"></div>
+
               <ModeToggle />
               <FeatureStatusBadge onClick={() => setActiveTab('ai-features')} />
               <UserProfile />
@@ -345,6 +377,16 @@ function AppWithGestures({
         {/* AI Trade Copilot - Proactive position monitoring */}
         {showCopilot && activeTab === 'chart' && (
           <AITradeCopilot onClose={() => setShowCopilot(false)} />
+        )}
+
+        {/* AVA Mind - AI Digital Twin */}
+        {showAVAMind && (
+          <AVAMind onClose={() => setShowAVAMind(false)} />
+        )}
+
+        {/* Social Trading Rooms */}
+        {showSocialRooms && (
+          <SocialTradingRooms onClose={() => setShowSocialRooms(false)} />
         )}
 
         {/* Enhanced Status Bar - Fixed at bottom */}
