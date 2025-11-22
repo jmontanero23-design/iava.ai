@@ -9,7 +9,7 @@
  * - AI-powered trade validation
  */
 
-import { selectGPT5Model } from '../../src/utils/modelSelector.js'
+// Copy trading execution backend - uses central LLM endpoint
 
 // In-memory trade queue (production would use Redis)
 const tradeQueue = new Map()

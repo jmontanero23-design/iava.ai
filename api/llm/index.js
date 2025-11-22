@@ -9,7 +9,12 @@
  * - Error handling with fallbacks
  */
 
-import { selectGPT5Model, GPT5_MODELS } from '../../src/utils/modelSelector.js'
+// GPT-5 model definitions
+const GPT5_MODELS = {
+  COMPLEX: 'gpt-5',
+  MEDIUM: 'gpt-5-mini',
+  SIMPLE: 'gpt-5-nano'
+}
 
 // Cache for recent responses (15 minute TTL)
 const responseCache = new Map()
@@ -80,22 +85,42 @@ export default async function handler(req, res) {
       }
     }
 
-    // Intelligently select GPT-5 model
-    const modelSelection = selectGPT5Model({
-      prompt: prompt || JSON.stringify(messages),
-      feature,
-      maxTokens: max_tokens,
-      preferredModel: requestedModel,
-      requireSpeed,
-      requireAccuracy
-    })
+    // Select appropriate GPT-5 model based on feature
+    let selectedModel = requestedModel || GPT5_MODELS.MEDIUM // Default to medium
 
-    const selectedModel = modelSelection.model
+    // Feature-based model selection
+    if (feature) {
+      const featureModelMap = {
+        'portfolio-optimization': GPT5_MODELS.COMPLEX,
+        'ava-mind-reasoning': GPT5_MODELS.COMPLEX,
+        'ai-copilot-complex': GPT5_MODELS.COMPLEX,
+        'harmonic-patterns': GPT5_MODELS.COMPLEX,
+        'strategy-generation': GPT5_MODELS.COMPLEX,
+        'options-greeks': GPT5_MODELS.MEDIUM,
+        'level2-analysis': GPT5_MODELS.MEDIUM,
+        'volume-profile': GPT5_MODELS.MEDIUM,
+        'chart-patterns': GPT5_MODELS.MEDIUM,
+        'trade-journal': GPT5_MODELS.MEDIUM,
+        'sentiment-quick': GPT5_MODELS.SIMPLE,
+        'trade-suggestion': GPT5_MODELS.SIMPLE,
+        'basic-qa': GPT5_MODELS.SIMPLE,
+        'copy-trading-validation': GPT5_MODELS.MEDIUM
+      }
+      selectedModel = featureModelMap[feature] || GPT5_MODELS.MEDIUM
+    }
+
+    // Override for speed/accuracy requirements
+    if (requireSpeed && selectedModel === GPT5_MODELS.COMPLEX) {
+      selectedModel = GPT5_MODELS.MEDIUM
+    }
+    if (requireAccuracy && selectedModel === GPT5_MODELS.SIMPLE) {
+      selectedModel = GPT5_MODELS.MEDIUM
+    }
+
     console.log('[LLM API] Model selected:', {
       model: selectedModel,
-      reasoning: modelSelection.reasoning,
-      estimatedCost: `$${modelSelection.estimatedCost.toFixed(6)}`,
-      feature: feature || 'general'
+      feature: feature || 'general',
+      estimatedCost: `$${calculateCost(selectedModel, max_tokens).toFixed(6)}`
     })
 
     // Prepare request body for OpenAI

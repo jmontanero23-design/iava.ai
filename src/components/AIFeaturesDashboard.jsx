@@ -6,10 +6,6 @@
  */
 
 import { useState, useEffect } from 'react'
-import OptionsGreeksCalculator from './OptionsGreeksCalculator.jsx'
-import Level2MarketDepth from './Level2MarketDepth.jsx'
-import VolumeProfile from './VolumeProfile.jsx'
-import PortfolioAnalytics from './PortfolioAnalytics.jsx'
 
 export default function AIFeaturesDashboard({ onFeatureSelect }) {
   const [metrics, setMetrics] = useState(null)
@@ -176,8 +172,7 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
       gradient: 'from-purple-600 via-indigo-500 to-blue-500',
       glowColor: 'indigo',
       requiresAPI: false,
-      category: 'Professional',
-      component: OptionsGreeksCalculator
+      category: 'Professional'
     },
     {
       id: 'level2_depth',
@@ -188,8 +183,7 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
       gradient: 'from-cyan-600 via-teal-500 to-emerald-500',
       glowColor: 'teal',
       requiresAPI: false,
-      category: 'Professional',
-      component: Level2MarketDepth
+      category: 'Professional'
     },
     {
       id: 'volume_profile',
@@ -200,8 +194,7 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
       gradient: 'from-pink-600 via-purple-500 to-indigo-500',
       glowColor: 'purple',
       requiresAPI: false,
-      category: 'Professional',
-      component: VolumeProfile
+      category: 'Professional'
     },
     {
       id: 'portfolio_analytics',
@@ -212,8 +205,7 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
       gradient: 'from-amber-600 via-orange-500 to-red-500',
       glowColor: 'orange',
       requiresAPI: false,
-      category: 'Professional',
-      component: PortfolioAnalytics
+      category: 'Professional'
     }
   ]
 
@@ -346,7 +338,7 @@ export default function AIFeaturesDashboard({ onFeatureSelect }) {
         {features.map((feature) => (
           <button
             key={feature.id}
-            onClick={() => onFeatureSelect?.(feature.component || feature.id)}
+            onClick={() => onFeatureSelect?.(feature.id)}
             className="group relative text-left transition-all duration-300 hover:scale-[1.02]"
           >
             {/* Glow effect on hover */}

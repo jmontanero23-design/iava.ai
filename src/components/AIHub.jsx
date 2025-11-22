@@ -14,6 +14,10 @@ import SmartWatchlistBuilderPanel from './SmartWatchlistBuilderPanel.jsx'
 import PredictiveConfidencePanel from './PredictiveConfidencePanel.jsx'
 import PersonalizedLearningPanel from './PersonalizedLearningPanel.jsx'
 import GeneticOptimizerPanel from './GeneticOptimizerPanel.jsx'
+import OptionsGreeksCalculator from './OptionsGreeksCalculator.jsx'
+import Level2MarketDepth from './Level2MarketDepth.jsx'
+import VolumeProfile from './VolumeProfile.jsx'
+import PortfolioAnalytics from './PortfolioAnalytics.jsx'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
 
 /**
@@ -38,7 +42,11 @@ export default function AIHub() {
     { id: 'anomaly', name: 'Anomaly', icon: '🎲', component: AnomalyDetectorPanel },
     { id: 'watchlist', name: 'Watchlist AI', icon: '👁️', component: SmartWatchlistBuilderPanel },
     { id: 'confidence', name: 'Confidence', icon: '🎯', component: PredictiveConfidencePanel },
-    { id: 'genetic', name: 'Genetic Opt', icon: '🧬', component: GeneticOptimizerPanel }
+    { id: 'genetic', name: 'Genetic Opt', icon: '🧬', component: GeneticOptimizerPanel },
+    { id: 'options_greeks', name: 'Options Greeks', icon: 'Δ', component: OptionsGreeksCalculator },
+    { id: 'level2_depth', name: 'Level 2', icon: '📊', component: Level2MarketDepth },
+    { id: 'volume_profile', name: 'Volume Profile', icon: '📈', component: VolumeProfile },
+    { id: 'portfolio_analytics', name: 'Portfolio', icon: '💼', component: PortfolioAnalytics }
   ]
 
   const ActiveComponent = features.find(f => f.id === selectedFeature)?.component
