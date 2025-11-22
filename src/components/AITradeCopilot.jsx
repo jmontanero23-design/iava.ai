@@ -36,15 +36,35 @@ export default function AITradeCopilot({ onClose }) {
   // PhD++ ALERT COOLDOWN: Use ref instead of state for synchronous checks
   const alertCooldownsRef = useRef({})
 
+  // PhD++ FIX: Track ALL alert IDs ever added to prevent any duplicates
+  const addedAlertIdsRef = useRef(new Set())
+
+  // PhD++ FIX: Track previous symbol to detect symbol changes (prevents wrong price display)
+  const prevSymbolRef = useRef(null)
+
+  // PhD++ FIX: Lock to prevent concurrent analyzePositions calls (async race condition fix)
+  const analyzeInProgressRef = useRef(false)
+
   // PhD++ ALERT COOLDOWN: Check if an alert type is on cooldown (60 seconds default)
   const isOnCooldown = (alertKey, cooldownMs = 60000) => {
     const lastTime = alertCooldownsRef.current[alertKey]
-    return lastTime && (Date.now() - lastTime) < cooldownMs
+    const onCooldown = lastTime && (Date.now() - lastTime) < cooldownMs
+    return onCooldown
   }
 
   // PhD++ Mark an alert type as recently fired (synchronous - no state delay)
   const markAlertFired = (alertKey) => {
     alertCooldownsRef.current[alertKey] = Date.now()
+  }
+
+  // PhD++ FIX: Check if an alert ID was EVER added (prevents any duplicate from appearing)
+  const wasAlertEverAdded = (alertId) => {
+    return addedAlertIdsRef.current.has(alertId)
+  }
+
+  // PhD++ FIX: Mark an alert as added (globally tracks across the session)
+  const markAlertAdded = (alertId) => {
+    addedAlertIdsRef.current.add(alertId)
   }
 
   // PhD++ POSITION-AWARE HELPERS: Get position info for smart alerts
@@ -79,7 +99,14 @@ export default function AITradeCopilot({ onClose }) {
   }
 
   // PhD++ CRITICAL: Check if marketData is still loading (prevents stale data usage)
-  const isDataLoading = marketData.isLoading || !marketData.symbol
+  // FIX: Also detect symbol changes - when symbol changes, price is stale until new data loads
+  const symbolChanged = prevSymbolRef.current !== null && prevSymbolRef.current !== marketData.symbol
+  const isDataLoading = marketData.isLoading || !marketData.symbol || symbolChanged
+
+  // Update previous symbol ref (after render, price should be correct)
+  if (!marketData.isLoading && marketData.symbol) {
+    prevSymbolRef.current = marketData.symbol
+  }
 
   // PhD++ CONFLUENCE CALCULATOR: Calculate current multi-TF confluence status
   const getConfluenceStatus = () => {
@@ -294,20 +321,34 @@ export default function AITradeCopilot({ onClose }) {
   }
 
   // Monitor positions and market data for alerts
+  // PhD++ FIX: Use stable interval - don't recreate on every marketData change!
+  // Only recreate when positions change (not on every price tick)
   useEffect(() => {
-    if (!marketData.symbol || positions.length === 0) return
+    if (positions.length === 0) return
 
     const checkInterval = setInterval(() => {
-      analyzePositions()
+      // Only analyze if we have a symbol and aren't already analyzing
+      if (marketData.symbol && !analyzeInProgressRef.current) {
+        analyzePositions()
+      }
     }, 5000) // Check every 5 seconds
 
     return () => clearInterval(checkInterval)
-  }, [marketData, positions])
+  }, [positions.length]) // PhD++ FIX: Only depend on positions.length, not the full objects
 
   // Proactive analysis of positions - PhD++ ASYNC for fresh score fetching
   const analyzePositions = async () => {
+    // PhD++ FIX: Prevent concurrent calls (async race condition fix)
+    if (analyzeInProgressRef.current) {
+      console.log('[Copilot] analyzePositions already in progress, skipping')
+      return
+    }
+    analyzeInProgressRef.current = true
+
     const newAlerts = []
     const currentTime = Date.now()
+
+    try {
 
     // PhD++ CRITICAL FIX: Analyze ALL positions with fresh scores, not just current chart symbol!
     for (const position of positions) {
@@ -566,16 +607,28 @@ export default function AITradeCopilot({ onClose }) {
       }
     }
 
-    // Add new alerts (avoid duplicates)
+    // Add new alerts (avoid duplicates) - PhD++ FIX: Also check global alert tracker
     if (newAlerts.length > 0) {
       setAlerts(prev => {
         const existingIds = new Set(prev.map(a => a.id))
-        const uniqueNew = newAlerts.filter(a => !existingIds.has(a.id))
+        const uniqueNew = newAlerts.filter(a => {
+          // PhD++ FIX: Triple protection - check existing IDs, global tracker, AND cooldown
+          if (existingIds.has(a.id)) return false
+          if (wasAlertEverAdded(a.id)) return false
+          // Mark as added globally
+          markAlertAdded(a.id)
+          return true
+        })
         return [...uniqueNew, ...prev].slice(0, 10) // Keep last 10 alerts
       })
     }
 
     setLastCheck(currentTime)
+
+    } finally {
+      // PhD++ FIX: Always release the lock
+      analyzeInProgressRef.current = false
+    }
   }
 
   // PhD++ BREAKING NEWS MONITORING: Check news for positions
@@ -727,7 +780,10 @@ export default function AITradeCopilot({ onClose }) {
         }
 
         setAlerts(prev => {
+          // PhD++ FIX: Triple protection against duplicates
           if (prev.some(a => a.id === unicornKey)) return prev
+          if (wasAlertEverAdded(unicornKey)) return prev
+          markAlertAdded(unicornKey)
 
           return [{
             id: unicornKey,
@@ -768,7 +824,10 @@ export default function AITradeCopilot({ onClose }) {
         }
 
         setAlerts(prev => {
+          // PhD++ FIX: Triple protection against duplicates
           if (prev.some(a => a.id === squeezeKey)) return prev
+          if (wasAlertEverAdded(squeezeKey)) return prev
+          markAlertAdded(squeezeKey)
 
           return [{
             id: squeezeKey,
@@ -803,7 +862,10 @@ export default function AITradeCopilot({ onClose }) {
         }
 
         setAlerts(prev => {
+          // PhD++ FIX: Triple protection against duplicates
           if (prev.some(a => a.id === momentumKey)) return prev
+          if (wasAlertEverAdded(momentumKey)) return prev
+          markAlertAdded(momentumKey)
 
           return [{
             id: momentumKey,
@@ -846,7 +908,10 @@ export default function AITradeCopilot({ onClose }) {
         }
 
         setAlerts(prev => {
+          // PhD++ FIX: Triple protection against duplicates
           if (prev.some(a => a.id === bearKey)) return prev
+          if (wasAlertEverAdded(bearKey)) return prev
+          markAlertAdded(bearKey)
 
           return [{
             id: bearKey,
@@ -921,7 +986,10 @@ export default function AITradeCopilot({ onClose }) {
       }
 
       setAlerts(prev => {
+        // PhD++ FIX: Triple protection against duplicates
         if (prev.some(a => a.id === confluenceKey)) return prev
+        if (wasAlertEverAdded(confluenceKey)) return prev
+        markAlertAdded(confluenceKey)
 
         return [{
           id: confluenceKey,
@@ -1518,13 +1586,14 @@ export default function AITradeCopilot({ onClose }) {
           <div className="bg-slate-800/30 px-3 py-2 border-t border-slate-700/50">
             <div className="flex items-center justify-between text-xs">
               <div className="text-slate-400">
-                {marketData.symbol}: {marketData.isLoading ? (
+                {/* PhD++ FIX: Use isDataLoading which detects symbol changes */}
+                {marketData.symbol}: {isDataLoading ? (
                   <span className="text-amber-400 animate-pulse">Loading...</span>
                 ) : (
                   <span className="text-slate-200">${marketData.currentPrice?.toFixed(2) || 'N/A'}</span>
                 )}
               </div>
-              {!marketData.isLoading && marketData.signalState && (
+              {!isDataLoading && marketData.signalState && (
                 <div className="flex items-center gap-3">
                   {/* Technical Score */}
                   <div className="flex items-center gap-1">
