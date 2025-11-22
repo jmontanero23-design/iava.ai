@@ -69,7 +69,7 @@ const getInitialTimeframe = () => {
   }
 }
 
-export default function App() {
+export default function AppChart() {
   const { updateMarketData } = useMarketData()
   const [symbol, setSymbol] = useState(getInitialSymbol)
   const [timeframe, setTimeframe] = useState(getInitialTimeframe)
