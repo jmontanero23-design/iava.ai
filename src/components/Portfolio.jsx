@@ -23,12 +23,18 @@ export default function Portfolio() {
     setIsLoading(true)
     try {
       const res = await fetch('/api/positions')
-      const data = await res.json()
-      if (res.ok) {
-        setPositions(data.positions || [])
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
       }
+      const data = await res.json()
+      setPositions(data.positions || [])
     } catch (error) {
       console.error('Error fetching positions:', error)
+      setPositions([]) // Reset to empty array on error
+      // Show error toast
+      window.dispatchEvent(new CustomEvent('iava.toast', {
+        detail: { text: 'Failed to load positions. Please try again.', type: 'error' }
+      }))
     } finally {
       setIsLoading(false)
     }
@@ -37,12 +43,14 @@ export default function Portfolio() {
   const fetchAccountInfo = async () => {
     try {
       const res = await fetch('/api/account')
-      const data = await res.json()
-      if (res.ok) {
-        setAccountInfo(data)
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
       }
+      const data = await res.json()
+      setAccountInfo(data)
     } catch (error) {
       console.error('Error fetching account:', error)
+      setAccountInfo(null)
     }
   }
 

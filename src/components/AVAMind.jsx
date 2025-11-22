@@ -21,16 +21,24 @@ export default function AVAMind({ onClose }) {
 
   // Load or initialize AI personality
   useEffect(() => {
-    const savedPersonality = localStorage.getItem('ava.mind.personality')
-    if (savedPersonality) {
-      setPersonality(JSON.parse(savedPersonality))
-      setMindState('thinking')
-    } else {
+    try {
+      const savedPersonality = localStorage.getItem('ava.mind.personality')
+      if (savedPersonality) {
+        setPersonality(JSON.parse(savedPersonality))
+        setMindState('thinking')
+      } else {
+        initializePersonality()
+      }
+    } catch (error) {
+      console.error('Error loading personality:', error)
       initializePersonality()
     }
+  }, [])
 
-    // Start learning from user patterns
-    startLearning()
+  // Set up learning listeners
+  useEffect(() => {
+    const cleanup = startLearning()
+    return cleanup
   }, [])
 
   // Initialize AI personality based on user's trading history
@@ -49,7 +57,11 @@ export default function AVAMind({ onClose }) {
       intuition: 0.6
     }
     setPersonality(newPersonality)
-    localStorage.setItem('ava.mind.personality', JSON.stringify(newPersonality))
+    try {
+      localStorage.setItem('ava.mind.personality', JSON.stringify(newPersonality))
+    } catch (error) {
+      console.error('Error saving personality:', error)
+    }
   }
 
   // Learn from user actions
@@ -145,7 +157,11 @@ export default function AVAMind({ onClose }) {
     }
 
     setPersonality(newPersonality)
-    localStorage.setItem('ava.mind.personality', JSON.stringify(newPersonality))
+    try {
+      localStorage.setItem('ava.mind.personality', JSON.stringify(newPersonality))
+    } catch (error) {
+      console.error('Error updating personality:', error)
+    }
   }
 
   const adjustValue = (current, change, direction) => {

@@ -33,8 +33,10 @@ export default function CommandPalette({
 
   // Initialize voice recognition
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
-      const recognition = new window.webkitSpeechRecognition()
+    // Check for browser compatibility (Chrome/Edge)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (typeof window !== 'undefined' && SpeechRecognition) {
+      const recognition = new SpeechRecognition()
       recognition.continuous = false
       recognition.interimResults = true
       recognition.lang = 'en-US'

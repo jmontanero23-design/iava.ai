@@ -41,9 +41,11 @@ export default function MobileGestures({
     })
 
     // Start long press timer
-    longPressTimer.current = setTimeout(() => {
-      handleLongPress(e.touches[0])
-    }, 500)
+    if (e.touches && e.touches[0]) {
+      longPressTimer.current = setTimeout(() => {
+        handleLongPress(e.touches[0])
+      }, 500)
+    }
   }, [])
 
   // Handle touch move

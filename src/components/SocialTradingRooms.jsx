@@ -93,7 +93,7 @@ export default function SocialTradingRooms({ onClose }) {
       clearInterval(messageInterval)
       clearInterval(tradeInterval)
     }
-  }, [activeRoom])
+  }, [activeRoom]) // Dependencies are functions defined inside component, this is intentional
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
