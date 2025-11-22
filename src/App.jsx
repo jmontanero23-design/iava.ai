@@ -164,6 +164,25 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [])
 
+  // Event listeners for Special Features (AVA Mind, Social Rooms)
+  useEffect(() => {
+    const handleToggleAVAMind = () => {
+      setShowAVAMind(prev => !prev)
+    }
+
+    const handleToggleSocialRooms = () => {
+      setShowSocialRooms(prev => !prev)
+    }
+
+    window.addEventListener('iava.toggleAVAMind', handleToggleAVAMind)
+    window.addEventListener('iava.toggleSocialRooms', handleToggleSocialRooms)
+
+    return () => {
+      window.removeEventListener('iava.toggleAVAMind', handleToggleAVAMind)
+      window.removeEventListener('iava.toggleSocialRooms', handleToggleSocialRooms)
+    }
+  }, [])
+
   // Handle feature selection from dashboard - ALL 12 features supported
   const handleFeatureSelect = (featureId) => {
     setSelectedFeature(featureId)

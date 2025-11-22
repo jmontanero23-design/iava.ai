@@ -477,6 +477,47 @@ export default function CommandPalette({
       run: () => window.location.hash = '#nlp-scanner'
     })
 
+    // Special Features - PhD++ Elite
+    items.push({
+      id: 'special:ava-mind',
+      group: 'Special Features',
+      label: '🧠 AVA Mind - AI Digital Twin',
+      keywords: ['mind', 'brain', 'ai', 'twin', 'digital', 'ava'],
+      run: () => {
+        window.dispatchEvent(new CustomEvent('iava.toggleAVAMind'))
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: { text: 'Opening AVA Mind...', type: 'info' }
+        }))
+      }
+    })
+
+    items.push({
+      id: 'special:social-rooms',
+      group: 'Special Features',
+      label: '👥 Social Trading Rooms',
+      keywords: ['social', 'rooms', 'chat', 'community', 'trading'],
+      run: () => {
+        window.dispatchEvent(new CustomEvent('iava.toggleSocialRooms'))
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: { text: 'Opening Social Trading Rooms...', type: 'info' }
+        }))
+      }
+    })
+
+    items.push({
+      id: 'special:voice',
+      group: 'Special Features',
+      label: '🎤 Voice Commands - Speak to trade',
+      hotkey: 'V',
+      keywords: ['voice', 'speak', 'microphone', 'audio'],
+      run: () => {
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: { text: 'Press ⌘V in command palette to use voice', type: 'info' }
+        }))
+        setOpen(true)
+      }
+    })
+
     // Symbol (freeform input) - if query looks like a symbol
     if (q && /^[A-Z]{1,5}$/.test(q.toUpperCase())) {
       items.unshift({
