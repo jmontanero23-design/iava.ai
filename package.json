@@ -14,6 +14,7 @@
     "test:api:prod": "VERCEL_URL=https://app.iava.ai node test-api-endpoints.mjs"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^2.0.45",
     "@ai-sdk/openai": "^2.0.65",
     "@neondatabase/serverless": "^1.0.2",
     "ai": "^5.0.92",
