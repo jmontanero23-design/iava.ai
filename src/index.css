@@ -1630,3 +1630,21 @@ select:focus {
     max-width: calc(100% - 2rem);
   }
 }
+
+/* Global dropdown z-index fix */
+/* Ensures all dropdowns appear above other content */
+.relative > div[class*="absolute"][class*="shadow-xl"],
+.relative > div[class*="absolute"][class*="rounded"] {
+  z-index: 9999 !important;
+}
+
+/* Fix for dropdowns getting cut off by overflow hidden containers */
+.glass-panel {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure dropdowns in headers appear on top */
+.panel-header .relative {
+  z-index: 10;
+}

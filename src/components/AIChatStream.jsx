@@ -88,15 +88,11 @@ export default function AIChatStream({
   const handleContextualSubmit = (e) => {
     e.preventDefault()
 
-    // Inject current market context into the message
-    const contextualInput = `${input}
+    // Only submit if there's input
+    if (!input || !input.trim()) return
 
-Current Context:
-- Symbol: ${symbol}
-- Price: ${context.price || 'N/A'}
-- Unicorn Score: ${context.unicornScore || 'N/A'}
-- Market Regime: ${context.regime || 'N/A'}`
-
+    // For now, just use the regular submit without context injection
+    // The context injection was breaking the submission
     handleSubmit(e)
   }
 
@@ -112,7 +108,7 @@ Current Context:
       </button>
 
       {showModelSelector && (
-        <div className="absolute bottom-full left-0 mb-2 bg-gray-800 rounded-lg shadow-xl p-2 min-w-[200px]">
+        <div className="absolute bottom-full left-0 mb-2 bg-gray-800 rounded-lg shadow-xl p-2 min-w-[200px]" style={{ zIndex: 9999 }}>
           <div className="text-xs text-gray-400 px-2 py-1 mb-1">Select Model</div>
           {['gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1-preview'].map(model => (
             <button

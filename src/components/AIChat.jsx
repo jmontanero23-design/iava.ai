@@ -1329,7 +1329,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                 <span className="text-xs opacity-60">▼</span>
               </button>
               {showModelSelector && (
-                <div className="absolute top-full right-0 mt-1 bg-slate-800 rounded-lg shadow-xl p-2 min-w-[180px] z-50 border border-slate-700">
+                <div className="absolute top-full right-0 mt-1 bg-slate-800 rounded-lg shadow-xl p-2 min-w-[180px] border border-slate-700" style={{ zIndex: 9999 }}>
                   <div className="text-xs text-slate-400 px-2 py-1 mb-1">Select Model</div>
                   {['auto', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano'].map(model => (
                     <button
