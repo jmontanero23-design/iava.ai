@@ -86,7 +86,19 @@ export default async function handler(req, res) {
 
   } catch (e) {
     console.error('[Preset API] Error:', e)
-    res.status(500).json({ error: e?.message || 'Unexpected error' })
+    // Ensure we always return JSON even on error
+    const errorMessage = e?.message || 'Unexpected error'
+    // Make sure response is JSON
+    if (!res.headersSent) {
+      res.setHeader('Content-Type', 'application/json')
+      res.status(500).json({
+        error: errorMessage,
+        fallback: true,
+        presetId: 'manual',
+        reason: 'AI preset service error',
+        params: { th: 70, hz: 10, regime: 'none' }
+      })
+    }
   }
 }
 

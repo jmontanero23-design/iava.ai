@@ -75,6 +75,15 @@ Do not give financial advice; provide usage guidance and interpretations only.`
 
   } catch (e) {
     console.error('[Help API] Error:', e)
-    res.status(500).json({ error: e?.message || 'Unexpected error' })
+    // Ensure we always return JSON even on error
+    const errorMessage = e?.message || 'Unexpected error'
+    // Make sure response is JSON
+    if (!res.headersSent) {
+      res.setHeader('Content-Type', 'application/json')
+      res.status(500).json({
+        error: errorMessage,
+        answer: 'I apologize, but I am currently unable to process your request. Please try again later or check if all AI services are properly configured.'
+      })
+    }
   }
 }

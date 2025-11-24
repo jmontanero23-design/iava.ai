@@ -154,9 +154,13 @@ export default function AITradeCopilot({ onClose }) {
     if (lastPrice && currentPrice) {
       const pctChange = Math.abs((currentPrice - lastPrice) / lastPrice) * 100
 
-      // If price jumped by more than 10%, clear alerts for this symbol
-      // This threshold catches data source switches but allows normal volatility
-      if (pctChange > 10) {
+      // If price jumped by more than 50%, clear alerts for this symbol
+      // Increased threshold to 50% to avoid false positives from:
+      // - Extended hours vs regular market prices
+      // - Different data sources (Yahoo vs Alpaca)
+      // - Legitimate high volatility stocks
+      // Only trigger on extreme jumps that indicate data errors
+      if (pctChange > 50) {
         console.log(`[Copilot] ⚠️ Price discontinuity detected for ${symbol}: $${lastPrice.toFixed(2)} → $${currentPrice.toFixed(2)} (${pctChange.toFixed(1)}% jump)`)
         console.log(`[Copilot] Clearing stale alerts that may reference outdated price context`)
 
