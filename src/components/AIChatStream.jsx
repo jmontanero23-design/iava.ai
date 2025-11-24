@@ -347,7 +347,7 @@ Current Context:
           ) : (
             <button
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input || !input.trim()}
               className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Send size={16} />
