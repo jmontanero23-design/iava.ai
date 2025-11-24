@@ -91,9 +91,9 @@ export default function AIChatStream({
     // Only submit if there's input
     if (!input || !input.trim()) return
 
-    // For now, just use the regular submit without context injection
-    // The context injection was breaking the submission
-    handleSubmit(e)
+    // Call handleSubmit without the event since we already prevented default
+    // The useChat hook's handleSubmit doesn't need the event when called programmatically
+    handleSubmit()
   }
 
   // Model selector component

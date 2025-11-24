@@ -1286,7 +1286,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
   ]
 
   return (
-    <div className="glass-panel flex flex-col overflow-hidden" style={{ height: 'clamp(500px, 750px, 90vh)' }}>
+    <div className="glass-panel flex flex-col overflow-visible" style={{ height: 'clamp(500px, 750px, 90vh)' }}>
       {/* Premium Header with animated background */}
       <div className="panel-header">
         <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl animate-pulse pointer-events-none" style={{ animationDuration: '4s' }} />
