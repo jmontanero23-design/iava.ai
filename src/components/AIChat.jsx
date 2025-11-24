@@ -60,6 +60,15 @@ export default function AIChat() {
       return false
     }
   })
+  const [selectedModel, setSelectedModel] = useState(() => {
+    // Load model preference from localStorage
+    try {
+      return localStorage.getItem('iava_selected_model') || 'auto'
+    } catch {
+      return 'auto'
+    }
+  })
+  const [showModelSelector, setShowModelSelector] = useState(false)
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
 
@@ -890,7 +899,9 @@ ${contextSummary}
 Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanations:
 ["question1", "question2", "question3", "question4"]`
 
-      const result = await callAI('gpt-5-nano', [
+      // Use selected model or default to nano for follow-ups
+      const model = selectedModel === 'auto' ? 'gpt-5-nano' : selectedModel
+      const result = await callAI(model, [
         { role: 'user', content: prompt }
       ], {
         temperature: 0.8,
@@ -1174,8 +1185,15 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
         { role: 'user', content: userContent }
       ]
 
-      // GPT-5 supports vision! Use GPT-5-mini for speed or GPT-5 for quality
-      const model = hasImages ? 'gpt-5-mini' : 'gpt-5' // gpt-5-mini faster for vision
+      // Determine which model to use
+      let model
+      if (selectedModel === 'auto') {
+        // Auto mode: Smart selection based on context
+        model = hasImages ? 'gpt-5-mini' : 'gpt-5' // gpt-5-mini faster for vision
+      } else {
+        // Manual selection
+        model = selectedModel
+      }
       const maxTokens = hasImages ? 600 : 300
 
       const result = await callAI(model, aiMessages, {
@@ -1276,14 +1294,22 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
           {/* Icon with glow effect */}
           <span className="panel-icon" style={{ fontSize: 'var(--text-3xl)' }}>🤖</span>
           <div className="flex-1">
-            <h3 className="font-bold bg-gradient-to-r from-indigo-200 via-purple-200 to-cyan-300 bg-clip-text text-transparent" style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-bold)' }}>
-              AI Assistant
-            </h3>
+            <div className="flex items-center gap-3">
+              <h3 className="font-bold bg-gradient-to-r from-indigo-200 via-purple-200 to-cyan-300 bg-clip-text text-transparent" style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-bold)' }}>
+                AI Assistant
+              </h3>
+              {/* Symbol Badge - New Feature! */}
+              {currentSymbol && (
+                <span className="px-3 py-1 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-cyan-500/30 rounded-full text-cyan-300 text-sm font-semibold shadow-lg shadow-cyan-500/20">
+                  {currentSymbol}
+                </span>
+              )}
+            </div>
             <p className="text-slate-400 flex items-center gap-2 mt-1" style={{ fontSize: 'var(--text-xs)' }}>
               <span className={`w-2 h-2 rounded-full ${hasRealData ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
               <span style={{ fontWeight: 'var(--font-semibold)' }}>
                 {hasRealData
-                  ? `Live Data: ${currentSymbol} • ${marketData.timeframe}`
+                  ? `Live Data • ${marketData.timeframe}`
                   : 'Sample Data • Load chart for live analysis'}
               </span>
               <span className="text-slate-400">• Chat persisted 24h</span>
@@ -1291,6 +1317,41 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
           </div>
           {/* Action Buttons */}
           <div className="flex gap-2">
+            {/* Model Selector - New Feature! */}
+            <div className="relative">
+              <button
+                onClick={() => setShowModelSelector(!showModelSelector)}
+                className="btn-ghost btn-sm flex items-center gap-2"
+                title="Select AI Model"
+              >
+                <span>🧠</span>
+                <span className="text-xs">{selectedModel === 'auto' ? 'Auto' : selectedModel}</span>
+                <span className="text-xs opacity-60">▼</span>
+              </button>
+              {showModelSelector && (
+                <div className="absolute top-full right-0 mt-1 bg-slate-800 rounded-lg shadow-xl p-2 min-w-[180px] z-50 border border-slate-700">
+                  <div className="text-xs text-slate-400 px-2 py-1 mb-1">Select Model</div>
+                  {['auto', 'gpt-5', 'gpt-5-mini', 'gpt-5-nano'].map(model => (
+                    <button
+                      key={model}
+                      onClick={() => {
+                        setSelectedModel(model)
+                        localStorage.setItem('iava_selected_model', model)
+                        setShowModelSelector(false)
+                      }}
+                      className={`w-full text-left px-2 py-1.5 rounded text-sm hover:bg-slate-700 transition-colors ${
+                        model === selectedModel ? 'bg-slate-700 text-cyan-300' : 'text-slate-300'
+                      }`}
+                    >
+                      {model === 'auto' && '🔄 Auto (Smart Selection)'}
+                      {model === 'gpt-5' && '💎 GPT-5 (Most Capable)'}
+                      {model === 'gpt-5-mini' && '⚡ GPT-5 Mini (Balanced)'}
+                      {model === 'gpt-5-nano' && '🚀 GPT-5 Nano (Fastest)'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               onClick={toggleTrustMode}
               className={`btn-sm ${
