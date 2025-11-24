@@ -39,6 +39,7 @@ import StrategyBuilder from './components/StrategyBuilder.jsx'
 import RiskControlsPanel from './components/RiskControlsPanel.jsx'
 import MultiTimeframePanel from './components/MultiTimeframePanel.jsx'
 import ChronosForecast from './components/ChronosForecast.jsx'
+import AIChatDemo from './pages/AIChatDemo.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -348,6 +349,21 @@ function AppWithGestures({
               <kbd className="hidden md:inline text-xs opacity-60 ml-1">⌘5</kbd>
             </button>
 
+            {/* AI Chat Demo Button - NEW! */}
+            <button
+              onClick={() => setActiveTab('ai-demo')}
+              className={`px-5 py-3 rounded-lg text-sm font-semibold transition-all flex items-center gap-2.5 ${
+                activeTab === 'ai-demo'
+                  ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-300 border border-yellow-500/30 shadow-lg shadow-yellow-500/20 animate-pulse'
+                  : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-slate-200'
+              }`}
+              title="AI Chat Streaming Demo - Try the NEW streaming chat!"
+            >
+              <span className="text-lg">✨</span>
+              <span>AI Demo</span>
+              <span className="ml-1 text-xs bg-yellow-500 text-black px-1.5 py-0.5 rounded font-bold">NEW</span>
+            </button>
+
             {/* Next-Gen Features */}
             <div className="ml-auto flex items-center gap-2">
 
@@ -392,6 +408,10 @@ function AppWithGestures({
 
         {activeTab === 'ava-mind' && (
           <AVAMind />
+        )}
+
+        {activeTab === 'ai-demo' && (
+          <AIChatDemo />
         )}
 
         {activeTab !== 'chart' && <BuildInfoFooter />}
