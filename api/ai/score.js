@@ -13,8 +13,6 @@
 
 import { UltraEliteAI } from '../../src/services/ai/ultraEliteModels_v2_SIMPLIFIED.js';
 
-const scorer = new UltraEliteAI();
-
 // Helper to determine quality label from score
 function getQuality(score) {
   if (score >= 80) return 'EXCEPTIONAL 🚀';
@@ -182,6 +180,9 @@ export default async function handler(req, res) {
       priceCount: data.prices?.length,
       candleCount: data.candles?.length
     });
+
+    // Create scorer instance inside handler for serverless compatibility
+    const scorer = new UltraEliteAI();
 
     // Calculate the Ultra Elite AI Score using SIMPLIFIED module
     const rawResult = await scorer.generateUltraSignal(symbol, data);

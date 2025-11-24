@@ -4,7 +4,6 @@
  */
 
 import { openai } from '@ai-sdk/openai'
-import { anthropic } from '@ai-sdk/anthropic'
 import { generateText } from 'ai'
 
 export default async function handler(req, res) {
@@ -13,7 +12,6 @@ export default async function handler(req, res) {
 
     const provider = (process.env.LLM_PROVIDER || '').toLowerCase()
     const openaiKey = process.env.OPENAI_API_KEY
-    const anthropicKey = process.env.ANTHROPIC_API_KEY
 
     if (!provider) return res.status(500).json({ error: 'LLM_PROVIDER not set' })
 
@@ -44,22 +42,6 @@ export default async function handler(req, res) {
         temperature: isNewModel ? undefined : 0.2,
         responseFormat: { type: 'json' },
         abortSignal: AbortSignal.timeout(isReasoningModel ? 60000 : 15000)
-      })
-
-    } else if (provider === 'anthropic') {
-      if (!anthropicKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY missing' })
-
-      const anthropicModel = process.env.LLM_MODEL_TUNE || 'claude-sonnet-4-5'
-
-      // Use Vercel AI SDK for Anthropic
-      result = await generateText({
-        model: anthropic(anthropicModel, { apiKey: anthropicKey }),
-        system: 'Return concise JSON only.',
-        messages: [
-          { role: 'user', content: prompt }
-        ],
-        maxTokens: 300,
-        abortSignal: AbortSignal.timeout(15000)
       })
 
     } else {

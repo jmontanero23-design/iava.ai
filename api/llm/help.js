@@ -6,6 +6,11 @@
 import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 
+export const config = {
+  runtime: 'nodejs',
+  maxDuration: 30,
+};
+
 export default async function handler(req, res) {
   try {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })

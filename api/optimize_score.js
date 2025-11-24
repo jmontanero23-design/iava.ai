@@ -18,7 +18,7 @@
  *    - Common + low quality = lower weight
  */
 
-import { fetchBars } from '../src/services/bars.js'
+import { fetchBars } from '../src/services/alpaca.js'
 import { computeStates } from '../src/utils/indicators.js'
 
 export default async function handler(req, res) {
