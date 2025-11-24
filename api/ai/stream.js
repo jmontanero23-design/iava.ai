@@ -93,18 +93,15 @@ export default async function handler(req) {
       temperature: isNewModel ? undefined : 0.2,
     })
 
-    // Return the streaming response with CORS headers
-    // The streamText result has a textStream property
-    return new Response(result.textStream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    })
+    // Use the toTextStreamResponse() method for proper streaming
+    const response = result.toTextStreamResponse()
+
+    // Add CORS headers
+    response.headers.set('Access-Control-Allow-Origin', '*')
+    response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
+
+    return response
 
   } catch (error) {
     console.error('[Stream API] Error:', error)
