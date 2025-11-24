@@ -1,6 +1,6 @@
 /**
  * Ask AI / HelpFab - In-app Trading Assistant
- * Now using Vercel AI SDK (same as AI Gateway)
+ * Using Vercel AI SDK with OpenAI
  */
 
 import { openai } from '@ai-sdk/openai'
