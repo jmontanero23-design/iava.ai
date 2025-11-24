@@ -5,7 +5,7 @@
  */
 
 import { openai } from '@ai-sdk/openai'
-import { streamText } from 'ai'
+import { streamText, createTextStreamResponse } from 'ai'
 
 export const config = {
   runtime: 'edge',
@@ -93,13 +93,15 @@ export default async function handler(req) {
       temperature: isNewModel ? undefined : 0.2,
     })
 
-    // Use the toTextStreamResponse() method for proper streaming
-    const response = result.toTextStreamResponse()
-
-    // Add CORS headers
-    response.headers.set('Access-Control-Allow-Origin', '*')
-    response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type')
+    // Create proper streaming response for useChat hook
+    // This converts the text stream to Server-Sent Events format
+    const response = createTextStreamResponse(result.textStream, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    })
 
     return response
 
