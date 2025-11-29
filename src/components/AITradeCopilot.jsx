@@ -1640,7 +1640,11 @@ export default function AITradeCopilot({ onClose }) {
                                     alert.id.includes('health-critical') ||
                                     alert.id.includes('score-') ||
                                     alert.id.includes('bear-perfect') ||
-                                    alert.id.includes('confluence') // PhD++ Add conflict alerts
+                                    alert.id.includes('confluence') || // PhD++ Add conflict alerts
+                                    alert.isChronosForecast // Chronos AI predictions
+
+                // Check if this is a Chronos forecast alert
+                const isChronosForecast = alert.isChronosForecast === true
 
                 return (
                   <div
@@ -1707,7 +1711,40 @@ export default function AITradeCopilot({ onClose }) {
                         </button>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        {isActionable && (
+                        {/* Chronos Forecast Action Buttons */}
+                        {isChronosForecast && (
+                          <>
+                            <button
+                              onClick={() => {
+                                // Set price alert at predicted target
+                                const targetPrice = alert.forecastData?.targetPrice || alert.predictedPrice || alert.targetPrice
+                                if (targetPrice) {
+                                  window.dispatchEvent(new CustomEvent('ava.createPriceAlert', {
+                                    detail: { targetPrice, symbol: alert.symbol }
+                                  }))
+                                  window.dispatchEvent(new CustomEvent('iava.toast', {
+                                    detail: { text: `Alert set at $${targetPrice.toFixed(2)}`, type: 'success' }
+                                  }))
+                                }
+                              }}
+                              className="text-xs px-2 py-1 rounded-lg font-semibold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/40 transition-all"
+                              title="Set alert at predicted target"
+                            >
+                              🔔 Alert
+                            </button>
+                            <button
+                              onClick={() => {
+                                // View full forecast
+                                window.dispatchEvent(new CustomEvent('iava.setActiveTab', { detail: { tab: 'ai-hub' } }))
+                              }}
+                              className="text-xs px-2 py-1 rounded-lg font-semibold bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 border border-purple-500/40 transition-all"
+                              title="View full Chronos forecast"
+                            >
+                              📊 Forecast
+                            </button>
+                          </>
+                        )}
+                        {isActionable && !isChronosForecast && (
                           <button
                             onClick={() => executeAlert(alert)}
                             disabled={executingAlerts.has(alert.id)}

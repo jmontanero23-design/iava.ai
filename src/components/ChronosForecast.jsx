@@ -14,6 +14,7 @@
 import { useState, useEffect } from 'react'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
 import { cacheForecast as cacheChronosForecast } from '../services/chronosCopilotBridge.js'
+import { recordPrediction, getAccuracyStats } from '../services/chronosAccuracyTracker.js'
 
 export default function ChronosForecast() {
   const { marketData } = useMarketData()
@@ -23,6 +24,13 @@ export default function ChronosForecast() {
   const [lastUpdate, setLastUpdate] = useState(null)
   const [error, setError] = useState(null)
   const [lastSymbol, setLastSymbol] = useState(null) // PhD++ Track last symbol to detect changes
+  const [accuracyStats, setAccuracyStats] = useState(null) // Historical accuracy tracking
+
+  // Load accuracy stats on mount and when symbol changes
+  useEffect(() => {
+    const stats = getAccuracyStats()
+    setAccuracyStats(stats)
+  }, [forecast])
 
   // PhD++ CRITICAL: Check if marketData is loading - prevents stale data usage
   const isDataLoading = marketData.isLoading || !marketData.symbol
@@ -140,6 +148,16 @@ export default function ChronosForecast() {
       }
       cacheChronosForecast(symbol, forecastForCopilot)
 
+      // Record prediction for accuracy tracking
+      recordPrediction({
+        symbol,
+        direction: forecastForCopilot.direction,
+        targetPrice: forecastForCopilot.targetPrice,
+        confidence: forecastForCopilot.confidence,
+        currentPrice,
+        timeframeHours: 24
+      })
+
       console.log(`✅ Forecast complete:`, result)
     } catch (err) {
       console.error('Forecast error:', err)
@@ -221,17 +239,36 @@ export default function ChronosForecast() {
           </p>
         </div>
 
-        <button
-          onClick={runForecast}
-          disabled={isLoading || isDataLoading || !symbol}
-          className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-            isLoading || isDataLoading || !symbol
-              ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-              : 'bg-indigo-600 hover:bg-indigo-500 text-white'
-          }`}
-        >
-          {isLoading ? '🔄 Forecasting...' : isDataLoading ? '⏳ Loading...' : '🔄 Refresh Forecast'}
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Historical Accuracy Badge */}
+          {accuracyStats && accuracyStats.verifiedPredictions > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 rounded-lg border border-slate-700/50">
+              <span className="text-slate-400 text-xs">AVA Accuracy:</span>
+              <span className={`font-bold text-sm ${
+                accuracyStats.directionAccuracy >= 70 ? 'text-emerald-400' :
+                accuracyStats.directionAccuracy >= 50 ? 'text-amber-400' :
+                'text-red-400'
+              }`}>
+                {accuracyStats.directionAccuracy}%
+              </span>
+              <span className="text-slate-500 text-xs">
+                ({accuracyStats.verifiedPredictions} verified)
+              </span>
+            </div>
+          )}
+
+          <button
+            onClick={runForecast}
+            disabled={isLoading || isDataLoading || !symbol}
+            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+              isLoading || isDataLoading || !symbol
+                ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+            }`}
+          >
+            {isLoading ? '🔄 Forecasting...' : isDataLoading ? '⏳ Loading...' : '🔄 Refresh Forecast'}
+          </button>
+        </div>
       </div>
 
       {/* Error State */}
