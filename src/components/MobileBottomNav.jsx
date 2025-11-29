@@ -1,54 +1,81 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 /**
- * Mobile Bottom Navigation
+ * Mobile Bottom Navigation - Elite 2025 Edition
  *
- * Elite 2025 mobile-first navigation inspired by modern fintech apps
- * PhD++ quality with haptic feedback support and smooth animations
+ * PhD++ quality mobile-first navigation with:
+ * - 44px+ touch targets (iOS/Android HIG compliance)
+ * - Haptic feedback on tap
+ * - Smooth spring animations
+ * - Safe area support for notched devices
+ * - Swipe gestures for quick actions
+ * - Badge notifications
  */
-export default function MobileBottomNav({ activeTab, onTabChange }) {
+export default function MobileBottomNav({ activeTab, onTabChange, badges = {} }) {
   const [showMoreMenu, setShowMoreMenu] = useState(false)
+  const [pressedItem, setPressedItem] = useState(null)
   const [notifications, setNotifications] = useState({
-    ai: 3,
-    alerts: 5,
-    trades: 0
+    ai: badges['ai-hub'] || 0,
+    alerts: badges['alerts'] || 0,
+    trades: badges['portfolio'] || 0,
+    scanner: badges['scanner'] || 0
   })
 
-  // Primary navigation items (max 5 for mobile UX best practice)
+  // Update notifications from badges prop
+  useEffect(() => {
+    setNotifications(prev => ({
+      ...prev,
+      ai: badges['ai-hub'] || prev.ai,
+      alerts: badges['alerts'] || prev.alerts,
+      trades: badges['portfolio'] || prev.trades,
+      scanner: badges['scanner'] || prev.scanner
+    }))
+  }, [badges])
+
+  // Primary navigation items (5 main tabs matching desktop)
   const primaryNav = [
     {
       id: 'chart',
       label: 'Chart',
       icon: '📊',
-      color: 'indigo'
+      activeIcon: '📈',
+      color: '#06B6D4', // cyan
+      gradient: 'from-cyan-500/20 to-blue-500/20'
     },
     {
       id: 'ai-hub',
       label: 'AI Hub',
       icon: '🤖',
-      color: 'purple',
-      badge: '17'
+      activeIcon: '🧠',
+      color: '#8B5CF6', // purple
+      gradient: 'from-violet-500/20 to-purple-500/20',
+      badge: notifications.ai > 0 ? notifications.ai : null
     },
     {
-      id: 'trade',
-      label: 'Trade',
-      icon: '💰',
-      color: 'emerald',
-      isAction: true
+      id: 'scanner',
+      label: 'Scanner',
+      icon: '🔍',
+      activeIcon: '🎯',
+      color: '#14B8A6', // teal
+      gradient: 'from-teal-500/20 to-emerald-500/20',
+      badge: notifications.scanner > 0 ? notifications.scanner : null
     },
     {
-      id: 'alerts',
-      label: 'Alerts',
-      icon: '🔔',
-      color: 'amber',
-      badge: notifications.alerts > 0 ? notifications.alerts : null
+      id: 'portfolio',
+      label: 'Portfolio',
+      icon: '💼',
+      activeIcon: '💰',
+      color: '#F59E0B', // amber
+      gradient: 'from-amber-500/20 to-orange-500/20',
+      badge: notifications.trades > 0 ? notifications.trades : null
     },
     {
-      id: 'more',
-      label: 'More',
-      icon: '≡',
-      color: 'slate',
-      isMenu: true
+      id: 'ava-mind',
+      label: 'AVA Mind',
+      icon: '🧠',
+      activeIcon: '✨',
+      color: '#A855F7', // purple
+      gradient: 'from-purple-500/20 to-cyan-500/20'
     }
   ]
 
@@ -63,12 +90,25 @@ export default function MobileBottomNav({ activeTab, onTabChange }) {
     { id: 'settings', label: 'Settings', icon: '⚙️', color: 'gray' }
   ]
 
-  // Handle navigation
-  const handleNavClick = (item) => {
-    // Haptic feedback on supported devices
-    if (window.navigator.vibrate) {
-      window.navigator.vibrate(10)
+  // Enhanced haptic feedback
+  const triggerHaptic = useCallback((intensity = 'light') => {
+    if ('vibrate' in navigator) {
+      const patterns = {
+        light: 10,
+        medium: [10, 50, 10],
+        heavy: [20, 50, 20]
+      }
+      navigator.vibrate(patterns[intensity] || 10)
     }
+  }, [])
+
+  // Handle navigation with press state
+  const handleNavClick = useCallback((item) => {
+    triggerHaptic('light')
+    setPressedItem(item.id)
+
+    // Reset pressed state after animation
+    setTimeout(() => setPressedItem(null), 150)
 
     if (item.isMenu) {
       setShowMoreMenu(!showMoreMenu)
@@ -86,7 +126,7 @@ export default function MobileBottomNav({ activeTab, onTabChange }) {
 
     onTabChange(item.id)
     setShowMoreMenu(false)
-  }
+  }, [showMoreMenu, onTabChange, triggerHaptic])
 
   // Close more menu on outside click
   useEffect(() => {
@@ -161,72 +201,83 @@ export default function MobileBottomNav({ activeTab, onTabChange }) {
         </div>
       )}
 
-      {/* Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700 z-50 md:hidden">
-        <div className="grid grid-cols-5 h-16">
+      {/* Bottom Navigation Bar - 44px+ touch targets */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 z-50 md:hidden"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        <div className="flex items-stretch justify-around px-1 py-1">
           {primaryNav.map((item) => {
-            const isActive = !item.isMenu && !item.isAction && activeTab === item.id
-            const isMoreActive = item.isMenu && showMoreMenu
+            const isActive = activeTab === item.id
+            const isPressed = pressedItem === item.id
 
             return (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item)}
-                className={`relative flex flex-col items-center justify-center gap-1 transition-all ${
-                  item.isAction
-                    ? 'scale-110' // Make trade button slightly larger
-                    : ''
-                }`}
+                onTouchStart={() => setPressedItem(item.id)}
+                onTouchEnd={() => setTimeout(() => setPressedItem(null), 100)}
+                className={`
+                  relative flex flex-col items-center justify-center
+                  min-w-[56px] min-h-[56px] py-2 px-2 rounded-xl
+                  transition-all duration-150 ease-out
+                  ${isActive
+                    ? `bg-gradient-to-b ${item.gradient} border border-white/10`
+                    : 'active:bg-slate-800/50'
+                  }
+                  ${isPressed ? 'scale-90' : 'scale-100'}
+                `}
+                style={{
+                  WebkitTapHighlightColor: 'transparent',
+                  touchAction: 'manipulation'
+                }}
               >
-                {/* Special styling for trade action button */}
-                {item.isAction ? (
-                  <div className="absolute inset-2 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-xl shadow-lg shadow-emerald-500/30 flex flex-col items-center justify-center">
-                    <span className="text-2xl text-white">{item.icon}</span>
-                    <span className="text-xs font-medium text-white">{item.label}</span>
-                  </div>
-                ) : (
-                  <>
-                    {/* Icon with badge */}
-                    <div className="relative">
-                      <span className={`text-2xl transition-all ${
-                        isActive || isMoreActive
-                          ? 'text-indigo-400 scale-110'
-                          : 'text-slate-400'
-                      }`}>
-                        {item.icon}
-                      </span>
-                      {item.badge && (
-                        <span className="absolute -top-1 -right-1 px-1 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] text-center">
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Label */}
-                    <span className={`text-xs transition-all ${
-                      isActive || isMoreActive
-                        ? 'text-indigo-400 font-medium'
-                        : 'text-slate-500'
-                    }`}>
-                      {item.label}
-                    </span>
-
-                    {/* Active indicator */}
-                    {(isActive || isMoreActive) && (
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full" />
-                    )}
-                  </>
+                {/* Active indicator dot at top */}
+                {isActive && (
+                  <div
+                    className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
                 )}
+
+                {/* Icon with badge */}
+                <div className="relative">
+                  <span
+                    className={`
+                      text-xl transition-transform duration-150
+                      ${isActive ? 'scale-110' : 'scale-100'}
+                      ${isPressed ? 'scale-125' : ''}
+                    `}
+                  >
+                    {isActive ? item.activeIcon : item.icon}
+                  </span>
+                  {item.badge && (
+                    <span className="absolute -top-1.5 -right-1.5 px-1 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </span>
+                  )}
+                </div>
+
+                {/* Label */}
+                <span
+                  className={`
+                    text-[10px] font-medium mt-0.5 transition-colors duration-150
+                    ${isActive ? 'text-white' : 'text-slate-500'}
+                  `}
+                  style={{ color: isActive ? item.color : undefined }}
+                >
+                  {item.label}
+                </span>
               </button>
             )
           })}
         </div>
 
         {/* iPhone-style home indicator */}
-        <div className="pb-safe">
-          <div className="mx-auto w-32 h-1 bg-slate-700 rounded-full mt-2" />
+        <div className="flex justify-center pt-1 pb-2">
+          <div className="w-32 h-1 bg-slate-700 rounded-full" />
         </div>
-      </div>
+      </nav>
 
       {/* Floating Action Buttons (FAB) for quick actions */}
       <div className="fixed bottom-24 right-4 flex flex-col gap-2 z-40 md:hidden">

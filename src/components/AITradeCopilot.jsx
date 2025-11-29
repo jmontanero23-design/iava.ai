@@ -21,6 +21,7 @@ import { useMarketData } from '../contexts/MarketDataContext.jsx'
 import { fetchBars } from '../services/yahooFinance.js'
 import { computeStates } from '../utils/indicators.js'
 import { speakAlert, speakGuidance, voiceQueue } from '../utils/voiceSynthesis.js'
+import chronosBridge from '../services/chronosCopilotBridge.js'
 
 export default function AITradeCopilot({ onClose }) {
   const { marketData } = useMarketData()
@@ -1058,6 +1059,54 @@ export default function AITradeCopilot({ onClose }) {
 
     return () => clearInterval(scanInterval)
   }, [marketData])
+
+  // PhD++ CHRONOS FORECAST INTEGRATION: Listen for AI predictions
+  useEffect(() => {
+    const handleChronosAlert = (event) => {
+      const alert = event.detail
+      if (!alert) return
+
+      const chronosKey = `chronos-${alert.symbol}`
+
+      // Check cooldown (5 min for Chronos alerts)
+      if (isOnCooldown(chronosKey, 300000)) return
+      markAlertFired(chronosKey)
+
+      // Check if we already have this alert
+      if (wasAlertEverAdded(alert.id)) return
+      markAlertAdded(alert.id)
+
+      // Add forecast alert with special styling
+      setAlerts(prev => [{
+        id: alert.id,
+        type: alert.direction === 'bullish' ? 'success' : alert.direction === 'bearish' ? 'danger' : 'info',
+        priority: alert.priority || 'medium',
+        symbol: alert.symbol,
+        title: alert.title,
+        message: alert.message,
+        action: `Target: $${alert.targetPrice?.toFixed(2)} • ${alert.confidence}% confidence`,
+        timestamp: alert.timestamp,
+        isChronosForecast: true,
+        forecastData: {
+          targetPrice: alert.targetPrice,
+          confidence: alert.confidence,
+          direction: alert.direction
+        },
+        actions: alert.actions
+      }, ...prev].slice(0, 10))
+
+      // Voice announcement for high confidence
+      if (alert.confidence >= 80) {
+        const voiceMsg = `AVA predicts ${alert.symbol} will ${
+          alert.direction === 'bullish' ? 'rise' : alert.direction === 'bearish' ? 'fall' : 'stay flat'
+        }. Confidence ${alert.confidence} percent.`
+        speakAlert(voiceMsg)
+      }
+    }
+
+    window.addEventListener('ava.chronosAlert', handleChronosAlert)
+    return () => window.removeEventListener('ava.chronosAlert', handleChronosAlert)
+  }, [])
 
   // PhD++ CONFLUENCE CHANGE ALERT: Alert when confluence changes to FULL (with cooldown) - POSITION-AWARE
   useEffect(() => {

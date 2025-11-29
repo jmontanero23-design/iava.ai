@@ -13,6 +13,7 @@
 
 import { useState, useEffect } from 'react'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
+import { cacheForecast as cacheChronosForecast } from '../services/chronosCopilotBridge.js'
 
 export default function ChronosForecast() {
   const { marketData } = useMarketData()
@@ -128,6 +129,16 @@ export default function ChronosForecast() {
 
       setForecast(result)
       setLastUpdate(new Date())
+
+      // PhD++ Bridge to Copilot - triggers alerts for high confidence predictions
+      const forecastForCopilot = {
+        direction: result.direction?.toLowerCase() || 'neutral',
+        confidence: Math.round((result.accuracy_score || 0.5) * 100),
+        percentChange: result.percentChange || 0,
+        targetPrice: result.predictions?.[result.predictions.length - 1] || null,
+        horizon: 24
+      }
+      cacheChronosForecast(symbol, forecastForCopilot)
 
       console.log(`✅ Forecast complete:`, result)
     } catch (err) {

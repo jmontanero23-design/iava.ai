@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
 import { speakAnalysis, speakGuidance, voiceQueue } from '../utils/voiceSynthesis.js'
+import AVAMindOnboarding, { needsAVAMindOnboarding, resetAVAMindOnboarding } from './AVAMindOnboarding.jsx'
+import avaMindService, { recordTrade, getLearning, generateSuggestions, getPatterns } from '../services/avaMindService.js'
 
 /**
  * AVA Mind - AI Digital Twin
@@ -17,24 +19,74 @@ export default function AVAMind({ onClose }) {
   const [brainActivity, setBrainActivity] = useState([])
   const [confidence, setConfidence] = useState(0)
   const [learningProgress, setLearningProgress] = useState(0)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [learningStats, setLearningStats] = useState(null)
+  const [patterns, setPatterns] = useState(null)
   const { marketData } = useMarketData()
   const animationRef = useRef(null)
+
+  // Load learning stats on mount
+  useEffect(() => {
+    const stats = getLearning()
+    setLearningStats(stats)
+    if (stats.totalTrades > 0) {
+      // Calculate learning progress based on actual trades
+      setLearningProgress(Math.min(stats.totalTrades * 2, 100))
+    }
+    setPatterns(getPatterns())
+  }, [])
+
+  // Check if onboarding is needed on mount
+  useEffect(() => {
+    if (needsAVAMindOnboarding()) {
+      setShowOnboarding(true)
+    }
+  }, [])
 
   // Load or initialize AI personality
   useEffect(() => {
     try {
       const savedPersonality = localStorage.getItem('ava.mind.personality')
+      const savedAutonomy = localStorage.getItem('ava.mind.autonomy')
+
       if (savedPersonality) {
         setPersonality(JSON.parse(savedPersonality))
         setMindState('thinking')
-      } else {
+      } else if (!needsAVAMindOnboarding()) {
+        // Only initialize default if onboarding was skipped
         initializePersonality()
+      }
+
+      // Load saved autonomy level
+      if (savedAutonomy) {
+        setAutonomyLevel(parseInt(savedAutonomy, 10))
       }
     } catch (error) {
       console.error('Error loading personality:', error)
       initializePersonality()
     }
   }, [])
+
+  // Handle onboarding completion
+  const handleOnboardingComplete = (result) => {
+    setShowOnboarding(false)
+    if (!result.skipped && result.personality) {
+      setPersonality(result.personality)
+      setAutonomyLevel(result.autonomyLevel)
+      setMindState('thinking')
+
+      // Welcome message
+      window.dispatchEvent(new CustomEvent('iava.toast', {
+        detail: { text: 'AVA Mind is configured and learning!', type: 'success' }
+      }))
+    }
+  }
+
+  // Handler to restart onboarding
+  const handleReconfigure = () => {
+    resetAVAMindOnboarding()
+    setShowOnboarding(true)
+  }
 
   // Set up learning listeners
   useEffect(() => {
@@ -65,14 +117,45 @@ export default function AVAMind({ onClose }) {
     }
   }
 
-  // Learn from user actions
+  // Learn from user actions using the AVA Mind Service
   const startLearning = () => {
     // Listen to user trading events
     const handleTrade = (e) => {
       const trade = e.detail
+
+      // Record trade using the service
+      recordTrade({
+        symbol: trade.symbol,
+        action: trade.action,
+        entryPrice: trade.price || trade.entryPrice,
+        quantity: trade.quantity || trade.qty,
+        timeframe: trade.timeframe || marketData.timeframe,
+        setupType: trade.setupType || trade.pattern,
+        indicators: trade.indicators,
+        marketCondition: marketData.signalState || 'unknown'
+      })
+
+      // Update UI
       addMemory('trade', trade)
       updatePersonality(trade)
-      setLearningProgress(prev => Math.min(prev + 5, 100))
+
+      // Refresh learning stats
+      const stats = getLearning()
+      setLearningStats(stats)
+      setLearningProgress(Math.min(stats.totalTrades * 2, 100))
+      setPatterns(getPatterns())
+
+      // Generate new suggestions based on updated patterns
+      if (marketData.symbol) {
+        const newSuggestions = generateSuggestions({
+          symbol: marketData.symbol,
+          timeframe: marketData.timeframe,
+          marketCondition: marketData.signalState
+        })
+        if (newSuggestions.length > 0) {
+          setSuggestions(prev => [...newSuggestions, ...prev].slice(0, 5))
+        }
+      }
     }
 
     const handleAnalysis = (e) => {
@@ -82,12 +165,39 @@ export default function AVAMind({ onClose }) {
       setLearningProgress(prev => Math.min(prev + 2, 100))
     }
 
+    // Listen for symbol changes to generate proactive suggestions
+    const handleSymbolChange = (e) => {
+      const { symbol, timeframe } = e.detail
+      if (symbol) {
+        const newSuggestions = generateSuggestions({
+          symbol,
+          timeframe: timeframe || marketData.timeframe,
+          marketCondition: marketData.signalState
+        })
+        if (newSuggestions.length > 0) {
+          setSuggestions(prev => {
+            // Filter out old suggestions for same symbol
+            const filtered = prev.filter(s => s.symbol !== symbol)
+            return [...newSuggestions, ...filtered].slice(0, 5)
+          })
+
+          // Set confidence based on pattern data
+          const stats = getLearning()
+          if (stats.totalTrades >= 5) {
+            setConfidence(Math.round(stats.winRate))
+          }
+        }
+      }
+    }
+
     window.addEventListener('iava.trade', handleTrade)
     window.addEventListener('iava.analysis', handleAnalysis)
+    window.addEventListener('iava.loadSymbol', handleSymbolChange)
 
     return () => {
       window.removeEventListener('iava.trade', handleTrade)
       window.removeEventListener('iava.analysis', handleAnalysis)
+      window.removeEventListener('iava.loadSymbol', handleSymbolChange)
     }
   }
 
@@ -430,10 +540,15 @@ export default function AVAMind({ onClose }) {
           {[1, 2, 3, 4, 5].map(level => (
             <button
               key={level}
-              onClick={() => setAutonomyLevel(level)}
+              onClick={() => {
+                setAutonomyLevel(level)
+                localStorage.setItem('ava.mind.autonomy', level.toString())
+              }}
               className={`flex-1 h-8 rounded transition-all ${
                 level <= autonomyLevel
-                  ? 'bg-gradient-to-r from-purple-500 to-cyan-500'
+                  ? level >= 3
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500'
+                    : 'bg-gradient-to-r from-purple-500 to-cyan-500'
                   : 'bg-slate-800'
               }`}
             >
@@ -441,8 +556,16 @@ export default function AVAMind({ onClose }) {
             </button>
           ))}
         </div>
-        <div className="mt-2 text-xs text-slate-500">
-          Level {autonomyLevel >= 3 ? '3+' : '3'} required for auto-execution
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-xs text-slate-500">
+            {autonomyLevel >= 3 ? '⚠️ Auto-execution enabled' : 'Level 3+ for auto-execution'}
+          </span>
+          <button
+            onClick={handleReconfigure}
+            className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+          >
+            Reconfigure
+          </button>
         </div>
       </div>
 
@@ -528,6 +651,14 @@ export default function AVAMind({ onClose }) {
           </button>
         </div>
       </div>
+
+      {/* Onboarding Modal */}
+      {showOnboarding && (
+        <AVAMindOnboarding
+          onComplete={handleOnboardingComplete}
+          forceShow={showOnboarding}
+        />
+      )}
     </div>
   )
 }

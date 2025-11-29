@@ -11,7 +11,14 @@
     "package:zip": "node scripts/package-zip.mjs",
     "generate:icons": "node scripts/generate-icons.js",
     "test:api": "node test-api-endpoints.mjs",
-    "test:api:prod": "VERCEL_URL=https://app.iava.ai node test-api-endpoints.mjs"
+    "test:api:prod": "VERCEL_URL=https://app.iava.ai node test-api-endpoints.mjs",
+    "lint": "eslint src --ext .js,.jsx",
+    "lint:fix": "eslint src --ext .js,.jsx --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,css}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,css}\"",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.65",
@@ -32,13 +39,24 @@
     "react-syntax-highlighter": "^16.1.0"
   },
   "devDependencies": {
+    "@sentry/react": "^10.27.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^4.0.14",
     "archiver": "^5.3.1",
     "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "jsdom": "^27.2.0",
     "pdf-parse": "^1.1.1",
     "postcss": "^8.4.47",
+    "prettier": "^3.7.3",
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.14",
-    "vite": "^7.2.2"
+    "vite": "^7.2.2",
+    "vitest": "^4.0.14"
   }
 }

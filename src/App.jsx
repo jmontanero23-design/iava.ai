@@ -14,6 +14,7 @@ import AIHub from './components/AIHub.jsx'
 import Portfolio from './components/Portfolio.jsx'
 import AIChat from './components/AIChat.jsx'
 import AVAMind from './components/AVAMind.jsx'
+import AVAMindDashboard from './components/ava-mind/AVAMindDashboard.jsx'
 import SocialTradingRooms from './components/SocialTradingRooms.jsx'
 import NaturalLanguageScanner from './components/NaturalLanguageScanner.jsx'
 import ModelMonitoring from './components/ModelMonitoring.jsx'
@@ -40,6 +41,7 @@ import RiskControlsPanel from './components/RiskControlsPanel.jsx'
 import MultiTimeframePanel from './components/MultiTimeframePanel.jsx'
 import ChronosForecast from './components/ChronosForecast.jsx'
 import AIChatDemo from './pages/AIChatDemo.jsx'
+import MobileBottomNav from './components/MobileBottomNav.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -108,6 +110,25 @@ export default function App() {
 
     window.addEventListener('iava.loadSymbol', handleLoadSymbol)
     return () => window.removeEventListener('iava.loadSymbol', handleLoadSymbol)
+  }, [])
+
+  // Listen for tab navigation events (from voice commands, etc.)
+  useEffect(() => {
+    const handleSetActiveTab = (event) => {
+      const { tab } = event.detail || {}
+      if (tab) {
+        // Map special tabs to valid tabs
+        const tabMap = {
+          'forecast': 'ai-hub', // Forecast is part of AI Hub
+          'chat': 'ai-hub',
+          'copilot': 'chart', // Copilot is on chart view
+        }
+        setActiveTab(tabMap[tab] || tab)
+      }
+    }
+
+    window.addEventListener('iava.setActiveTab', handleSetActiveTab)
+    return () => window.removeEventListener('iava.setActiveTab', handleSetActiveTab)
   }, [])
 
   // Keyboard shortcuts for elite UX
@@ -367,6 +388,21 @@ function AppWithGestures({
             {/* Next-Gen Features */}
             <div className="ml-auto flex items-center gap-2">
 
+              {/* AI Coach Quick Access */}
+              <button
+                onClick={() => {
+                  setActiveTab('ava-mind')
+                  // Open coach tab in AVA Mind
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('ava.openCoach'))
+                  }, 100)
+                }}
+                className="p-2.5 rounded-lg transition-all bg-slate-800/30 text-slate-400 hover:bg-gradient-to-r hover:from-amber-500/20 hover:to-orange-500/20 hover:text-amber-300 hover:border hover:border-amber-500/30"
+                title="AI Trading Coach - Get personalized coaching"
+              >
+                <span className="text-lg">🎓</span>
+              </button>
+
               {/* Social Rooms Button */}
               <button
                 onClick={() => setShowSocialRooms(!showSocialRooms)}
@@ -407,7 +443,16 @@ function AppWithGestures({
         )}
 
         {activeTab === 'ava-mind' && (
-          <AVAMind />
+          <div className="glass-panel -mx-6 -mt-6 overflow-hidden" style={{ minHeight: 'calc(100vh - 200px)' }}>
+            <AVAMindDashboard
+              onViewSymbol={(symbol) => {
+                window.dispatchEvent(new CustomEvent('iava.loadSymbol', {
+                  detail: { symbol }
+                }))
+                setActiveTab('chart')
+              }}
+            />
+          </div>
         )}
 
         {activeTab === 'ai-demo' && (
@@ -436,8 +481,14 @@ function AppWithGestures({
           <SocialTradingRooms onClose={() => setShowSocialRooms(false)} />
         )}
 
-        {/* Enhanced Status Bar - Fixed at bottom */}
+        {/* Enhanced Status Bar - Fixed at bottom (desktop) */}
         <EnhancedStatusBar />
+
+        {/* Mobile Bottom Navigation */}
+        <MobileBottomNav
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
       </div>
     </MobileGestures>
   )

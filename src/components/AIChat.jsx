@@ -12,8 +12,9 @@ import { useState, useRef, useEffect } from 'react'
 import { callAI } from '../utils/aiGateway.js'
 import { generateTradingSystemPrompt, buildMarketContext, formatContextForAI } from '../utils/aiContext.js'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
-import MobilePushToTalk from './MobilePushToTalk.jsx'
+// import MobilePushToTalk from './MobilePushToTalk.jsx' // Disabled - existing mic button works
 import { detectSymbols, detectTimeframe, buildEnhancedContext, formatEnhancedContext } from '../utils/aiEnhancements.js'
+import { TrustModeToggle, useTrustMode } from './TrustModeManager.jsx'
 
 export default function AIChat() {
   const { marketData } = useMarketData()
@@ -1352,17 +1353,8 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                 </div>
               )}
             </div>
-            <button
-              onClick={toggleTrustMode}
-              className={`btn-sm ${
-                trustMode
-                  ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold shadow-lg shadow-emerald-500/50 pulse-ring'
-                  : 'btn-ghost'
-              }`}
-              title={trustMode ? 'Trust Mode ON - Trades execute instantly!' : 'Trust Mode OFF - Trades require confirmation'}
-            >
-              {trustMode ? '⚡ Trust Mode' : '🛡️ Safe Mode'}
-            </button>
+            {/* Enhanced Trust Mode with levels, limits, and execution history */}
+            <TrustModeToggle />
             <button
               onClick={exportChat}
               className="btn-tertiary btn-sm"
@@ -1764,7 +1756,8 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
         </div>
       </form>
 
-      {/* ELITE: Mobile Push-to-Talk Interface - DISABLED (doesn't work properly) */}
+      {/* ELITE: Mobile Push-to-Talk Interface */}
+      {/* NOTE: MobilePushToTalk disabled - existing mic button works better */}
       {/* <MobilePushToTalk
         onTranscript={handleMobileTranscript}
         isListening={isListening}

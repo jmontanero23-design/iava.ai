@@ -260,7 +260,15 @@ export default function SocialTradingRooms({ onClose }) {
 
           <div className="relative p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">Social Trading Rooms</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold text-white">Social Trading Rooms</h2>
+                <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  Demo Data
+                </span>
+              </div>
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
@@ -413,7 +421,12 @@ export default function SocialTradingRooms({ onClose }) {
                 </button>
                 <span className="text-2xl">{room.avatar}</span>
                 <div>
-                  <h2 className="text-lg font-bold text-white">{room.name}</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-white">{room.name}</h2>
+                    <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                      Demo
+                    </span>
+                  </div>
                   <div className="text-xs text-slate-400">{room.online} online • {room.performance} avg</div>
                 </div>
               </div>
