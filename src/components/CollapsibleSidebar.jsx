@@ -226,8 +226,8 @@ export default function CollapsibleSidebar({ activeTab, onTabChange }) {
         <div className="flex items-center justify-between">
           {!isCollapsed && (
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-600/20 flex items-center justify-center">
+                <IAVALogo className="w-6 h-6" />
               </div>
               <span className="text-sm font-bold text-white">iAVA.ai</span>
             </div>
