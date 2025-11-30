@@ -20,10 +20,12 @@ import VolumeProfile from './VolumeProfile.jsx'
 import PortfolioAnalytics from './PortfolioAnalytics.jsx'
 import VoiceAlertSettings, { VoiceAlertToggle } from './VoiceAlertSettings.jsx'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
+import { LogoMark } from './ui/Logo'
+import { colors, gradients, animation } from '../styles/tokens'
 import {
-  Target, MessageSquare, TrendingUp, Sparkles, Clock, Eye, LineChart,
+  Target, MessageSquare, TrendingUp, Clock, Eye, LineChart,
   AlertTriangle, Thermometer, Dice1, EyeIcon, Gauge, Dna, Calculator,
-  BarChart3, BarChartHorizontal, Briefcase, Volume2
+  BarChart3, BarChartHorizontal, Briefcase, Volume2, Zap
 } from 'lucide-react'
 
 /**
@@ -59,72 +61,181 @@ export default function AIHub() {
     }
   }, [])
 
+  // Feature definitions with LEGENDARY styling
   const features = [
-    { id: 'dashboard', name: 'Dashboard', Icon: Target, component: AIFeaturesDashboard },
-    { id: 'chat', name: 'AI Chat', Icon: MessageSquare, component: AIChat },
-    { id: 'sentiment', name: 'Sentiment', Icon: TrendingUp, component: MarketSentiment },
-    { id: 'forecast', name: 'AVA Forecast', Icon: Sparkles, component: ChronosForecast },
-    { id: 'multi-tf', name: 'Multi-TF', Icon: Clock, component: () => <MultiTimeframePanel symbol={symbol} /> },
-    { id: 'patterns', name: 'Patterns', Icon: Eye, component: PatternRecognition },
-    { id: 'signals', name: 'Signal Score', Icon: LineChart, component: SignalQualityScorerPanel },
-    { id: 'risk', name: 'Risk Advisor', Icon: AlertTriangle, component: RiskAdvisorPanel },
-    { id: 'regime', name: 'Market Regime', Icon: Thermometer, component: MarketRegimeDetectorPanel },
-    { id: 'anomaly', name: 'Anomaly', Icon: Dice1, component: AnomalyDetectorPanel },
-    { id: 'watchlist', name: 'Watchlist AI', Icon: EyeIcon, component: SmartWatchlistBuilderPanel },
-    { id: 'confidence', name: 'Confidence', Icon: Gauge, component: PredictiveConfidencePanel },
-    { id: 'genetic', name: 'Genetic Opt', Icon: Dna, component: GeneticOptimizerPanel },
-    { id: 'options_greeks', name: 'Options', Icon: Calculator, component: OptionsGreeksCalculator },
-    { id: 'level2_depth', name: 'Level 2', Icon: BarChart3, component: Level2MarketDepth },
-    { id: 'volume_profile', name: 'Volume', Icon: BarChartHorizontal, component: VolumeProfile },
-    { id: 'portfolio_analytics', name: 'Portfolio', Icon: Briefcase, component: PortfolioAnalytics },
-    { id: 'voice_settings', name: 'Voice', Icon: Volume2, component: VoiceAlertSettings }
+    { id: 'dashboard', name: 'Dashboard', Icon: Target, component: AIFeaturesDashboard, color: colors.cyan[400] },
+    { id: 'chat', name: 'AI Chat', Icon: MessageSquare, component: AIChat, color: colors.indigo[500] },
+    { id: 'sentiment', name: 'Sentiment', Icon: TrendingUp, component: MarketSentiment, color: colors.emerald[400] },
+    { id: 'forecast', name: 'AVA Forecast', Icon: Zap, component: ChronosForecast, color: colors.purple[500], isAVA: true },
+    { id: 'multi-tf', name: 'Multi-TF', Icon: Clock, component: () => <MultiTimeframePanel symbol={symbol} />, color: colors.cyan[400] },
+    { id: 'patterns', name: 'Patterns', Icon: Eye, component: PatternRecognition, color: colors.purple[400] },
+    { id: 'signals', name: 'Signal Score', Icon: LineChart, component: SignalQualityScorerPanel, color: colors.emerald[400] },
+    { id: 'risk', name: 'Risk Advisor', Icon: AlertTriangle, component: RiskAdvisorPanel, color: colors.red[400] },
+    { id: 'regime', name: 'Market Regime', Icon: Thermometer, component: MarketRegimeDetectorPanel, color: colors.amber[400] },
+    { id: 'anomaly', name: 'Anomaly', Icon: Dice1, component: AnomalyDetectorPanel, color: colors.red[400] },
+    { id: 'watchlist', name: 'Watchlist AI', Icon: EyeIcon, component: SmartWatchlistBuilderPanel, color: colors.cyan[400] },
+    { id: 'confidence', name: 'Confidence', Icon: Gauge, component: PredictiveConfidencePanel, color: colors.purple[500] },
+    { id: 'genetic', name: 'Genetic Opt', Icon: Dna, component: GeneticOptimizerPanel, color: colors.emerald[400] },
+    { id: 'options_greeks', name: 'Options', Icon: Calculator, component: OptionsGreeksCalculator, color: colors.indigo[400] },
+    { id: 'level2_depth', name: 'Level 2', Icon: BarChart3, component: Level2MarketDepth, color: colors.cyan[400] },
+    { id: 'volume_profile', name: 'Volume', Icon: BarChartHorizontal, component: VolumeProfile, color: colors.purple[400] },
+    { id: 'portfolio_analytics', name: 'Portfolio', Icon: Briefcase, component: PortfolioAnalytics, color: colors.amber[400] },
+    { id: 'voice_settings', name: 'Voice', Icon: Volume2, component: VoiceAlertSettings, color: colors.text[50] }
   ]
 
   const ActiveComponent = features.find(f => f.id === selectedFeature)?.component
 
   return (
     <div className="space-y-4">
-      {/* Feature Selector Grid */}
-      <div className="elite-panel">
+      {/* LEGENDARY Feature Selector Grid */}
+      <div
+        style={{
+          background: colors.glass.bg,
+          backdropFilter: 'blur(20px)',
+          border: `1px solid ${colors.glass.border}`,
+          borderRadius: 16,
+          padding: 16,
+        }}
+      >
+        {/* Header with Unicorn gradient title */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-white">
-            AI Command Center
-          </h2>
+          <div className="flex items-center gap-3">
+            <LogoMark size={28} />
+            <div>
+              <h2
+                style={{
+                  fontSize: 18,
+                  fontWeight: 800,
+                  background: gradients.unicorn,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                AI Command Center
+              </h2>
+              <p style={{ fontSize: 12, color: colors.text[50], marginTop: 2 }}>
+                {features.filter(f => f.id !== 'dashboard' && f.id !== 'voice_settings').length} AI-Powered Features
+              </p>
+            </div>
+          </div>
           <div className="flex items-center gap-3">
             <VoiceAlertToggle />
-            <span className="text-xs text-slate-500">
-              {features.filter(f => f.id !== 'dashboard' && f.id !== 'voice_settings').length} Features
-            </span>
-            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 12px',
+                background: colors.emerald.dim,
+                borderRadius: 20,
+                border: `1px solid ${colors.emerald[400]}30`,
+              }}
+            >
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  background: colors.emerald[400],
+                  borderRadius: '50%',
+                  boxShadow: `0 0 8px ${colors.emerald.glow}`,
+                  animation: 'pulse 2s ease-in-out infinite',
+                }}
+              />
+              <span style={{ fontSize: 11, fontWeight: 600, color: colors.emerald[400] }}>
+                LIVE
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Feature Grid */}
+        {/* LEGENDARY Feature Grid */}
         <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-9 gap-2">
           {features.map(feature => {
             const IconComponent = feature.Icon
             const isActive = selectedFeature === feature.id
+            const featureColor = feature.color || colors.text[50]
+
             return (
               <button
                 key={feature.id}
                 onClick={() => setSelectedFeature(feature.id)}
-                className={`p-3 rounded-lg border transition-all group ${
-                  isActive
-                    ? 'bg-indigo-600/20 border-indigo-500/50'
-                    : 'bg-white/5 border-transparent hover:bg-white/10 hover:border-white/10'
-                }`}
+                style={{
+                  padding: 12,
+                  borderRadius: 12,
+                  border: isActive
+                    ? `1px solid ${featureColor}50`
+                    : '1px solid transparent',
+                  background: isActive
+                    ? `${featureColor}15`
+                    : 'rgba(255, 255, 255, 0.03)',
+                  transition: `all ${animation.duration.normal}ms ${animation.easing.smooth}`,
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)'
+                    e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.1)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
+                    e.currentTarget.style.border = '1px solid transparent'
+                  }
+                }}
               >
-                <div className="flex flex-col items-center">
-                  <IconComponent
-                    className={`w-5 h-5 mb-1.5 transition-transform group-hover:scale-110 ${
-                      isActive ? 'text-indigo-400' : 'text-slate-400'
-                    }`}
-                  />
-                  <div className={`text-[10px] font-medium truncate w-full text-center ${
-                    isActive ? 'text-indigo-300' : 'text-slate-500'
-                  }`}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  {feature.isAVA ? (
+                    <div
+                      style={{
+                        width: 20,
+                        height: 20,
+                        marginBottom: 6,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <LogoMark
+                        size={20}
+                        style={{
+                          filter: isActive
+                            ? `drop-shadow(0 0 8px ${colors.purple.glow})`
+                            : 'none',
+                          opacity: isActive ? 1 : 0.6,
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <IconComponent
+                      style={{
+                        width: 20,
+                        height: 20,
+                        marginBottom: 6,
+                        color: isActive ? featureColor : colors.text[30],
+                        transition: `all ${animation.duration.fast}ms ${animation.easing.smooth}`,
+                        filter: isActive
+                          ? `drop-shadow(0 0 6px ${featureColor}60)`
+                          : 'none',
+                      }}
+                    />
+                  )}
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: isActive ? featureColor : colors.text[30],
+                      textAlign: 'center',
+                      width: '100%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {feature.name}
-                  </div>
+                  </span>
                 </div>
               </button>
             )

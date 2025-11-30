@@ -4,14 +4,17 @@ import {
   MessageSquare, BarChart3, Eye, BookOpen, Clock, Settings
 } from 'lucide-react'
 import { LogoMark } from './ui/Logo'
+import { colors, gradients, animation } from '../styles/tokens'
 
 /**
- * Mobile Bottom Navigation - Elite 2025 Edition
+ * Mobile Bottom Navigation - LEGENDARY Edition
  *
- * Professional mobile navigation with Lucide icons
+ * THE signature mobile navigation with unicorn gradient styling
  * - 44px+ touch targets (iOS/Android HIG compliance)
  * - Haptic feedback on tap
  * - Safe area support for notched devices
+ * - Glass morphism with depth
+ * - Unicorn gradient active states
  */
 export default function MobileBottomNav({ activeTab, onTabChange, badges = {} }) {
   const [showMoreMenu, setShowMoreMenu] = useState(false)
@@ -34,46 +37,51 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
     }))
   }, [badges])
 
-  // Primary navigation items with Lucide icons
+  // Primary navigation items with LEGENDARY colors
   const primaryNav = [
     {
       id: 'chart',
       label: 'Chart',
       Icon: LineChart,
-      color: '#06B6D4', // cyan
-      gradient: 'from-cyan-500/20 to-blue-500/20'
+      color: colors.cyan[400],
+      dimColor: colors.cyan.dim,
+      glowColor: colors.cyan.glow,
     },
     {
       id: 'ai-hub',
       label: 'AI Hub',
       Icon: Brain,
-      color: '#8B5CF6', // purple
-      gradient: 'from-violet-500/20 to-purple-500/20',
+      color: colors.purple[500],
+      dimColor: colors.purple.dim,
+      glowColor: colors.purple.glow,
       badge: notifications.ai > 0 ? notifications.ai : null
     },
     {
       id: 'scanner',
       label: 'Scanner',
       Icon: Search,
-      color: '#14B8A6', // teal
-      gradient: 'from-teal-500/20 to-emerald-500/20',
+      color: colors.emerald[400],
+      dimColor: colors.emerald.dim,
+      glowColor: colors.emerald.glow,
       badge: notifications.scanner > 0 ? notifications.scanner : null
     },
     {
       id: 'portfolio',
       label: 'Portfolio',
       Icon: Briefcase,
-      color: '#F59E0B', // amber
-      gradient: 'from-amber-500/20 to-orange-500/20',
+      color: colors.amber[400],
+      dimColor: colors.amber.dim,
+      glowColor: colors.amber.glow,
       badge: notifications.trades > 0 ? notifications.trades : null
     },
     {
       id: 'ava-mind',
       label: 'AVA',
       Icon: LogoMark,
-      color: '#A855F7', // purple
-      gradient: 'from-purple-500/20 to-cyan-500/20',
-      isLogo: true // Flag to render the logo differently
+      color: colors.purple[500],
+      dimColor: colors.purple.dim,
+      glowColor: colors.purple.glow,
+      isLogo: true // Flag to render the logo with unicorn gradient
     }
   ]
 
@@ -155,19 +163,39 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
 
   return (
     <>
-      {/* More Menu Overlay */}
+      {/* More Menu Overlay - LEGENDARY glass morphism */}
       {showMoreMenu && (
-        <div className="fixed inset-0 bg-black/60 z-40 md:hidden">
-          <div className="absolute bottom-20 left-0 right-0 mobile-more-menu">
+        <div
+          className="fixed inset-0 z-40 md:hidden"
+          style={{ background: 'rgba(0, 0, 0, 0.7)' }}
+        >
+          <div className="absolute bottom-24 left-0 right-0 mobile-more-menu px-4">
             <div
-              className="mx-4 rounded-2xl shadow-2xl overflow-hidden"
-              style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-subtle)' }}
+              style={{
+                background: colors.glass.bgHeavy,
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                border: `1px solid ${colors.glass.border}`,
+                borderRadius: 20,
+                overflow: 'hidden',
+                boxShadow: '0 -8px 40px rgba(0, 0, 0, 0.4)',
+              }}
             >
-              <div className="p-4">
-                <h3 className="text-sm font-semibold text-slate-400 mb-3">More Features</h3>
+              <div style={{ padding: 16 }}>
+                <h3
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: colors.text[70],
+                    marginBottom: 12,
+                  }}
+                >
+                  More Features
+                </h3>
                 <div className="grid grid-cols-3 gap-2">
                   {secondaryNav.map((item) => {
                     const IconComponent = item.Icon
+                    const isActive = activeTab === item.id
                     return (
                       <button
                         key={item.id}
@@ -175,29 +203,75 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
                           onTabChange(item.id)
                           setShowMoreMenu(false)
                         }}
-                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all ${
-                          activeTab === item.id
-                            ? 'bg-indigo-600/20 text-indigo-400'
-                            : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-                        }`}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: 6,
+                          padding: 12,
+                          borderRadius: 12,
+                          border: isActive
+                            ? `1px solid ${colors.purple[500]}40`
+                            : '1px solid transparent',
+                          background: isActive
+                            ? colors.purple.dim
+                            : 'rgba(255, 255, 255, 0.03)',
+                          transition: `all ${animation.duration.fast}ms ${animation.easing.smooth}`,
+                        }}
                       >
-                        <IconComponent className="w-5 h-5" />
-                        <span className="text-xs">{item.label}</span>
+                        <IconComponent
+                          style={{
+                            width: 20,
+                            height: 20,
+                            color: isActive ? colors.purple[400] : colors.text[30],
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 500,
+                            color: isActive ? colors.purple[400] : colors.text[50],
+                          }}
+                        >
+                          {item.label}
+                        </span>
                       </button>
                     )
                   })}
                 </div>
               </div>
 
-              {/* Quick Stats */}
+              {/* Quick Stats footer */}
               <div
-                className="px-4 py-3"
-                style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-subtle)' }}
+                style={{
+                  padding: '12px 16px',
+                  background: 'rgba(0, 0, 0, 0.2)',
+                  borderTop: `1px solid ${colors.glass.border}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
               >
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span>17 AI Features</span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 bg-emerald-400 rounded-full" />
+                <span style={{ fontSize: 11, color: colors.text[30] }}>
+                  17 AI Features
+                </span>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 6,
+                      height: 6,
+                      background: colors.emerald[400],
+                      borderRadius: '50%',
+                      boxShadow: `0 0 6px ${colors.emerald.glow}`,
+                    }}
+                  />
+                  <span style={{ fontSize: 11, color: colors.emerald[400] }}>
                     Market Open
                   </span>
                 </div>
@@ -207,13 +281,16 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
         </div>
       )}
 
-      {/* Bottom Navigation Bar - 44px+ touch targets */}
+      {/* Bottom Navigation Bar - LEGENDARY glass morphism */}
       <nav
         className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
         style={{
-          background: 'var(--bg-base)',
-          borderTop: '1px solid var(--border-subtle)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+          background: colors.glass.bgHeavy,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderTop: `1px solid ${colors.glass.border}`,
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.3)',
         }}
       >
         <div className="flex items-stretch justify-around px-1 py-1">
@@ -228,54 +305,85 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
                 onClick={() => handleNavClick(item)}
                 onTouchStart={() => setPressedItem(item.id)}
                 onTouchEnd={() => setTimeout(() => setPressedItem(null), 100)}
-                className={`
-                  relative flex flex-col items-center justify-center
-                  min-w-[56px] min-h-[56px] py-2 px-2 rounded-xl
-                  transition-all duration-150 ease-out
-                  ${isActive
-                    ? `bg-gradient-to-b ${item.gradient} border border-white/10`
-                    : 'active:bg-white/5'
-                  }
-                  ${isPressed ? 'scale-90' : 'scale-100'}
-                `}
+                className="relative flex flex-col items-center justify-center"
                 style={{
+                  minWidth: 56,
+                  minHeight: 56,
+                  padding: '8px',
+                  borderRadius: 12,
+                  transition: `all ${animation.duration.fast}ms ${animation.easing.smooth}`,
+                  background: isActive ? item.dimColor : 'transparent',
+                  border: isActive ? `1px solid ${item.color}30` : '1px solid transparent',
+                  transform: isPressed ? 'scale(0.9)' : 'scale(1)',
                   WebkitTapHighlightColor: 'transparent',
-                  touchAction: 'manipulation'
+                  touchAction: 'manipulation',
                 }}
               >
-                {/* Active indicator dot at top */}
+                {/* Active indicator bar at top */}
                 {isActive && (
                   <div
-                    className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full"
-                    style={{ backgroundColor: item.color }}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: 32,
+                      height: 3,
+                      borderRadius: 2,
+                      background: item.isLogo ? gradients.unicorn : item.color,
+                      boxShadow: `0 0 8px ${item.glowColor}`,
+                    }}
                   />
                 )}
 
                 {/* Icon with badge */}
-                <div className="relative">
+                <div style={{ position: 'relative' }}>
                   {item.isLogo ? (
                     <IconComponent
-                      size={20}
-                      className={`transition-transform duration-150 ${
-                        isActive ? 'scale-110' : 'scale-100'
-                      } ${isPressed ? 'scale-125' : ''}`}
+                      size={22}
                       style={{
+                        transition: `all ${animation.duration.fast}ms ${animation.easing.smooth}`,
+                        transform: isActive ? 'scale(1.1)' : 'scale(1)',
                         filter: isActive
-                          ? 'drop-shadow(0 0 8px rgba(168, 85, 247, 0.6))'
+                          ? `drop-shadow(0 0 10px ${colors.purple.glow})`
                           : 'none',
-                        opacity: isActive ? 1 : 0.7
+                        opacity: isActive ? 1 : 0.6,
                       }}
                     />
                   ) : (
                     <IconComponent
-                      className={`w-5 h-5 transition-transform duration-150 ${
-                        isActive ? 'scale-110' : 'scale-100'
-                      } ${isPressed ? 'scale-125' : ''}`}
-                      style={{ color: isActive ? item.color : '#94a3b8' }}
+                      style={{
+                        width: 22,
+                        height: 22,
+                        transition: `all ${animation.duration.fast}ms ${animation.easing.smooth}`,
+                        transform: isActive ? 'scale(1.1)' : 'scale(1)',
+                        color: isActive ? item.color : colors.text[30],
+                        filter: isActive
+                          ? `drop-shadow(0 0 6px ${item.glowColor})`
+                          : 'none',
+                      }}
                     />
                   )}
                   {item.badge && (
-                    <span className="absolute -top-1.5 -right-2.5 px-1 min-w-[16px] h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: -6,
+                        right: -10,
+                        minWidth: 16,
+                        height: 16,
+                        padding: '0 4px',
+                        background: colors.red[500],
+                        color: 'white',
+                        fontSize: 10,
+                        fontWeight: 700,
+                        borderRadius: 8,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: `0 0 8px ${colors.red.glow}`,
+                      }}
+                    >
                       {item.badge > 99 ? '99+' : item.badge}
                     </span>
                   )}
@@ -283,10 +391,13 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
 
                 {/* Label */}
                 <span
-                  className={`text-[10px] font-medium mt-1 transition-colors duration-150 ${
-                    isActive ? 'text-white' : 'text-slate-500'
-                  }`}
-                  style={{ color: isActive ? item.color : undefined }}
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    marginTop: 4,
+                    transition: `color ${animation.duration.fast}ms ${animation.easing.smooth}`,
+                    color: isActive ? item.color : colors.text[30],
+                  }}
                 >
                   {item.label}
                 </span>
@@ -296,27 +407,39 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
         </div>
 
         {/* iPhone-style home indicator */}
-        <div className="flex justify-center pt-1 pb-2">
-          <div className="w-32 h-1 bg-slate-700 rounded-full" />
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            paddingTop: 4,
+            paddingBottom: 8,
+          }}
+        >
+          <div
+            style={{
+              width: 134,
+              height: 5,
+              background: colors.text[20],
+              borderRadius: 3,
+            }}
+          />
         </div>
       </nav>
 
-      {/* Add padding to main content to account for bottom nav */}
-      <style jsx global>{`
+      {/* CSS for animations */}
+      <style>{`
         @media (max-width: 768px) {
           .main-content {
-            padding-bottom: 80px !important;
+            padding-bottom: 100px !important;
           }
         }
 
-        /* Safe area for iPhone notch/home indicator */
         .pb-safe {
           padding-bottom: env(safe-area-inset-bottom, 0);
         }
 
-        /* Smooth transitions */
         .mobile-more-menu {
-          animation: slideUp 0.2s ease-out;
+          animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes slideUp {
@@ -328,6 +451,11 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
             transform: translateY(0);
             opacity: 1;
           }
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
       `}</style>
     </>
