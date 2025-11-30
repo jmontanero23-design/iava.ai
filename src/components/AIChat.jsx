@@ -15,6 +15,7 @@ import { useMarketData } from '../contexts/MarketDataContext.jsx'
 // import MobilePushToTalk from './MobilePushToTalk.jsx' // Disabled - existing mic button works
 import { detectSymbols, detectTimeframe, buildEnhancedContext, formatEnhancedContext } from '../utils/aiEnhancements.js'
 import { TrustModeToggle, useTrustMode } from './TrustModeManager.jsx'
+import { analyzePatterns, PATTERN_TYPES, SEVERITY } from '../services/tradingPatternDetector.js'
 
 export default function AIChat() {
   const { marketData } = useMarketData()
@@ -49,6 +50,7 @@ export default function AIChat() {
   const [isTyping, setIsTyping] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState([]) // Chart images, PDFs, CSVs
   const [smartSuggestions, setSmartSuggestions] = useState([]) // AI-generated context-aware questions
+  const [avaMindInsights, setAvaMindInsights] = useState([]) // AVA Mind pattern-based suggestions
   const [audioUnlocked, setAudioUnlocked] = useState(false) // Mobile Safari audio unlock status
   const [pendingAudio, setPendingAudio] = useState(null) // Audio waiting for user gesture
   const [showAudioPrompt, setShowAudioPrompt] = useState(false) // Show "Tap to enable voice" UI
@@ -126,6 +128,77 @@ export default function AIChat() {
       }
     }
     checkPendingRequest()
+  }, [])
+
+  // AVA Mind: Load trading pattern insights
+  useEffect(() => {
+    const loadAvaMindInsights = () => {
+      try {
+        const { insights } = analyzePatterns()
+        if (insights && insights.length > 0) {
+          // Convert insights to chat-friendly suggestions
+          const suggestions = insights.slice(0, 3).map(insight => {
+            let question = ''
+            switch (insight.type) {
+              case PATTERN_TYPES.OVERTRADING:
+                question = 'AVA noticed I might be overtrading. What should I do?'
+                break
+              case PATTERN_TYPES.REVENGE_TRADING:
+                question = 'How can I avoid revenge trading after losses?'
+                break
+              case PATTERN_TYPES.EXIT_EARLY:
+                question = 'Why do I exit winners too early? Help me improve.'
+                break
+              case PATTERN_TYPES.EXIT_LATE:
+                question = 'How can I cut my losses quicker?'
+                break
+              case PATTERN_TYPES.BEST_DAY:
+                question = `AVA says my best trading day is ${insight.stat}. Why might that be?`
+                break
+              case PATTERN_TYPES.WORST_DAY:
+                question = `Why do I perform worse on certain days? ${insight.title}`
+                break
+              case PATTERN_TYPES.IMPROVING:
+                question = 'My trading is improving! What am I doing right?'
+                break
+              case PATTERN_TYPES.DECLINING:
+                question = 'My performance is declining. Help me identify the issue.'
+                break
+              default:
+                question = `Tell me more about: ${insight.title}`
+            }
+            return {
+              ...insight,
+              question
+            }
+          })
+          setAvaMindInsights(suggestions)
+        }
+      } catch (e) {
+        console.error('[AVA Mind] Error loading insights:', e)
+      }
+    }
+
+    loadAvaMindInsights()
+
+    // Listen for new pattern events
+    const handlePatternUpdate = () => loadAvaMindInsights()
+    window.addEventListener('ava.patternUpdate', handlePatternUpdate)
+
+    return () => window.removeEventListener('ava.patternUpdate', handlePatternUpdate)
+  }, [])
+
+  // Listen for external chat messages (from Copilot's "Ask AVA Mind" button, etc.)
+  useEffect(() => {
+    const handleChatMessage = (event) => {
+      const { message } = event.detail || {}
+      if (message) {
+        setInput(message)
+      }
+    }
+
+    window.addEventListener('ava.chatMessage', handleChatMessage)
+    return () => window.removeEventListener('ava.chatMessage', handleChatMessage)
   }, [])
 
   // Detect if running on iOS/Safari mobile
@@ -1611,6 +1684,37 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
 
         <div ref={messagesEndRef} />
       </div>
+
+      {/* AVA Mind Insights - Pattern-Based Suggestions */}
+      {avaMindInsights.length > 0 && (
+        <div className="px-4 pb-3">
+          <div className="flex items-center gap-2 text-slate-400 mb-3" style={{ fontSize: 'var(--text-xs)' }}>
+            <span style={{ fontSize: 'var(--text-base)' }}>🔮</span>
+            <span className="uppercase tracking-wider" style={{ fontWeight: 'var(--font-semibold)' }}>
+              AVA Mind Insights
+            </span>
+            <span className="text-purple-400 ml-1" style={{ fontSize: 'var(--text-xs)' }}>• Pattern Analysis</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {avaMindInsights.map((insight, idx) => (
+              <button
+                key={idx}
+                onClick={() => setInput(insight.question)}
+                className="relative group px-3 py-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 border border-purple-500/40 hover:border-purple-400/50 text-purple-300 hover:text-purple-200 shadow-lg hover:shadow-purple-500/10"
+                style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', borderRadius: 'var(--radius-lg)', transition: 'var(--transition-base)' }}
+                title={insight.message}
+              >
+                <span className="mr-1.5">
+                  {insight.severity === SEVERITY.CRITICAL ? '🚨' :
+                   insight.severity === SEVERITY.WARNING ? '⚠️' :
+                   insight.severity === SEVERITY.POSITIVE ? '✨' : '💡'}
+                </span>
+                <span className="relative">{insight.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Smart AI-Powered Suggested Questions */}
       {((messages.length <= 1 && suggestedQuestions.length > 0) || smartSuggestions.length > 0) && (

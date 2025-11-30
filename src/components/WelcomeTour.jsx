@@ -91,19 +91,19 @@ export default function WelcomeTour({ onClose, forceShow = false }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Premium Overlay */}
-      <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-md" />
+      {/* Premium Overlay - pointer-events-none to allow clicks on card */}
+      <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-md pointer-events-none" />
 
       {/* Premium Tour Card */}
       <div className="relative z-10 w-full max-w-lg">
         <div className="relative">
-          {/* Card glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl opacity-30 rounded-2xl" />
+          {/* Card glow effect - pointer-events-none for click-through */}
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl opacity-30 rounded-2xl pointer-events-none" />
 
           {/* Card content */}
           <div className="relative glass-panel overflow-hidden">
-            {/* Animated background */}
-            <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-2xl animate-pulse" style={{ animationDuration: '4s' }} />
+            {/* Animated background - pointer-events-none for click-through */}
+            <div className="absolute inset-0 opacity-10 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-2xl animate-pulse pointer-events-none" style={{ animationDuration: '4s' }} />
 
             <div className="relative p-8 space-y-5">
               {/* Premium Progress Bar */}
@@ -155,11 +155,11 @@ export default function WelcomeTour({ onClose, forceShow = false }) {
                   </span>
                   <button
                     onClick={handleNext}
-                    className="relative group px-6 py-2.5 rounded-xl text-sm font-bold overflow-hidden shadow-xl"
+                    className="relative group px-6 py-2.5 rounded-xl text-sm font-bold overflow-hidden shadow-xl cursor-pointer"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 group-hover:from-indigo-500 group-hover:via-purple-500 group-hover:to-cyan-500 transition-all" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-cyan-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
-                    <span className="relative text-white flex items-center gap-2">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 group-hover:from-indigo-500 group-hover:via-purple-500 group-hover:to-cyan-500 transition-all pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-cyan-600 blur-lg opacity-50 group-hover:opacity-70 transition-opacity pointer-events-none" />
+                    <span className="relative text-white flex items-center gap-2 pointer-events-none">
                       {currentStep === TOUR_STEPS.length - 1 ? (
                         <>
                           <span>Get Started</span>
@@ -205,14 +205,14 @@ export function TourHelpButton({ onClick }) {
   return (
     <button
       onClick={onClick}
-      className="fixed bottom-6 right-6 w-14 h-14 group z-40"
+      className="fixed bottom-6 right-6 w-14 h-14 group z-40 cursor-pointer"
       title="Restart Tour"
     >
-      {/* Button glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-cyan-600 blur-xl opacity-50 group-hover:opacity-70 rounded-full transition-opacity" />
+      {/* Button glow effect - pointer-events-none for click-through */}
+      <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-cyan-600 blur-xl opacity-50 group-hover:opacity-70 rounded-full transition-opacity pointer-events-none" />
 
-      {/* Button content */}
-      <div className="relative w-full h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:via-purple-500 hover:to-cyan-500 rounded-full shadow-2xl flex items-center justify-center text-2xl font-bold text-white transition-all hover:scale-110">
+      {/* Button content - pointer-events-none so click goes to button */}
+      <div className="relative w-full h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:via-purple-500 hover:to-cyan-500 rounded-full shadow-2xl flex items-center justify-center text-2xl font-bold text-white transition-all hover:scale-110 pointer-events-none">
         ?
       </div>
     </button>

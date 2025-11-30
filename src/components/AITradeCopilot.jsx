@@ -1770,6 +1770,32 @@ export default function AITradeCopilot({ onClose }) {
           )}
         </div>
 
+        {/* Ask AVA Mind Button */}
+        <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 px-3 py-2 border-t border-purple-500/30">
+          <button
+            onClick={() => {
+              // Navigate to AI Chat tab and set a message
+              window.dispatchEvent(new CustomEvent('iava.setActiveTab', {
+                detail: { tab: 'chat' }
+              }))
+              // Dispatch message for AI Chat
+              setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('ava.chatMessage', {
+                  detail: {
+                    message: marketData.symbol
+                      ? `What should I do with ${marketData.symbol}? Current price is $${marketData.currentPrice?.toFixed(2)}, Unicorn Score is ${marketData.unicornScore?.ultraUnicornScore?.toFixed(0) || 'N/A'}. Give me your analysis.`
+                      : 'Analyze my current trading patterns and give me recommendations.'
+                  }
+                }))
+              }, 100)
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/30 hover:to-pink-500/30 border border-purple-500/40 text-purple-300 hover:text-purple-200 transition-all text-sm font-medium"
+          >
+            <span>🔮</span>
+            <span>Ask AVA Mind</span>
+          </button>
+        </div>
+
         {/* Market Status */}
         {marketData.symbol && (
           <div className="bg-slate-800/30 px-3 py-2 border-t border-slate-700/50">

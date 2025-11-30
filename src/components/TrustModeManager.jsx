@@ -337,32 +337,67 @@ export default function TrustModeManager({
   // Compact mode for embedding in other components
   if (compact) {
     return (
-      <div className={`flex items-center gap-2 ${className}`}>
-        <button
-          onClick={() => handleLevelChange(trustLevel === 'off' ? 'trust' : 'off')}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-sm transition-all ${
-            currentLevel.autoExecute
-              ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/30 shadow-lg shadow-amber-500/20'
-              : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
-          }`}
-        >
-          <span>{currentLevel.icon}</span>
-          <span>{currentLevel.name}</span>
-          {isPaused && <span className="text-rose-400">⏸</span>}
-        </button>
-
-        {currentLevel.autoExecute && (
+      <>
+        <div className={`flex items-center gap-2 ${className}`}>
           <button
-            onClick={togglePause}
-            className={`p-1.5 rounded-lg transition-colors ${
-              isPaused ? 'bg-rose-500/20 text-rose-400' : 'bg-slate-800/50 text-slate-400 hover:text-white'
+            onClick={() => handleLevelChange(trustLevel === 'off' ? 'trust' : 'off')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-sm transition-all cursor-pointer ${
+              currentLevel.autoExecute
+                ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/30 shadow-lg shadow-amber-500/20'
+                : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
             }`}
-            title={isPaused ? 'Resume' : 'Pause'}
           >
-            {isPaused ? '▶️' : '⏸️'}
+            <span>{currentLevel.icon}</span>
+            <span>{currentLevel.name}</span>
+            {isPaused && <span className="text-rose-400">⏸</span>}
           </button>
+
+          {currentLevel.autoExecute && (
+            <button
+              onClick={togglePause}
+              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                isPaused ? 'bg-rose-500/20 text-rose-400' : 'bg-slate-800/50 text-slate-400 hover:text-white'
+              }`}
+              title={isPaused ? 'Resume' : 'Pause'}
+            >
+              {isPaused ? '▶️' : '⏸️'}
+            </button>
+          )}
+        </div>
+
+        {/* Confirmation dialog for compact mode */}
+        {showConfirmDialog && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md mx-4 shadow-2xl">
+              <div className="text-center">
+                <div className="text-4xl mb-4">
+                  {TRUST_LEVELS[showConfirmDialog.level.toUpperCase()].icon}
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">
+                  Enable {TRUST_LEVELS[showConfirmDialog.level.toUpperCase()].name}?
+                </h3>
+                <p className="text-slate-400 text-sm mb-6">
+                  {showConfirmDialog.message}
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowConfirmDialog(null)}
+                    className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => applyLevelChange(showConfirmDialog.level)}
+                    className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium rounded-xl transition-colors cursor-pointer"
+                  >
+                    Enable
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
-      </div>
+      </>
     )
   }
 
