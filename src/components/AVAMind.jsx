@@ -3,6 +3,7 @@ import { useMarketData } from '../contexts/MarketDataContext.jsx'
 import { speakAnalysis, speakGuidance, voiceQueue } from '../utils/voiceSynthesis.js'
 import AVAMindOnboarding, { needsAVAMindOnboarding, resetAVAMindOnboarding } from './AVAMindOnboarding.jsx'
 import avaMindService, { recordTrade, getLearning, generateSuggestions, getPatterns } from '../services/avaMindService.js'
+import { Brain, X, Zap, Pause, TrendingUp, TrendingDown, Settings } from 'lucide-react'
 
 /**
  * AVA Mind - AI Digital Twin
@@ -455,7 +456,7 @@ export default function AVAMind({ onClose }) {
             <div className="relative w-12 h-12">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-full animate-pulse" />
               <div className="absolute inset-1 bg-slate-900 rounded-full flex items-center justify-center">
-                <span className="text-2xl">🧠</span>
+                <Brain className="w-6 h-6 text-purple-400" />
               </div>
             </div>
             <div>
@@ -467,9 +468,7 @@ export default function AVAMind({ onClose }) {
             onClick={onClose}
             className="p-1 hover:bg-slate-800 rounded transition-colors"
           >
-            <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-5 h-5 text-slate-400" />
           </button>
         </div>
 
@@ -557,14 +556,15 @@ export default function AVAMind({ onClose }) {
           ))}
         </div>
         <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-slate-500">
-            {autonomyLevel >= 3 ? '⚠️ Auto-execution enabled' : 'Level 3+ for auto-execution'}
+          <span className="text-xs text-slate-500 flex items-center gap-1">
+            {autonomyLevel >= 3 && <Zap className="w-3 h-3 text-amber-400" />}
+            {autonomyLevel >= 3 ? 'Auto-execution enabled' : 'Level 3+ for auto-execution'}
           </span>
           <button
             onClick={handleReconfigure}
-            className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+            className="text-xs text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
           >
-            Reconfigure
+            <Settings className="w-3 h-3" /> Reconfigure
           </button>
         </div>
       </div>
@@ -641,13 +641,11 @@ export default function AVAMind({ onClose }) {
             }`}
             title={isListening ? "Mind is active" : "Mind is paused"}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {isListening ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6" />
-              )}
-            </svg>
+            {isListening ? (
+              <Zap className="w-4 h-4" />
+            ) : (
+              <Pause className="w-4 h-4" />
+            )}
           </button>
         </div>
       </div>

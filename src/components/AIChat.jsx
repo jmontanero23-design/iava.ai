@@ -16,6 +16,12 @@ import { useMarketData } from '../contexts/MarketDataContext.jsx'
 import { detectSymbols, detectTimeframe, buildEnhancedContext, formatEnhancedContext } from '../utils/aiEnhancements.js'
 import { TrustModeToggle, useTrustMode } from './TrustModeManager.jsx'
 import { analyzePatterns, PATTERN_TYPES, SEVERITY } from '../services/tradingPatternDetector.js'
+import {
+  Bot, Brain, Clipboard, Trash2, Mic, MicOff, Paperclip, Send,
+  Volume2, VolumeX, Image, FileText, DollarSign, Zap, CheckCircle,
+  AlertTriangle, XCircle, TrendingUp, TrendingDown, Search, FlaskConical,
+  ChevronDown, Sparkles, RefreshCw, Target, BarChart3, Eye
+} from 'lucide-react'
 
 export default function AIChat() {
   const { marketData } = useMarketData()
@@ -1379,7 +1385,9 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
         <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl animate-pulse pointer-events-none" style={{ animationDuration: '4s' }} />
         <div className="relative flex items-center gap-3">
           {/* Icon with glow effect - smaller on mobile */}
-          <span className="panel-icon" style={{ fontSize: isMobileView ? 'var(--text-2xl)' : 'var(--text-3xl)' }}>🤖</span>
+          <div className={`panel-icon flex items-center justify-center ${isMobileView ? 'w-8 h-8' : 'w-10 h-10'} rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600`}>
+            <Bot className={`${isMobileView ? 'w-5 h-5' : 'w-6 h-6'} text-white`} />
+          </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-bold bg-gradient-to-r from-indigo-200 via-purple-200 to-cyan-300 bg-clip-text text-transparent truncate" style={{ fontSize: isMobileView ? 'var(--text-lg)' : 'var(--text-xl)', fontWeight: 'var(--font-bold)' }}>
@@ -1410,9 +1418,9 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                 className="btn-ghost btn-sm flex items-center gap-2"
                 title="Select AI Model"
               >
-                <span>🧠</span>
+                <Brain className="w-4 h-4 text-purple-400" />
                 <span className="text-xs">{selectedModel === 'auto' ? 'Auto' : selectedModel}</span>
-                <span className="text-xs opacity-60">▼</span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
               </button>
               {showModelSelector && (
                 <div className="absolute top-full right-0 mt-1 bg-slate-800 rounded-lg shadow-xl p-2 min-w-[180px] border border-slate-700" style={{ zIndex: 9999 }}>
@@ -1425,14 +1433,14 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                         localStorage.setItem('iava_selected_model', model)
                         setShowModelSelector(false)
                       }}
-                      className={`w-full text-left px-2 py-1.5 rounded text-sm hover:bg-slate-700 transition-colors ${
+                      className={`w-full text-left px-2 py-1.5 rounded text-sm hover:bg-slate-700 transition-colors flex items-center gap-2 ${
                         model === selectedModel ? 'bg-slate-700 text-cyan-300' : 'text-slate-300'
                       }`}
                     >
-                      {model === 'auto' && '🔄 Auto (Smart Selection)'}
-                      {model === 'gpt-5' && '💎 GPT-5 (Most Capable)'}
-                      {model === 'gpt-5-mini' && '⚡ GPT-5 Mini (Balanced)'}
-                      {model === 'gpt-5-nano' && '🚀 GPT-5 Nano (Fastest)'}
+                      {model === 'auto' && <><RefreshCw className="w-3.5 h-3.5" /> Auto (Smart Selection)</>}
+                      {model === 'gpt-5' && <><Sparkles className="w-3.5 h-3.5" /> GPT-5 (Most Capable)</>}
+                      {model === 'gpt-5-mini' && <><Zap className="w-3.5 h-3.5" /> GPT-5 Mini (Balanced)</>}
+                      {model === 'gpt-5-nano' && <><Target className="w-3.5 h-3.5" /> GPT-5 Nano (Fastest)</>}
                     </button>
                   ))}
                 </div>
@@ -1443,18 +1451,18 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
             {!isMobileView && (
               <button
                 onClick={exportChat}
-                className="btn-tertiary btn-sm"
+                className="btn-tertiary btn-sm flex items-center gap-1.5"
                 title="Export chat to clipboard"
               >
-                📋 Export
+                <Clipboard className="w-3.5 h-3.5" /> Export
               </button>
             )}
             <button
               onClick={clearChat}
-              className={`btn-ghost ${isMobileView ? 'p-2' : 'btn-sm'}`}
+              className={`btn-ghost flex items-center gap-1 ${isMobileView ? 'p-2' : 'btn-sm'}`}
               title="Clear chat history"
             >
-              🗑️{!isMobileView && ' Clear'}
+              <Trash2 className="w-4 h-4" />{!isMobileView && ' Clear'}
             </button>
           </div>
         </div>
@@ -1465,7 +1473,9 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
         <div className="mx-4 mt-4 mb-2 p-4 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/40 rounded-lg relative" style={{ zIndex: 20 }}>
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
-              <div className="text-sm font-semibold text-indigo-300 mb-1">🔊 Voice Ready</div>
+              <div className="text-sm font-semibold text-indigo-300 mb-1 flex items-center gap-2">
+                <Volume2 className="w-4 h-4" /> Voice Ready
+              </div>
               <div className="text-xs text-slate-300">Tap to enable premium voice playback</div>
             </div>
             <button
@@ -1475,7 +1485,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
               className="btn-success btn-sm flex items-center gap-2 relative"
               style={{ zIndex: 21, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
-              <span>🔓</span>
+              <VolumeX className="w-4 h-4" />
               <span>Enable Voice</span>
             </button>
           </div>
@@ -1514,7 +1524,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                     <div className="flex flex-wrap gap-1.5">
                       {msg.files.map((file, fileIdx) => (
                         <div key={fileIdx} className="flex items-center gap-1.5 px-2 py-1 bg-slate-900/30 rounded text-xs">
-                          <span>{file.isImage ? '🖼️' : '📄'}</span>
+                          {file.isImage ? <Image className="w-3.5 h-3.5 text-slate-400" /> : <FileText className="w-3.5 h-3.5 text-slate-400" />}
                           <span className="text-slate-400">{file.name}</span>
                         </div>
                       ))}
@@ -1525,14 +1535,14 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                 {msg.cost != null && (
                   <div className="flex items-center gap-3 mt-2 pt-2 border-t border-slate-700/30">
                     <div className="flex items-center gap-1 text-xs text-emerald-400">
-                      <span>💰</span>
+                      <DollarSign className="w-3.5 h-3.5" />
                       <span className="font-semibold">
                         ${typeof msg.cost === 'number' ? msg.cost.toFixed(4) : msg.cost.totalCost?.toFixed(4) || '0.0000'}
                       </span>
                     </div>
                     {msg.latency != null && (
                       <div className="flex items-center gap-1 text-xs text-cyan-400">
-                        <span>⚡</span>
+                        <Zap className="w-3.5 h-3.5" />
                         <span className="font-semibold">{msg.latency}ms</span>
                       </div>
                     )}
@@ -1546,7 +1556,9 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                     {msg.awaitingTradeConfirmation && msg.tradeSetup && !msg.tradeConfirmed && (
                       <div className="space-y-2">
                         <div className="p-3 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/30 rounded-lg">
-                          <div className="text-xs text-emerald-400 font-semibold mb-2">🎙️ Voice-to-Trade Ready</div>
+                          <div className="text-xs text-emerald-400 font-semibold mb-2 flex items-center gap-1.5">
+                            <Mic className="w-3.5 h-3.5" /> Voice-to-Trade Ready
+                          </div>
                           <div className="text-sm text-slate-300">
                             Say <span className="font-bold text-emerald-400">"Yes"</span> or <span className="font-bold text-emerald-400">"Confirm"</span> to place this trade
                           </div>
@@ -1555,7 +1567,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                           onClick={() => confirmTrade(msg.tradeSetup)}
                           className="btn-success w-full flex items-center justify-center gap-2 pulse-ring"
                         >
-                          <span>✅</span>
+                          <CheckCircle className="w-4 h-4" />
                           <span>Confirm Trade</span>
                           <span className="text-emerald-200">({msg.tradeSetup.symbol} {msg.tradeSetup.side})</span>
                         </button>
@@ -1571,7 +1583,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                             onClick={() => executeTradeSetup(setup)}
                             className="btn-success w-full flex items-center justify-center gap-2"
                           >
-                            <span>📊</span>
+                            <BarChart3 className="w-4 h-4" />
                             <span>Trade This Setup</span>
                             <span className="text-emerald-200">({setup.symbol} {setup.side})</span>
                           </button>
@@ -1647,7 +1659,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                                       }, 300)
                                     }
                                   }}
-                                  className={`btn-xs ${
+                                  className={`btn-xs flex items-center gap-1.5 ${
                                     q.toLowerCase().includes('backtest')
                                       ? 'bg-emerald-600/20 hover:bg-emerald-600/30 border-emerald-500/40 hover:border-emerald-400/50 text-emerald-300'
                                       : q.toLowerCase().includes('similar')
@@ -1658,9 +1670,9 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                                   } border`}
                                   style={{ borderRadius: 'var(--radius-lg)', transition: 'var(--transition-base)' }}
                                 >
-                                  {q.toLowerCase().includes('backtest') && '🔬 '}
-                                  {q.toLowerCase().includes('similar') && '🔍 '}
-                                  {q.match(/^Load [A-Z]{1,5}/i) && '📊 '}
+                                  {q.toLowerCase().includes('backtest') && <FlaskConical className="w-3 h-3" />}
+                                  {q.toLowerCase().includes('similar') && <Search className="w-3 h-3" />}
+                                  {q.match(/^Load [A-Z]{1,5}/i) && <BarChart3 className="w-3 h-3" />}
                                   {q}
                                 </button>
                               ))}
@@ -1703,7 +1715,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
       {avaMindInsights.length > 0 && (
         <div className="px-4 pb-3">
           <div className="flex items-center gap-2 text-slate-400 mb-3" style={{ fontSize: 'var(--text-xs)' }}>
-            <span style={{ fontSize: 'var(--text-base)' }}>🔮</span>
+            <Eye className="w-4 h-4 text-purple-400" />
             <span className="uppercase tracking-wider" style={{ fontWeight: 'var(--font-semibold)' }}>
               AVA Mind Insights
             </span>
@@ -1714,15 +1726,14 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
               <button
                 key={idx}
                 onClick={() => setInput(insight.question)}
-                className="relative group px-3 py-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 border border-purple-500/40 hover:border-purple-400/50 text-purple-300 hover:text-purple-200 shadow-lg hover:shadow-purple-500/10"
+                className="relative group px-3 py-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 border border-purple-500/40 hover:border-purple-400/50 text-purple-300 hover:text-purple-200 shadow-lg hover:shadow-purple-500/10 flex items-center gap-1.5"
                 style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-medium)', borderRadius: 'var(--radius-lg)', transition: 'var(--transition-base)' }}
                 title={insight.message}
               >
-                <span className="mr-1.5">
-                  {insight.severity === SEVERITY.CRITICAL ? '🚨' :
-                   insight.severity === SEVERITY.WARNING ? '⚠️' :
-                   insight.severity === SEVERITY.POSITIVE ? '✨' : '💡'}
-                </span>
+                {insight.severity === SEVERITY.CRITICAL && <XCircle className="w-3 h-3 text-rose-400" />}
+                {insight.severity === SEVERITY.WARNING && <AlertTriangle className="w-3 h-3 text-amber-400" />}
+                {insight.severity === SEVERITY.POSITIVE && <Sparkles className="w-3 h-3 text-emerald-400" />}
+                {(!insight.severity || ![SEVERITY.CRITICAL, SEVERITY.WARNING, SEVERITY.POSITIVE].includes(insight.severity)) && <Target className="w-3 h-3 text-cyan-400" />}
                 <span className="relative">{insight.title}</span>
               </button>
             ))}
@@ -1734,7 +1745,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
       {((messages.length <= 1 && suggestedQuestions.length > 0) || smartSuggestions.length > 0) && (
         <div className="px-4 pb-3">
           <div className="flex items-center gap-2 text-slate-400 mb-3" style={{ fontSize: 'var(--text-xs)' }}>
-            <span style={{ fontSize: 'var(--text-base)' }}>{smartSuggestions.length > 0 ? '🧠' : '💡'}</span>
+            {smartSuggestions.length > 0 ? <Brain className="w-4 h-4 text-emerald-400" /> : <Target className="w-4 h-4 text-cyan-400" />}
             <span className="uppercase tracking-wider" style={{ fontWeight: 'var(--font-semibold)' }}>
               {smartSuggestions.length > 0 ? 'Smart Suggestions' : 'Suggested Questions'}
             </span>
@@ -1776,8 +1787,8 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
                     <img src={file.preview} alt={file.name} className="w-12 h-12 object-cover rounded" />
                   )}
                   {!file.isImage && (
-                    <span className="text-2xl">
-                      {file.isPDF ? '📄' : '📋'}
+                    <span className="text-2xl flex items-center justify-center">
+                      {file.isPDF ? <FileText className="w-6 h-6 text-slate-400" /> : <FileText className="w-6 h-6 text-slate-400" />}
                     </span>
                   )}
                   <div className="flex-1 min-w-0">
@@ -1819,7 +1830,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
             className="btn-secondary btn-icon"
             title="Upload chart screenshot or document"
           >
-            <span style={{ fontSize: 'var(--text-xl)' }}>📎</span>
+            <Paperclip className="w-5 h-5" />
           </button>
 
           {/* Voice Input Button - ALL PLATFORMS */}
@@ -1834,7 +1845,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
             style={{ zIndex: 2, touchAction: 'manipulation' }}
             title={isListening ? 'Stop recording' : 'Voice input'}
           >
-            <span style={{ fontSize: 'var(--text-xl)' }}>{isListening ? '🔴' : '🎤'}</span>
+            {isListening ? <MicOff className="w-5 h-5 text-rose-400" /> : <Mic className="w-5 h-5" />}
           </button>
 
           <div className="flex-1 relative group">
@@ -1856,7 +1867,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
           <button
             type="submit"
             disabled={(!input.trim() && uploadedFiles.length === 0) || isTyping}
-            className="btn-primary relative"
+            className="btn-primary relative flex items-center gap-2"
             style={{ zIndex: 2, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             {isTyping ? (
@@ -1867,7 +1878,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
             ) : (
               <>
                 <span>Send</span>
-                <span style={{ fontSize: 'var(--text-lg)' }}>→</span>
+                <Send className="w-4 h-4" />
               </>
             )}
           </button>
