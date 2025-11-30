@@ -3,8 +3,9 @@ import { useMarketData } from '../contexts/MarketDataContext.jsx'
 import {
   LineChart, Brain, Target, MessageSquare, Search, BarChart3,
   Clock, Eye, BookOpen, Settings, TrendingUp, TrendingDown,
-  Bell, ChevronLeft, ChevronRight, Briefcase, Sparkles
+  Bell, ChevronLeft, ChevronRight, Briefcase
 } from 'lucide-react'
+import { LogoMark, LogoFull } from './ui/Logo'
 
 /**
  * Collapsible Sidebar Navigation - Elite 2025 Edition
@@ -60,8 +61,9 @@ export default function CollapsibleSidebar({ activeTab, onTabChange }) {
     {
       id: 'ava-mind',
       label: 'AVA Mind',
-      Icon: Sparkles,
+      Icon: LogoMark,
       hotkey: '5',
+      isLogo: true,
       badge: null,
       color: 'violet',
       description: 'AI digital twin'
@@ -196,13 +198,10 @@ export default function CollapsibleSidebar({ activeTab, onTabChange }) {
       {/* Header */}
       <div className="p-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="flex items-center justify-between">
-          {!isCollapsed && (
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-sm font-bold text-white">iAVA.ai</span>
-            </div>
+          {!isCollapsed ? (
+            <LogoFull size={28} />
+          ) : (
+            <LogoMark size={28} style={{ filter: 'drop-shadow(0 0 8px rgba(168, 85, 247, 0.4))' }} />
           )}
           <button
             onClick={toggleSidebar}
@@ -236,7 +235,20 @@ export default function CollapsibleSidebar({ activeTab, onTabChange }) {
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <IconComponent className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-indigo-400' : ''}`} />
+                {item.isLogo ? (
+                  <IconComponent
+                    size={20}
+                    className="flex-shrink-0"
+                    style={{
+                      filter: isActive
+                        ? 'drop-shadow(0 0 6px rgba(168, 85, 247, 0.5))'
+                        : 'none',
+                      opacity: isActive ? 1 : 0.7
+                    }}
+                  />
+                ) : (
+                  <IconComponent className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-indigo-400' : ''}`} />
+                )}
                 {!isCollapsed && (
                   <>
                     <span className="flex-1 text-left truncate">{item.label}</span>

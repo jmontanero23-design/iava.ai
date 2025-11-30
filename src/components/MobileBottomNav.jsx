@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  LineChart, Brain, Search, Briefcase, Sparkles,
+  LineChart, Brain, Search, Briefcase,
   MessageSquare, BarChart3, Eye, BookOpen, Clock, Settings
 } from 'lucide-react'
+import { LogoMark } from './ui/Logo'
 
 /**
  * Mobile Bottom Navigation - Elite 2025 Edition
@@ -68,10 +69,11 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
     },
     {
       id: 'ava-mind',
-      label: 'AVA Mind',
-      Icon: Sparkles,
+      label: 'AVA',
+      Icon: LogoMark,
       color: '#A855F7', // purple
-      gradient: 'from-purple-500/20 to-cyan-500/20'
+      gradient: 'from-purple-500/20 to-cyan-500/20',
+      isLogo: true // Flag to render the logo differently
     }
   ]
 
@@ -251,12 +253,27 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
 
                 {/* Icon with badge */}
                 <div className="relative">
-                  <IconComponent
-                    className={`w-5 h-5 transition-transform duration-150 ${
-                      isActive ? 'scale-110' : 'scale-100'
-                    } ${isPressed ? 'scale-125' : ''}`}
-                    style={{ color: isActive ? item.color : '#94a3b8' }}
-                  />
+                  {item.isLogo ? (
+                    <IconComponent
+                      size={20}
+                      className={`transition-transform duration-150 ${
+                        isActive ? 'scale-110' : 'scale-100'
+                      } ${isPressed ? 'scale-125' : ''}`}
+                      style={{
+                        filter: isActive
+                          ? 'drop-shadow(0 0 8px rgba(168, 85, 247, 0.6))'
+                          : 'none',
+                        opacity: isActive ? 1 : 0.7
+                      }}
+                    />
+                  ) : (
+                    <IconComponent
+                      className={`w-5 h-5 transition-transform duration-150 ${
+                        isActive ? 'scale-110' : 'scale-100'
+                      } ${isPressed ? 'scale-125' : ''}`}
+                      style={{ color: isActive ? item.color : '#94a3b8' }}
+                    />
+                  )}
                   {item.badge && (
                     <span className="absolute -top-1.5 -right-2.5 px-1 min-w-[16px] h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                       {item.badge > 99 ? '99+' : item.badge}
