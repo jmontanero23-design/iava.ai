@@ -20,6 +20,11 @@ import VolumeProfile from './VolumeProfile.jsx'
 import PortfolioAnalytics from './PortfolioAnalytics.jsx'
 import VoiceAlertSettings, { VoiceAlertToggle } from './VoiceAlertSettings.jsx'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
+import {
+  Target, MessageSquare, TrendingUp, Sparkles, Clock, Eye, LineChart,
+  AlertTriangle, Thermometer, Dice1, EyeIcon, Gauge, Dna, Calculator,
+  BarChart3, BarChartHorizontal, Briefcase, Volume2
+} from 'lucide-react'
 
 /**
  * AI Hub - Unified AI Feature Center
@@ -55,24 +60,24 @@ export default function AIHub() {
   }, [])
 
   const features = [
-    { id: 'dashboard', name: 'Dashboard', icon: '🎯', component: AIFeaturesDashboard },
-    { id: 'chat', name: 'AI Chat', icon: '💬', component: AIChat },
-    { id: 'sentiment', name: 'Sentiment', icon: '📈', component: MarketSentiment },
-    { id: 'forecast', name: 'AVA Forecast', icon: '🔮', component: ChronosForecast },
-    { id: 'multi-tf', name: 'Multi-TF', icon: '🕐', component: () => <MultiTimeframePanel symbol={symbol} /> },
-    { id: 'patterns', name: 'Patterns', icon: '🎯', component: PatternRecognition },
-    { id: 'signals', name: 'Signal Score', icon: '📊', component: SignalQualityScorerPanel },
-    { id: 'risk', name: 'Risk Advisor', icon: '⚠️', component: RiskAdvisorPanel },
-    { id: 'regime', name: 'Market Regime', icon: '🌡️', component: MarketRegimeDetectorPanel },
-    { id: 'anomaly', name: 'Anomaly', icon: '🎲', component: AnomalyDetectorPanel },
-    { id: 'watchlist', name: 'Watchlist AI', icon: '👁️', component: SmartWatchlistBuilderPanel },
-    { id: 'confidence', name: 'Confidence', icon: '🎯', component: PredictiveConfidencePanel },
-    { id: 'genetic', name: 'Genetic Opt', icon: '🧬', component: GeneticOptimizerPanel },
-    { id: 'options_greeks', name: 'Options Greeks', icon: 'Δ', component: OptionsGreeksCalculator },
-    { id: 'level2_depth', name: 'Level 2', icon: '📊', component: Level2MarketDepth },
-    { id: 'volume_profile', name: 'Volume Profile', icon: '📈', component: VolumeProfile },
-    { id: 'portfolio_analytics', name: 'Portfolio', icon: '💼', component: PortfolioAnalytics },
-    { id: 'voice_settings', name: 'Voice', icon: '🔊', component: VoiceAlertSettings }
+    { id: 'dashboard', name: 'Dashboard', Icon: Target, component: AIFeaturesDashboard },
+    { id: 'chat', name: 'AI Chat', Icon: MessageSquare, component: AIChat },
+    { id: 'sentiment', name: 'Sentiment', Icon: TrendingUp, component: MarketSentiment },
+    { id: 'forecast', name: 'AVA Forecast', Icon: Sparkles, component: ChronosForecast },
+    { id: 'multi-tf', name: 'Multi-TF', Icon: Clock, component: () => <MultiTimeframePanel symbol={symbol} /> },
+    { id: 'patterns', name: 'Patterns', Icon: Eye, component: PatternRecognition },
+    { id: 'signals', name: 'Signal Score', Icon: LineChart, component: SignalQualityScorerPanel },
+    { id: 'risk', name: 'Risk Advisor', Icon: AlertTriangle, component: RiskAdvisorPanel },
+    { id: 'regime', name: 'Market Regime', Icon: Thermometer, component: MarketRegimeDetectorPanel },
+    { id: 'anomaly', name: 'Anomaly', Icon: Dice1, component: AnomalyDetectorPanel },
+    { id: 'watchlist', name: 'Watchlist AI', Icon: EyeIcon, component: SmartWatchlistBuilderPanel },
+    { id: 'confidence', name: 'Confidence', Icon: Gauge, component: PredictiveConfidencePanel },
+    { id: 'genetic', name: 'Genetic Opt', Icon: Dna, component: GeneticOptimizerPanel },
+    { id: 'options_greeks', name: 'Options', Icon: Calculator, component: OptionsGreeksCalculator },
+    { id: 'level2_depth', name: 'Level 2', Icon: BarChart3, component: Level2MarketDepth },
+    { id: 'volume_profile', name: 'Volume', Icon: BarChartHorizontal, component: VolumeProfile },
+    { id: 'portfolio_analytics', name: 'Portfolio', Icon: Briefcase, component: PortfolioAnalytics },
+    { id: 'voice_settings', name: 'Voice', Icon: Volume2, component: VoiceAlertSettings }
   ]
 
   const ActiveComponent = features.find(f => f.id === selectedFeature)?.component
@@ -80,42 +85,50 @@ export default function AIHub() {
   return (
     <div className="space-y-4">
       {/* Feature Selector Grid */}
-      <div className="glass-panel p-4">
+      <div className="elite-panel">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
+          <h2 className="text-lg font-semibold text-white">
             AI Command Center
           </h2>
           <div className="flex items-center gap-3">
             <VoiceAlertToggle />
             <span className="text-xs text-slate-500">
-              {features.filter(f => f.id !== 'dashboard' && f.id !== 'voice_settings').length} AI Features
+              {features.filter(f => f.id !== 'dashboard' && f.id !== 'voice_settings').length} Features
             </span>
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
           </div>
         </div>
 
         {/* Feature Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
-          {features.map(feature => (
-            <button
-              key={feature.id}
-              onClick={() => setSelectedFeature(feature.id)}
-              className={`p-3 rounded-lg border transition-all group ${
-                selectedFeature === feature.id
-                  ? 'bg-gradient-to-r from-violet-500/20 to-purple-500/20 border-purple-500/50 shadow-lg'
-                  : 'bg-slate-800/30 border-slate-700/30 hover:bg-slate-700/40 hover:border-slate-600/50'
-              }`}
-            >
-              <div className="text-2xl mb-1 group-hover:scale-110 transition-transform">
-                {feature.icon}
-              </div>
-              <div className={`text-xs font-medium ${
-                selectedFeature === feature.id ? 'text-purple-300' : 'text-slate-400'
-              }`}>
-                {feature.name}
-              </div>
-            </button>
-          ))}
+        <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-9 gap-2">
+          {features.map(feature => {
+            const IconComponent = feature.Icon
+            const isActive = selectedFeature === feature.id
+            return (
+              <button
+                key={feature.id}
+                onClick={() => setSelectedFeature(feature.id)}
+                className={`p-3 rounded-lg border transition-all group ${
+                  isActive
+                    ? 'bg-indigo-600/20 border-indigo-500/50'
+                    : 'bg-white/5 border-transparent hover:bg-white/10 hover:border-white/10'
+                }`}
+              >
+                <div className="flex flex-col items-center">
+                  <IconComponent
+                    className={`w-5 h-5 mb-1.5 transition-transform group-hover:scale-110 ${
+                      isActive ? 'text-indigo-400' : 'text-slate-400'
+                    }`}
+                  />
+                  <div className={`text-[10px] font-medium truncate w-full text-center ${
+                    isActive ? 'text-indigo-300' : 'text-slate-500'
+                  }`}>
+                    {feature.name}
+                  </div>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
 
