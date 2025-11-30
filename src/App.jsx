@@ -48,6 +48,7 @@ import TrustModeBanner from './components/TrustModeBanner.jsx'
 // Elite 2025 Layout Components
 import CollapsibleSidebar from './components/CollapsibleSidebar.jsx'
 import TopBar from './components/layout/TopBar.jsx'
+import UnicornScoreOverlay from './components/UnicornScoreOverlay.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -387,6 +388,11 @@ function AppWithGestures({
         {/* AI Trade Copilot - Proactive position monitoring */}
         {showCopilot && activeTab === 'chart' && (
           <AITradeCopilot onClose={() => setShowCopilot(false)} />
+        )}
+
+        {/* Unicorn Score Overlay - Shows score on chart view */}
+        {activeTab === 'chart' && (
+          <UnicornScoreOverlay className="hidden md:block" />
         )}
 
         {/* Social Trading Rooms */}
