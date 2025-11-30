@@ -243,3 +243,11 @@ export { default as Badge } from './Badge.jsx'
 export { default as Skeleton } from './Skeleton.jsx'
 export { default as Modal } from './Modal.jsx'
 export { default as Tooltip } from './Tooltip.jsx'
+
+// LEGENDARY UI Components
+export { default as Logo, LogoMark, LogoFull, AppIcon, LoadingLogo } from './Logo.jsx'
+export { default as ScoreRing, ScoreRingMini, ScoreCard } from './ScoreRing.jsx'
+
+// LEGENDARY Design Tokens (new)
+export { default as legendaryTokens } from '../../styles/tokens.js'
+export * as designTokens from '../../styles/tokens.js'

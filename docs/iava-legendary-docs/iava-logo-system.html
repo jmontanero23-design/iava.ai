@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iAVA.ai - Logo System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --void: #000000;
+      --depth-1: #030712;
+      --purple: #a855f7;
+      --purple-bright: #c084fc;
+      --cyan: #22d3ee;
+      --indigo: #6366f1;
+      --text-100: #ffffff;
+      --text-50: #94a3b8;
+      --unicorn: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #22d3ee 100%);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--depth-1);
+      color: var(--text-100);
+      min-height: 100vh;
+      padding: 60px 40px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+      background: var(--unicorn);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      color: var(--text-50);
+      margin-bottom: 60px;
+    }
+
+    .section {
+      margin-bottom: 80px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--purple);
+      margin-bottom: 24px;
+    }
+
+    .logo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .logo-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 24px;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logo-card.dark {
+      background: var(--void);
+    }
+
+    .logo-card.light {
+      background: #ffffff;
+    }
+
+    .logo-card.gradient {
+      background: var(--unicorn);
+    }
+
+    .logo-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-50);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .logo-card.light .logo-label {
+      color: #64748b;
+    }
+
+    .logo-card.gradient .logo-label {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* ============================================
+       LOGO DESIGNS
+       ============================================ */
+
+    /* Original Concept - Enhanced */
+    .logo-original {
+      width: 120px;
+      height: 120px;
+    }
+
+    /* Legendary Logo Mark */
+    .logo-mark {
+      width: 80px;
+      height: 80px;
+      position: relative;
+    }
+
+    .logo-mark svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Full Logo with Type */
+    .logo-full {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-full .mark {
+      width: 56px;
+      height: 56px;
+    }
+
+    .logo-full .type {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-full.dark .type {
+      background: var(--unicorn);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-full.light .type {
+      color: #1f2937;
+    }
+
+    /* App Icon */
+    .app-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 18px;
+      background: var(--unicorn);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app-icon::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+    }
+
+    .app-icon svg {
+      width: 48px;
+      height: 48px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Favicon */
+    .favicon {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--unicorn);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .favicon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Animated Logo */
+    .logo-animated {
+      width: 120px;
+      height: 120px;
+      position: relative;
+    }
+
+    .logo-animated svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .logo-animated .node {
+      animation: nodePulse 2s ease-in-out infinite;
+    }
+
+    .logo-animated .node:nth-child(2) { animation-delay: 0.1s; }
+    .logo-animated .node:nth-child(3) { animation-delay: 0.2s; }
+    .logo-animated .node:nth-child(4) { animation-delay: 0.3s; }
+    .logo-animated .node:nth-child(5) { animation-delay: 0.4s; }
+
+    .logo-animated .arc {
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      animation: arcDraw 3s ease-in-out infinite;
+    }
+
+    .logo-animated .connection {
+      stroke-dasharray: 50;
+      stroke-dashoffset: 50;
+      animation: lineDraw 2s ease-in-out infinite;
+    }
+
+    @keyframes nodePulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.8; }
+    }
+
+    @keyframes arcDraw {
+      0% { stroke-dashoffset: 100; }
+      50% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -100; }
+    }
+
+    @keyframes lineDraw {
+      0% { stroke-dashoffset: 50; opacity: 0.3; }
+      50% { stroke-dashoffset: 0; opacity: 1; }
+      100% { stroke-dashoffset: -50; opacity: 0.3; }
+    }
+
+    /* Loading Animation */
+    .logo-loading {
+      width: 60px;
+      height: 60px;
+      position: relative;
+    }
+
+    .logo-loading .ring {
+      position: absolute;
+      inset: 0;
+      border: 3px solid transparent;
+      border-top-color: var(--purple);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .logo-loading .ring:nth-child(2) {
+      inset: 6px;
+      border-top-color: var(--indigo);
+      animation-duration: 0.8s;
+      animation-direction: reverse;
+    }
+
+    .logo-loading .ring:nth-child(3) {
+      inset: 12px;
+      border-top-color: var(--cyan);
+      animation-duration: 0.6s;
+    }
+
+    .logo-loading .core {
+      position: absolute;
+      inset: 18px;
+      background: var(--unicorn);
+      border-radius: 50%;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Color Specs */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .color-swatch {
+      height: 100px;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .color-swatch.purple { background: #a855f7; }
+    .color-swatch.indigo { background: #6366f1; }
+    .color-swatch.cyan { background: #22d3ee; color: #0f172a; }
+    .color-swatch.gradient { background: var(--unicorn); }
+    .color-swatch.void { background: #000000; border: 1px solid rgba(255,255,255,0.1); }
+
+    .color-name { margin-bottom: 2px; }
+    .color-hex { opacity: 0.7; }
+
+    /* Usage Guidelines */
+    .guidelines {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .guideline-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .guideline-card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--cyan);
+    }
+
+    .guideline-card p {
+      font-size: 14px;
+      color: var(--text-50);
+      line-height: 1.6;
+    }
+
+    .guideline-card ul {
+      list-style: none;
+      margin-top: 12px;
+    }
+
+    .guideline-card li {
+      font-size: 13px;
+      color: var(--text-50);
+      padding-left: 20px;
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .guideline-card li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--purple);
+    }
+
+    .guideline-card li.dont::before {
+      content: '✗';
+      color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>iAVA.ai Logo System</h1>
+    <p class="subtitle">Legendary Brand Identity for the World's Most Advanced AI Trading Platform</p>
+
+    <!-- Primary Logos -->
+    <section class="section">
+      <h2 class="section-title">Primary Logo Marks</h2>
+      <div class="logo-grid">
+        <!-- Original Enhanced -->
+        <div class="logo-card dark">
+          <div class="logo-original">
+            <svg viewBox="0 0 100 100" fill="none">
+              <defs>
+                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6366f1"/>
+                  <stop offset="50%" stop-color="#a855f7"/>
+                  <stop offset="100%" stop-color="#22d3ee"/>
+                </linearGradient>
+              </defs>
+              <!-- Background glow -->
+              <circle cx="50" cy="50" r="45" fill="url(#grad1)" opacity="0.1"/>
+              <!-- Arc (prediction curve) -->
+              <path d="M20 40 Q50 15 80 40" stroke="url(#grad1)" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <!-- Neural connections -->
+              <line x1="50" y1="35" x2="30" y2="55" stroke="url(#grad1)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="50" y1="35" x2="70" y2="55" stroke="url(#grad1)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="50" y1="35" x2="50" y2="60" stroke="url(#grad1)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="30" y1="55" x2="20" y2="75" stroke="url(#grad1)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="30" y1="55" x2="40" y2="75" stroke="url(#grad1)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="70" y1="55" x2="60" y2="75" stroke="url(#grad1)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="70" y1="55" x2="80" y2="75" stroke="url(#grad1)" stroke-width="2" stroke-linecap="round"/>
+              <!-- Nodes -->
+              <circle cx="50" cy="35" r="6" fill="url(#grad1)"/>
+              <circle cx="30" cy="55" r="5" fill="url(#grad1)"/>
+              <circle cx="70" cy="55" r="5" fill="url(#grad1)"/>
+              <circle cx="20" cy="75" r="4" fill="url(#grad1)"/>
+              <circle cx="40" cy="75" r="4" fill="url(#grad1)"/>
+              <circle cx="60" cy="75" r="4" fill="url(#grad1)"/>
+              <circle cx="80" cy="75" r="4" fill="url(#grad1)"/>
+              <!-- Center highlight -->
+              <circle cx="50" cy="35" r="3" fill="white" opacity="0.5"/>
+            </svg>
+          </div>
+          <span class="logo-label">Primary Mark - Dark</span>
+        </div>
+
+        <!-- Light Background -->
+        <div class="logo-card light">
+          <div class="logo-original">
+            <svg viewBox="0 0 100 100" fill="none">
+              <defs>
+                <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6366f1"/>
+                  <stop offset="50%" stop-color="#a855f7"/>
+                  <stop offset="100%" stop-color="#22d3ee"/>
+                </linearGradient>
+              </defs>
+              <circle cx="50" cy="50" r="45" fill="#f8fafc"/>
+              <path d="M20 40 Q50 15 80 40" stroke="url(#grad2)" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <line x1="50" y1="35" x2="30" y2="55" stroke="url(#grad2)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="50" y1="35" x2="70" y2="55" stroke="url(#grad2)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="50" y1="35" x2="50" y2="60" stroke="url(#grad2)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="30" y1="55" x2="20" y2="75" stroke="url(#grad2)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="30" y1="55" x2="40" y2="75" stroke="url(#grad2)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="70" y1="55" x2="60" y2="75" stroke="url(#grad2)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="70" y1="55" x2="80" y2="75" stroke="url(#grad2)" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="50" cy="35" r="6" fill="url(#grad2)"/>
+              <circle cx="30" cy="55" r="5" fill="url(#grad2)"/>
+              <circle cx="70" cy="55" r="5" fill="url(#grad2)"/>
+              <circle cx="20" cy="75" r="4" fill="url(#grad2)"/>
+              <circle cx="40" cy="75" r="4" fill="url(#grad2)"/>
+              <circle cx="60" cy="75" r="4" fill="url(#grad2)"/>
+              <circle cx="80" cy="75" r="4" fill="url(#grad2)"/>
+            </svg>
+          </div>
+          <span class="logo-label">Primary Mark - Light</span>
+        </div>
+
+        <!-- Monochrome White -->
+        <div class="logo-card gradient">
+          <div class="logo-original">
+            <svg viewBox="0 0 100 100" fill="none">
+              <path d="M20 40 Q50 15 80 40" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <line x1="50" y1="35" x2="30" y2="55" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              <line x1="50" y1="35" x2="70" y2="55" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              <line x1="50" y1="35" x2="50" y2="60" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              <line x1="30" y1="55" x2="20" y2="75" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              <line x1="30" y1="55" x2="40" y2="75" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              <line x1="70" y1="55" x2="60" y2="75" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              <line x1="70" y1="55" x2="80" y2="75" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="50" cy="35" r="6" fill="white"/>
+              <circle cx="30" cy="55" r="5" fill="white"/>
+              <circle cx="70" cy="55" r="5" fill="white"/>
+              <circle cx="20" cy="75" r="4" fill="white"/>
+              <circle cx="40" cy="75" r="4" fill="white"/>
+              <circle cx="60" cy="75" r="4" fill="white"/>
+              <circle cx="80" cy="75" r="4" fill="white"/>
+            </svg>
+          </div>
+          <span class="logo-label">Monochrome - Gradient BG</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Full Logo -->
+    <section class="section">
+      <h2 class="section-title">Full Logo with Wordmark</h2>
+      <div class="logo-grid">
+        <div class="logo-card dark">
+          <div class="logo-full dark">
+            <div class="mark">
+              <svg viewBox="0 0 100 100" fill="none">
+                <defs>
+                  <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#6366f1"/>
+                    <stop offset="50%" stop-color="#a855f7"/>
+                    <stop offset="100%" stop-color="#22d3ee"/>
+                  </linearGradient>
+                </defs>
+                <path d="M20 40 Q50 15 80 40" stroke="url(#grad3)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <line x1="50" y1="35" x2="30" y2="55" stroke="url(#grad3)" stroke-width="2"/>
+                <line x1="50" y1="35" x2="70" y2="55" stroke="url(#grad3)" stroke-width="2"/>
+                <line x1="50" y1="35" x2="50" y2="60" stroke="url(#grad3)" stroke-width="2"/>
+                <line x1="30" y1="55" x2="20" y2="75" stroke="url(#grad3)" stroke-width="2"/>
+                <line x1="30" y1="55" x2="40" y2="75" stroke="url(#grad3)" stroke-width="2"/>
+                <line x1="70" y1="55" x2="60" y2="75" stroke="url(#grad3)" stroke-width="2"/>
+                <line x1="70" y1="55" x2="80" y2="75" stroke="url(#grad3)" stroke-width="2"/>
+                <circle cx="50" cy="35" r="6" fill="url(#grad3)"/>
+                <circle cx="30" cy="55" r="5" fill="url(#grad3)"/>
+                <circle cx="70" cy="55" r="5" fill="url(#grad3)"/>
+                <circle cx="20" cy="75" r="4" fill="url(#grad3)"/>
+                <circle cx="40" cy="75" r="4" fill="url(#grad3)"/>
+                <circle cx="60" cy="75" r="4" fill="url(#grad3)"/>
+                <circle cx="80" cy="75" r="4" fill="url(#grad3)"/>
+              </svg>
+            </div>
+            <span class="type">iAVA.ai</span>
+          </div>
+          <span class="logo-label">Horizontal Lockup - Dark</span>
+        </div>
+
+        <div class="logo-card light">
+          <div class="logo-full light">
+            <div class="mark">
+              <svg viewBox="0 0 100 100" fill="none">
+                <defs>
+                  <linearGradient id="grad4" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#6366f1"/>
+                    <stop offset="50%" stop-color="#a855f7"/>
+                    <stop offset="100%" stop-color="#22d3ee"/>
+                  </linearGradient>
+                </defs>
+                <path d="M20 40 Q50 15 80 40" stroke="url(#grad4)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                <line x1="50" y1="35" x2="30" y2="55" stroke="url(#grad4)" stroke-width="2"/>
+                <line x1="50" y1="35" x2="70" y2="55" stroke="url(#grad4)" stroke-width="2"/>
+                <line x1="50" y1="35" x2="50" y2="60" stroke="url(#grad4)" stroke-width="2"/>
+                <line x1="30" y1="55" x2="20" y2="75" stroke="url(#grad4)" stroke-width="2"/>
+                <line x1="30" y1="55" x2="40" y2="75" stroke="url(#grad4)" stroke-width="2"/>
+                <line x1="70" y1="55" x2="60" y2="75" stroke="url(#grad4)" stroke-width="2"/>
+                <line x1="70" y1="55" x2="80" y2="75" stroke="url(#grad4)" stroke-width="2"/>
+                <circle cx="50" cy="35" r="6" fill="url(#grad4)"/>
+                <circle cx="30" cy="55" r="5" fill="url(#grad4)"/>
+                <circle cx="70" cy="55" r="5" fill="url(#grad4)"/>
+                <circle cx="20" cy="75" r="4" fill="url(#grad4)"/>
+                <circle cx="40" cy="75" r="4" fill="url(#grad4)"/>
+                <circle cx="60" cy="75" r="4" fill="url(#grad4)"/>
+                <circle cx="80" cy="75" r="4" fill="url(#grad4)"/>
+              </svg>
+            </div>
+            <span class="type">iAVA.ai</span>
+          </div>
+          <span class="logo-label">Horizontal Lockup - Light</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- App Icons -->
+    <section class="section">
+      <h2 class="section-title">App Icons</h2>
+      <div class="logo-grid">
+        <div class="logo-card dark">
+          <div class="app-icon">
+            <svg viewBox="0 0 100 100" fill="none">
+              <path d="M20 40 Q50 15 80 40" stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/>
+              <line x1="50" y1="35" x2="30" y2="55" stroke="white" stroke-width="3"/>
+              <line x1="50" y1="35" x2="70" y2="55" stroke="white" stroke-width="3"/>
+              <line x1="50" y1="35" x2="50" y2="60" stroke="white" stroke-width="3"/>
+              <line x1="30" y1="55" x2="20" y2="75" stroke="white" stroke-width="2.5"/>
+              <line x1="30" y1="55" x2="40" y2="75" stroke="white" stroke-width="2.5"/>
+              <line x1="70" y1="55" x2="60" y2="75" stroke="white" stroke-width="2.5"/>
+              <line x1="70" y1="55" x2="80" y2="75" stroke="white" stroke-width="2.5"/>
+              <circle cx="50" cy="35" r="7" fill="white"/>
+              <circle cx="30" cy="55" r="6" fill="white"/>
+              <circle cx="70" cy="55" r="6" fill="white"/>
+              <circle cx="20" cy="75" r="5" fill="white"/>
+              <circle cx="40" cy="75" r="5" fill="white"/>
+              <circle cx="60" cy="75" r="5" fill="white"/>
+              <circle cx="80" cy="75" r="5" fill="white"/>
+            </svg>
+          </div>
+          <span class="logo-label">iOS App Icon</span>
+        </div>
+
+        <div class="logo-card dark">
+          <div style="display: flex; gap: 16px; align-items: flex-end;">
+            <div class="app-icon" style="width: 60px; height: 60px; border-radius: 14px;">
+              <svg viewBox="0 0 100 100" fill="none" style="width: 36px; height: 36px;">
+                <path d="M20 40 Q50 15 80 40" stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <line x1="50" y1="35" x2="30" y2="55" stroke="white" stroke-width="3"/>
+                <line x1="50" y1="35" x2="70" y2="55" stroke="white" stroke-width="3"/>
+                <line x1="50" y1="35" x2="50" y2="60" stroke="white" stroke-width="3"/>
+                <line x1="30" y1="55" x2="20" y2="75" stroke="white" stroke-width="2.5"/>
+                <line x1="30" y1="55" x2="40" y2="75" stroke="white" stroke-width="2.5"/>
+                <line x1="70" y1="55" x2="60" y2="75" stroke="white" stroke-width="2.5"/>
+                <line x1="70" y1="55" x2="80" y2="75" stroke="white" stroke-width="2.5"/>
+                <circle cx="50" cy="35" r="7" fill="white"/>
+                <circle cx="30" cy="55" r="6" fill="white"/>
+                <circle cx="70" cy="55" r="6" fill="white"/>
+                <circle cx="20" cy="75" r="5" fill="white"/>
+                <circle cx="40" cy="75" r="5" fill="white"/>
+                <circle cx="60" cy="75" r="5" fill="white"/>
+                <circle cx="80" cy="75" r="5" fill="white"/>
+              </svg>
+            </div>
+            <div class="app-icon" style="width: 44px; height: 44px; border-radius: 10px;">
+              <svg viewBox="0 0 100 100" fill="none" style="width: 28px; height: 28px;">
+                <path d="M20 40 Q50 15 80 40" stroke="white" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <circle cx="50" cy="35" r="8" fill="white"/>
+                <circle cx="30" cy="55" r="7" fill="white"/>
+                <circle cx="70" cy="55" r="7" fill="white"/>
+                <circle cx="20" cy="75" r="6" fill="white"/>
+                <circle cx="40" cy="75" r="6" fill="white"/>
+                <circle cx="60" cy="75" r="6" fill="white"/>
+                <circle cx="80" cy="75" r="6" fill="white"/>
+              </svg>
+            </div>
+            <div class="favicon">
+              <svg viewBox="0 0 100 100" fill="none">
+                <path d="M20 40 Q50 15 80 40" stroke="white" stroke-width="6" fill="none" stroke-linecap="round"/>
+                <circle cx="50" cy="35" r="10" fill="white"/>
+                <circle cx="30" cy="60" r="8" fill="white"/>
+                <circle cx="70" cy="60" r="8" fill="white"/>
+              </svg>
+            </div>
+          </div>
+          <span class="logo-label">Size Variations</span>
+        </div>
+
+        <div class="logo-card dark">
+          <div class="logo-animated">
+            <svg viewBox="0 0 100 100" fill="none">
+              <defs>
+                <linearGradient id="grad5" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6366f1"/>
+                  <stop offset="50%" stop-color="#a855f7"/>
+                  <stop offset="100%" stop-color="#22d3ee"/>
+                </linearGradient>
+              </defs>
+              <path class="arc" d="M20 40 Q50 15 80 40" stroke="url(#grad5)" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <line class="connection" x1="50" y1="35" x2="30" y2="55" stroke="url(#grad5)" stroke-width="2"/>
+              <line class="connection" x1="50" y1="35" x2="70" y2="55" stroke="url(#grad5)" stroke-width="2"/>
+              <line class="connection" x1="50" y1="35" x2="50" y2="60" stroke="url(#grad5)" stroke-width="2"/>
+              <circle class="node" cx="50" cy="35" r="6" fill="url(#grad5)"/>
+              <circle class="node" cx="30" cy="55" r="5" fill="url(#grad5)"/>
+              <circle class="node" cx="70" cy="55" r="5" fill="url(#grad5)"/>
+              <circle class="node" cx="20" cy="75" r="4" fill="url(#grad5)"/>
+              <circle class="node" cx="40" cy="75" r="4" fill="url(#grad5)"/>
+              <circle class="node" cx="60" cy="75" r="4" fill="url(#grad5)"/>
+              <circle class="node" cx="80" cy="75" r="4" fill="url(#grad5)"/>
+            </svg>
+          </div>
+          <span class="logo-label">Animated Version</span>
+        </div>
+
+        <div class="logo-card dark">
+          <div class="logo-loading">
+            <div class="ring"></div>
+            <div class="ring"></div>
+            <div class="ring"></div>
+            <div class="core"></div>
+          </div>
+          <span class="logo-label">Loading State</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Brand Colors -->
+    <section class="section">
+      <h2 class="section-title">Brand Colors</h2>
+      <div class="color-grid">
+        <div class="color-swatch indigo">
+          <span class="color-name">Indigo</span>
+          <span class="color-hex">#6366F1</span>
+        </div>
+        <div class="color-swatch purple">
+          <span class="color-name">Purple</span>
+          <span class="color-hex">#A855F7</span>
+        </div>
+        <div class="color-swatch cyan">
+          <span class="color-name">Cyan</span>
+          <span class="color-hex">#22D3EE</span>
+        </div>
+        <div class="color-swatch gradient">
+          <span class="color-name">Unicorn Gradient</span>
+          <span class="color-hex">135° Indigo → Purple → Cyan</span>
+        </div>
+        <div class="color-swatch void">
+          <span class="color-name">Void Black</span>
+          <span class="color-hex">#000000</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Usage Guidelines -->
+    <section class="section">
+      <h2 class="section-title">Logo Symbolism</h2>
+      <div class="guidelines">
+        <div class="guideline-card">
+          <h3>The Prediction Arc</h3>
+          <p>The curved line at the top represents iAVA's predictive AI capabilities - the ability to forecast market movements before they happen.</p>
+        </div>
+        <div class="guideline-card">
+          <h3>The Neural Network</h3>
+          <p>The connected nodes represent the AI neural network that powers iAVA - intelligence distributed across multiple points, working together.</p>
+        </div>
+        <div class="guideline-card">
+          <h3>The Tree Structure</h3>
+          <p>From one insight, branches grow into multiple opportunities. Like a decision tree, each node expands possibilities.</p>
+        </div>
+        <div class="guideline-card">
+          <h3>The 7 Nodes</h3>
+          <p>Representing completeness and perfection. The central node is AVA Mind, branching to the core AI features.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Do's and Don'ts -->
+    <section class="section">
+      <h2 class="section-title">Usage Guidelines</h2>
+      <div class="guidelines">
+        <div class="guideline-card">
+          <h3>Do's ✓</h3>
+          <ul>
+            <li>Use the gradient version on dark backgrounds</li>
+            <li>Maintain minimum clear space (1x logo width)</li>
+            <li>Use white version on gradient backgrounds</li>
+            <li>Scale proportionally</li>
+            <li>Use animated version for loading states</li>
+          </ul>
+        </div>
+        <div class="guideline-card">
+          <h3>Don'ts ✗</h3>
+          <ul>
+            <li class="dont">Stretch or distort the logo</li>
+            <li class="dont">Change the gradient direction</li>
+            <li class="dont">Use on busy backgrounds</li>
+            <li class="dont">Add effects like drop shadows</li>
+            <li class="dont">Rearrange the nodes</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

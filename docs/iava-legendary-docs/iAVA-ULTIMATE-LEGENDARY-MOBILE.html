@@ -1,0 +1,2602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>iAVA.ai - ULTIMATE LEGENDARY Preview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* ============================================
+       iAVA.ai ULTIMATE LEGENDARY EDITION
+       The platform that makes ALL apps look like toys
+       ============================================ */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      /* THE VOID */
+      --void: #000000;
+      --void-soft: #030712;
+      --depth-1: #0a0f1a;
+      --depth-2: #111827;
+      
+      /* INTELLIGENCE (Purple) */
+      --purple: #a855f7;
+      --purple-bright: #c084fc;
+      --purple-dim: rgba(168, 85, 247, 0.12);
+      --purple-glow: rgba(168, 85, 247, 0.5);
+      
+      /* PREDICTION (Cyan) */
+      --cyan: #22d3ee;
+      --cyan-bright: #67e8f9;
+      --cyan-dim: rgba(34, 211, 238, 0.12);
+      --cyan-glow: rgba(34, 211, 238, 0.5);
+      
+      /* SUCCESS (Emerald) */
+      --emerald: #34d399;
+      --emerald-bright: #6ee7b7;
+      --emerald-dim: rgba(52, 211, 153, 0.12);
+      --emerald-glow: rgba(52, 211, 153, 0.4);
+      
+      /* DANGER (Red) */
+      --red: #f87171;
+      --red-dim: rgba(248, 113, 113, 0.12);
+      
+      /* CAUTION (Amber) */
+      --amber: #fbbf24;
+      --amber-dim: rgba(251, 191, 36, 0.12);
+      
+      /* CORE (Indigo) */
+      --indigo: #6366f1;
+      --indigo-dim: rgba(99, 102, 241, 0.12);
+      --indigo-glow: rgba(99, 102, 241, 0.5);
+      
+      /* TEXT */
+      --text-100: #ffffff;
+      --text-90: #f1f5f9;
+      --text-70: #cbd5e1;
+      --text-50: #94a3b8;
+      --text-30: #64748b;
+      
+      /* GLASS */
+      --glass: rgba(10, 15, 26, 0.88);
+      --glass-heavy: rgba(10, 15, 26, 0.95);
+      --glass-border: rgba(255, 255, 255, 0.05);
+      
+      /* GRADIENTS */
+      --unicorn: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #22d3ee 100%);
+      --fire: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+      
+      /* MOTION */
+      --spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      --smooth: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--void);
+      color: var(--text-100);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ============================================
+       AMBIENT SYSTEM
+       ============================================ */
+
+    .ambient {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      animation: orbFloat 20s ease-in-out infinite;
+    }
+
+    .orb-1 {
+      width: 600px;
+      height: 600px;
+      background: var(--purple);
+      top: -250px;
+      right: -200px;
+      opacity: 0.2;
+    }
+
+    .orb-2 {
+      width: 500px;
+      height: 500px;
+      background: var(--cyan);
+      bottom: 5%;
+      left: -200px;
+      opacity: 0.15;
+      animation-delay: -7s;
+    }
+
+    .orb-3 {
+      width: 400px;
+      height: 400px;
+      background: var(--indigo);
+      top: 40%;
+      right: -150px;
+      opacity: 0.12;
+      animation-delay: -14s;
+    }
+
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(40px, -30px) scale(1.05); }
+      66% { transform: translate(-30px, 40px) scale(0.95); }
+    }
+
+    .particles {
+      position: absolute;
+      inset: 0;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: var(--purple-bright);
+      border-radius: 50%;
+      opacity: 0;
+      animation: particleFloat 15s linear infinite;
+    }
+
+    .particle:nth-child(odd) { background: var(--cyan); }
+    .particle:nth-child(3n) { width: 3px; height: 3px; }
+
+    @keyframes particleFloat {
+      0% { opacity: 0; transform: translateY(100vh) scale(0); }
+      10% { opacity: 0.6; transform: scale(1); }
+      90% { opacity: 0.6; }
+      100% { opacity: 0; transform: translateY(-100px) scale(0.5); }
+    }
+
+    /* ============================================
+       PREVIEW WRAPPER
+       ============================================ */
+
+    .preview-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 20px 100px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .preview-header {
+      text-align: center;
+      margin-bottom: 60px;
+      max-width: 800px;
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .header-logo svg {
+      width: 64px;
+      height: 64px;
+      filter: drop-shadow(0 0 30px var(--purple-glow));
+      animation: logoFloat 4s ease-in-out infinite;
+    }
+
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .header-logo span {
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      background: var(--unicorn);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .legendary-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15), rgba(34, 211, 238, 0.15));
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: var(--purple-bright);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      animation: badgeGlow 3s ease-in-out infinite;
+    }
+
+    @keyframes badgeGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.2); }
+      50% { box-shadow: 0 0 50px rgba(168, 85, 247, 0.4); }
+    }
+
+    .legendary-badge::before {
+      content: '🦄';
+      font-size: 16px;
+    }
+
+    .preview-header h1 {
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    .preview-header h1 span {
+      background: var(--unicorn);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .preview-header p {
+      font-size: 1.25rem;
+      color: var(--text-50);
+      line-height: 1.6;
+    }
+
+    .preview-header .highlight {
+      color: var(--cyan);
+      font-weight: 600;
+    }
+
+    /* ============================================
+       PHONE FRAME
+       ============================================ */
+
+    .phone-frame {
+      position: relative;
+      width: 393px;
+      height: 852px;
+      background: var(--void);
+      border-radius: 55px;
+      overflow: hidden;
+      box-shadow: 
+        0 0 0 11px #1a1a1a,
+        0 0 0 13px #0d0d0d,
+        0 25px 80px rgba(0, 0, 0, 0.6),
+        0 0 100px var(--purple-glow);
+      animation: phoneFloat 6s ease-in-out infinite;
+    }
+
+    @keyframes phoneFloat {
+      0%, 100% { transform: translateY(0) rotateX(0); }
+      50% { transform: translateY(-12px) rotateX(2deg); }
+    }
+
+    /* Dynamic Island */
+    .dynamic-island {
+      position: absolute;
+      top: 11px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 126px;
+      height: 37px;
+      background: #000;
+      border-radius: 24px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.5s var(--spring);
+      overflow: hidden;
+    }
+
+    .dynamic-island.expanded {
+      width: 240px;
+      height: 52px;
+      border-radius: 28px;
+    }
+
+    .di-content {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: all 0.3s var(--smooth);
+    }
+
+    .dynamic-island.expanded .di-content {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .di-logo {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .di-logo svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    .di-score {
+      font-size: 20px;
+      font-weight: 900;
+      background: var(--unicorn);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .di-ticker {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-70);
+    }
+
+    .di-trend {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--emerald);
+    }
+
+    .di-trend svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      position: absolute;
+      top: 14px;
+      left: 36px;
+      right: 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 50;
+    }
+
+    .status-time {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status-icons svg {
+      width: 16px;
+      height: 16px;
+      opacity: 0.9;
+    }
+
+    /* ============================================
+       APP SHELL
+       ============================================ */
+
+    .app-shell {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      padding-top: 59px;
+      background: var(--void);
+    }
+
+    .app-content {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .tab-panel {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.98);
+      transition: all 0.4s var(--smooth);
+    }
+
+    .tab-panel.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1);
+    }
+
+    .scroll-view {
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .scroll-view::-webkit-scrollbar { display: none; }
+
+    /* ============================================
+       BOTTOM NAV
+       ============================================ */
+
+    .bottom-nav {
+      position: relative;
+      background: rgba(0, 0, 0, 0.98);
+      backdrop-filter: blur(40px);
+      border-top: 1px solid var(--glass-border);
+      padding: 8px 12px calc(8px + 28px);
+    }
+
+    .bottom-nav::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 2px;
+      background: var(--unicorn);
+      opacity: 0.5;
+      filter: blur(1px);
+    }
+
+    .nav-list {
+      display: flex;
+      justify-content: space-around;
+      list-style: none;
+    }
+
+    .nav-item {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 14px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s var(--spring);
+    }
+
+    .nav-item::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%) scaleX(0);
+      width: 32px;
+      height: 4px;
+      background: var(--unicorn);
+      border-radius: 4px;
+      transition: transform 0.3s var(--spring);
+      box-shadow: 0 0 20px var(--purple-glow);
+    }
+
+    .nav-item.active::before {
+      transform: translateX(-50%) scaleX(1);
+    }
+
+    .nav-item.active {
+      background: linear-gradient(180deg, var(--purple-dim) 0%, transparent 100%);
+    }
+
+    .nav-icon {
+      width: 26px;
+      height: 26px;
+      margin-bottom: 4px;
+      color: var(--text-30);
+      transition: all 0.3s var(--spring);
+    }
+
+    .nav-item.active .nav-icon {
+      color: var(--purple);
+      filter: drop-shadow(0 0 12px var(--purple-glow));
+      transform: scale(1.1);
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-30);
+      transition: color 0.3s;
+    }
+
+    .nav-item.active .nav-label {
+      color: var(--purple-bright);
+    }
+
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+
+    /* ============================================
+       TRADE TAB
+       ============================================ */
+
+    .trade-tab {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    /* Logo Header */
+    .logo-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.06) 0%, transparent 100%);
+    }
+
+    .app-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-mark {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-mark svg {
+      width: 36px;
+      height: 36px;
+      filter: drop-shadow(0 0 10px var(--purple-glow));
+    }
+
+    .logo-type {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      background: var(--unicorn);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .header-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .header-btn svg {
+      width: 18px;
+      height: 18px;
+      color: var(--text-50);
+    }
+
+    .header-btn:hover {
+      border-color: var(--purple);
+      background: var(--purple-dim);
+    }
+
+    .header-btn:hover svg {
+      color: var(--purple);
+    }
+
+    /* Symbol Header */
+    .symbol-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+    }
+
+    .symbol-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .company-logo {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    .company-logo::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 2px solid rgba(99, 102, 241, 0.15);
+      border-radius: 14px;
+    }
+
+    .company-logo img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
+
+    .symbol-info h1 {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .symbol-info span {
+      font-size: 13px;
+      color: var(--text-50);
+    }
+
+    .price-block {
+      text-align: right;
+    }
+
+    .price-value {
+      font-size: 28px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+
+    .price-change {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .price-change.up { color: var(--emerald); }
+    .price-change.down { color: var(--red); }
+
+    .price-change svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Chart Area */
+    .chart-container {
+      flex: 1;
+      position: relative;
+      background: var(--void);
+      min-height: 260px;
+    }
+
+    .chart-glow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 70% 30%, var(--indigo-dim) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .timeframe-bar {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: flex;
+      gap: 4px;
+      z-index: 10;
+    }
+
+    .tf-btn {
+      padding: 8px 12px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-50);
+      cursor: pointer;
+      transition: all 0.2s var(--spring);
+    }
+
+    .tf-btn.active {
+      background: var(--unicorn);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 0 20px var(--purple-glow);
+    }
+
+    .chart-tools {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      gap: 6px;
+      z-index: 10;
+    }
+
+    .tool-btn {
+      width: 36px;
+      height: 36px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tool-btn svg {
+      width: 16px;
+      height: 16px;
+      color: var(--text-50);
+    }
+
+    /* Score Card */
+    .score-card {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      background: var(--glass);
+      backdrop-filter: blur(30px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.4s var(--smooth);
+      z-index: 15;
+    }
+
+    .score-card::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      background: var(--unicorn);
+      border-radius: 21px;
+      opacity: 0;
+      z-index: -1;
+      transition: opacity 0.3s;
+    }
+
+    .score-card:hover::before {
+      opacity: 0.12;
+    }
+
+    .score-card.expanded {
+      bottom: 60px;
+      background: var(--glass-heavy);
+    }
+
+    .score-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .score-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .score-ring {
+      position: relative;
+      width: 64px;
+      height: 64px;
+    }
+
+    .score-ring svg {
+      transform: rotate(-90deg);
+    }
+
+    .ring-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.06);
+      stroke-width: 5;
+    }
+
+    .ring-fill {
+      fill: none;
+      stroke: url(#scoreGrad);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-dasharray: 283;
+      stroke-dashoffset: 36;
+      transition: stroke-dashoffset 1.2s var(--smooth);
+      filter: drop-shadow(0 0 8px var(--purple-glow));
+    }
+
+    .score-number {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 900;
+      background: var(--unicorn);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .score-info h3 {
+      font-size: 16px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .direction-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .direction-badge.bullish {
+      background: var(--emerald-dim);
+      color: var(--emerald);
+    }
+
+    .score-info span {
+      font-size: 12px;
+      color: var(--text-50);
+    }
+
+    .archetype-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--purple-dim);
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      border-radius: 12px;
+    }
+
+    .archetype-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--unicorn);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .archetype-icon svg {
+      width: 18px;
+      height: 18px;
+      color: white;
+    }
+
+    .archetype-label {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--purple-bright);
+    }
+
+    .expand-hint {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--glass-border);
+      font-size: 11px;
+      color: var(--text-50);
+    }
+
+    .expand-hint svg {
+      width: 14px;
+      height: 14px;
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(3px); }
+    }
+
+    .score-card.expanded .expand-hint {
+      display: none;
+    }
+
+    .score-expanded {
+      display: none;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--glass-border);
+      animation: slideIn 0.4s var(--smooth);
+    }
+
+    .score-card.expanded .score-expanded {
+      display: block;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .breakdown-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .breakdown-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .bd-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bd-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .bd-icon.tech { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .bd-icon.sent { background: var(--purple-dim); color: var(--purple); }
+    .bd-icon.fore { background: var(--cyan-dim); color: var(--cyan); }
+
+    .bd-content { flex: 1; }
+
+    .bd-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .bd-header span:first-child { color: var(--text-70); }
+    .bd-header span:last-child { font-weight: 700; }
+
+    .bd-bar {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .bd-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    .bd-fill.tech { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+    .bd-fill.sent { background: linear-gradient(90deg, #9333ea, #a855f7); }
+    .bd-fill.fore { background: linear-gradient(90deg, #0891b2, #22d3ee); }
+
+    .ai-rec {
+      background: var(--indigo-dim);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .ai-rec-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .ai-rec-header svg {
+      width: 16px;
+      height: 16px;
+      color: var(--indigo);
+    }
+
+    .ai-rec-header span {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--indigo);
+    }
+
+    .ai-rec p {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-70);
+    }
+
+    .ai-rec strong {
+      color: var(--text-100);
+    }
+
+    /* Action Bar */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.98);
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .trade-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s var(--spring);
+    }
+
+    .trade-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .trade-btn.buy {
+      background: linear-gradient(135deg, #059669, #34d399);
+      color: white;
+      box-shadow: 0 0 30px var(--emerald-glow);
+    }
+
+    .trade-btn.buy:active {
+      transform: scale(0.97);
+    }
+
+    .trade-btn.sell {
+      background: linear-gradient(135deg, #dc2626, #f87171);
+      color: white;
+      box-shadow: 0 0 20px rgba(248, 113, 113, 0.3);
+    }
+
+    .action-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .action-btn svg {
+      width: 22px;
+      height: 22px;
+      color: var(--text-50);
+    }
+
+    .action-btn:hover {
+      border-color: var(--purple);
+      background: var(--purple-dim);
+    }
+
+    .action-btn:hover svg {
+      color: var(--purple);
+    }
+
+    /* ============================================
+       AI HUB TAB - FIXED
+       ============================================ */
+
+    .hub-tab {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .hub-header {
+      padding: 16px 20px 12px;
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.06) 0%, transparent 100%);
+    }
+
+    .hub-title-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 6px;
+    }
+
+    .hub-icon {
+      width: 52px;
+      height: 52px;
+      background: var(--unicorn);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px var(--purple-glow);
+    }
+
+    .hub-icon svg {
+      width: 26px;
+      height: 26px;
+      color: white;
+    }
+
+    .hub-header h1 {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .hub-subtitle {
+      font-size: 14px;
+      color: var(--text-50);
+      margin-left: 66px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding: 12px 16px 100px;
+      overflow-y: auto;
+    }
+
+    .feature-card {
+      background: var(--depth-1);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.25s var(--spring);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--unicorn);
+      transform: scaleX(0);
+      transition: transform 0.25s var(--spring);
+    }
+
+    .feature-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .feature-card.wide {
+      grid-column: span 2;
+    }
+
+    .feature-status {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 8px;
+      font-weight: 800;
+      padding: 3px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .feature-status.live {
+      background: var(--emerald-dim);
+      color: var(--emerald);
+    }
+
+    .feature-status.beta {
+      background: var(--amber-dim);
+      color: var(--amber);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .feature-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .feature-icon.purple { background: var(--purple-dim); color: var(--purple); }
+    .feature-icon.cyan { background: var(--cyan-dim); color: var(--cyan); }
+    .feature-icon.emerald { background: var(--emerald-dim); color: var(--emerald); }
+    .feature-icon.indigo { background: var(--indigo-dim); color: var(--indigo); }
+    .feature-icon.amber { background: var(--amber-dim); color: var(--amber); }
+    .feature-icon.red { background: var(--red-dim); color: var(--red); }
+
+    .feature-card h3 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .feature-card p {
+      font-size: 12px;
+      color: var(--text-50);
+      line-height: 1.4;
+    }
+
+    /* ============================================
+       DISCOVER TAB
+       ============================================ */
+
+    .discover-tab {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .discover-header {
+      padding: 16px 20px;
+      background: linear-gradient(180deg, rgba(34, 211, 238, 0.04) 0%, transparent 100%);
+    }
+
+    .discover-header h1 {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 14px;
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background: var(--depth-1);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 4px 4px 4px 16px;
+      transition: all 0.2s;
+    }
+
+    .search-bar:focus-within {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px var(--cyan-dim);
+    }
+
+    .search-bar > svg {
+      width: 20px;
+      height: 20px;
+      color: var(--text-50);
+      flex-shrink: 0;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      border: none;
+      font-size: 16px;
+      color: var(--text-100);
+      outline: none;
+    }
+
+    .search-bar input::placeholder {
+      color: var(--text-30);
+    }
+
+    .voice-btn {
+      width: 42px;
+      height: 42px;
+      background: var(--cyan-dim);
+      border: none;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .voice-btn svg {
+      width: 18px;
+      height: 18px;
+      color: var(--cyan);
+    }
+
+    .filter-section {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--void);
+      padding: 10px 0;
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+      padding: 0 20px;
+      overflow-x: auto;
+    }
+
+    .filter-pills::-webkit-scrollbar { display: none; }
+
+    .filter-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 14px;
+      background: var(--depth-1);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-50);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s var(--spring);
+    }
+
+    .filter-pill svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .filter-pill.active {
+      background: var(--unicorn);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 0 20px var(--purple-glow);
+    }
+
+    .stock-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 16px 100px;
+    }
+
+    .stock-card {
+      display: flex;
+      align-items: center;
+      padding: 14px;
+      background: var(--depth-1);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s var(--spring);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stock-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--unicorn);
+      transform: scaleY(0);
+      transition: transform 0.2s var(--spring);
+    }
+
+    .stock-card:hover::before {
+      transform: scaleY(1);
+    }
+
+    .stock-card:hover {
+      transform: translateX(4px);
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    .stock-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      overflow: hidden;
+    }
+
+    .stock-logo img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+    }
+
+    .stock-info { flex: 1; }
+
+    .stock-ticker {
+      font-size: 17px;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+
+    .stock-name {
+      font-size: 12px;
+      color: var(--text-50);
+    }
+
+    .stock-score-col { text-align: right; }
+
+    .mini-score {
+      font-size: 22px;
+      font-weight: 900;
+      background: var(--unicorn);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 2px;
+    }
+
+    .mini-direction {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .mini-direction.bullish { color: var(--emerald); }
+    .mini-direction.bearish { color: var(--red); }
+
+    /* ============================================
+       PORTFOLIO TAB
+       ============================================ */
+
+    .portfolio-tab {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .portfolio-hero {
+      margin: 16px;
+      padding: 24px;
+      background: linear-gradient(135deg, var(--indigo-dim) 0%, var(--purple-dim) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .portfolio-hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, var(--purple-glow) 0%, transparent 70%);
+    }
+
+    .port-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-50);
+      margin-bottom: 6px;
+    }
+
+    .port-value {
+      font-size: 40px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .port-change {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .change-amount {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--emerald);
+    }
+
+    .change-pct {
+      padding: 6px 12px;
+      background: var(--emerald-dim);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--emerald);
+    }
+
+    .port-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .port-stat {
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+
+    .stat-val.success { color: var(--emerald); }
+
+    .stat-lbl {
+      font-size: 11px;
+      color: var(--text-50);
+    }
+
+    .positions-section {
+      padding: 0 16px 100px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .section-head h2 {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .section-head a {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--purple);
+      text-decoration: none;
+    }
+
+    .position-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .position-card {
+      display: flex;
+      align-items: center;
+      padding: 14px;
+      background: var(--depth-1);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+    }
+
+    .pos-logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 11px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      overflow: hidden;
+    }
+
+    .pos-logo img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+    }
+
+    .pos-info { flex: 1; }
+
+    .pos-ticker {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+
+    .pos-shares {
+      font-size: 12px;
+      color: var(--text-50);
+    }
+
+    .pos-values { text-align: right; }
+
+    .pos-value {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .pos-pnl {
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .pos-pnl.up { color: var(--emerald); }
+    .pos-pnl.down { color: var(--red); }
+
+    /* ============================================
+       YOU TAB
+       ============================================ */
+
+    .you-tab {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      background: linear-gradient(180deg, var(--purple-dim) 0%, transparent 100%);
+    }
+
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+      background: var(--unicorn);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: 0 0 40px var(--purple-glow);
+    }
+
+    .profile-avatar svg {
+      width: 36px;
+      height: 36px;
+      color: white;
+    }
+
+    .profile-avatar::after {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      right: -3px;
+      width: 22px;
+      height: 22px;
+      background: var(--emerald);
+      border: 3px solid var(--void);
+      border-radius: 50%;
+    }
+
+    .profile-info h1 {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .profile-archetype {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--purple);
+    }
+
+    .profile-archetype svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .profile-archetype span {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .you-cards {
+      padding: 0 16px 100px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .you-card {
+      background: var(--depth-1);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.25s var(--spring);
+    }
+
+    .you-card:hover {
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    .you-card-head {
+      display: flex;
+      align-items: center;
+      padding: 14px;
+      cursor: pointer;
+    }
+
+    .yc-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+    }
+
+    .yc-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .yc-icon.purple { background: var(--purple-dim); color: var(--purple); }
+    .yc-icon.indigo { background: var(--indigo-dim); color: var(--indigo); }
+    .yc-icon.cyan { background: var(--cyan-dim); color: var(--cyan); }
+    .yc-icon.emerald { background: var(--emerald-dim); color: var(--emerald); }
+
+    .yc-content { flex: 1; }
+
+    .yc-content h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .yc-content p {
+      font-size: 12px;
+      color: var(--text-50);
+    }
+
+    .yc-arrow {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.25s var(--spring);
+    }
+
+    .yc-arrow svg {
+      width: 16px;
+      height: 16px;
+      color: var(--text-50);
+    }
+
+    .you-card.open .yc-arrow {
+      transform: rotate(90deg);
+    }
+
+    .you-card-body {
+      display: none;
+      padding: 0 14px 14px;
+    }
+
+    .you-card.open .you-card-body {
+      display: block;
+      animation: slideIn 0.3s var(--smooth);
+    }
+
+    .emotional-state {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      background: var(--emerald-dim);
+      border-radius: 12px;
+    }
+
+    .emotion-emoji {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--emerald), var(--cyan));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .emotion-info h4 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--emerald);
+      margin-bottom: 2px;
+    }
+
+    .emotion-info p {
+      font-size: 12px;
+      color: var(--text-50);
+    }
+
+    .journal-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .j-stat {
+      background: var(--depth-2);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .j-val {
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 2px;
+    }
+
+    .j-val.up { color: var(--emerald); }
+
+    .j-lbl {
+      font-size: 10px;
+      color: var(--text-50);
+    }
+
+    /* Chart SVG placeholder */
+    .chart-svg {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <!-- SVG Definitions -->
+  <svg style="position: absolute; width: 0; height: 0;">
+    <defs>
+      <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#6366f1"/>
+        <stop offset="50%" stop-color="#a855f7"/>
+        <stop offset="100%" stop-color="#22d3ee"/>
+      </linearGradient>
+      <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#6366f1"/>
+        <stop offset="50%" stop-color="#a855f7"/>
+        <stop offset="100%" stop-color="#22d3ee"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- Ambient Background -->
+  <div class="ambient">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="particles" id="particles"></div>
+  </div>
+
+  <div class="preview-wrapper">
+    <header class="preview-header">
+      <div class="header-logo">
+        <!-- YOUR ACTUAL LOGO -->
+        <svg viewBox="0 0 100 100" fill="none">
+          <path d="M20 40 Q50 15 80 40" stroke="url(#logoGrad)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <line x1="50" y1="35" x2="30" y2="55" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="50" y1="35" x2="70" y2="55" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="50" y1="35" x2="50" y2="60" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="30" y1="55" x2="20" y2="75" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round"/>
+          <line x1="30" y1="55" x2="40" y2="75" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round"/>
+          <line x1="70" y1="55" x2="60" y2="75" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round"/>
+          <line x1="70" y1="55" x2="80" y2="75" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="50" cy="35" r="7" fill="url(#logoGrad)"/>
+          <circle cx="30" cy="55" r="6" fill="url(#logoGrad)"/>
+          <circle cx="70" cy="55" r="6" fill="url(#logoGrad)"/>
+          <circle cx="20" cy="75" r="5" fill="url(#logoGrad)"/>
+          <circle cx="40" cy="75" r="5" fill="url(#logoGrad)"/>
+          <circle cx="60" cy="75" r="5" fill="url(#logoGrad)"/>
+          <circle cx="80" cy="75" r="5" fill="url(#logoGrad)"/>
+          <circle cx="50" cy="35" r="3" fill="white" opacity="0.6"/>
+        </svg>
+        <span>iAVA.ai</span>
+      </div>
+      <div class="legendary-badge">Ultimate Legendary Edition</div>
+      <h1>The Platform That Makes <span>Everything Else Obsolete</span></h1>
+      <p>17 AI features. Voice trading. Emotional intelligence. <span class="highlight">This is the future of trading.</span></p>
+    </header>
+
+    <!-- Phone Frame -->
+    <div class="phone-frame">
+      <!-- Dynamic Island -->
+      <div class="dynamic-island expanded" id="dynamicIsland">
+        <div class="di-content">
+          <div class="di-logo">
+            <svg viewBox="0 0 100 100" fill="none">
+              <path d="M20 40 Q50 15 80 40" stroke="url(#logoGrad)" stroke-width="4" fill="none" stroke-linecap="round"/>
+              <circle cx="50" cy="35" r="8" fill="url(#logoGrad)"/>
+              <circle cx="30" cy="55" r="6" fill="url(#logoGrad)"/>
+              <circle cx="70" cy="55" r="6" fill="url(#logoGrad)"/>
+              <circle cx="20" cy="75" r="5" fill="url(#logoGrad)"/>
+              <circle cx="40" cy="75" r="5" fill="url(#logoGrad)"/>
+              <circle cx="60" cy="75" r="5" fill="url(#logoGrad)"/>
+              <circle cx="80" cy="75" r="5" fill="url(#logoGrad)"/>
+            </svg>
+          </div>
+          <span class="di-score">87</span>
+          <span class="di-ticker">SPY</span>
+          <span class="di-trend"><i data-lucide="trending-up"></i>+0.59%</span>
+        </div>
+      </div>
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="1"/><path d="M22 11v2"/></svg>
+        </div>
+      </div>
+
+      <!-- App Shell -->
+      <div class="app-shell">
+        <div class="app-content">
+          <!-- TRADE TAB -->
+          <div class="tab-panel active" id="tradeTab">
+            <div class="trade-tab">
+              <!-- Logo Header -->
+              <div class="logo-header">
+                <div class="app-logo">
+                  <div class="logo-mark">
+                    <svg viewBox="0 0 100 100" fill="none">
+                      <path d="M20 40 Q50 15 80 40" stroke="url(#logoGrad)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                      <line x1="50" y1="35" x2="30" y2="55" stroke="url(#logoGrad)" stroke-width="2.5"/>
+                      <line x1="50" y1="35" x2="70" y2="55" stroke="url(#logoGrad)" stroke-width="2.5"/>
+                      <line x1="50" y1="35" x2="50" y2="60" stroke="url(#logoGrad)" stroke-width="2.5"/>
+                      <line x1="30" y1="55" x2="20" y2="75" stroke="url(#logoGrad)" stroke-width="2"/>
+                      <line x1="30" y1="55" x2="40" y2="75" stroke="url(#logoGrad)" stroke-width="2"/>
+                      <line x1="70" y1="55" x2="60" y2="75" stroke="url(#logoGrad)" stroke-width="2"/>
+                      <line x1="70" y1="55" x2="80" y2="75" stroke="url(#logoGrad)" stroke-width="2"/>
+                      <circle cx="50" cy="35" r="7" fill="url(#logoGrad)"/>
+                      <circle cx="30" cy="55" r="5" fill="url(#logoGrad)"/>
+                      <circle cx="70" cy="55" r="5" fill="url(#logoGrad)"/>
+                      <circle cx="20" cy="75" r="4" fill="url(#logoGrad)"/>
+                      <circle cx="40" cy="75" r="4" fill="url(#logoGrad)"/>
+                      <circle cx="60" cy="75" r="4" fill="url(#logoGrad)"/>
+                      <circle cx="80" cy="75" r="4" fill="url(#logoGrad)"/>
+                    </svg>
+                  </div>
+                  <span class="logo-type">iAVA.ai</span>
+                </div>
+                <div class="header-actions">
+                  <button class="header-btn"><i data-lucide="bell"></i></button>
+                  <button class="header-btn"><i data-lucide="settings"></i></button>
+                </div>
+              </div>
+
+              <!-- Symbol Header -->
+              <div class="symbol-header">
+                <div class="symbol-left">
+                  <div class="company-logo">
+                    <img src="https://logo.clearbit.com/spdrs.com" alt="SPY" onerror="this.parentElement.innerHTML='SPY';this.parentElement.style.background='var(--unicorn)';this.parentElement.style.color='white';this.parentElement.style.fontWeight='900';this.parentElement.style.fontSize='14px';">
+                  </div>
+                  <div class="symbol-info">
+                    <h1>SPY</h1>
+                    <span>SPDR S&P 500 ETF</span>
+                  </div>
+                </div>
+                <div class="price-block">
+                  <div class="price-value">$594.82</div>
+                  <div class="price-change up">
+                    <i data-lucide="trending-up"></i>
+                    +$3.47 (0.59%)
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chart Container -->
+              <div class="chart-container">
+                <div class="chart-glow"></div>
+
+                <div class="timeframe-bar">
+                  <button class="tf-btn">1m</button>
+                  <button class="tf-btn">5m</button>
+                  <button class="tf-btn active">15m</button>
+                  <button class="tf-btn">1H</button>
+                  <button class="tf-btn">D</button>
+                </div>
+
+                <div class="chart-tools">
+                  <button class="tool-btn"><i data-lucide="plus"></i></button>
+                  <button class="tool-btn"><i data-lucide="layers"></i></button>
+                  <button class="tool-btn"><i data-lucide="maximize-2"></i></button>
+                </div>
+
+                <svg class="chart-svg" viewBox="0 0 393 260" preserveAspectRatio="none">
+                  <g stroke="rgba(255,255,255,0.03)" stroke-width="1">
+                    <line x1="0" y1="65" x2="393" y2="65"/>
+                    <line x1="0" y1="130" x2="393" y2="130"/>
+                    <line x1="0" y1="195" x2="393" y2="195"/>
+                  </g>
+                  <g>
+                    <g><line stroke="#10b981" x1="25" y1="180" x2="25" y2="210"/><rect fill="#10b981" x="20" y="186" width="10" height="18" rx="2"/></g>
+                    <g><line stroke="#10b981" x1="50" y1="165" x2="50" y2="195"/><rect fill="#10b981" x="45" y="170" width="10" height="20" rx="2"/></g>
+                    <g><line stroke="#ef4444" x1="75" y1="155" x2="75" y2="185"/><rect fill="#ef4444" x="70" y="160" width="10" height="20" rx="2"/></g>
+                    <g><line stroke="#10b981" x1="100" y1="140" x2="100" y2="170"/><rect fill="#10b981" x="95" y="145" width="10" height="20" rx="2"/></g>
+                    <g><line stroke="#10b981" x1="125" y1="122" x2="125" y2="152"/><rect fill="#10b981" x="120" y="126" width="10" height="21" rx="2"/></g>
+                    <g><line stroke="#ef4444" x1="150" y1="115" x2="150" y2="145"/><rect fill="#ef4444" x="145" y="119" width="10" height="21" rx="2"/></g>
+                    <g><line stroke="#10b981" x1="175" y1="102" x2="175" y2="132"/><rect fill="#10b981" x="170" y="106" width="10" height="21" rx="2"/></g>
+                    <g><line stroke="#10b981" x1="200" y1="88" x2="200" y2="118"/><rect fill="#10b981" x="195" y="92" width="10" height="21" rx="2"/></g>
+                    <g><line stroke="#10b981" x1="225" y1="76" x2="225" y2="106"/><rect fill="#10b981" x="220" y="80" width="10" height="21" rx="2"/></g>
+                    <g><line stroke="#ef4444" x1="250" y1="71" x2="250" y2="101"/><rect fill="#ef4444" x="245" y="75" width="10" height="21" rx="2"/></g>
+                    <g><line stroke="#10b981" x1="275" y1="60" x2="275" y2="90"/><rect fill="#10b981" x="270" y="64" width="10" height="21" rx="2"/></g>
+                    <g><line stroke="#10b981" x1="300" y1="48" x2="300" y2="78"/><rect fill="#10b981" x="295" y="52" width="10" height="21" rx="2"/></g>
+                    <g><line stroke="#10b981" x1="325" y1="40" x2="325" y2="70"/><rect fill="#10b981" x="320" y="44" width="10" height="21" rx="2"/></g>
+                    <g><line stroke="#10b981" x1="350" y1="34" x2="350" y2="64"/><rect fill="#10b981" x="345" y="38" width="10" height="21" rx="2"/></g>
+                  </g>
+                  <line stroke="#6366f1" stroke-dasharray="4 4" x1="0" y1="45" x2="393" y2="45"/>
+                </svg>
+
+                <!-- Score Card -->
+                <div class="score-card" id="scoreCard" onclick="toggleScore()">
+                  <div class="score-main">
+                    <div class="score-left">
+                      <div class="score-ring">
+                        <svg width="64" height="64" viewBox="0 0 100 100">
+                          <circle class="ring-bg" cx="50" cy="50" r="45"/>
+                          <circle class="ring-fill" cx="50" cy="50" r="45"/>
+                        </svg>
+                        <span class="score-number">87</span>
+                      </div>
+                      <div class="score-info">
+                        <h3>Unicorn Score <span class="direction-badge bullish">Bullish</span></h3>
+                        <span>Strong confluence • 4 aligned</span>
+                      </div>
+                    </div>
+                    <div class="archetype-chip">
+                      <div class="archetype-icon"><i data-lucide="crosshair"></i></div>
+                      <span class="archetype-label">Sniper</span>
+                    </div>
+                  </div>
+
+                  <div class="expand-hint">
+                    <i data-lucide="chevron-down"></i>
+                    Tap for breakdown
+                  </div>
+
+                  <div class="score-expanded">
+                    <div class="breakdown-list">
+                      <div class="breakdown-item">
+                        <div class="bd-icon tech"><i data-lucide="activity"></i></div>
+                        <div class="bd-content">
+                          <div class="bd-header"><span>Technicals</span><span>43.5/50</span></div>
+                          <div class="bd-bar"><div class="bd-fill tech" style="width:87%"></div></div>
+                        </div>
+                      </div>
+                      <div class="breakdown-item">
+                        <div class="bd-icon sent"><i data-lucide="message-circle"></i></div>
+                        <div class="bd-content">
+                          <div class="bd-header"><span>AI Sentiment</span><span>21.5/25</span></div>
+                          <div class="bd-bar"><div class="bd-fill sent" style="width:86%"></div></div>
+                        </div>
+                      </div>
+                      <div class="breakdown-item">
+                        <div class="bd-icon fore"><i data-lucide="sparkles"></i></div>
+                        <div class="bd-content">
+                          <div class="bd-header"><span>Chronos Forecast</span><span>22.0/25</span></div>
+                          <div class="bd-bar"><div class="bd-fill fore" style="width:88%"></div></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="ai-rec">
+                      <div class="ai-rec-header">
+                        <i data-lucide="lightbulb"></i>
+                        <span>AVA Recommendation</span>
+                      </div>
+                      <p><strong>Strong Sniper setup.</strong> Squeeze fired with bullish EMA cloud. Scale in 25% now, add at $592.40. Target: $598.50.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Bar -->
+              <div class="action-bar">
+                <button class="trade-btn buy"><i data-lucide="trending-up"></i>Buy</button>
+                <button class="trade-btn sell"><i data-lucide="trending-down"></i>Sell</button>
+                <button class="action-btn"><i data-lucide="message-square"></i></button>
+                <button class="action-btn"><i data-lucide="bell"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- DISCOVER TAB -->
+          <div class="tab-panel" id="discoverTab">
+            <div class="discover-tab">
+              <div class="discover-header">
+                <h1>Discover</h1>
+                <div class="search-bar">
+                  <i data-lucide="search"></i>
+                  <input type="text" placeholder="Search or ask AVA...">
+                  <button class="voice-btn"><i data-lucide="mic"></i></button>
+                </div>
+              </div>
+
+              <div class="scroll-view">
+                <div class="filter-section">
+                  <div class="filter-pills">
+                    <button class="filter-pill active"><i data-lucide="sparkles"></i>Unicorns</button>
+                    <button class="filter-pill"><i data-lucide="zap"></i>Squeezes</button>
+                    <button class="filter-pill"><i data-lucide="bar-chart-3"></i>Earnings</button>
+                    <button class="filter-pill"><i data-lucide="trending-up"></i>Trending</button>
+                  </div>
+                </div>
+
+                <div class="stock-list">
+                  <div class="stock-card">
+                    <div class="stock-logo"><img src="https://logo.clearbit.com/nvidia.com" alt="NVDA"></div>
+                    <div class="stock-info">
+                      <div class="stock-ticker">NVDA</div>
+                      <div class="stock-name">NVIDIA Corporation</div>
+                    </div>
+                    <div class="stock-score-col">
+                      <div class="mini-score">94</div>
+                      <div class="mini-direction bullish">Bullish</div>
+                    </div>
+                  </div>
+
+                  <div class="stock-card">
+                    <div class="stock-logo"><img src="https://logo.clearbit.com/tesla.com" alt="TSLA"></div>
+                    <div class="stock-info">
+                      <div class="stock-ticker">TSLA</div>
+                      <div class="stock-name">Tesla, Inc.</div>
+                    </div>
+                    <div class="stock-score-col">
+                      <div class="mini-score">89</div>
+                      <div class="mini-direction bullish">Bullish</div>
+                    </div>
+                  </div>
+
+                  <div class="stock-card">
+                    <div class="stock-logo"><img src="https://logo.clearbit.com/apple.com" alt="AAPL"></div>
+                    <div class="stock-info">
+                      <div class="stock-ticker">AAPL</div>
+                      <div class="stock-name">Apple Inc.</div>
+                    </div>
+                    <div class="stock-score-col">
+                      <div class="mini-score">78</div>
+                      <div class="mini-direction bullish">Bullish</div>
+                    </div>
+                  </div>
+
+                  <div class="stock-card">
+                    <div class="stock-logo"><img src="https://logo.clearbit.com/meta.com" alt="META"></div>
+                    <div class="stock-info">
+                      <div class="stock-ticker">META</div>
+                      <div class="stock-name">Meta Platforms</div>
+                    </div>
+                    <div class="stock-score-col">
+                      <div class="mini-score">72</div>
+                      <div class="mini-direction bullish">Bullish</div>
+                    </div>
+                  </div>
+
+                  <div class="stock-card">
+                    <div class="stock-logo"><img src="https://logo.clearbit.com/amd.com" alt="AMD"></div>
+                    <div class="stock-info">
+                      <div class="stock-ticker">AMD</div>
+                      <div class="stock-name">Advanced Micro</div>
+                    </div>
+                    <div class="stock-score-col">
+                      <div class="mini-score">45</div>
+                      <div class="mini-direction bearish">Bearish</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI HUB TAB -->
+          <div class="tab-panel" id="hubTab">
+            <div class="hub-tab">
+              <div class="hub-header">
+                <div class="hub-title-row">
+                  <div class="hub-icon"><i data-lucide="sparkles"></i></div>
+                  <h1>AI Hub</h1>
+                </div>
+                <p class="hub-subtitle">17 AI features at your fingertips</p>
+              </div>
+
+              <div class="feature-grid">
+                <div class="feature-card wide">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon purple"><i data-lucide="brain"></i></div>
+                  <h3>AVA Mind</h3>
+                  <p>Your AI twin that learns your trading style and evolves with you</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon cyan"><i data-lucide="sparkles"></i></div>
+                  <h3>Chronos</h3>
+                  <p>AI price predictions</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon emerald"><i data-lucide="message-circle"></i></div>
+                  <h3>Sentiment</h3>
+                  <p>News & social analysis</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon indigo"><i data-lucide="activity"></i></div>
+                  <h3>Regime</h3>
+                  <p>Market condition</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon amber"><i data-lucide="dna"></i></div>
+                  <h3>Genetic</h3>
+                  <p>Strategy evolution</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon red"><i data-lucide="heart"></i></div>
+                  <h3>Emotional</h3>
+                  <p>Psychology tracking</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon purple"><i data-lucide="gauge"></i></div>
+                  <h3>Confidence</h3>
+                  <p>Signal probability</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon cyan"><i data-lucide="eye"></i></div>
+                  <h3>Patterns</h3>
+                  <p>Chart recognition</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon emerald"><i data-lucide="shield"></i></div>
+                  <h3>Risk</h3>
+                  <p>Position sizing</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon indigo"><i data-lucide="book-open"></i></div>
+                  <h3>Journal</h3>
+                  <p>Trade analysis</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon amber"><i data-lucide="search"></i></div>
+                  <h3>NLP</h3>
+                  <p>Natural search</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon red"><i data-lucide="list"></i></div>
+                  <h3>Watchlist</h3>
+                  <p>AI-curated</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon purple"><i data-lucide="layers"></i></div>
+                  <h3>Multi-TF</h3>
+                  <p>Cross analysis</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status beta">Beta</span>
+                  <div class="feature-icon cyan"><i data-lucide="users"></i></div>
+                  <h3>Social</h3>
+                  <p>Trade together</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon emerald"><i data-lucide="mic"></i></div>
+                  <h3>Voice</h3>
+                  <p>Hands-free trading</p>
+                </div>
+                <div class="feature-card">
+                  <span class="feature-status live">Live</span>
+                  <div class="feature-icon indigo"><i data-lucide="graduation-cap"></i></div>
+                  <h3>Learning</h3>
+                  <p>Education path</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PORTFOLIO TAB -->
+          <div class="tab-panel" id="portfolioTab">
+            <div class="portfolio-tab">
+              <div class="portfolio-hero">
+                <div class="port-label">Portfolio Value</div>
+                <div class="port-value">$127,482.35</div>
+                <div class="port-change">
+                  <span class="change-amount">+$2,847.50</span>
+                  <span class="change-pct">+2.28%</span>
+                </div>
+                <div class="port-stats">
+                  <div class="port-stat">
+                    <div class="stat-val">8</div>
+                    <div class="stat-lbl">Positions</div>
+                  </div>
+                  <div class="port-stat">
+                    <div class="stat-val">$24.3K</div>
+                    <div class="stat-lbl">Buying Power</div>
+                  </div>
+                  <div class="port-stat">
+                    <div class="stat-val success">68%</div>
+                    <div class="stat-lbl">Win Rate</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="positions-section">
+                <div class="section-head">
+                  <h2>Positions</h2>
+                  <a href="#">View All</a>
+                </div>
+                <div class="position-list">
+                  <div class="position-card">
+                    <div class="pos-logo"><img src="https://logo.clearbit.com/spdrs.com" alt="SPY"></div>
+                    <div class="pos-info">
+                      <div class="pos-ticker">SPY</div>
+                      <div class="pos-shares">50 shares</div>
+                    </div>
+                    <div class="pos-values">
+                      <div class="pos-value">$29,741</div>
+                      <div class="pos-pnl up">+$1,247 (4.4%)</div>
+                    </div>
+                  </div>
+                  <div class="position-card">
+                    <div class="pos-logo"><img src="https://logo.clearbit.com/nvidia.com" alt="NVDA"></div>
+                    <div class="pos-info">
+                      <div class="pos-ticker">NVDA</div>
+                      <div class="pos-shares">25 shares</div>
+                    </div>
+                    <div class="pos-values">
+                      <div class="pos-value">$34,875</div>
+                      <div class="pos-pnl up">+$2,340 (7.2%)</div>
+                    </div>
+                  </div>
+                  <div class="position-card">
+                    <div class="pos-logo"><img src="https://logo.clearbit.com/tesla.com" alt="TSLA"></div>
+                    <div class="pos-info">
+                      <div class="pos-ticker">TSLA</div>
+                      <div class="pos-shares">30 shares</div>
+                    </div>
+                    <div class="pos-values">
+                      <div class="pos-value">$12,450</div>
+                      <div class="pos-pnl down">-$380 (3.0%)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- YOU TAB -->
+          <div class="tab-panel" id="youTab">
+            <div class="you-tab">
+              <div class="profile-header">
+                <div class="profile-avatar"><i data-lucide="user"></i></div>
+                <div class="profile-info">
+                  <h1>jMoney</h1>
+                  <div class="profile-archetype">
+                    <i data-lucide="crosshair"></i>
+                    <span>Sniper Archetype</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="you-cards">
+                <div class="you-card" onclick="toggleCard(this)">
+                  <div class="you-card-head">
+                    <div class="yc-icon purple"><i data-lucide="brain"></i></div>
+                    <div class="yc-content">
+                      <h3>AVA Mind</h3>
+                      <p>Your AI trading twin</p>
+                    </div>
+                    <div class="yc-arrow"><i data-lucide="chevron-right"></i></div>
+                  </div>
+                  <div class="you-card-body">
+                    <div class="emotional-state">
+                      <div class="emotion-emoji">😌</div>
+                      <div class="emotion-info">
+                        <h4>Calm & Focused</h4>
+                        <p>Optimal for trading decisions</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="you-card" onclick="toggleCard(this)">
+                  <div class="you-card-head">
+                    <div class="yc-icon indigo"><i data-lucide="book-open"></i></div>
+                    <div class="yc-content">
+                      <h3>Trade Journal</h3>
+                      <p>AI-powered analysis</p>
+                    </div>
+                    <div class="yc-arrow"><i data-lucide="chevron-right"></i></div>
+                  </div>
+                  <div class="you-card-body">
+                    <div class="journal-stats">
+                      <div class="j-stat">
+                        <div class="j-val up">+$4,280</div>
+                        <div class="j-lbl">This Week</div>
+                      </div>
+                      <div class="j-stat">
+                        <div class="j-val">23</div>
+                        <div class="j-lbl">Trades</div>
+                      </div>
+                      <div class="j-stat">
+                        <div class="j-val up">68%</div>
+                        <div class="j-lbl">Win Rate</div>
+                      </div>
+                      <div class="j-stat">
+                        <div class="j-val">2.4</div>
+                        <div class="j-lbl">Profit Factor</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="you-card">
+                  <div class="you-card-head">
+                    <div class="yc-icon cyan"><i data-lucide="credit-card"></i></div>
+                    <div class="yc-content">
+                      <h3>Broker</h3>
+                      <p>Alpaca • Connected</p>
+                    </div>
+                    <div class="yc-arrow"><i data-lucide="chevron-right"></i></div>
+                  </div>
+                </div>
+
+                <div class="you-card">
+                  <div class="you-card-head">
+                    <div class="yc-icon emerald"><i data-lucide="bell"></i></div>
+                    <div class="yc-content">
+                      <h3>Alerts</h3>
+                      <p>12 active alerts</p>
+                    </div>
+                    <div class="yc-arrow"><i data-lucide="chevron-right"></i></div>
+                  </div>
+                </div>
+
+                <div class="you-card">
+                  <div class="you-card-head">
+                    <div class="yc-icon purple"><i data-lucide="settings"></i></div>
+                    <div class="yc-content">
+                      <h3>Settings</h3>
+                      <p>Theme, preferences</p>
+                    </div>
+                    <div class="yc-arrow"><i data-lucide="chevron-right"></i></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Nav -->
+        <nav class="bottom-nav">
+          <ul class="nav-list">
+            <li class="nav-item active" onclick="switchTab('trade')">
+              <i data-lucide="candlestick-chart" class="nav-icon"></i>
+              <span class="nav-label">Trade</span>
+            </li>
+            <li class="nav-item" onclick="switchTab('discover')">
+              <i data-lucide="search" class="nav-icon"></i>
+              <span class="nav-label">Discover</span>
+            </li>
+            <li class="nav-item" onclick="switchTab('hub')">
+              <i data-lucide="sparkles" class="nav-icon"></i>
+              <span class="nav-label">AI Hub</span>
+            </li>
+            <li class="nav-item" onclick="switchTab('portfolio')">
+              <i data-lucide="briefcase" class="nav-icon"></i>
+              <span class="nav-label">Portfolio</span>
+            </li>
+            <li class="nav-item" onclick="switchTab('you')">
+              <i data-lucide="user" class="nav-icon"></i>
+              <span class="nav-label">You</span>
+            </li>
+          </ul>
+          <div class="home-indicator"></div>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // Particles
+    const pc = document.getElementById('particles');
+    for (let i = 0; i < 50; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDelay = Math.random() * 15 + 's';
+      p.style.animationDuration = (12 + Math.random() * 8) + 's';
+      pc.appendChild(p);
+    }
+
+    function switchTab(id) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById(id + 'Tab').classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      
+      const di = document.getElementById('dynamicIsland');
+      di.classList.toggle('expanded', id === 'trade');
+    }
+
+    function toggleScore() {
+      document.getElementById('scoreCard').classList.toggle('expanded');
+    }
+
+    function toggleCard(el) {
+      el.classList.toggle('open');
+    }
+  </script>
+</body>
+</html>

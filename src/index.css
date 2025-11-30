@@ -3,14 +3,87 @@
 @tailwind utilities;
 
 :root {
-  /* === ELITE 2025 DESIGN SYSTEM - DARKER EDITION === */
+  /* === iAVA.ai LEGENDARY DESIGN SYSTEM === */
+  /* Based on: iAVA-ULTIMATE-DESIGN-SYSTEM.html */
 
-  /* Base surfaces - TRUE BLACK for content to pop */
+  /* Safe area insets for mobile */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nav-height: 72px;
+
+  /* Z-index hierarchy - prevents stacking conflicts */
+  --z-content: 10;
+  --z-score: 20;
+  --z-nav: 30;
+  --z-topbar: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+
+  /* THE VOID (Backgrounds) */
+  --void: #000000;
+  --void-soft: #030712;
+  --depth-1: #0a0f1a;
+  --depth-2: #111827;
+  --depth-3: #1f2937;
+
+  /* Legacy aliases (for backward compatibility) */
   --bg-base: #000000;        /* True black - deepest layer */
-  --bg-surface: #050505;     /* Near black - main background */
-  --bg-panel: #0a0a0a;       /* Panel background */
-  --bg-elevated: #111111;    /* Elevated surface */
+  --bg-surface: #030712;     /* Near black - main background */
+  --bg-panel: #0a0f1a;       /* Panel background */
+  --bg-elevated: #111827;    /* Elevated surface */
   --bg-card: #0d0d0d;        /* Card background */
+
+  /* UNICORN GRADIENT - The signature iAVA colors */
+  --unicorn: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #22d3ee 100%);
+  --unicorn-vertical: linear-gradient(180deg, #6366f1 0%, #a855f7 50%, #22d3ee 100%);
+
+  /* INTELLIGENCE (Purple) - AI Features */
+  --purple: #a855f7;
+  --purple-bright: #c084fc;
+  --purple-dim: rgba(168, 85, 247, 0.12);
+  --purple-glow: rgba(168, 85, 247, 0.5);
+
+  /* PREDICTION (Cyan) - Chronos, Forecasts */
+  --cyan: #22d3ee;
+  --cyan-bright: #67e8f9;
+  --cyan-dim: rgba(34, 211, 238, 0.12);
+  --cyan-glow: rgba(34, 211, 238, 0.5);
+
+  /* SUCCESS (Emerald) - Profit, Bullish */
+  --emerald: #34d399;
+  --emerald-bright: #6ee7b7;
+  --emerald-dim: rgba(52, 211, 153, 0.12);
+  --emerald-glow: rgba(52, 211, 153, 0.4);
+
+  /* DANGER (Red) - Loss, Bearish */
+  --red: #f87171;
+  --red-bright: #fca5a5;
+  --red-dim: rgba(248, 113, 113, 0.12);
+  --red-glow: rgba(248, 113, 113, 0.4);
+
+  /* CORE (Indigo) */
+  --indigo: #6366f1;
+  --indigo-bright: #818cf8;
+  --indigo-dim: rgba(99, 102, 241, 0.12);
+  --indigo-glow: rgba(99, 102, 241, 0.5);
+
+  /* TEXT */
+  --text-100: #ffffff;
+  --text-90: #f1f5f9;
+  --text-70: #cbd5e1;
+  --text-50: #94a3b8;
+  --text-30: #64748b;
+  --text-20: #475569;
+
+  /* GLASS */
+  --glass-bg: rgba(10, 15, 26, 0.88);
+  --glass-bg-heavy: rgba(10, 15, 26, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-border-light: rgba(255, 255, 255, 0.08);
+
+  /* SPRING ANIMATION */
+  --spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --smooth: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Legacy aliases (for backward compatibility) */
   --surface: #050505;
