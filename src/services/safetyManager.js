@@ -521,12 +521,56 @@ export function resetCircuitBreaker(confirmationCode = null) {
   return true
 }
 
+/**
+ * Get audit statistics for dashboard display
+ */
+export function getAuditStats() {
+  const now = Date.now()
+  const todayStart = new Date().setHours(0, 0, 0, 0)
+
+  // Filter today's events
+  const todayEvents = auditLog.filter(e => e.timestamp >= todayStart)
+
+  // Count today's trades
+  const todayTrades = todayEvents.filter(e => e.eventType === AUDIT_EVENTS.TRADE_EXECUTED)
+
+  // Calculate today's P&L (from trade events)
+  let todayPnL = 0
+  todayTrades.forEach(trade => {
+    if (trade.details?.pnl) {
+      todayPnL += trade.details.pnl
+    }
+  })
+
+  // Count by event type
+  const eventCounts = {}
+  todayEvents.forEach(e => {
+    eventCounts[e.eventType] = (eventCounts[e.eventType] || 0) + 1
+  })
+
+  // Get session stats
+  const sessionEvents = auditLog.filter(e => e.sessionId === sessionId)
+  const sessionTrades = sessionEvents.filter(e => e.eventType === AUDIT_EVENTS.TRADE_EXECUTED)
+
+  return {
+    todayTrades: todayTrades.length,
+    todayPnL,
+    todayEvents: todayEvents.length,
+    eventCounts,
+    sessionTrades: sessionTrades.length,
+    totalLogEntries: auditLog.length,
+    oldestEntry: auditLog.length > 0 ? new Date(auditLog[0].timestamp).toISOString() : null,
+    newestEntry: auditLog.length > 0 ? new Date(auditLog[auditLog.length - 1].timestamp).toISOString() : null
+  }
+}
+
 // Initialize on import
 initSafetyManager()
 
 export default {
   logAuditEvent,
   getAuditLog,
+  getAuditStats,
   exportAuditLog,
   activateEmergencyStop,
   releaseEmergencyStop,

@@ -1359,38 +1359,50 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
     "📸 Upload chart for AI analysis"
   ]
 
+  // Detect mobile for full-screen mode
+  const [isMobileView, setIsMobileView] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobileView(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   return (
-    <div className="glass-panel flex flex-col overflow-visible" style={{ height: 'clamp(500px, 750px, 90vh)' }}>
-      {/* Premium Header with animated background */}
-      <div className="panel-header">
+    <div
+      className={`flex flex-col overflow-visible ${isMobileView ? 'fixed inset-0 z-40 bg-slate-950' : 'glass-panel'}`}
+      style={{ height: isMobileView ? '100%' : 'clamp(500px, 750px, 90vh)' }}
+    >
+      {/* Premium Header - Mobile optimized */}
+      <div className={`panel-header ${isMobileView ? 'px-4 py-3 bg-slate-900/95 backdrop-blur-xl border-b border-slate-800' : ''}`}>
         <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl animate-pulse pointer-events-none" style={{ animationDuration: '4s' }} />
-        <div className="relative flex items-center gap-4">
-          {/* Icon with glow effect */}
-          <span className="panel-icon" style={{ fontSize: 'var(--text-3xl)' }}>🤖</span>
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h3 className="font-bold bg-gradient-to-r from-indigo-200 via-purple-200 to-cyan-300 bg-clip-text text-transparent" style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-bold)' }}>
-                AI Assistant
+        <div className="relative flex items-center gap-3">
+          {/* Icon with glow effect - smaller on mobile */}
+          <span className="panel-icon" style={{ fontSize: isMobileView ? 'var(--text-2xl)' : 'var(--text-3xl)' }}>🤖</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold bg-gradient-to-r from-indigo-200 via-purple-200 to-cyan-300 bg-clip-text text-transparent truncate" style={{ fontSize: isMobileView ? 'var(--text-lg)' : 'var(--text-xl)', fontWeight: 'var(--font-bold)' }}>
+                AI Chat
               </h3>
-              {/* Symbol Badge - New Feature! */}
+              {/* Symbol Badge - smaller on mobile */}
               {currentSymbol && (
-                <span className="px-3 py-1 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-cyan-500/30 rounded-full text-cyan-300 text-sm font-semibold shadow-lg shadow-cyan-500/20">
+                <span className={`px-2 py-0.5 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-cyan-500/30 rounded-full text-cyan-300 font-semibold shadow-lg shadow-cyan-500/20 ${isMobileView ? 'text-xs' : 'text-sm'}`}>
                   {currentSymbol}
                 </span>
               )}
             </div>
-            <p className="text-slate-400 flex items-center gap-2 mt-1" style={{ fontSize: 'var(--text-xs)' }}>
+            {/* Status - simplified on mobile */}
+            <p className="text-slate-400 flex items-center gap-2 mt-0.5" style={{ fontSize: 'var(--text-xs)' }}>
               <span className={`w-2 h-2 rounded-full ${hasRealData ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
               <span style={{ fontWeight: 'var(--font-semibold)' }}>
-                {hasRealData
-                  ? `Live Data • ${marketData.timeframe}`
-                  : 'Sample Data • Load chart for live analysis'}
+                {hasRealData ? `Live • ${marketData.timeframe}` : 'Sample Data'}
               </span>
-              <span className="text-slate-400">• Chat persisted 24h</span>
+              {!isMobileView && <span className="text-slate-500">• Chat persisted 24h</span>}
             </p>
           </div>
-          {/* Action Buttons */}
-          <div className="flex gap-2">
+          {/* Action Buttons - condensed on mobile */}
+          <div className={`flex ${isMobileView ? 'gap-1' : 'gap-2'}`}>
             {/* Model Selector - New Feature! */}
             <div className="relative">
               <button
@@ -1427,20 +1439,22 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
               )}
             </div>
             {/* Enhanced Trust Mode with levels, limits, and execution history */}
-            <TrustModeToggle />
-            <button
-              onClick={exportChat}
-              className="btn-tertiary btn-sm"
-              title="Export chat to clipboard"
-            >
-              📋 Export
-            </button>
+            {!isMobileView && <TrustModeToggle />}
+            {!isMobileView && (
+              <button
+                onClick={exportChat}
+                className="btn-tertiary btn-sm"
+                title="Export chat to clipboard"
+              >
+                📋 Export
+              </button>
+            )}
             <button
               onClick={clearChat}
-              className="btn-ghost btn-sm"
+              className={`btn-ghost ${isMobileView ? 'p-2' : 'btn-sm'}`}
               title="Clear chat history"
             >
-              🗑️ Clear
+              🗑️{!isMobileView && ' Clear'}
             </button>
           </div>
         </div>
@@ -1750,8 +1764,8 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
         </div>
       )}
 
-      {/* Premium Input Area */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-slate-700/50 bg-slate-900/30 backdrop-blur-sm relative" style={{ zIndex: 30 }}>
+      {/* Premium Input Area - with extra bottom padding on mobile for nav */}
+      <form onSubmit={handleSubmit} className={`p-4 border-t border-slate-700/50 bg-slate-900/30 backdrop-blur-sm relative ${isMobileView ? 'pb-24' : ''}`} style={{ zIndex: 30 }}>
         {/* File Preview Area */}
         {uploadedFiles.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">

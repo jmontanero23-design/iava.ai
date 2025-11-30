@@ -34,6 +34,7 @@ export default function AITradeCopilot({ onClose }) {
   const [watchlist, setWatchlist] = useState(['SPY', 'QQQ', 'AAPL', 'TSLA', 'NVDA']) // PhD++: Multi-symbol monitoring
   const [validatedSymbols, setValidatedSymbols] = useState(new Set()) // Cache of validated symbols
   const [lastConfluence, setLastConfluence] = useState(null) // Track confluence changes
+  const [chronosForecast, setChronosForecast] = useState(null) // Cached Chronos forecast
 
   // PhD++ ALERT COOLDOWN: Use ref instead of state for synchronous checks
   const alertCooldownsRef = useRef({})
@@ -1108,6 +1109,29 @@ export default function AITradeCopilot({ onClose }) {
     return () => window.removeEventListener('ava.chronosAlert', handleChronosAlert)
   }, [])
 
+  // Load cached Chronos forecast when symbol changes
+  useEffect(() => {
+    const symbol = marketData.symbol
+    if (!symbol) {
+      setChronosForecast(null)
+      return
+    }
+
+    // Try to get cached forecast
+    const cached = chronosBridge.getCachedForecast(symbol)
+    setChronosForecast(cached)
+
+    // Listen for new forecasts
+    const handleNewForecast = (event) => {
+      if (event.detail?.symbol === symbol) {
+        setChronosForecast(event.detail.forecast)
+      }
+    }
+
+    window.addEventListener('ava.forecastUpdated', handleNewForecast)
+    return () => window.removeEventListener('ava.forecastUpdated', handleNewForecast)
+  }, [marketData.symbol])
+
   // PhD++ CONFLUENCE CHANGE ALERT: Alert when confluence changes to FULL (with cooldown) - POSITION-AWARE
   useEffect(() => {
     if (!marketData.signalState) return
@@ -1591,6 +1615,143 @@ export default function AITradeCopilot({ onClose }) {
           </div>
         )}
 
+        {/* Chronos AI Forecast Section */}
+        {marketData.symbol && (
+          <div className="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 px-3 py-2 border-b border-purple-500/30">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm">🔮</span>
+                <span className="text-xs text-purple-300 font-semibold">AVA FORECAST</span>
+              </div>
+              <button
+                onClick={() => {
+                  // Navigate to Chronos forecast tab
+                  window.dispatchEvent(new CustomEvent('iava.setActiveTab', {
+                    detail: { tab: 'ai-hub' }
+                  }))
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('ava.openHubFeature', {
+                      detail: { feature: 'forecast' }
+                    }))
+                  }, 100)
+                }}
+                className="text-xs text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+              >
+                <span>View Full Forecast</span>
+                <span>→</span>
+              </button>
+            </div>
+
+            {chronosForecast ? (
+              <div className="space-y-2">
+                {/* Prediction Summary */}
+                <div className="flex items-center justify-between bg-slate-800/50 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">
+                      {chronosForecast.direction === 'bullish' ? '📈' :
+                       chronosForecast.direction === 'bearish' ? '📉' : '➡️'}
+                    </span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-bold ${
+                          chronosForecast.direction === 'bullish' ? 'text-emerald-400' :
+                          chronosForecast.direction === 'bearish' ? 'text-rose-400' :
+                          'text-slate-400'
+                        }`}>
+                          {chronosForecast.direction?.toUpperCase() || 'NEUTRAL'}
+                        </span>
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${
+                          chronosForecast.confidence >= 80 ? 'bg-emerald-500/20 text-emerald-400' :
+                          chronosForecast.confidence >= 65 ? 'bg-amber-500/20 text-amber-400' :
+                          'bg-slate-500/20 text-slate-400'
+                        }`}>
+                          {chronosForecast.confidence}% confident
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-400 mt-0.5">
+                        <span className={chronosForecast.percentChange >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                          {chronosForecast.percentChange >= 0 ? '+' : ''}{chronosForecast.percentChange?.toFixed(2) || 0}%
+                        </span>
+                        {chronosForecast.targetPrice && (
+                          <span className="ml-2">
+                            → ${chronosForecast.targetPrice?.toFixed(2)}
+                          </span>
+                        )}
+                        {chronosForecast.horizon && (
+                          <span className="text-slate-500 ml-2">
+                            in {chronosForecast.horizon}h
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                {chronosForecast.confidence >= 65 && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        if (chronosForecast.targetPrice) {
+                          chronosBridge.createPriceAlert(
+                            marketData.symbol,
+                            chronosForecast.targetPrice,
+                            chronosForecast.direction
+                          )
+                        }
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-xs font-medium transition-colors"
+                    >
+                      <span>🔔</span>
+                      <span>Set Alert at Target</span>
+                    </button>
+                    {chronosForecast.confidence >= 75 && chronosForecast.direction !== 'neutral' && (
+                      <button
+                        onClick={() => {
+                          chronosBridge.createOrderAtPrediction(
+                            marketData.symbol,
+                            chronosForecast.targetPrice,
+                            chronosForecast.direction
+                          )
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          chronosForecast.direction === 'bullish'
+                            ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300'
+                            : 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300'
+                        }`}
+                      >
+                        <span>{chronosForecast.direction === 'bullish' ? '🟢' : '🔴'}</span>
+                        <span>Quick {chronosForecast.direction === 'bullish' ? 'Buy' : 'Sell'}</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-3">
+                <div className="text-xs text-slate-500">
+                  No forecast available for {marketData.symbol}
+                </div>
+                <button
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('iava.setActiveTab', {
+                      detail: { tab: 'ai-hub' }
+                    }))
+                    setTimeout(() => {
+                      window.dispatchEvent(new CustomEvent('ava.openHubFeature', {
+                        detail: { feature: 'forecast' }
+                      }))
+                    }, 100)
+                  }}
+                  className="text-xs text-purple-400 hover:text-purple-300 mt-1 inline-block"
+                >
+                  Generate Forecast →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Alerts */}
         <div className="max-h-96 overflow-y-auto p-3 space-y-2">
           {alerts.length === 0 ? (
@@ -1774,11 +1935,15 @@ export default function AITradeCopilot({ onClose }) {
         <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 px-3 py-2 border-t border-purple-500/30">
           <button
             onClick={() => {
-              // Navigate to AI Chat tab and set a message
+              // Navigate to AI Hub tab first
               window.dispatchEvent(new CustomEvent('iava.setActiveTab', {
-                detail: { tab: 'chat' }
+                detail: { tab: 'ai-hub' }
               }))
-              // Dispatch message for AI Chat
+              // Then switch to AI Chat within the hub
+              setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('ava.openChat'))
+              }, 50)
+              // Finally dispatch the message for AI Chat
               setTimeout(() => {
                 window.dispatchEvent(new CustomEvent('ava.chatMessage', {
                   detail: {
@@ -1787,7 +1952,7 @@ export default function AITradeCopilot({ onClose }) {
                       : 'Analyze my current trading patterns and give me recommendations.'
                   }
                 }))
-              }, 100)
+              }, 150)
             }}
             className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/30 hover:to-pink-500/30 border border-purple-500/40 text-purple-300 hover:text-purple-200 transition-all text-sm font-medium"
           >

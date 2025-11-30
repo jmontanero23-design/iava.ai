@@ -208,11 +208,13 @@ export class UltraEliteAI {
     });
 
     const ultraScore = scoreResult.score || scoreResult;
+    const pureAIScore = scoreResult.pureAIScore || 50; // PhD+++ Pure AI (Sentiment + Forecast only)
     const breakdown = scoreResult.breakdown || {};
 
     return {
       symbol,
-      ultraScore,
+      ultraScore,              // Full 50% Tech + 25% Sentiment + 25% Forecast
+      pureAIScore,             // PhD+++ NEW: Just Sentiment + Forecast (0-100) for true 50/50 splits
       action: this.determineAction(ultraScore),
       confidence: this.calculateConfidence(ultraScore),
       signals: {
@@ -323,15 +325,28 @@ export class UltraEliteAI {
 
       const finalScore = Math.min(100, Math.max(0, score));
 
+      // PhD+++ PURE AI SCORE: Just Sentiment + Forecast (NO technicals)
+      // This is for external consumers who want to add their own technical calculation
+      // Normalized to 0-100: (sentimentContribution + forecastContribution) scaled from 50-point to 100-point
+      const pureAIContribution = sentimentContribution + forecastContribution;
+      // Since sentiment (0-25) + forecast (0-25) = 0-50, we scale to 0-100
+      const pureAIScore = Math.min(100, Math.max(0, pureAIContribution * 2));
+
       console.log(`[UltraScore] Simplified Breakdown:`, {
         finalScore: finalScore.toFixed(2),
+        pureAIScore: pureAIScore.toFixed(2),
         technicals: `${techContribution.toFixed(1)} (${weights.technicals * 100}%)`,
         sentiment: `${sentimentContribution.toFixed(1)} (${weights.sentiment * 100}%)`,
         forecast: `${forecastContribution.toFixed(1)} (${weights.forecast * 100}%)`,
         modelsWorking: `${breakdown.modelsUsed.length}/${breakdown.modelsUsed.length + breakdown.modelsFailed.length}`
       });
 
-      return { score: finalScore, breakdown };
+      // Return both combined score AND pure AI score (for true 50/50 splits)
+      return {
+        score: finalScore,           // Full 50/25/25 score
+        pureAIScore: pureAIScore,    // Just Sentiment + Forecast (0-100)
+        breakdown
+      };
     } catch (error) {
       console.error('[UltraScore] Error calculating score:', error);
       return { score: 50, breakdown };

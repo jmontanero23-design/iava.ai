@@ -23,6 +23,7 @@ import WelcomeTour, { TourHelpButton } from './components/WelcomeTour.jsx'
 import ModeToggle from './components/ModeToggle.jsx'
 import EnhancedStatusBar from './components/EnhancedStatusBar.jsx'
 import UserProfile from './components/UserProfile.jsx'
+import EmotionalStateBadge from './components/EmotionalStateBadge.jsx'
 import SignalQualityScorerPanel from './components/SignalQualityScorerPanel.jsx'
 import RiskAdvisorPanel from './components/RiskAdvisorPanel.jsx'
 import TradeJournalAIPanel from './components/TradeJournalAIPanel.jsx'
@@ -42,6 +43,7 @@ import MultiTimeframePanel from './components/MultiTimeframePanel.jsx'
 import ChronosForecast from './components/ChronosForecast.jsx'
 import AIChatDemo from './pages/AIChatDemo.jsx'
 import MobileBottomNav from './components/MobileBottomNav.jsx'
+import TrustModeBanner from './components/TrustModeBanner.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -297,6 +299,16 @@ function AppWithGestures({
         setActiveTab(tabs[prevIndex])
       }}
     >
+      {/* Global Trust Mode Banner - shows when AVA is trading autonomously */}
+      <TrustModeBanner
+        onNavigateToSafety={() => {
+          setActiveTab('ava-mind')
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('ava.openSafety'))
+          }, 100)
+        }}
+      />
+
       <div className="min-h-screen bg-transparent text-slate-100 bg-grid">
         <div className="max-w-7xl mx-auto p-6 space-y-6 pb-16">
           <Hero />
@@ -417,6 +429,9 @@ function AppWithGestures({
               </button>
 
               <div className="w-px h-8 bg-slate-700"></div>
+
+              {/* Emotional State Badge - AVA Mind Integration */}
+              <EmotionalStateBadge />
 
               <ModeToggle />
               <FeatureStatusBadge onClick={() => setActiveTab('ai-features')} />

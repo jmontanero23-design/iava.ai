@@ -26,6 +26,15 @@ import avaMindService, {
   getRecentTrades
 } from '../../services/avaMindService.js'
 
+// Personality & Archetype system
+import {
+  determineArchetype,
+  detectEmotionalState,
+  TRADING_ARCHETYPES
+} from '../../services/avaMindPersonality.js'
+import ArchetypeReveal from './ArchetypeReveal.jsx'
+import EmotionalStateBadge from './EmotionalStateBadge.jsx'
+
 // Import sub-components
 import AVAOrb from './AVAOrb.jsx'
 import HexGrid from './HexGrid.jsx'
@@ -110,6 +119,10 @@ export default function AVAMindDashboard({
   const [activeTab, setActiveTab] = useState('overview')
   const [voiceActive, setVoiceActive] = useState(false)
 
+  // Archetype & Personality state
+  const [archetype, setArchetype] = useState(null)
+  const [showArchetypeReveal, setShowArchetypeReveal] = useState(false)
+
   // Onboarding state
   const { needsOnboarding, completeOnboarding, resetOnboarding } = useAVAMindOnboarding()
 
@@ -173,6 +186,14 @@ export default function AVAMindDashboard({
       }
     }
   }, [learningStats])
+
+  // Calculate archetype when personality loads
+  useEffect(() => {
+    if (personality) {
+      const result = determineArchetype(personality)
+      setArchetype(result)
+    }
+  }, [personality])
 
   // Handle trust level change
   const handleTrustChange = (level) => {
@@ -343,6 +364,47 @@ export default function AVAMindDashboard({
                   )}
                 </div>
               </div>
+
+              {/* Trading Archetype Display */}
+              {archetype?.primary && (
+                <div
+                  className="bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-800/50 p-6 cursor-pointer hover:scale-[1.01] transition-all"
+                  onClick={() => setShowArchetypeReveal(true)}
+                >
+                  <div className="flex items-center gap-4">
+                    <span
+                      className="text-5xl"
+                      style={{ filter: `drop-shadow(0 0 20px ${archetype.primary.archetype.color}60)` }}
+                    >
+                      {archetype.primary.archetype.emoji}
+                    </span>
+                    <div>
+                      <h2
+                        className="text-xl font-bold"
+                        style={{ color: archetype.primary.archetype.color }}
+                      >
+                        {archetype.primary.archetype.name}
+                      </h2>
+                      <p className="text-sm text-slate-400">{archetype.primary.archetype.tagline}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span
+                          className="text-xs px-2 py-1 rounded-full"
+                          style={{
+                            backgroundColor: `${archetype.primary.archetype.color}20`,
+                            color: archetype.primary.archetype.color
+                          }}
+                        >
+                          {archetype.primary.score}% match
+                        </span>
+                        <span className="text-xs text-slate-500">Click for details</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Emotional State Badge */}
+              <EmotionalStateBadge className="w-full" />
 
               {/* Personality HexGrid */}
               <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-800/50 p-6">
@@ -608,6 +670,19 @@ export default function AVAMindDashboard({
             completeOnboarding()
           }}
           onSkip={completeOnboarding}
+        />
+      )}
+
+      {/* Archetype Reveal Modal */}
+      {showArchetypeReveal && archetype && (
+        <ArchetypeReveal
+          archetype={archetype}
+          profile={personality}
+          onContinue={() => setShowArchetypeReveal(false)}
+          onRetake={() => {
+            setShowArchetypeReveal(false)
+            resetOnboarding()
+          }}
         />
       )}
 

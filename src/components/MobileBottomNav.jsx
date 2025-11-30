@@ -279,34 +279,6 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
         </div>
       </nav>
 
-      {/* Floating Action Buttons (FAB) for quick actions */}
-      <div className="fixed bottom-24 right-4 flex flex-col gap-2 z-40 md:hidden">
-        {/* Mic button for voice input */}
-        <button
-          onClick={() => {
-            window.dispatchEvent(new CustomEvent('iava.startVoiceInput'))
-            if (window.navigator.vibrate) window.navigator.vibrate(20)
-          }}
-          className="w-12 h-12 bg-indigo-600 rounded-full shadow-lg shadow-indigo-500/30 flex items-center justify-center text-white hover:scale-110 transition-all"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-          </svg>
-        </button>
-
-        {/* Command palette button */}
-        <button
-          onClick={() => {
-            window.dispatchEvent(new CustomEvent('iava.toggleCommandPalette'))
-            if (window.navigator.vibrate) window.navigator.vibrate(20)
-          }}
-          className="w-12 h-12 bg-slate-800 rounded-full shadow-lg flex items-center justify-center text-slate-300 hover:scale-110 transition-all"
-        >
-          <span className="text-xl">⌘</span>
-        </button>
-      </div>
-
       {/* Add padding to main content to account for bottom nav */}
       <style jsx global>{`
         @media (max-width: 768px) {

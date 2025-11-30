@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import AIFeaturesDashboard from './AIFeaturesDashboard.jsx'
 import AIChat from './AIChat.jsx'
 import MarketSentiment from './MarketSentiment.jsx'
@@ -18,6 +18,7 @@ import OptionsGreeksCalculator from './OptionsGreeksCalculator.jsx'
 import Level2MarketDepth from './Level2MarketDepth.jsx'
 import VolumeProfile from './VolumeProfile.jsx'
 import PortfolioAnalytics from './PortfolioAnalytics.jsx'
+import VoiceAlertSettings, { VoiceAlertToggle } from './VoiceAlertSettings.jsx'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
 
 /**
@@ -28,6 +29,30 @@ export default function AIHub() {
   const [selectedFeature, setSelectedFeature] = useState('dashboard')
   const { marketData } = useMarketData()
   const symbol = marketData?.symbol || 'SPY'
+
+  // Listen for events to switch to a specific feature
+  useEffect(() => {
+    const handleOpenFeature = (event) => {
+      const { feature } = event.detail || {}
+      if (feature) {
+        setSelectedFeature(feature)
+      }
+    }
+
+    // Listen for specific events
+    const handleOpenChat = () => setSelectedFeature('chat')
+    const handleOpenForecast = () => setSelectedFeature('forecast')
+
+    window.addEventListener('ava.openHubFeature', handleOpenFeature)
+    window.addEventListener('ava.openChat', handleOpenChat)
+    window.addEventListener('ava.openForecast', handleOpenForecast)
+
+    return () => {
+      window.removeEventListener('ava.openHubFeature', handleOpenFeature)
+      window.removeEventListener('ava.openChat', handleOpenChat)
+      window.removeEventListener('ava.openForecast', handleOpenForecast)
+    }
+  }, [])
 
   const features = [
     { id: 'dashboard', name: 'Dashboard', icon: '🎯', component: AIFeaturesDashboard },
@@ -46,7 +71,8 @@ export default function AIHub() {
     { id: 'options_greeks', name: 'Options Greeks', icon: 'Δ', component: OptionsGreeksCalculator },
     { id: 'level2_depth', name: 'Level 2', icon: '📊', component: Level2MarketDepth },
     { id: 'volume_profile', name: 'Volume Profile', icon: '📈', component: VolumeProfile },
-    { id: 'portfolio_analytics', name: 'Portfolio', icon: '💼', component: PortfolioAnalytics }
+    { id: 'portfolio_analytics', name: 'Portfolio', icon: '💼', component: PortfolioAnalytics },
+    { id: 'voice_settings', name: 'Voice', icon: '🔊', component: VoiceAlertSettings }
   ]
 
   const ActiveComponent = features.find(f => f.id === selectedFeature)?.component
@@ -59,9 +85,10 @@ export default function AIHub() {
           <h2 className="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
             AI Command Center
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <VoiceAlertToggle />
             <span className="text-xs text-slate-500">
-              {features.filter(f => f.id !== 'dashboard').length} AI Features Active
+              {features.filter(f => f.id !== 'dashboard' && f.id !== 'voice_settings').length} AI Features
             </span>
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
           </div>

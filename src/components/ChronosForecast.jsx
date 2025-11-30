@@ -15,6 +15,7 @@ import { useState, useEffect } from 'react'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
 import { cacheForecast as cacheChronosForecast } from '../services/chronosCopilotBridge.js'
 import { recordPrediction, getAccuracyStats } from '../services/chronosAccuracyTracker.js'
+import ForecastFitBadge from './ForecastFitBadge.jsx'
 
 export default function ChronosForecast() {
   const { marketData } = useMarketData()
@@ -147,6 +148,11 @@ export default function ChronosForecast() {
         horizon: 24
       }
       cacheChronosForecast(symbol, forecastForCopilot)
+
+      // Dispatch event for Copilot to pick up
+      window.dispatchEvent(new CustomEvent('ava.forecastUpdated', {
+        detail: { symbol, forecast: forecastForCopilot }
+      }))
 
       // Record prediction for accuracy tracking
       recordPrediction({
@@ -295,6 +301,17 @@ export default function ChronosForecast() {
       {/* Forecast Results */}
       {forecast && !isLoading && !isDataLoading && (
         <div className="space-y-6">
+          {/* AVA Mind Fit Assessment */}
+          <ForecastFitBadge
+            forecast={{
+              direction: forecast.direction?.toLowerCase() || 'neutral',
+              confidence: Math.round((forecast.accuracy_score || 0.5) * 100),
+              percentChange: forecast.percentChange || 0,
+              horizon: 24
+            }}
+            showDetails={false}
+          />
+
           {/* Main Direction Card */}
           <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
             <div className="flex items-center justify-between">

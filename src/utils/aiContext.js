@@ -6,9 +6,12 @@
  * - Indicator readings (Unicorn Score, SATY, Ichimoku, etc.)
  * - Market regime and trend
  * - Recent signals and setup quality
+ * - Personality-aware context from AVA Mind
  *
  * This transforms generic AI into a world-class trading assistant.
  */
+
+import { buildPersonalityAwareContext, getPersonalitySummary } from './aiPersonalityBridge.js'
 
 /**
  * Generate comprehensive world-class system prompt for trading AI
@@ -575,6 +578,40 @@ export function formatContextForAI(context) {
   // Recent signals
   if (context.recentActivity) {
     parts.push(`\n${context.recentActivity.summary}`)
+  }
+
+  // Personality-aware context from AVA Mind
+  try {
+    const personalitySummary = getPersonalitySummary()
+    if (personalitySummary?.archetype) {
+      parts.push(`\n═══════════════════════════════════════`)
+      parts.push(`🧠 TRADER PERSONALITY (AVA Mind)`)
+      parts.push(`═══════════════════════════════════════`)
+      parts.push(`Archetype: ${personalitySummary.archetype.emoji} ${personalitySummary.archetype.name}`)
+      parts.push(`└─ "${personalitySummary.archetype.tagline}"`)
+
+      // Emotional state
+      if (personalitySummary.emotionalState) {
+        parts.push(`\nEmotional State: ${personalitySummary.emotionalState.emoji} ${personalitySummary.emotionalState.name}`)
+        if (personalitySummary.emotionalIntensity > 0.5) {
+          parts.push(`└─ ⚠️ High intensity: ${personalitySummary.emotionalState.advice}`)
+        }
+      }
+
+      // Key personality traits
+      parts.push(`\nTrading Style:`)
+      parts.push(`└─ Risk Tolerance: ${personalitySummary.riskTolerance > 65 ? 'High (aggressive)' : personalitySummary.riskTolerance < 35 ? 'Low (conservative)' : 'Moderate'}`)
+      parts.push(`└─ Confidence: ${personalitySummary.confidenceLevel > 65 ? 'High conviction' : 'Cautious approach'}`)
+
+      // Full personality context for deeper analysis
+      const fullContext = buildPersonalityAwareContext()
+      if (fullContext) {
+        parts.push(`\n${fullContext}`)
+      }
+    }
+  } catch (e) {
+    // Personality system not available - continue without it
+    console.warn('[AIContext] Personality context unavailable:', e)
   }
 
   return parts.join('\n')
