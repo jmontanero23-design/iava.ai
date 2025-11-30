@@ -1,15 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
+import {
+  LineChart, Brain, Search, Briefcase, Sparkles,
+  MessageSquare, BarChart3, Eye, BookOpen, Clock, Settings
+} from 'lucide-react'
 
 /**
  * Mobile Bottom Navigation - Elite 2025 Edition
  *
- * PhD++ quality mobile-first navigation with:
+ * Professional mobile navigation with Lucide icons
  * - 44px+ touch targets (iOS/Android HIG compliance)
  * - Haptic feedback on tap
- * - Smooth spring animations
  * - Safe area support for notched devices
- * - Swipe gestures for quick actions
- * - Badge notifications
  */
 export default function MobileBottomNav({ activeTab, onTabChange, badges = {} }) {
   const [showMoreMenu, setShowMoreMenu] = useState(false)
@@ -32,21 +33,19 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
     }))
   }, [badges])
 
-  // Primary navigation items (5 main tabs matching desktop)
+  // Primary navigation items with Lucide icons
   const primaryNav = [
     {
       id: 'chart',
       label: 'Chart',
-      icon: '📊',
-      activeIcon: '📈',
+      Icon: LineChart,
       color: '#06B6D4', // cyan
       gradient: 'from-cyan-500/20 to-blue-500/20'
     },
     {
       id: 'ai-hub',
       label: 'AI Hub',
-      icon: '🤖',
-      activeIcon: '🧠',
+      Icon: Brain,
       color: '#8B5CF6', // purple
       gradient: 'from-violet-500/20 to-purple-500/20',
       badge: notifications.ai > 0 ? notifications.ai : null
@@ -54,8 +53,7 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
     {
       id: 'scanner',
       label: 'Scanner',
-      icon: '🔍',
-      activeIcon: '🎯',
+      Icon: Search,
       color: '#14B8A6', // teal
       gradient: 'from-teal-500/20 to-emerald-500/20',
       badge: notifications.scanner > 0 ? notifications.scanner : null
@@ -63,8 +61,7 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
     {
       id: 'portfolio',
       label: 'Portfolio',
-      icon: '💼',
-      activeIcon: '💰',
+      Icon: Briefcase,
       color: '#F59E0B', // amber
       gradient: 'from-amber-500/20 to-orange-500/20',
       badge: notifications.trades > 0 ? notifications.trades : null
@@ -72,22 +69,20 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
     {
       id: 'ava-mind',
       label: 'AVA Mind',
-      icon: '🧠',
-      activeIcon: '✨',
+      Icon: Sparkles,
       color: '#A855F7', // purple
       gradient: 'from-purple-500/20 to-cyan-500/20'
     }
   ]
 
-  // Secondary navigation (in "More" menu)
+  // Secondary navigation with Lucide icons
   const secondaryNav = [
-    { id: 'ai-chat', label: 'AI Chat', icon: '💬', color: 'blue' },
-    { id: 'nlp-scanner', label: 'Scanner', icon: '🔍', color: 'cyan' },
-    { id: 'market-sentiment', label: 'Sentiment', icon: '💭', color: 'emerald' },
-    { id: 'pattern-recognition', label: 'Patterns', icon: '🔍', color: 'pink' },
-    { id: 'trade-journal', label: 'Journal', icon: '📓', color: 'slate' },
-    { id: 'multi-timeframe', label: 'Multi-TF', icon: '⏰', color: 'amber' },
-    { id: 'settings', label: 'Settings', icon: '⚙️', color: 'gray' }
+    { id: 'ai-chat', label: 'AI Chat', Icon: MessageSquare, color: 'blue' },
+    { id: 'market-sentiment', label: 'Sentiment', Icon: BarChart3, color: 'emerald' },
+    { id: 'pattern-recognition', label: 'Patterns', Icon: Eye, color: 'pink' },
+    { id: 'trade-journal', label: 'Journal', Icon: BookOpen, color: 'slate' },
+    { id: 'multi-timeframe', label: 'Multi-TF', Icon: Clock, color: 'amber' },
+    { id: 'settings', label: 'Settings', Icon: Settings, color: 'gray' }
   ]
 
   // Enhanced haptic feedback
@@ -160,38 +155,47 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
     <>
       {/* More Menu Overlay */}
       {showMoreMenu && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden">
+        <div className="fixed inset-0 bg-black/60 z-40 md:hidden">
           <div className="absolute bottom-20 left-0 right-0 mobile-more-menu">
-            <div className="mx-4 bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+            <div
+              className="mx-4 rounded-2xl shadow-2xl overflow-hidden"
+              style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-subtle)' }}
+            >
               <div className="p-4">
                 <h3 className="text-sm font-semibold text-slate-400 mb-3">More Features</h3>
-                <div className="grid grid-cols-4 gap-3">
-                  {secondaryNav.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        onTabChange(item.id)
-                        setShowMoreMenu(false)
-                      }}
-                      className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${
-                        activeTab === item.id
-                          ? 'bg-indigo-600/20 text-indigo-400'
-                          : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white'
-                      }`}
-                    >
-                      <span className="text-2xl">{item.icon}</span>
-                      <span className="text-xs">{item.label}</span>
-                    </button>
-                  ))}
+                <div className="grid grid-cols-3 gap-2">
+                  {secondaryNav.map((item) => {
+                    const IconComponent = item.Icon
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          onTabChange(item.id)
+                          setShowMoreMenu(false)
+                        }}
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all ${
+                          activeTab === item.id
+                            ? 'bg-indigo-600/20 text-indigo-400'
+                            : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+                        }`}
+                      >
+                        <IconComponent className="w-5 h-5" />
+                        <span className="text-xs">{item.label}</span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
               {/* Quick Stats */}
-              <div className="px-4 py-3 bg-slate-800/30 border-t border-slate-700">
+              <div
+                className="px-4 py-3"
+                style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-subtle)' }}
+              >
                 <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span>17 AI Features Active</span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                  <span>17 AI Features</span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 bg-emerald-400 rounded-full" />
                     Market Open
                   </span>
                 </div>
@@ -203,13 +207,18 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
 
       {/* Bottom Navigation Bar - 44px+ touch targets */}
       <nav
-        className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 z-50 md:hidden"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
+        style={{
+          background: 'var(--bg-base)',
+          borderTop: '1px solid var(--border-subtle)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+        }}
       >
         <div className="flex items-stretch justify-around px-1 py-1">
           {primaryNav.map((item) => {
             const isActive = activeTab === item.id
             const isPressed = pressedItem === item.id
+            const IconComponent = item.Icon
 
             return (
               <button
@@ -223,7 +232,7 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
                   transition-all duration-150 ease-out
                   ${isActive
                     ? `bg-gradient-to-b ${item.gradient} border border-white/10`
-                    : 'active:bg-slate-800/50'
+                    : 'active:bg-white/5'
                   }
                   ${isPressed ? 'scale-90' : 'scale-100'}
                 `}
@@ -242,17 +251,14 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
 
                 {/* Icon with badge */}
                 <div className="relative">
-                  <span
-                    className={`
-                      text-xl transition-transform duration-150
-                      ${isActive ? 'scale-110' : 'scale-100'}
-                      ${isPressed ? 'scale-125' : ''}
-                    `}
-                  >
-                    {isActive ? item.activeIcon : item.icon}
-                  </span>
+                  <IconComponent
+                    className={`w-5 h-5 transition-transform duration-150 ${
+                      isActive ? 'scale-110' : 'scale-100'
+                    } ${isPressed ? 'scale-125' : ''}`}
+                    style={{ color: isActive ? item.color : '#94a3b8' }}
+                  />
                   {item.badge && (
-                    <span className="absolute -top-1.5 -right-1.5 px-1 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1.5 -right-2.5 px-1 min-w-[16px] h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                       {item.badge > 99 ? '99+' : item.badge}
                     </span>
                   )}
@@ -260,10 +266,9 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
 
                 {/* Label */}
                 <span
-                  className={`
-                    text-[10px] font-medium mt-0.5 transition-colors duration-150
-                    ${isActive ? 'text-white' : 'text-slate-500'}
-                  `}
+                  className={`text-[10px] font-medium mt-1 transition-colors duration-150 ${
+                    isActive ? 'text-white' : 'text-slate-500'
+                  }`}
                   style={{ color: isActive ? item.color : undefined }}
                 >
                   {item.label}

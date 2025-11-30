@@ -1,6 +1,6 @@
 /**
- * Main App Router - Tabs for Chart + AI Features
- * Preserves ALL original functionality
+ * Main App Router - Elite 2025 Edition
+ * Professional layout with sidebar + topbar navigation
  */
 
 import { useState, useEffect } from 'react'
@@ -44,6 +44,10 @@ import ChronosForecast from './components/ChronosForecast.jsx'
 import AIChatDemo from './pages/AIChatDemo.jsx'
 import MobileBottomNav from './components/MobileBottomNav.jsx'
 import TrustModeBanner from './components/TrustModeBanner.jsx'
+
+// Elite 2025 Layout Components
+import CollapsibleSidebar from './components/CollapsibleSidebar.jsx'
+import TopBar from './components/layout/TopBar.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
@@ -309,136 +313,30 @@ function AppWithGestures({
         }}
       />
 
-      <div className="min-h-screen bg-transparent text-slate-100 bg-grid">
-        <div className="max-w-7xl mx-auto p-6 space-y-6 pb-16">
-          <Hero />
+      {/* Elite 2025 Layout: TopBar + Sidebar + Content */}
+      <div className="min-h-screen text-slate-100">
+        {/* TopBar - Fixed at top */}
+        <TopBar
+          currentSymbol={symbol}
+          onSymbolChange={(newSymbol) => {
+            window.dispatchEvent(new CustomEvent('iava.loadSymbol', {
+              detail: { symbol: newSymbol }
+            }))
+          }}
+        />
 
-        {/* Streamlined Navigation - 4 Main Views */}
-        <nav className="glass-panel p-3">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActiveTab('chart')}
-              className={`px-5 py-3 rounded-lg text-sm font-semibold transition-all flex items-center gap-2.5 ${
-                activeTab === 'chart'
-                  ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border border-cyan-500/30 shadow-lg shadow-cyan-500/20'
-                  : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-slate-200'
-              }`}
-              title="Trading Chart (⌘1)"
-            >
-              <span className="text-lg">📊</span>
-              <span>Chart</span>
-              <kbd className="hidden md:inline text-xs opacity-60 ml-1">⌘1</kbd>
-            </button>
-            <button
-              onClick={() => setActiveTab('ai-hub')}
-              className={`px-5 py-3 rounded-lg text-sm font-semibold transition-all flex items-center gap-2.5 ${
-                activeTab === 'ai-hub'
-                  ? 'bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-purple-300 border border-purple-500/30 shadow-lg shadow-purple-500/20'
-                  : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-slate-200'
-              }`}
-              title="AI Command Center (⌘2)"
-            >
-              <span className="text-lg">🤖</span>
-              <span>AI Hub</span>
-              <kbd className="hidden md:inline text-xs opacity-60 ml-1">⌘2</kbd>
-            </button>
-            <button
-              onClick={() => setActiveTab('scanner')}
-              className={`px-5 py-3 rounded-lg text-sm font-semibold transition-all flex items-center gap-2.5 ${
-                activeTab === 'scanner' || activeTab === 'nlp-scanner'
-                  ? 'bg-gradient-to-r from-teal-500/20 to-emerald-500/20 text-teal-300 border border-teal-500/30 shadow-lg shadow-teal-500/20'
-                  : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-slate-200'
-              }`}
-              title="Market Scanner (⌘3)"
-            >
-              <span className="text-lg">🔍</span>
-              <span>Scanner</span>
-              <kbd className="hidden md:inline text-xs opacity-60 ml-1">⌘3</kbd>
-            </button>
-            <button
-              onClick={() => setActiveTab('portfolio')}
-              className={`px-5 py-3 rounded-lg text-sm font-semibold transition-all flex items-center gap-2.5 ${
-                activeTab === 'portfolio'
-                  ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/30 shadow-lg shadow-amber-500/20'
-                  : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-slate-200'
-              }`}
-              title="Portfolio & Journal (⌘4)"
-            >
-              <span className="text-lg">💼</span>
-              <span>Portfolio</span>
-              <kbd className="hidden md:inline text-xs opacity-60 ml-1">⌘4</kbd>
-            </button>
-            <button
-              onClick={() => setActiveTab('ava-mind')}
-              className={`px-5 py-3 rounded-lg text-sm font-semibold transition-all flex items-center gap-2.5 ${
-                activeTab === 'ava-mind'
-                  ? 'bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-purple-300 border border-purple-500/30 shadow-lg shadow-purple-500/20'
-                  : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-slate-200'
-              }`}
-              title="AVA Mind - AI Twin (⌘5)"
-            >
-              <span className="text-lg">🧠</span>
-              <span>AVA Mind</span>
-              <kbd className="hidden md:inline text-xs opacity-60 ml-1">⌘5</kbd>
-            </button>
+        {/* Sidebar - Desktop only (hidden on mobile via CSS) */}
+        <CollapsibleSidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
 
-            {/* AI Chat Demo Button - NEW! */}
-            <button
-              onClick={() => setActiveTab('ai-demo')}
-              className={`px-5 py-3 rounded-lg text-sm font-semibold transition-all flex items-center gap-2.5 ${
-                activeTab === 'ai-demo'
-                  ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-300 border border-yellow-500/30 shadow-lg shadow-yellow-500/20 animate-pulse'
-                  : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-slate-200'
-              }`}
-              title="AI Chat Streaming Demo - Try the NEW streaming chat!"
-            >
-              <span className="text-lg">✨</span>
-              <span>AI Demo</span>
-              <span className="ml-1 text-xs bg-yellow-500 text-black px-1.5 py-0.5 rounded font-bold">NEW</span>
-            </button>
-
-            {/* Next-Gen Features */}
-            <div className="ml-auto flex items-center gap-2">
-
-              {/* AI Coach Quick Access */}
-              <button
-                onClick={() => {
-                  setActiveTab('ava-mind')
-                  // Open coach tab in AVA Mind
-                  setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent('ava.openCoach'))
-                  }, 100)
-                }}
-                className="p-2.5 rounded-lg transition-all bg-slate-800/30 text-slate-400 hover:bg-gradient-to-r hover:from-amber-500/20 hover:to-orange-500/20 hover:text-amber-300 hover:border hover:border-amber-500/30"
-                title="AI Trading Coach - Get personalized coaching"
-              >
-                <span className="text-lg">🎓</span>
-              </button>
-
-              {/* Social Rooms Button */}
-              <button
-                onClick={() => setShowSocialRooms(!showSocialRooms)}
-                className={`p-2.5 rounded-lg transition-all ${
-                  showSocialRooms
-                    ? 'bg-gradient-to-r from-cyan-500/30 to-blue-500/30 text-cyan-300 border border-cyan-500/30'
-                    : 'bg-slate-800/30 text-slate-400 hover:bg-slate-700/40 hover:text-cyan-300'
-                }`}
-                title="Social Trading Rooms"
-              >
-                <span className="text-lg">👥</span>
-              </button>
-
-              <div className="w-px h-8 bg-slate-700"></div>
-
-              {/* Emotional State Badge - AVA Mind Integration */}
-              <EmotionalStateBadge />
-
-              <ModeToggle />
-              <FeatureStatusBadge onClick={() => setActiveTab('ai-features')} />
-              <UserProfile />
-            </div>
-          </div>
-        </nav>
+        {/* Main Content Area */}
+        <div
+          className="pt-14 md:ml-56 transition-all duration-300 min-h-screen"
+          style={{ background: 'var(--bg-base)' }}
+        >
+          <div className="p-4 md:p-6 pb-24 md:pb-6 space-y-4">
 
         {/* Tab Content */}
         {activeTab === 'chart' && (
@@ -475,6 +373,7 @@ function AppWithGestures({
         )}
 
         {activeTab !== 'chart' && <BuildInfoFooter />}
+          </div>
         </div>
 
         {/* Welcome Tour for new users */}
@@ -490,14 +389,10 @@ function AppWithGestures({
           <AITradeCopilot onClose={() => setShowCopilot(false)} />
         )}
 
-
         {/* Social Trading Rooms */}
         {showSocialRooms && (
           <SocialTradingRooms onClose={() => setShowSocialRooms(false)} />
         )}
-
-        {/* Enhanced Status Bar - Fixed at bottom (desktop) */}
-        <EnhancedStatusBar />
 
         {/* Mobile Bottom Navigation */}
         <MobileBottomNav

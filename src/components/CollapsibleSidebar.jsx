@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
+import {
+  LineChart, Brain, Target, MessageSquare, Search, BarChart3,
+  Clock, Eye, BookOpen, Settings, TrendingUp, TrendingDown,
+  Bell, ChevronLeft, ChevronRight, Briefcase, Sparkles
+} from 'lucide-react'
 
 /**
- * Collapsible Sidebar Navigation
+ * Collapsible Sidebar Navigation - Elite 2025 Edition
  *
- * Elite 2025 Bloomberg-inspired sidebar with intelligent collapse/expand
- * PhD++ quality with smooth animations and keyboard shortcuts
+ * Professional Bloomberg-inspired sidebar with Lucide icons
+ * Desktop only - hidden on mobile (mobile uses bottom nav)
  */
 export default function CollapsibleSidebar({ activeTab, onTabChange }) {
   const [isCollapsed, setIsCollapsed] = useState(() =>
@@ -14,106 +19,106 @@ export default function CollapsibleSidebar({ activeTab, onTabChange }) {
   const [hoveredItem, setHoveredItem] = useState(null)
   const { marketData } = useMarketData()
 
-  // Navigation items with full configuration
+  // Navigation items with Lucide icons
   const navigation = [
     {
       id: 'chart',
-      label: 'Trading Chart',
-      icon: '📊',
+      label: 'Chart',
+      Icon: LineChart,
       hotkey: '1',
       badge: null,
-      color: 'indigo',
-      description: 'Advanced charting with TradingView'
+      color: 'cyan',
+      description: 'Advanced trading chart'
     },
     {
       id: 'ai-hub',
       label: 'AI Hub',
-      icon: '🤖',
+      Icon: Brain,
       hotkey: '2',
-      badge: '17',
+      badge: null,
       color: 'purple',
-      description: 'Command center for all AI features'
+      description: 'AI command center'
     },
     {
-      id: 'ai-features',
-      label: 'AI Dashboard',
-      icon: '🎯',
+      id: 'scanner',
+      label: 'Scanner',
+      Icon: Search,
       hotkey: '3',
-      badge: '12',
-      color: 'indigo',
-      description: 'Original AI features dashboard'
+      badge: null,
+      color: 'teal',
+      description: 'Market scanner'
+    },
+    {
+      id: 'portfolio',
+      label: 'Portfolio',
+      Icon: Briefcase,
+      hotkey: '4',
+      badge: null,
+      color: 'amber',
+      description: 'Positions & orders'
+    },
+    {
+      id: 'ava-mind',
+      label: 'AVA Mind',
+      Icon: Sparkles,
+      hotkey: '5',
+      badge: null,
+      color: 'violet',
+      description: 'AI digital twin'
     },
     {
       id: 'ai-chat',
-      label: 'AI Assistant',
-      icon: '💬',
-      hotkey: '4',
+      label: 'AI Chat',
+      Icon: MessageSquare,
+      hotkey: '6',
       badge: null,
       color: 'blue',
-      description: 'Chat with AI trading assistant'
-    },
-    {
-      id: 'nlp-scanner',
-      label: 'NLP Scanner',
-      icon: '🔤',
-      hotkey: '5',
-      badge: null,
-      color: 'cyan',
-      description: 'Natural language market queries'
+      description: 'Chat with AVA'
     },
     {
       id: 'market-sentiment',
       label: 'Sentiment',
-      icon: '💭',
-      hotkey: '6',
+      Icon: BarChart3,
+      hotkey: '7',
       badge: null,
       color: 'emerald',
-      description: 'Social & news sentiment analysis'
+      description: 'Market sentiment'
     },
     {
       id: 'multi-timeframe',
       label: 'Multi-TF',
-      icon: '⏰',
-      hotkey: '7',
+      Icon: Clock,
+      hotkey: null,
       badge: null,
       color: 'amber',
-      description: 'Cross-timeframe correlation'
+      description: 'Multi-timeframe analysis'
     },
     {
       id: 'pattern-recognition',
       label: 'Patterns',
-      icon: '🔍',
+      Icon: Eye,
       hotkey: null,
       badge: null,
       color: 'pink',
-      description: 'Chart pattern detection'
+      description: 'Pattern detection'
     },
     {
       id: 'trade-journal',
       label: 'Journal',
-      icon: '📓',
+      Icon: BookOpen,
       hotkey: null,
       badge: null,
       color: 'slate',
-      description: 'Trade logging & analysis'
-    },
-    {
-      id: 'monitoring',
-      label: 'System',
-      icon: '🔧',
-      hotkey: null,
-      badge: null,
-      color: 'gray',
-      description: 'System health monitoring'
+      description: 'Trade journal'
     }
   ]
 
-  // Quick actions section
+  // Quick actions with Lucide icons
   const quickActions = [
-    { id: 'buy', label: 'Buy', icon: '📈', action: 'trade.buy' },
-    { id: 'sell', label: 'Sell', icon: '📉', action: 'trade.sell' },
-    { id: 'scan', label: 'Scan', icon: '🔍', action: 'scan.market' },
-    { id: 'alert', label: 'Alert', icon: '🔔', action: 'alert.create' }
+    { id: 'buy', label: 'Buy', Icon: TrendingUp, action: 'trade.buy', color: 'emerald' },
+    { id: 'sell', label: 'Sell', Icon: TrendingDown, action: 'trade.sell', color: 'rose' },
+    { id: 'scan', label: 'Scan', Icon: Search, action: 'scan.market', color: 'cyan' },
+    { id: 'alert', label: 'Alert', Icon: Bell, action: 'alert.create', color: 'amber' }
   ]
 
   // Toggle sidebar
@@ -182,73 +187,61 @@ export default function CollapsibleSidebar({ activeTab, onTabChange }) {
   }
 
   return (
-    <>
-      {/* Sidebar */}
-      <div
-        className={`fixed left-0 top-0 h-full bg-slate-900/95 backdrop-blur-xl border-r border-slate-700 transition-all duration-300 z-40 ${
-          isCollapsed ? 'w-16' : 'w-64'
-        }`}
-      >
-        {/* Header */}
-        <div className="p-4 border-b border-slate-700">
-          <div className="flex items-center justify-between">
-            {!isCollapsed && (
-              <div className="flex items-center gap-2">
-                <img src="/logo.svg" className="w-8 h-8" alt="iAVA.ai" />
-                <span className="text-lg font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                  iAVA.ai
-                </span>
+    <div
+      className={`hidden md:flex fixed left-0 top-0 h-full flex-col transition-all duration-300 z-40 ${
+        isCollapsed ? 'w-16' : 'w-56'
+      }`}
+      style={{ background: 'var(--bg-surface)', borderRight: '1px solid var(--border-subtle)' }}
+    >
+      {/* Header */}
+      <div className="p-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className="flex items-center justify-between">
+          {!isCollapsed && (
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
+              <span className="text-sm font-bold text-white">iAVA.ai</span>
+            </div>
+          )}
+          <button
+            onClick={toggleSidebar}
+            className="p-1.5 rounded-lg hover:bg-white/5 transition-all"
+            title={`${isCollapsed ? 'Expand' : 'Collapse'} (Alt+S)`}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            ) : (
+              <ChevronLeft className="w-4 h-4 text-slate-400" />
             )}
-            <button
-              onClick={toggleSidebar}
-              className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-all"
-              title={`${isCollapsed ? 'Expand' : 'Collapse'} Sidebar (Alt+S)`}
-            >
-              <svg
-                className={`w-4 h-4 text-slate-400 transition-transform ${
-                  isCollapsed ? 'rotate-180' : ''
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-                />
-              </svg>
-            </button>
-          </div>
+          </button>
         </div>
+      </div>
 
-        {/* Navigation Items */}
-        <div className="py-2">
-          {navigation.map((item) => (
-            <div key={item.id} className="relative">
+      {/* Navigation Items */}
+      <div className="flex-1 py-2 overflow-y-auto">
+        {navigation.map((item) => {
+          const IconComponent = item.Icon
+          const isActive = activeTab === item.id
+
+          return (
+            <div key={item.id} className="relative px-2">
               <button
                 onClick={() => onTabChange(item.id)}
                 onMouseEnter={() => setHoveredItem(item.id)}
                 onMouseLeave={() => setHoveredItem(null)}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all ${
-                  activeTab === item.id
-                    ? getColorClasses(item.color, true)
-                    : `text-slate-300 ${getColorClasses(item.color, false)}`
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  isActive
+                    ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <span className="text-xl flex-shrink-0">{item.icon}</span>
+                <IconComponent className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-indigo-400' : ''}`} />
                 {!isCollapsed && (
                   <>
-                    <span className="flex-1 text-left">{item.label}</span>
-                    {item.badge && (
-                      <span className="px-1.5 py-0.5 bg-white/20 rounded text-xs">
-                        {item.badge}
-                      </span>
-                    )}
+                    <span className="flex-1 text-left truncate">{item.label}</span>
                     {item.hotkey && (
-                      <kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-xs">
+                      <kbd className="px-1.5 py-0.5 rounded text-[10px] text-slate-500 bg-black/30">
                         {item.hotkey}
                       </kbd>
                     )}
@@ -259,82 +252,79 @@ export default function CollapsibleSidebar({ activeTab, onTabChange }) {
               {/* Tooltip for collapsed state */}
               {isCollapsed && hoveredItem === item.id && (
                 <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50">
-                  <div className="bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-lg shadow-xl p-3 whitespace-nowrap">
-                    <div className="font-medium text-white mb-1">{item.label}</div>
-                    <div className="text-xs text-slate-400">{item.description}</div>
-                    {item.hotkey && (
-                      <div className="mt-2 text-xs text-slate-500">
-                        Press <kbd className="px-1 py-0.5 bg-slate-800 rounded border border-slate-700">{item.hotkey}</kbd>
-                      </div>
-                    )}
+                  <div className="rounded-lg shadow-xl p-2.5 whitespace-nowrap" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)' }}>
+                    <div className="font-medium text-white text-sm">{item.label}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">{item.description}</div>
                   </div>
                 </div>
               )}
             </div>
-          ))}
-        </div>
+          )
+        })}
+      </div>
 
-        {/* Quick Actions */}
-        {!isCollapsed && (
-          <>
-            <div className="px-4 py-2 border-t border-slate-700">
-              <div className="text-xs text-slate-500 font-semibold mb-2">Quick Actions</div>
-              <div className="grid grid-cols-2 gap-2">
-                {quickActions.map((action) => (
-                  <button
-                    key={action.id}
-                    onClick={() => handleQuickAction(action.action)}
-                    className="px-3 py-2 bg-slate-800/50 hover:bg-slate-700/50 rounded-lg text-sm text-slate-300 hover:text-white transition-all flex items-center gap-2"
-                  >
-                    <span>{action.icon}</span>
-                    <span>{action.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Market Status */}
-            <div className="px-4 py-3 border-t border-slate-700">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${
-                    marketData?.marketOpen ? 'bg-emerald-400' : 'bg-red-400'
-                  } animate-pulse`} />
-                  <span className="text-slate-400">
-                    Market {marketData?.marketOpen ? 'Open' : 'Closed'}
-                  </span>
-                </div>
-                <span className="text-slate-500">{marketData?.symbol || 'SPY'}</span>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Collapsed Quick Actions */}
-        {isCollapsed && (
-          <div className="absolute bottom-0 left-0 right-0 p-2 border-t border-slate-700">
-            <button
-              onClick={() => handleQuickAction('trade.buy')}
-              className="w-full p-2 mb-1 bg-emerald-600/20 hover:bg-emerald-600/30 rounded text-emerald-400 transition-all"
-              title="Buy"
-            >
-              📈
-            </button>
-            <button
-              onClick={() => handleQuickAction('trade.sell')}
-              className="w-full p-2 bg-red-600/20 hover:bg-red-600/30 rounded text-red-400 transition-all"
-              title="Sell"
-            >
-              📉
-            </button>
+      {/* Quick Actions */}
+      {!isCollapsed && (
+        <div className="p-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+          <div className="grid grid-cols-2 gap-1.5">
+            {quickActions.map((action) => {
+              const IconComponent = action.Icon
+              return (
+                <button
+                  key={action.id}
+                  onClick={() => handleQuickAction(action.action)}
+                  className={`px-2.5 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5
+                    ${action.color === 'emerald' ? 'bg-emerald-600/10 text-emerald-400 hover:bg-emerald-600/20' : ''}
+                    ${action.color === 'rose' ? 'bg-rose-600/10 text-rose-400 hover:bg-rose-600/20' : ''}
+                    ${action.color === 'cyan' ? 'bg-cyan-600/10 text-cyan-400 hover:bg-cyan-600/20' : ''}
+                    ${action.color === 'amber' ? 'bg-amber-600/10 text-amber-400 hover:bg-amber-600/20' : ''}
+                  `}
+                >
+                  <IconComponent className="w-3.5 h-3.5" />
+                  <span>{action.label}</span>
+                </button>
+              )
+            })}
           </div>
-        )}
+        </div>
+      )}
+
+      {/* Market Status */}
+      <div className="p-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${
+              marketData?.marketOpen ? 'bg-emerald-400' : 'bg-slate-500'
+            }`} />
+            <span className="text-slate-500">
+              {marketData?.marketOpen ? 'Open' : 'Closed'}
+            </span>
+          </div>
+          {!isCollapsed && (
+            <span className="text-slate-600">{marketData?.symbol || 'SPY'}</span>
+          )}
+        </div>
       </div>
 
-      {/* Main Content Offset */}
-      <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
-        {/* Content will be rendered here */}
-      </div>
-    </>
+      {/* Collapsed Quick Actions */}
+      {isCollapsed && (
+        <div className="p-2 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+          <button
+            onClick={() => handleQuickAction('trade.buy')}
+            className="w-full p-2 mb-1 bg-emerald-600/10 hover:bg-emerald-600/20 rounded-lg text-emerald-400 transition-all"
+            title="Buy"
+          >
+            <TrendingUp className="w-4 h-4 mx-auto" />
+          </button>
+          <button
+            onClick={() => handleQuickAction('trade.sell')}
+            className="w-full p-2 bg-rose-600/10 hover:bg-rose-600/20 rounded-lg text-rose-400 transition-all"
+            title="Sell"
+          >
+            <TrendingDown className="w-4 h-4 mx-auto" />
+          </button>
+        </div>
+      )}
+    </div>
   )
 }

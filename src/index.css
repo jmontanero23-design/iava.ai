@@ -3,12 +3,26 @@
 @tailwind utilities;
 
 :root {
-  /* === ELITE 2025 DESIGN SYSTEM === */
+  /* === ELITE 2025 DESIGN SYSTEM - DARKER EDITION === */
 
-  /* Base surfaces */
-  --surface: #05070f;
-  --panel: #0f172a;
-  --panel-elevated: #1e293b;
+  /* Base surfaces - TRUE BLACK for content to pop */
+  --bg-base: #000000;        /* True black - deepest layer */
+  --bg-surface: #050505;     /* Near black - main background */
+  --bg-panel: #0a0a0a;       /* Panel background */
+  --bg-elevated: #111111;    /* Elevated surface */
+  --bg-card: #0d0d0d;        /* Card background */
+
+  /* Legacy aliases (for backward compatibility) */
+  --surface: #050505;
+  --panel: #0a0a0a;
+  --panel-elevated: #111111;
+
+  /* Border colors - subtle on dark backgrounds */
+  --border-subtle: #1a1a1a;
+  --border-default: #262626;
+  --border-strong: #333333;
+
+  /* Text colors */
   --text: #e5e7eb;
   --text-muted: #94a3b8;
   --text-subtle: #64748b;
@@ -96,10 +110,11 @@ html, body, #root {
 }
 
 body {
-  background:
-    radial-gradient(circle at 20% 20%, rgba(79,70,229,0.14), transparent 55%),
-    radial-gradient(circle at 80% 0%, rgba(6,182,212,0.10), transparent 45%),
-    #040715;
+  /* Elite dark background - solid black with subtle accent glow */
+  background: #000000;
+  background-image:
+    radial-gradient(ellipse at 15% 0%, rgba(99,102,241,0.08), transparent 50%),
+    radial-gradient(ellipse at 85% 100%, rgba(6,182,212,0.05), transparent 40%);
   color: var(--text);
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont;
   -webkit-font-smoothing: antialiased;
@@ -258,10 +273,11 @@ body {
 }
 
 .card {
-  @apply bg-slate-900/85 border border-slate-800 rounded-xl;
-  backdrop-filter: blur(8px) saturate(120%);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
 
 .card:hover {
@@ -342,18 +358,19 @@ select:focus {
 }
 
 .glass-panel {
-  background: rgba(15,23,42,0.75);
-  border: 1px solid rgba(148,163,184,0.25);
-  backdrop-filter: blur(20px) saturate(140%);
-  border-radius: 20px;
-  box-shadow:
-    0 8px 32px rgba(0,0,0,0.4),
-    inset 0 1px 0 rgba(255,255,255,0.05),
-    inset 0 -1px 0 rgba(0,0,0,0.2);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
   position: relative;
 }
 
-.glass-panel::before {
+.glass-panel:hover {
+  border-color: var(--border-default);
+}
+
+/* Optional gradient border - apply with .glass-panel-glow */
+.glass-panel-glow::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -364,7 +381,7 @@ select:focus {
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
-  opacity: 0.8;
+  opacity: 0.5;
 }
 
 /* Workflow pill chips (superpower rail) */
@@ -1697,4 +1714,91 @@ textarea:focus-visible {
 /* Ensure dropdowns in headers appear on top */
 .panel-header .relative {
   z-index: 10;
+}
+
+/* ========================================
+   ELITE PANEL SYSTEM - 2025 Edition
+   Clean, professional, dark panels
+   ======================================== */
+
+.elite-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.elite-panel:hover {
+  border-color: var(--border-default);
+}
+
+.elite-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.elite-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.elite-panel-content {
+  color: var(--text-muted);
+}
+
+/* Card variant - slightly elevated */
+.elite-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.elite-card:hover {
+  border-color: var(--border-default);
+  background: var(--bg-elevated);
+}
+
+/* Layout containers */
+.elite-sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+}
+
+.elite-topbar {
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border-subtle);
+  height: 56px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.elite-bottombar {
+  background: var(--bg-base);
+  border-top: 1px solid var(--border-subtle);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
