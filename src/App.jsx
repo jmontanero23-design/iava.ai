@@ -334,9 +334,13 @@ function AppWithGestures({
         {/* Main Content Area */}
         <div
           className="pt-14 md:ml-56 transition-all duration-300 min-h-screen"
-          style={{ background: 'var(--bg-base)' }}
+          style={{
+            background: 'var(--bg-base)',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+          }}
         >
-          <div className="p-4 md:p-6 pb-24 md:pb-6 space-y-4">
+          {/* Mobile: pb-20 for nav (80px), Desktop: pb-6 */}
+          <div className="p-4 md:p-6 pb-20 md:pb-6 space-y-4">
 
         {/* Tab Content */}
         {activeTab === 'chart' && (
@@ -356,7 +360,7 @@ function AppWithGestures({
         )}
 
         {activeTab === 'ava-mind' && (
-          <div className="glass-panel -mx-6 -mt-6 overflow-hidden" style={{ minHeight: 'calc(100vh - 200px)' }}>
+          <div className="glass-panel -mx-4 md:-mx-6 -mt-4 md:-mt-6 overflow-hidden" style={{ minHeight: 'calc(100vh - 160px)', maxHeight: 'calc(100vh - 100px)' }}>
             <AVAMindDashboard
               onViewSymbol={(symbol) => {
                 window.dispatchEvent(new CustomEvent('iava.loadSymbol', {

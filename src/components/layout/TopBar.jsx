@@ -77,8 +77,12 @@ export default function TopBar({ onSymbolChange, currentSymbol, onMenuClick }) {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50 h-14 flex items-center px-4 gap-4"
-      style={{ background: 'var(--bg-base)', borderBottom: '1px solid var(--border-subtle)' }}
+      className="fixed top-0 left-0 right-0 h-14 flex items-center px-4 gap-4 layer-topbar"
+      style={{
+        background: 'var(--bg-base)',
+        borderBottom: '1px solid var(--border-subtle)',
+        zIndex: 'var(--z-topbar)'
+      }}
     >
       {/* Mobile Menu Button */}
       <button

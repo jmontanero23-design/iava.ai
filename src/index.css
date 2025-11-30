@@ -5,6 +5,19 @@
 :root {
   /* === ELITE 2025 DESIGN SYSTEM - DARKER EDITION === */
 
+  /* Safe area insets for mobile */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nav-height: 72px;
+
+  /* Z-index hierarchy - prevents stacking conflicts */
+  --z-content: 10;
+  --z-score: 20;
+  --z-nav: 30;
+  --z-topbar: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+
   /* Base surfaces - TRUE BLACK for content to pop */
   --bg-base: #000000;        /* True black - deepest layer */
   --bg-surface: #050505;     /* Near black - main background */
@@ -1799,6 +1812,33 @@ textarea:focus-visible {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 40;
+  z-index: var(--z-nav);
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* ========================================
+   Z-INDEX LAYER SYSTEM
+   Prevents stacking conflicts
+   ======================================== */
+
+.layer-content { z-index: var(--z-content) !important; }
+.layer-score { z-index: var(--z-score) !important; }
+.layer-nav { z-index: var(--z-nav) !important; }
+.layer-topbar { z-index: var(--z-topbar) !important; }
+.layer-modal { z-index: var(--z-modal) !important; }
+.layer-toast { z-index: var(--z-toast) !important; }
+
+/* Safe area utilities */
+.safe-bottom {
+  padding-bottom: calc(var(--nav-height) + var(--safe-bottom));
+}
+
+.safe-top {
+  padding-top: var(--safe-top);
+}
+
+/* Touch target utility */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
 }

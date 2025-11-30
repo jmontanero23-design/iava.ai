@@ -3,8 +3,35 @@ import { useMarketData } from '../contexts/MarketDataContext.jsx'
 import {
   LineChart, Brain, Target, MessageSquare, Search, BarChart3,
   Clock, Eye, BookOpen, Settings, TrendingUp, TrendingDown,
-  Bell, ChevronLeft, ChevronRight, Briefcase, Sparkles
+  Bell, ChevronLeft, ChevronRight, Briefcase
 } from 'lucide-react'
+
+// iAVA Logo component - neural network + chart design
+const IAVALogo = ({ className, style }) => (
+  <svg viewBox="0 0 200 200" fill="none" className={className} style={style}>
+    <defs>
+      <linearGradient id="logoGradSidebar" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style={{ stopColor: '#6366f1', stopOpacity: 1 }} />
+        <stop offset="50%" style={{ stopColor: '#8b5cf6', stopOpacity: 1 }} />
+        <stop offset="100%" style={{ stopColor: '#10b981', stopOpacity: 1 }} />
+      </linearGradient>
+    </defs>
+    <circle cx="60" cy="140" r="8" fill="url(#logoGradSidebar)" opacity="0.6"/>
+    <circle cx="100" cy="140" r="8" fill="url(#logoGradSidebar)" opacity="0.6"/>
+    <circle cx="140" cy="140" r="8" fill="url(#logoGradSidebar)" opacity="0.6"/>
+    <circle cx="80" cy="100" r="10" fill="url(#logoGradSidebar)" opacity="0.8"/>
+    <circle cx="120" cy="100" r="10" fill="url(#logoGradSidebar)" opacity="0.8"/>
+    <circle cx="100" cy="60" r="12" fill="url(#logoGradSidebar)"/>
+    <line x1="60" y1="140" x2="80" y2="100" stroke="url(#logoGradSidebar)" strokeWidth="3" opacity="0.4"/>
+    <line x1="100" y1="140" x2="80" y2="100" stroke="url(#logoGradSidebar)" strokeWidth="3" opacity="0.4"/>
+    <line x1="100" y1="140" x2="120" y2="100" stroke="url(#logoGradSidebar)" strokeWidth="3" opacity="0.4"/>
+    <line x1="140" y1="140" x2="120" y2="100" stroke="url(#logoGradSidebar)" strokeWidth="3" opacity="0.4"/>
+    <line x1="80" y1="100" x2="100" y2="60" stroke="url(#logoGradSidebar)" strokeWidth="3" opacity="0.7"/>
+    <line x1="120" y1="100" x2="100" y2="60" stroke="url(#logoGradSidebar)" strokeWidth="3" opacity="0.7"/>
+    <path d="M 95 50 L 100 40 L 105 50 Z" fill="url(#logoGradSidebar)"/>
+    <path d="M 40 130 Q 70 110, 100 90 T 160 70" stroke="url(#logoGradSidebar)" strokeWidth="4" fill="none" opacity="0.5" strokeLinecap="round"/>
+  </svg>
+)
 
 /**
  * Collapsible Sidebar Navigation - Elite 2025 Edition
@@ -60,11 +87,12 @@ export default function CollapsibleSidebar({ activeTab, onTabChange }) {
     {
       id: 'ava-mind',
       label: 'AVA Mind',
-      Icon: Sparkles,
+      Icon: IAVALogo,
       hotkey: '5',
       badge: null,
       color: 'violet',
-      description: 'AI digital twin'
+      description: 'AI digital twin',
+      isLogo: true
     },
     {
       id: 'ai-chat',

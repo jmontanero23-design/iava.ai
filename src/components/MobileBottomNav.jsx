@@ -1,8 +1,35 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  LineChart, Brain, Search, Briefcase, Sparkles,
+  LineChart, Brain, Search, Briefcase,
   MessageSquare, BarChart3, Eye, BookOpen, Clock, Settings
 } from 'lucide-react'
+
+// iAVA Logo component - neural network + chart design
+const IAVALogo = ({ className, style }) => (
+  <svg viewBox="0 0 200 200" fill="none" className={className} style={style}>
+    <defs>
+      <linearGradient id="logoGradNav" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style={{ stopColor: '#6366f1', stopOpacity: 1 }} />
+        <stop offset="50%" style={{ stopColor: '#8b5cf6', stopOpacity: 1 }} />
+        <stop offset="100%" style={{ stopColor: '#10b981', stopOpacity: 1 }} />
+      </linearGradient>
+    </defs>
+    <circle cx="60" cy="140" r="8" fill="url(#logoGradNav)" opacity="0.6"/>
+    <circle cx="100" cy="140" r="8" fill="url(#logoGradNav)" opacity="0.6"/>
+    <circle cx="140" cy="140" r="8" fill="url(#logoGradNav)" opacity="0.6"/>
+    <circle cx="80" cy="100" r="10" fill="url(#logoGradNav)" opacity="0.8"/>
+    <circle cx="120" cy="100" r="10" fill="url(#logoGradNav)" opacity="0.8"/>
+    <circle cx="100" cy="60" r="12" fill="url(#logoGradNav)"/>
+    <line x1="60" y1="140" x2="80" y2="100" stroke="url(#logoGradNav)" strokeWidth="3" opacity="0.4"/>
+    <line x1="100" y1="140" x2="80" y2="100" stroke="url(#logoGradNav)" strokeWidth="3" opacity="0.4"/>
+    <line x1="100" y1="140" x2="120" y2="100" stroke="url(#logoGradNav)" strokeWidth="3" opacity="0.4"/>
+    <line x1="140" y1="140" x2="120" y2="100" stroke="url(#logoGradNav)" strokeWidth="3" opacity="0.4"/>
+    <line x1="80" y1="100" x2="100" y2="60" stroke="url(#logoGradNav)" strokeWidth="3" opacity="0.7"/>
+    <line x1="120" y1="100" x2="100" y2="60" stroke="url(#logoGradNav)" strokeWidth="3" opacity="0.7"/>
+    <path d="M 95 50 L 100 40 L 105 50 Z" fill="url(#logoGradNav)"/>
+    <path d="M 40 130 Q 70 110, 100 90 T 160 70" stroke="url(#logoGradNav)" strokeWidth="4" fill="none" opacity="0.5" strokeLinecap="round"/>
+  </svg>
+)
 
 /**
  * Mobile Bottom Navigation - Elite 2025 Edition
@@ -68,10 +95,11 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
     },
     {
       id: 'ava-mind',
-      label: 'AVA Mind',
-      Icon: Sparkles,
-      color: '#A855F7', // purple
-      gradient: 'from-purple-500/20 to-cyan-500/20'
+      label: 'AVA',
+      Icon: IAVALogo, // Custom logo
+      color: '#8B5CF6', // purple matching logo gradient
+      gradient: 'from-purple-500/20 to-emerald-500/20',
+      isLogo: true // Flag to render differently
     }
   ]
 
@@ -207,11 +235,12 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
 
       {/* Bottom Navigation Bar - 44px+ touch targets */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
+        className="fixed bottom-0 left-0 right-0 md:hidden layer-nav"
         style={{
           background: 'var(--bg-base)',
           borderTop: '1px solid var(--border-subtle)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          zIndex: 'var(--z-nav)'
         }}
       >
         <div className="flex items-stretch justify-around px-1 py-1">
