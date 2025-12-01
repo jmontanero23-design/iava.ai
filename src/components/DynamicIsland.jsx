@@ -109,7 +109,7 @@ export default function DynamicIsland({
         top: 11,
         left: '50%',
         transform: 'translateX(-50%)',
-        background: '#000',
+        background: colors.void, // Pure black - THE VOID
         borderRadius: expanded ? 28 : 24,
         width: expanded ? (showActivity ? 280 : 240) : 126,
         height: expanded ? (showActivity ? 64 : 52) : 37,
