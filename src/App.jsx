@@ -12,10 +12,12 @@ import { MarketDataProvider, useMarketData } from './contexts/MarketDataContext.
 import MobileGestures from './components/MobileGestures.jsx'
 import AIHub from './components/AIHub.jsx'
 import Portfolio from './components/Portfolio.jsx'
+import LegendaryPortfolio from './components/LegendaryPortfolio.jsx'
 import AVAMindDashboard from './components/ava-mind/AVAMindDashboard.jsx'
 import SocialTradingRooms from './components/SocialTradingRooms.jsx'
 import NaturalLanguageScanner from './components/NaturalLanguageScanner.jsx'
 import DiscoverTab from './components/DiscoverTab.jsx'
+import YouTab from './components/YouTab.jsx'
 import WelcomeTour, { TourHelpButton } from './components/WelcomeTour.jsx'
 import AITradeCopilot from './components/AITradeCopilot.jsx'
 import MobileBottomNav from './components/MobileBottomNav.jsx'
@@ -271,7 +273,7 @@ function AppWithGestures({
       case 'scanner':
         return <NaturalLanguageScanner />
       case 'portfolio':
-        return <Portfolio />
+        return <LegendaryPortfolio onSelectSymbol={handleSelectSymbol} />
       case 'ava-mind':
         return (
           <div style={{
@@ -287,6 +289,8 @@ function AppWithGestures({
             />
           </div>
         )
+      case 'you':
+        return <YouTab />
       default:
         return <AppChart />
     }
