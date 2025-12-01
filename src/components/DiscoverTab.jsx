@@ -14,6 +14,7 @@ import {
   Star,
   Sparkles,
 } from 'lucide-react'
+import StockLogo from './ui/StockLogo'
 import { colors, gradients, animation, spacing, radius, typography } from '../styles/tokens'
 
 // Demo data for discovery
@@ -314,23 +315,12 @@ function StockCard({ stock, isPositive, onClick }) {
       />
 
       {/* Stock Logo */}
-      <div
-        style={{
-          width: 48,
-          height: 48,
-          borderRadius: 12,
-          background: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: 12,
-          fontSize: typography.fontSize.sm,
-          fontWeight: typography.fontWeight.bold,
-          color: colors.depth1,
-        }}
-      >
-        {stock.symbol.slice(0, 2)}
-      </div>
+      <StockLogo
+        symbol={stock.symbol}
+        size={48}
+        borderRadius={12}
+        style={{ marginRight: 12 }}
+      />
 
       {/* Stock Info */}
       <div style={{ flex: 1 }}>

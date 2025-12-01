@@ -29,6 +29,7 @@ import {
 import AppChart from '../AppChart'
 import { LogoMark } from './ui/Logo'
 import { ScoreRing } from './ui/ScoreRing'
+import StockLogo from './ui/StockLogo'
 import { SkeletonChart, SkeletonMobileHeader } from './ui/Skeleton'
 import { colors, gradients, spacing, animation, radius, typography } from '../styles/tokens'
 
@@ -204,29 +205,13 @@ export default function MobileTradeView({
           onClick={onSymbolClick}
         >
           {/* Company Logo */}
-          <div
-            style={{
-              width: 54,
-              height: 54,
-              borderRadius: 14,
-              background: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
-            <span
-              style={{
-                fontSize: typography.fontSize.lg,
-                fontWeight: typography.fontWeight.bold,
-                color: colors.depth1,
-              }}
-            >
-              {symbolData.symbol.slice(0, 2)}
-            </span>
+          <div style={{ position: 'relative' }}>
+            <StockLogo
+              symbol={symbolData.symbol}
+              size={54}
+              borderRadius={14}
+              style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)' }}
+            />
             <div
               style={{
                 position: 'absolute',

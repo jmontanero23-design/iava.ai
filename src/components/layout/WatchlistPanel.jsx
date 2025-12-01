@@ -20,6 +20,7 @@ import {
   Star,
 } from 'lucide-react'
 import { ScoreRing } from '../ui/ScoreRing'
+import StockLogo from '../ui/StockLogo'
 import { colors, gradients, animation, spacing, radius, typography } from '../../styles/tokens'
 
 // Demo watchlist data
@@ -173,25 +174,13 @@ export default function WatchlistPanel({ onSelectSymbol, currentSymbol }) {
                 textAlign: 'left',
               }}
             >
-              {/* Stock Logo Placeholder */}
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: radius.lg,
-                  background: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: spacing[3],
-                  overflow: 'hidden',
-                  fontSize: typography.fontSize.sm,
-                  fontWeight: typography.fontWeight.bold,
-                  color: colors.depth1,
-                }}
-              >
-                {stock.symbol.slice(0, 2)}
-              </div>
+              {/* Stock Logo */}
+              <StockLogo
+                symbol={stock.symbol}
+                size={40}
+                borderRadius={radius.lg}
+                style={{ marginRight: spacing[3] }}
+              />
 
               {/* Stock Info */}
               <div style={{ flex: 1, minWidth: 0 }}>

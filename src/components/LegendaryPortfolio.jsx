@@ -13,6 +13,7 @@ import {
   Zap,
   Target,
 } from 'lucide-react'
+import StockLogo from './ui/StockLogo'
 import { colors, gradients, animation, spacing, radius, typography } from '../styles/tokens'
 
 // Demo portfolio data
@@ -438,22 +439,11 @@ function PositionCard({ position, onSelect }) {
       />
 
       {/* Position Logo */}
-      <div
-        style={{
-          width: 46,
-          height: 46,
-          borderRadius: 11,
-          background: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: typography.fontSize.sm,
-          fontWeight: typography.fontWeight.bold,
-          color: colors.depth1,
-        }}
-      >
-        {position.symbol.slice(0, 2)}
-      </div>
+      <StockLogo
+        symbol={position.symbol}
+        size={46}
+        borderRadius={11}
+      />
 
       {/* Position Info */}
       <div style={{ flex: 1 }}>
