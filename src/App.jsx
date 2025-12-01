@@ -1,77 +1,39 @@
 /**
- * Main App Router - Elite 2025 Edition
- * Professional layout with sidebar + topbar navigation
+ * Main App Router - LEGENDARY Edition
+ * Responsive layout: Desktop 4-column grid / Mobile 5-tab navigation
+ *
+ * Based on: iAVA-LEGENDARY-DESKTOP_1.html & iAVA-ULTIMATE-LEGENDARY-MOBILE.html
  */
 
 import { useState, useEffect } from 'react'
-import Hero from './components/Hero.jsx'
 import ToastHub from './components/ToastHub.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
 import { MarketDataProvider, useMarketData } from './contexts/MarketDataContext.jsx'
-import AIFeaturesDashboard from './components/AIFeaturesDashboard.jsx'
 import MobileGestures from './components/MobileGestures.jsx'
 import AIHub from './components/AIHub.jsx'
 import Portfolio from './components/Portfolio.jsx'
-import AIChat from './components/AIChat.jsx'
-import AVAMind from './components/AVAMind.jsx'
 import AVAMindDashboard from './components/ava-mind/AVAMindDashboard.jsx'
 import SocialTradingRooms from './components/SocialTradingRooms.jsx'
 import NaturalLanguageScanner from './components/NaturalLanguageScanner.jsx'
-import ModelMonitoring from './components/ModelMonitoring.jsx'
-import FeatureStatusBadge from './components/FeatureStatusBadge.jsx'
 import WelcomeTour, { TourHelpButton } from './components/WelcomeTour.jsx'
-import ModeToggle from './components/ModeToggle.jsx'
-import EnhancedStatusBar from './components/EnhancedStatusBar.jsx'
-import UserProfile from './components/UserProfile.jsx'
-import EmotionalStateBadge from './components/EmotionalStateBadge.jsx'
-import SignalQualityScorerPanel from './components/SignalQualityScorerPanel.jsx'
-import RiskAdvisorPanel from './components/RiskAdvisorPanel.jsx'
-import TradeJournalAIPanel from './components/TradeJournalAIPanel.jsx'
-import MarketRegimeDetectorPanel from './components/MarketRegimeDetectorPanel.jsx'
-import AnomalyDetectorPanel from './components/AnomalyDetectorPanel.jsx'
-import SmartWatchlistBuilderPanel from './components/SmartWatchlistBuilderPanel.jsx'
-import PredictiveConfidencePanel from './components/PredictiveConfidencePanel.jsx'
-import PersonalizedLearningPanel from './components/PersonalizedLearningPanel.jsx'
-import GeneticOptimizerPanel from './components/GeneticOptimizerPanel.jsx'
-import MarketSentiment from './components/MarketSentiment.jsx'
 import AITradeCopilot from './components/AITradeCopilot.jsx'
-import PatternRecognition from './components/PatternRecognition.jsx'
-import MultiSymbolAnalysis from './components/MultiSymbolAnalysis.jsx'
-import StrategyBuilder from './components/StrategyBuilder.jsx'
-import RiskControlsPanel from './components/RiskControlsPanel.jsx'
-import MultiTimeframePanel from './components/MultiTimeframePanel.jsx'
-import ChronosForecast from './components/ChronosForecast.jsx'
-import AIChatDemo from './pages/AIChatDemo.jsx'
 import MobileBottomNav from './components/MobileBottomNav.jsx'
 import TrustModeBanner from './components/TrustModeBanner.jsx'
 
-// Elite 2025 Layout Components
-import CollapsibleSidebar from './components/CollapsibleSidebar.jsx'
+// LEGENDARY Layout Components
+import LegendaryLayout from './components/layout/LegendaryLayout.jsx'
+import IconRail from './components/layout/IconRail.jsx'
+import WatchlistPanel from './components/layout/WatchlistPanel.jsx'
+import AIPanel from './components/layout/AIPanel.jsx'
 import TopBar from './components/layout/TopBar.jsx'
 import UnicornScoreOverlay from './components/UnicornScoreOverlay.jsx'
 
 // Import the full original trading chart app
 import AppChart from './AppChart.jsx'
 
-// Wrapper component for Multi-TF Panel that needs market data
-function MultiTFPanelWrapper({ setActiveTab }) {
-  const { marketData } = useMarketData()
-  const symbol = marketData.symbol || 'SPY'
+// Design tokens
+import { colors } from './styles/tokens'
 
-  return (
-    <MultiTimeframePanel
-      symbol={symbol}
-      onLoadTimeframe={(tf) => {
-        // Load timeframe on chart
-        window.dispatchEvent(new CustomEvent('iava.loadTimeframe', {
-          detail: { timeframe: tf }
-        }))
-        // Switch to chart tab
-        setActiveTab('chart')
-      }}
-    />
-  )
-}
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('chart')
@@ -269,7 +231,7 @@ export default function App() {
   )
 }
 
-// Inner component that has access to market data and can use MobileGestures
+// Inner component that has access to market data and uses LEGENDARY layout
 function AppWithGestures({
   activeTab,
   setActiveTab,
@@ -288,23 +250,63 @@ function AppWithGestures({
   const { marketData } = useMarketData()
   const symbol = marketData?.symbol || 'SPY'
 
+  // Handle symbol selection from watchlist
+  const handleSelectSymbol = (newSymbol) => {
+    window.dispatchEvent(new CustomEvent('iava.loadSymbol', {
+      detail: { symbol: newSymbol }
+    }))
+    setActiveTab('chart')
+  }
+
+  // Main content based on active tab
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'chart':
+        return <AppChart />
+      case 'ai-hub':
+        return <AIHub />
+      case 'discover':
+      case 'scanner':
+        return <NaturalLanguageScanner />
+      case 'portfolio':
+        return <Portfolio />
+      case 'ava-mind':
+        return (
+          <div style={{
+            background: colors.glass.bg,
+            borderRadius: 16,
+            overflow: 'hidden',
+            minHeight: 'calc(100vh - 120px)',
+          }}>
+            <AVAMindDashboard
+              onViewSymbol={(sym) => {
+                handleSelectSymbol(sym)
+              }}
+            />
+          </div>
+        )
+      default:
+        return <AppChart />
+    }
+  }
+
   return (
     <MobileGestures
       symbol={symbol}
       onSwipeLeft={() => {
-        const tabs = ['chart', 'ai-hub', 'scanner', 'portfolio', 'ava-mind']
+        const tabs = ['chart', 'discover', 'ai-hub', 'portfolio', 'ava-mind']
         const currentIndex = tabs.indexOf(activeTab)
         const nextIndex = (currentIndex + 1) % tabs.length
         setActiveTab(tabs[nextIndex])
       }}
       onSwipeRight={() => {
-        const tabs = ['chart', 'ai-hub', 'scanner', 'portfolio', 'ava-mind']
+        const tabs = ['chart', 'discover', 'ai-hub', 'portfolio', 'ava-mind']
         const currentIndex = tabs.indexOf(activeTab)
         const prevIndex = currentIndex === 0 ? tabs.length - 1 : currentIndex - 1
         setActiveTab(tabs[prevIndex])
       }}
     >
-      {/* Global Trust Mode Banner - shows when AVA is trading autonomously */}
+      {/* Global Trust Mode Banner */}
       <TrustModeBanner
         onNavigateToSafety={() => {
           setActiveTab('ava-mind')
@@ -314,98 +316,66 @@ function AppWithGestures({
         }}
       />
 
-      {/* Elite 2025 Layout: TopBar + Sidebar + Content */}
-      <div className="min-h-screen text-slate-100">
-        {/* TopBar - Fixed at top */}
-        <TopBar
-          currentSymbol={symbol}
-          onSymbolChange={(newSymbol) => {
-            window.dispatchEvent(new CustomEvent('iava.loadSymbol', {
-              detail: { symbol: newSymbol }
-            }))
-          }}
-        />
-
-        {/* Sidebar - Desktop only (hidden on mobile via CSS) */}
-        <CollapsibleSidebar
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-
-        {/* Main Content Area */}
-        <div
-          className="pt-14 md:ml-56 transition-all duration-300 min-h-screen"
-          style={{ background: 'var(--bg-base)' }}
-        >
-          <div className="p-4 md:p-6 pb-24 md:pb-6 space-y-4">
-
-        {/* Tab Content */}
-        {activeTab === 'chart' && (
-          <AppChart />
-        )}
-
-        {activeTab === 'ai-hub' && (
-          <AIHub />
-        )}
-
-        {activeTab === 'scanner' && (
-          <NaturalLanguageScanner />
-        )}
-
-        {activeTab === 'portfolio' && (
-          <Portfolio />
-        )}
-
-        {activeTab === 'ava-mind' && (
-          <div className="glass-panel -mx-6 -mt-6 overflow-hidden" style={{ minHeight: 'calc(100vh - 200px)' }}>
-            <AVAMindDashboard
-              onViewSymbol={(symbol) => {
-                window.dispatchEvent(new CustomEvent('iava.loadSymbol', {
-                  detail: { symbol }
-                }))
-                setActiveTab('chart')
-              }}
-            />
-          </div>
-        )}
-
-        {activeTab === 'ai-demo' && (
-          <AIChatDemo />
-        )}
-
-        {activeTab !== 'chart' && <BuildInfoFooter />}
-          </div>
+      {/* LEGENDARY Layout */}
+      <LegendaryLayout
+        topBar={
+          <TopBar
+            currentSymbol={symbol}
+            onSymbolChange={handleSelectSymbol}
+          />
+        }
+        iconRail={
+          <IconRail
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
+        }
+        watchlistPanel={
+          <WatchlistPanel
+            currentSymbol={symbol}
+            onSelectSymbol={handleSelectSymbol}
+          />
+        }
+        aiPanel={
+          <AIPanel
+            symbol={symbol}
+            score={87}
+          />
+        }
+        bottomNav={
+          <MobileBottomNav
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
+        }
+        showPanels={{
+          watchlist: activeTab === 'chart' || activeTab === 'discover',
+          ai: activeTab === 'chart',
+        }}
+      >
+        {/* Main Content */}
+        <div style={{ padding: 16, minHeight: '100%' }}>
+          {renderContent()}
+          {activeTab !== 'chart' && <BuildInfoFooter />}
         </div>
+      </LegendaryLayout>
 
-        {/* Welcome Tour for new users */}
-        <WelcomeTour forceShow={showTour} onClose={() => setShowTour(false)} />
+      {/* Welcome Tour */}
+      <WelcomeTour forceShow={showTour} onClose={() => setShowTour(false)} />
+      <TourHelpButton onClick={() => setShowTour(true)} />
 
-        {/* Help button to restart tour */}
-        <TourHelpButton onClick={() => setShowTour(true)} />
+      {/* Toast Notifications */}
+      <ToastHub />
 
-        <ToastHub />
+      {/* AI Trade Copilot */}
+      {showCopilot && activeTab === 'chart' && (
+        <AITradeCopilot onClose={() => setShowCopilot(false)} />
+      )}
 
-        {/* AI Trade Copilot - Proactive position monitoring */}
-        {showCopilot && activeTab === 'chart' && (
-          <AITradeCopilot onClose={() => setShowCopilot(false)} />
-        )}
-
-        {/* Unicorn Score Overlay - Shows score on chart view */}
-        {activeTab === 'chart' && (
-          <UnicornScoreOverlay className="hidden md:block" />
-        )}
-
-        {/* Social Trading Rooms */}
-        {showSocialRooms && (
-          <SocialTradingRooms onClose={() => setShowSocialRooms(false)} />
-        )}
-
-        {/* Mobile Bottom Navigation */}
-        <MobileBottomNav
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-      </div>
+      {/* Social Trading Rooms */}
+      {showSocialRooms && (
+        <SocialTradingRooms onClose={() => setShowSocialRooms(false)} />
+      )}
     </MobileGestures>
   )
 }
