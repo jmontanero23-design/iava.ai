@@ -22,6 +22,10 @@ import WelcomeTour, { TourHelpButton } from './components/WelcomeTour.jsx'
 import AITradeCopilot from './components/AITradeCopilot.jsx'
 import MobileBottomNav from './components/MobileBottomNav.jsx'
 import TrustModeBanner from './components/TrustModeBanner.jsx'
+import ExpandableScoreCard from './components/ExpandableScoreCard.jsx'
+import DynamicIsland from './components/DynamicIsland.jsx'
+import MobileSymbolHeader from './components/MobileSymbolHeader.jsx'
+import MobileTradeView from './components/MobileTradeView.jsx'
 
 // LEGENDARY Layout Components
 import LegendaryLayout from './components/layout/LegendaryLayout.jsx'
@@ -265,7 +269,12 @@ function AppWithGestures({
   const renderContent = () => {
     switch (activeTab) {
       case 'chart':
-        return <AppChart />
+        return (
+          <MobileTradeView
+            symbol={symbol}
+            onSelectSymbol={handleSelectSymbol}
+          />
+        )
       case 'ai-hub':
         return <AIHub />
       case 'discover':
@@ -382,6 +391,27 @@ function AppWithGestures({
       {showSocialRooms && (
         <SocialTradingRooms onClose={() => setShowSocialRooms(false)} />
       )}
+
+      {/* Mobile Score Card - shows on chart view for mobile */}
+      {activeTab === 'chart' && (
+        <div className="md:hidden">
+          <ExpandableScoreCard
+            symbol={symbol}
+            score={87}
+            trend="bullish"
+            signal="Strong Buy"
+          />
+        </div>
+      )}
+
+      {/* Dynamic Island - iOS devices only */}
+      <div className="md:hidden">
+        <DynamicIsland
+          symbol={symbol}
+          score={87}
+          changePercent={0.59}
+        />
+      </div>
     </MobileGestures>
   )
 }

@@ -17,13 +17,15 @@ import {
   Target,
   ArrowUp,
   ArrowDown,
+  Radio,
 } from 'lucide-react'
 import { ScoreRing } from '../ui/ScoreRing'
+import SignalFeed from '../SignalFeed'
 import { colors, gradients, animation, spacing, radius, typography, shadows } from '../../styles/tokens'
 
 const tabs = [
   { id: 'score', label: 'Score', Icon: Zap },
-  { id: 'insights', label: 'Insights', Icon: TrendingUp },
+  { id: 'signals', label: 'Signals', Icon: Radio },
   { id: 'chronos', label: 'Chronos', Icon: Clock },
   { id: 'chat', label: 'Chat', Icon: MessageCircle },
 ]
@@ -531,7 +533,11 @@ export default function AIPanel({ symbol = 'NVDA', score = 87 }) {
       {/* Tab content */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {activeTab === 'score' && <ScoreTab symbol={symbol} score={score} />}
-        {activeTab === 'insights' && <InsightsTab />}
+        {activeTab === 'signals' && (
+          <div style={{ padding: spacing[4] }}>
+            <SignalFeed compact={false} />
+          </div>
+        )}
         {activeTab === 'chronos' && <ChronosTab />}
         {activeTab === 'chat' && <ChatTab />}
       </div>

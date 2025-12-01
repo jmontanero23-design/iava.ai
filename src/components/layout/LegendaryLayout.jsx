@@ -62,6 +62,24 @@ function AmbientOrbs() {
           animation: 'orbFloat3 30s ease-in-out infinite',
         }}
       />
+      {/* Floating particles */}
+      <div style={{ position: 'absolute', inset: 0 }}>
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              width: i % 3 === 0 ? 3 : 2,
+              height: i % 3 === 0 ? 3 : 2,
+              background: i % 2 === 0 ? 'rgba(168, 85, 247, 0.6)' : 'rgba(34, 211, 238, 0.6)',
+              borderRadius: '50%',
+              left: `${(i * 5) % 100}%`,
+              animation: `particleFloat ${15 + i * 0.5}s linear infinite`,
+              animationDelay: `${-i * 0.7}s`,
+            }}
+          />
+        ))}
+      </div>
       <style>{`
         @keyframes orbFloat1 {
           0%, 100% { transform: translate(0, 0) scale(1); }
@@ -74,6 +92,12 @@ function AmbientOrbs() {
         @keyframes orbFloat3 {
           0%, 100% { transform: translate(0, 0) scale(1); }
           50% { transform: translate(20px, -25px) scale(1.05); }
+        }
+        @keyframes particleFloat {
+          0% { opacity: 0; transform: translateY(100vh) scale(0); }
+          10% { opacity: 0.6; transform: scale(1); }
+          90% { opacity: 0.6; }
+          100% { opacity: 0; transform: translateY(-100px) scale(0.5); }
         }
       `}</style>
     </div>
