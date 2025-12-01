@@ -157,7 +157,7 @@ export default function NaturalLanguageScanner({ onFiltersGenerated, onLoadSymbo
   }
 
   return (
-    <div className="glass-panel overflow-hidden">
+    <div className="glass-panel overflow-hidden" style={{ margin: 16, marginBottom: 32 }}>
       {/* Premium Header */}
       <div className="p-6 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-indigo-600 via-purple-500 to-cyan-500 blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />

@@ -2,14 +2,18 @@
  * LEGENDARY Layout Shell
  *
  * Responsive layout that transforms between:
- * - DESKTOP: 4-column grid (IconRail | Watchlist | Main | AIPanel)
+ * - DESKTOP: 4-column layout (IconRail | Watchlist | Main | AIPanel)
+ * - TABLET: 2-column layout (IconRail | Main)
  * - MOBILE: Full-screen with bottom navigation
+ *
+ * Architecture: Fixed positioning for panels with proper margin-based content area
+ * This avoids CSS Grid conflicts and ensures panels don't overlap content.
  *
  * Based on: iAVA-LEGENDARY-DESKTOP_1.html & iAVA-ULTIMATE-LEGENDARY-MOBILE.html
  */
 
 import { useState, useEffect } from 'react'
-import { colors, gradients, layout, zIndex, animation } from '../../styles/tokens'
+import { colors, layout, zIndex, animation } from '../../styles/tokens'
 
 // Ambient Orbs - Floating gradient background elements (matches HTML mockups)
 function AmbientOrbs() {
@@ -137,20 +141,36 @@ export default function LegendaryLayout({
     return () => window.removeEventListener('resize', checkBreakpoints)
   }, [])
 
-  // Calculate grid columns based on visible panels
-  const getGridColumns = () => {
-    if (isMobile) return '1fr'
-    if (isTablet) {
-      // Tablet: Icon rail + main content (no side panels)
-      return `${layout.desktop.iconRail}px 1fr`
+  // Calculate margins for main content based on visible fixed panels
+  const getContentMargins = () => {
+    if (isMobile) {
+      return {
+        marginLeft: 0,
+        marginRight: 0,
+        paddingTop: 0, // Mobile uses dynamic island, no topbar
+        paddingBottom: bottomNav ? layout.mobile.bottomNav : 0,
+      }
     }
+
+    if (isTablet) {
+      return {
+        marginLeft: layout.desktop.iconRail,
+        marginRight: 0,
+        paddingTop: layout.desktop.topBar,
+        paddingBottom: 0,
+      }
+    }
+
     // Desktop: Full 4-column layout
-    const cols = [`${layout.desktop.iconRail}px`]
-    if (showPanels.watchlist) cols.push(`${layout.desktop.watchlistPanel}px`)
-    cols.push('1fr')
-    if (showPanels.ai) cols.push(`${layout.desktop.aiPanel}px`)
-    return cols.join(' ')
+    return {
+      marginLeft: layout.desktop.iconRail + (showPanels.watchlist ? layout.desktop.watchlistPanel : 0),
+      marginRight: showPanels.ai ? layout.desktop.aiPanel : 0,
+      paddingTop: layout.desktop.topBar,
+      paddingBottom: 0,
+    }
   }
+
+  const contentMargins = getContentMargins()
 
   return (
     <div
@@ -163,8 +183,8 @@ export default function LegendaryLayout({
       {/* Ambient background orbs */}
       <AmbientOrbs />
 
-      {/* TopBar - Fixed at top */}
-      {topBar && (
+      {/* TopBar - Fixed at top (Desktop/Tablet only) */}
+      {!isMobile && topBar && (
         <div
           style={{
             position: 'fixed',
@@ -173,117 +193,115 @@ export default function LegendaryLayout({
             right: 0,
             height: layout.desktop.topBar,
             zIndex: zIndex.topbar,
+            background: colors.glass.bgHeavy,
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderBottom: `1px solid ${colors.glass.border}`,
           }}
         >
           {topBar}
         </div>
       )}
 
-      {/* Main grid container */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: getGridColumns(),
-          minHeight: '100vh',
-          paddingTop: topBar ? layout.desktop.topBar : 0,
-          paddingBottom: isMobile && bottomNav ? layout.mobile.bottomNav : 0,
-          position: 'relative',
-          zIndex: zIndex.content,
-        }}
-      >
-        {/* Icon Rail - Desktop/Tablet only */}
-        {!isMobile && iconRail && (
-          <div
-            style={{
-              position: 'fixed',
-              left: 0,
-              top: topBar ? layout.desktop.topBar : 0,
-              bottom: 0,
-              width: layout.desktop.iconRail,
-              background: colors.glass.bgHeavy,
-              backdropFilter: 'blur(20px)',
-              borderRight: `1px solid ${colors.glass.border}`,
-              zIndex: zIndex.nav,
-              overflowY: 'auto',
-            }}
-          >
-            {iconRail}
-          </div>
-        )}
-
-        {/* Watchlist Panel - Desktop only */}
-        {!isMobile && !isTablet && showPanels.watchlist && watchlistPanel && (
-          <div
-            style={{
-              position: 'fixed',
-              left: layout.desktop.iconRail,
-              top: topBar ? layout.desktop.topBar : 0,
-              bottom: 0,
-              width: layout.desktop.watchlistPanel,
-              background: colors.glass.bg,
-              backdropFilter: 'blur(20px)',
-              borderRight: `1px solid ${colors.glass.border}`,
-              zIndex: zIndex.content,
-              overflowY: 'auto',
-            }}
-          >
-            {watchlistPanel}
-          </div>
-        )}
-
-        {/* Main Content Area */}
-        <main
+      {/* Icon Rail - Fixed left (Desktop/Tablet only) */}
+      {!isMobile && iconRail && (
+        <aside
           style={{
-            marginLeft: isMobile
-              ? 0
-              : isTablet
-                ? layout.desktop.iconRail
-                : layout.desktop.iconRail + (showPanels.watchlist ? layout.desktop.watchlistPanel : 0),
-            marginRight: isMobile || isTablet || !showPanels.ai
-              ? 0
-              : layout.desktop.aiPanel,
-            minHeight: '100%',
-            position: 'relative',
-            transition: `margin ${animation.duration.normal}ms ${animation.easing.smooth}`,
+            position: 'fixed',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: layout.desktop.iconRail,
+            background: colors.glass.bgHeavy,
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderRight: `1px solid ${colors.glass.border}`,
+            zIndex: zIndex.nav,
+            overflowY: 'auto',
+            overflowX: 'hidden',
           }}
         >
-          {children}
-        </main>
+          {iconRail}
+        </aside>
+      )}
 
-        {/* AI Panel - Desktop only */}
-        {!isMobile && !isTablet && showPanels.ai && aiPanel && (
-          <div
-            style={{
-              position: 'fixed',
-              right: 0,
-              top: topBar ? layout.desktop.topBar : 0,
-              bottom: 0,
-              width: layout.desktop.aiPanel,
-              background: colors.glass.bg,
-              backdropFilter: 'blur(20px)',
-              borderLeft: `1px solid ${colors.glass.border}`,
-              zIndex: zIndex.content,
-              overflowY: 'auto',
-            }}
-          >
-            {aiPanel}
-          </div>
-        )}
-      </div>
+      {/* Watchlist Panel - Fixed left of main (Desktop only) */}
+      {!isMobile && !isTablet && showPanels.watchlist && watchlistPanel && (
+        <aside
+          style={{
+            position: 'fixed',
+            left: layout.desktop.iconRail,
+            top: layout.desktop.topBar,
+            bottom: 0,
+            width: layout.desktop.watchlistPanel,
+            background: colors.glass.bg,
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderRight: `1px solid ${colors.glass.border}`,
+            zIndex: zIndex.content,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+          }}
+        >
+          {watchlistPanel}
+        </aside>
+      )}
 
-      {/* Bottom Navigation - Mobile only */}
+      {/* AI Panel - Fixed right (Desktop only) */}
+      {!isMobile && !isTablet && showPanels.ai && aiPanel && (
+        <aside
+          style={{
+            position: 'fixed',
+            right: 0,
+            top: layout.desktop.topBar,
+            bottom: 0,
+            width: layout.desktop.aiPanel,
+            background: colors.glass.bg,
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderLeft: `1px solid ${colors.glass.border}`,
+            zIndex: zIndex.content,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+          }}
+        >
+          {aiPanel}
+        </aside>
+      )}
+
+      {/* Main Content Area - Margins account for fixed panels */}
+      <main
+        style={{
+          position: 'relative',
+          minHeight: '100vh',
+          marginLeft: contentMargins.marginLeft,
+          marginRight: contentMargins.marginRight,
+          paddingTop: contentMargins.paddingTop,
+          paddingBottom: contentMargins.paddingBottom,
+          zIndex: zIndex.content,
+          transition: `margin ${animation.duration.normal}ms ${animation.easing.smooth}`,
+        }}
+      >
+        {children}
+      </main>
+
+      {/* Bottom Navigation - Fixed bottom (Mobile only) */}
       {isMobile && bottomNav && (
-        <div
+        <nav
           style={{
             position: 'fixed',
             bottom: 0,
             left: 0,
             right: 0,
             zIndex: zIndex.nav,
+            background: colors.glass.bgHeavy,
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderTop: `1px solid ${colors.glass.border}`,
           }}
         >
           {bottomNav}
-        </div>
+        </nav>
       )}
     </div>
   )

@@ -102,18 +102,11 @@ export default function TopBar({
     <header
       className={className}
       style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 40,
-        height: 56,
+        // No fixed positioning - parent LegendaryLayout handles positioning
+        height: '100%',
         paddingTop: 'env(safe-area-inset-top, 0px)',
-        background: colors.glass.bgHeavy,
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: `1px solid ${colors.glass.border}`,
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+        // Background handled by parent, but add for standalone use
+        background: 'transparent',
       }}
     >
       <div

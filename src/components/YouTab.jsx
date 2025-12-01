@@ -122,6 +122,7 @@ export default function YouTab() {
         display: 'flex',
         flexDirection: 'column',
         gap: spacing[4],
+        padding: spacing[4],
         paddingBottom: spacing[8],
       }}
     >

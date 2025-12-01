@@ -86,7 +86,7 @@ export default function AIHub() {
   const ActiveComponent = features.find(f => f.id === selectedFeature)?.component
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" style={{ padding: 16, paddingBottom: 32 }}>
       {/* LEGENDARY Feature Selector Grid */}
       <div
         style={{

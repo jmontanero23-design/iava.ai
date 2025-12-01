@@ -394,8 +394,14 @@ function AppWithGestures({
           ai: activeTab === 'chart',
         }}
       >
-        {/* Main Content */}
-        <div style={{ padding: 16, minHeight: '100%' }}>
+        {/* Main Content - padding handled by individual components for flexibility */}
+        <div
+          style={{
+            minHeight: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           {renderContent()}
           {activeTab !== 'chart' && <BuildInfoFooter />}
         </div>

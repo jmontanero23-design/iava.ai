@@ -107,8 +107,8 @@ export default function MobileTradeView({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
-        margin: isMobile ? `-${spacing[4]}px` : 0,
+        flex: 1,
+        minHeight: 0, // Prevent flex overflow
         opacity: isChangingSymbol ? 0.7 : 1,
         transition: `opacity ${animation.duration.fast}ms`,
       }}

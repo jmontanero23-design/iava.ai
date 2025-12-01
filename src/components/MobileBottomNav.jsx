@@ -281,15 +281,13 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
       )}
 
       {/* Bottom Navigation Bar - LEGENDARY glass morphism */}
+      {/* Note: Fixed positioning is handled by parent LegendaryLayout */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
+        className="md:hidden"
         style={{
-          background: colors.glass.bgHeavy,
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderTop: `1px solid ${colors.glass.border}`,
+          // Background handled by LegendaryLayout, but keep for standalone use
+          background: 'transparent',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.3)',
         }}
       >
         <div className="flex items-stretch justify-around px-1 py-1">
