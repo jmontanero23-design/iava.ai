@@ -1,14 +1,16 @@
 /**
- * Skeleton - Elite UI Loading Skeleton Components
+ * LEGENDARY Skeleton Components
  *
  * Features:
  * - Multiple shapes (text, circle, rectangle, card)
- * - Shimmer animation
+ * - Shimmer animation with unicorn gradient
  * - Customizable dimensions
- * - Dark mode optimized
+ * - Dark mode optimized for THE VOID
+ * Based on: LEGENDARY design system
  */
 
 import React from 'react'
+import { colors, radius, spacing } from '../../styles/tokens'
 
 // Base Skeleton
 export default function Skeleton({
@@ -251,6 +253,237 @@ export function SkeletonDashboard({ className = '' }) {
 
       {/* List */}
       <SkeletonList items={5} />
+    </div>
+  )
+}
+
+// LEGENDARY Unicorn Score Ring Skeleton
+export function SkeletonScoreRing({ size = 'lg' }) {
+  const sizes = {
+    sm: 60,
+    md: 80,
+    lg: 120,
+    xl: 160,
+  }
+  const dimension = sizes[size] || sizes.lg
+
+  return (
+    <div
+      style={{
+        width: dimension,
+        height: dimension,
+        borderRadius: '50%',
+        background: `conic-gradient(from 0deg, ${colors.depth2}, ${colors.depth3}, ${colors.depth2})`,
+        animation: 'spinSkeleton 2s linear infinite',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        style={{
+          width: dimension - 16,
+          height: dimension - 16,
+          borderRadius: '50%',
+          background: colors.depth1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Skeleton width={`${dimension / 2}px`} height={`${dimension / 4}px`} rounded="md" />
+      </div>
+      <style>{`
+        @keyframes spinSkeleton {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// LEGENDARY Watchlist Item Skeleton
+export function SkeletonWatchlistItem() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: spacing[3],
+        padding: spacing[3],
+        background: colors.depth1,
+        borderRadius: radius.xl,
+        border: `1px solid ${colors.glass.border}`,
+      }}
+    >
+      <Skeleton width="44px" height="44px" rounded="lg" />
+      <div style={{ flex: 1 }}>
+        <Skeleton width="50%" height="16px" rounded="md" className="mb-1" />
+        <Skeleton width="35%" height="12px" rounded="md" />
+      </div>
+      <div style={{ textAlign: 'right' }}>
+        <Skeleton width="60px" height="16px" rounded="md" className="mb-1" />
+        <Skeleton width="40px" height="12px" rounded="md" />
+      </div>
+    </div>
+  )
+}
+
+// LEGENDARY AI Panel Skeleton
+export function SkeletonAIPanel() {
+  return (
+    <div style={{ padding: spacing[4] }}>
+      {/* Score area */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          padding: spacing[6],
+          marginBottom: spacing[4],
+        }}
+      >
+        <SkeletonScoreRing size="xl" />
+        <div style={{ marginTop: spacing[3], width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Skeleton width="80px" height="18px" rounded="md" className="mb-1" />
+          <Skeleton width="100px" height="12px" rounded="md" />
+        </div>
+      </div>
+
+      {/* Breakdown */}
+      <div
+        style={{
+          background: colors.depth2,
+          borderRadius: radius.xl,
+          padding: spacing[4],
+          border: `1px solid ${colors.glass.border}`,
+        }}
+      >
+        <Skeleton width="120px" height="12px" rounded="md" className="mb-3" />
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: `${spacing[2]}px 0`,
+            }}
+          >
+            <Skeleton width="70px" height="14px" rounded="md" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+              <Skeleton width="80px" height="4px" rounded="full" />
+              <Skeleton width="24px" height="14px" rounded="md" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// LEGENDARY Mobile Header Skeleton
+export function SkeletonMobileHeader() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: spacing[4],
+        background: colors.glass.bg,
+        backdropFilter: 'blur(20px)',
+        borderRadius: radius['2xl'],
+        border: `1px solid ${colors.glass.border}`,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+        <Skeleton width="48px" height="48px" rounded="xl" />
+        <div>
+          <Skeleton width="60px" height="18px" rounded="md" className="mb-1" />
+          <Skeleton width="100px" height="12px" rounded="md" />
+        </div>
+      </div>
+      <div style={{ textAlign: 'right' }}>
+        <Skeleton width="80px" height="24px" rounded="md" className="mb-1" />
+        <Skeleton width="60px" height="14px" rounded="md" />
+      </div>
+    </div>
+  )
+}
+
+// LEGENDARY Signal Feed Skeleton
+export function SkeletonSignalFeed({ count = 3 }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[3] }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            display: 'flex',
+            gap: spacing[3],
+            padding: spacing[3],
+            background: colors.depth1,
+            borderRadius: radius.xl,
+            border: `1px solid ${colors.glass.border}`,
+          }}
+        >
+          <Skeleton width="44px" height="44px" rounded="lg" />
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: spacing[2] }}>
+              <Skeleton width="80px" height="14px" rounded="md" />
+              <Skeleton width="50px" height="14px" rounded="md" />
+            </div>
+            <Skeleton width="90%" height="12px" rounded="md" className="mb-1" />
+            <Skeleton width="60%" height="12px" rounded="md" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// LEGENDARY Trade Panel Skeleton
+export function SkeletonTradePanel() {
+  return (
+    <div
+      style={{
+        background: colors.depth1,
+        borderRadius: radius['2xl'],
+        border: `1px solid ${colors.glass.border}`,
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          padding: spacing[4],
+          background: colors.emerald.dim,
+          borderBottom: `1px solid ${colors.glass.border}`,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
+          <Skeleton width="40px" height="40px" rounded="lg" />
+          <div style={{ flex: 1 }}>
+            <Skeleton width="150px" height="18px" rounded="md" className="mb-1" />
+            <Skeleton width="100px" height="12px" rounded="md" />
+          </div>
+        </div>
+      </div>
+
+      {/* Form */}
+      <div style={{ padding: spacing[4] }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing[4], marginBottom: spacing[4] }}>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i}>
+              <Skeleton width="60px" height="12px" rounded="md" className="mb-2" />
+              <Skeleton width="100%" height="40px" rounded="lg" />
+            </div>
+          ))}
+        </div>
+        <Skeleton width="100%" height="48px" rounded="xl" />
+      </div>
     </div>
   )
 }
