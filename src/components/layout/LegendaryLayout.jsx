@@ -11,7 +11,7 @@
 import { useState, useEffect } from 'react'
 import { colors, gradients, layout, zIndex, animation } from '../../styles/tokens'
 
-// Ambient Orbs - Floating gradient background elements
+// Ambient Orbs - Floating gradient background elements (matches HTML mockups)
 function AmbientOrbs() {
   return (
     <div
@@ -23,43 +23,51 @@ function AmbientOrbs() {
         overflow: 'hidden',
       }}
     >
-      {/* Purple orb - top left */}
+      {/* Purple orb - top right (larger, more visible) */}
       <div
         style={{
           position: 'absolute',
-          top: '-20%',
-          left: '-10%',
+          top: '-300px',
+          right: '-200px',
+          width: '800px',
+          height: '800px',
+          background: colors.purple[500],
+          borderRadius: '50%',
+          filter: 'blur(120px)',
+          opacity: 0.15,
+          animation: 'orbFloat1 25s ease-in-out infinite',
+        }}
+      />
+      {/* Cyan orb - bottom left */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '-200px',
+          left: '-200px',
           width: '600px',
           height: '600px',
-          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%)',
-          filter: 'blur(60px)',
-          animation: 'orbFloat1 20s ease-in-out infinite',
-        }}
-      />
-      {/* Cyan orb - bottom right */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '-20%',
-          right: '-10%',
-          width: '500px',
-          height: '500px',
-          background: 'radial-gradient(circle, rgba(34, 211, 238, 0.12) 0%, transparent 70%)',
-          filter: 'blur(60px)',
+          background: colors.cyan[400],
+          borderRadius: '50%',
+          filter: 'blur(120px)',
+          opacity: 0.1,
           animation: 'orbFloat2 25s ease-in-out infinite',
+          animationDelay: '-8s',
         }}
       />
-      {/* Indigo orb - center */}
+      {/* Indigo orb - center right */}
       <div
         style={{
           position: 'absolute',
           top: '40%',
-          left: '30%',
-          width: '400px',
-          height: '400px',
-          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%)',
-          filter: 'blur(80px)',
-          animation: 'orbFloat3 30s ease-in-out infinite',
+          right: '-100px',
+          width: '500px',
+          height: '500px',
+          background: colors.indigo[500],
+          borderRadius: '50%',
+          filter: 'blur(120px)',
+          opacity: 0.08,
+          animation: 'orbFloat3 25s ease-in-out infinite',
+          animationDelay: '-15s',
         }}
       />
       {/* Floating particles */}
@@ -148,7 +156,7 @@ export default function LegendaryLayout({
     <div
       style={{
         minHeight: '100vh',
-        background: colors.voidSoft,
+        background: colors.void, // Pure black - THE VOID
         position: 'relative',
       }}
     >

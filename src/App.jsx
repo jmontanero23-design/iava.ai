@@ -26,6 +26,12 @@ import ExpandableScoreCard from './components/ExpandableScoreCard.jsx'
 import DynamicIsland from './components/DynamicIsland.jsx'
 import MobileSymbolHeader from './components/MobileSymbolHeader.jsx'
 import MobileTradeView from './components/MobileTradeView.jsx'
+import MarketOverview from './components/MarketOverview.jsx'
+import NotificationCenter from './components/NotificationCenter.jsx'
+import MobileQuickActions, { QuickActionsFAB } from './components/MobileQuickActions.jsx'
+import AlertsCenter from './components/AlertsCenter.jsx'
+import SymbolSearchModal from './components/SymbolSearchModal.jsx'
+import ScoreBreakdown from './components/ScoreBreakdown.jsx'
 
 // LEGENDARY Layout Components
 import LegendaryLayout from './components/layout/LegendaryLayout.jsx'
@@ -49,6 +55,10 @@ export default function App() {
   const [showCopilot, setShowCopilot] = useState(true) // AI Copilot visible by default
   const [showAVAMind, setShowAVAMind] = useState(false) // AVA Mind AI Twin
   const [showSocialRooms, setShowSocialRooms] = useState(false) // Social Trading Rooms
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [showQuickActions, setShowQuickActions] = useState(false)
+  const [showSymbolSearch, setShowSymbolSearch] = useState(false)
+  const [showAlerts, setShowAlerts] = useState(false)
 
   // CRITICAL FIX: Listen for symbol loading from AI Chat
   useEffect(() => {
@@ -113,10 +123,10 @@ export default function App() {
       // Only trigger if not typing in an input
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
 
-      // Cmd/Ctrl + K for Command Palette (common pattern)
+      // Cmd/Ctrl + K for Symbol Search (common pattern)
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
-        window.dispatchEvent(new CustomEvent('iava.toggleCommandPalette'))
+        setShowSymbolSearch(prev => !prev)
         return
       }
 
@@ -232,6 +242,14 @@ export default function App() {
         setShowAVAMind={setShowAVAMind}
         showSocialRooms={showSocialRooms}
         setShowSocialRooms={setShowSocialRooms}
+        showNotifications={showNotifications}
+        setShowNotifications={setShowNotifications}
+        showQuickActions={showQuickActions}
+        setShowQuickActions={setShowQuickActions}
+        showSymbolSearch={showSymbolSearch}
+        setShowSymbolSearch={setShowSymbolSearch}
+        showAlerts={showAlerts}
+        setShowAlerts={setShowAlerts}
         handleFeatureSelect={handleFeatureSelect}
       />
     </MarketDataProvider>
@@ -252,6 +270,14 @@ function AppWithGestures({
   setShowAVAMind,
   showSocialRooms,
   setShowSocialRooms,
+  showNotifications,
+  setShowNotifications,
+  showQuickActions,
+  setShowQuickActions,
+  showSymbolSearch,
+  setShowSymbolSearch,
+  showAlerts,
+  setShowAlerts,
   handleFeatureSelect
 }) {
   const { marketData } = useMarketData()
@@ -391,6 +417,37 @@ function AppWithGestures({
       {showSocialRooms && (
         <SocialTradingRooms onClose={() => setShowSocialRooms(false)} />
       )}
+
+      {/* Symbol Search Modal - Cmd+K */}
+      <SymbolSearchModal
+        isOpen={showSymbolSearch}
+        onClose={() => setShowSymbolSearch(false)}
+        onSelect={handleSelectSymbol}
+      />
+
+      {/* Notification Center - Slides in from right */}
+      <NotificationCenter
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
+
+      {/* Mobile Quick Actions */}
+      <MobileQuickActions
+        symbol={symbol}
+        isOpen={showQuickActions}
+        onClose={() => setShowQuickActions(false)}
+        onAction={(actionId) => {
+          // Handle quick action
+          if (actionId === 'alert') setShowAlerts(true)
+        }}
+      />
+
+      {/* Mobile FAB for Quick Actions */}
+      <div className="md:hidden">
+        {activeTab === 'chart' && (
+          <QuickActionsFAB onClick={() => setShowQuickActions(true)} />
+        )}
+      </div>
 
       {/* Mobile Score Card - shows on chart view for mobile */}
       {activeTab === 'chart' && (
