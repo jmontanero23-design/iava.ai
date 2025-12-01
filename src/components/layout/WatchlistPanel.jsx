@@ -8,6 +8,7 @@
  * - Filter pills (All, Unicorns, Squeezes)
  * - Watchlist items with mini ScoreRing
  * - Active item highlighting
+ * - LEGENDARY hover effects with unicorn gradient bar
  */
 
 import { useState } from 'react'
@@ -23,8 +24,8 @@ import { ScoreRing } from '../ui/ScoreRing'
 import StockLogo from '../ui/StockLogo'
 import { colors, gradients, animation, spacing, radius, typography } from '../../styles/tokens'
 
-// Demo watchlist data
-const watchlistData = [
+// Default demo watchlist data (used when no external data provided)
+const defaultWatchlistData = [
   { symbol: 'NVDA', name: 'NVIDIA Corporation', price: 142.56, change: 3.24, changePercent: 2.32, score: 87 },
   { symbol: 'AAPL', name: 'Apple Inc', price: 178.32, change: -0.89, changePercent: -0.50, score: 72 },
   { symbol: 'TSLA', name: 'Tesla Inc', price: 234.12, change: 5.67, changePercent: 2.48, score: 65 },
@@ -41,15 +42,23 @@ const filterOptions = [
   { id: 'squeezes', label: 'Squeezes' },
 ]
 
-export default function WatchlistPanel({ onSelectSymbol, currentSymbol }) {
+export default function WatchlistPanel({
+  onSelectSymbol,
+  currentSymbol,
+  watchlist = null,  // Accept external watchlist data
+  onAddSymbol,       // Callback for adding symbols
+}) {
   const [activeFilter, setActiveFilter] = useState('all')
   const [hoveredItem, setHoveredItem] = useState(null)
+
+  // Use provided watchlist or fall back to demo data
+  const watchlistData = watchlist && watchlist.length > 0 ? watchlist : defaultWatchlistData
 
   // Filter stocks based on active filter
   const filteredStocks = watchlistData.filter((stock) => {
     if (activeFilter === 'all') return true
-    if (activeFilter === 'unicorns') return stock.score >= 75
-    if (activeFilter === 'squeezes') return stock.score < 60
+    if (activeFilter === 'unicorns') return (stock.score ?? 0) >= 75
+    if (activeFilter === 'squeezes') return (stock.score ?? 0) < 60
     return true
   })
 
@@ -146,7 +155,10 @@ export default function WatchlistPanel({ onSelectSymbol, currentSymbol }) {
         {filteredStocks.map((stock) => {
           const isActive = currentSymbol === stock.symbol
           const isHovered = hoveredItem === stock.symbol
-          const isPositive = stock.change >= 0
+          const isPositive = (stock.change ?? 0) >= 0
+          const price = stock.price ?? 0
+          const changePercent = stock.changePercent ?? 0
+          const score = stock.score ?? 0
 
           return (
             <button
@@ -166,14 +178,33 @@ export default function WatchlistPanel({ onSelectSymbol, currentSymbol }) {
                     ? colors.depth1
                     : 'transparent',
                 border: isActive
-                  ? `1px solid ${colors.purple[500]}20`
-                  : '1px solid transparent',
+                  ? `1px solid ${colors.purple[500]}30`
+                  : isHovered
+                    ? `1px solid rgba(139, 92, 246, 0.2)`
+                    : '1px solid transparent',
                 borderRadius: radius.lg,
                 cursor: 'pointer',
                 transition: `all ${animation.duration.fast}ms ${animation.easing.spring}`,
                 textAlign: 'left',
+                position: 'relative',
+                overflow: 'hidden',
+                transform: isHovered && !isActive ? 'translateX(4px)' : 'none',
               }}
             >
+              {/* LEGENDARY unicorn bar on hover */}
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 3,
+                  background: gradients.unicorn,
+                  transform: (isHovered || isActive) ? 'scaleY(1)' : 'scaleY(0)',
+                  transition: `transform ${animation.duration.fast}ms ${animation.easing.spring}`,
+                }}
+              />
+
               {/* Stock Logo */}
               <StockLogo
                 symbol={stock.symbol}
@@ -218,7 +249,7 @@ export default function WatchlistPanel({ onSelectSymbol, currentSymbol }) {
                     marginBottom: 2,
                   }}
                 >
-                  ${stock.price.toFixed(2)}
+                  ${price > 0 ? price.toFixed(2) : '---'}
                 </div>
                 <div
                   style={{
@@ -236,12 +267,12 @@ export default function WatchlistPanel({ onSelectSymbol, currentSymbol }) {
                   ) : (
                     <TrendingDown size={12} />
                   )}
-                  {isPositive ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                  {isPositive ? '+' : ''}{changePercent.toFixed(2)}%
                 </div>
               </div>
 
               {/* Mini Score Ring */}
-              <ScoreRing score={stock.score} size="sm" showLabel={false} />
+              <ScoreRing score={score} size="sm" showLabel={false} />
             </button>
           )
         })}

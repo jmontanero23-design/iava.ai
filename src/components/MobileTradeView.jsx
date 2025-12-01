@@ -25,38 +25,61 @@ import {
   Zap,
   Sparkles,
   Brain,
+  Mic,
 } from 'lucide-react'
 import AppChart from '../AppChart'
 import { LogoMark } from './ui/Logo'
 import { ScoreRing } from './ui/ScoreRing'
 import StockLogo from './ui/StockLogo'
 import { SkeletonChart, SkeletonMobileHeader } from './ui/Skeleton'
+import { useMarketData } from '../contexts/MarketDataContext'
 import { colors, gradients, spacing, animation, radius, typography } from '../styles/tokens'
 
 // Timeframe options
 const timeframes = ['1m', '5m', '15m', '1H', '4H', '1D', '1W']
 
+// Company name lookup
+const COMPANY_NAMES = {
+  SPY: 'SPDR S&P 500 ETF',
+  QQQ: 'Invesco QQQ Trust',
+  AAPL: 'Apple Inc',
+  TSLA: 'Tesla Inc',
+  NVDA: 'NVIDIA Corporation',
+  AMD: 'Advanced Micro Devices',
+  MSFT: 'Microsoft Corporation',
+  GOOGL: 'Alphabet Inc',
+  AMZN: 'Amazon.com Inc',
+  META: 'Meta Platforms',
+}
+
 export default function MobileTradeView({
   symbol = 'SPY',
   onSymbolClick,
   onSelectSymbol,
+  onVoiceCommand,
 }) {
+  // Get real market data from context
+  const { marketData } = useMarketData()
+
   const [isMobile, setIsMobile] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTimeframe, setActiveTimeframe] = useState('15m')
   const [isChangingSymbol, setIsChangingSymbol] = useState(false)
   const [scoreCardExpanded, setScoreCardExpanded] = useState(false)
-  const [symbolData, setSymbolData] = useState({
-    symbol: symbol,
-    companyName: 'SPDR S&P 500 ETF',
-    price: 594.82,
-    change: 3.47,
-    changePercent: 0.59,
-    score: 87,
-    high: 596.20,
-    low: 591.50,
-    volume: '42.3M',
-  })
+  const [isVoiceActive, setIsVoiceActive] = useState(false)
+
+  // Use real data from context with fallbacks
+  const currentPrice = marketData?.currentPrice ?? 0
+  const priceChange = marketData?.signalState?.change ?? 0
+  const priceChangePercent = marketData?.signalState?.changePercent ?? 0
+  const realScore = marketData?.unicornScore?.ultraUnicornScore ?? marketData?.unicornScore?.score ?? 0
+  const scoreComponents = marketData?.unicornScore?.components ?? {}
+  const scoreBreakdown = marketData?.unicornScore?.breakdown ?? {}
+  const recommendation = marketData?.unicornScore?.recommendation?.action ?? 'HOLD'
+
+  // Determine direction from score or price
+  const direction = realScore >= 70 ? 'bullish' : realScore >= 50 ? 'neutral' : 'bearish'
+  const companyName = COMPANY_NAMES[symbol] || symbol
 
   // Check if mobile
   useEffect(() => {
@@ -66,49 +89,51 @@ export default function MobileTradeView({
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Simulate initial load
+  // Handle loading state based on market data
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800)
+    if (marketData?.currentPrice != null && !marketData?.isLoading) {
+      setIsLoading(false)
+    }
+    // Initial timeout fallback
+    const timer = setTimeout(() => setIsLoading(false), 1500)
     return () => clearTimeout(timer)
-  }, [])
+  }, [marketData])
 
-  // Update symbol data when symbol changes
+  // Handle symbol change animation
   useEffect(() => {
     setIsChangingSymbol(true)
-
-    const companyNames = {
-      SPY: 'SPDR S&P 500 ETF',
-      QQQ: 'Invesco QQQ Trust',
-      AAPL: 'Apple Inc',
-      TSLA: 'Tesla Inc',
-      NVDA: 'NVIDIA Corporation',
-      AMD: 'Advanced Micro Devices',
-      MSFT: 'Microsoft Corporation',
-      GOOGL: 'Alphabet Inc',
-      AMZN: 'Amazon.com Inc',
-      META: 'Meta Platforms',
-    }
-
-    const timer = setTimeout(() => {
-      setSymbolData(prev => ({
-        ...prev,
-        symbol: symbol,
-        companyName: companyNames[symbol] || symbol,
-      }))
-      setIsChangingSymbol(false)
-    }, 300)
-
+    const timer = setTimeout(() => setIsChangingSymbol(false), 300)
     return () => clearTimeout(timer)
   }, [symbol])
 
-  const isPositive = symbolData.change >= 0
+  // Handle voice commands
+  const handleVoiceCommand = (command) => {
+    setIsVoiceActive(false)
+    if (onVoiceCommand) {
+      onVoiceCommand(command)
+    }
+    // Dispatch event for voice command handler
+    window.dispatchEvent(new CustomEvent('iava.voiceCommand', { detail: command }))
+  }
 
-  // Score breakdown data
+  const isPositive = priceChange >= 0
+
+  // Score breakdown using REAL data from API (50/25/25 formula)
   const breakdown = [
-    { label: 'Technical', value: 92, type: 'tech' },
-    { label: 'Sentiment', value: 85, type: 'sent' },
-    { label: 'Forecast', value: 78, type: 'fore' },
+    { label: 'Technical', value: Math.round(scoreComponents?.technical ?? 50), type: 'tech' },
+    { label: 'Sentiment', value: Math.round(scoreComponents?.sentiment ?? 50), type: 'sent' },
+    { label: 'Forecast', value: Math.round(scoreComponents?.forecast ?? 50), type: 'fore' },
   ]
+
+  // Get score classification
+  const getScoreClassification = (score) => {
+    if (score >= 90) return { label: 'Ultra Elite', color: colors.cyan[400], bg: colors.cyan.dim }
+    if (score >= 80) return { label: 'Elite', color: colors.purple[400], bg: colors.purple.dim }
+    if (score >= 70) return { label: 'Unicorn', color: colors.emerald[400], bg: colors.emerald.dim }
+    if (score >= 50) return { label: 'Moderate', color: colors.amber[400], bg: 'rgba(251, 191, 36, 0.15)' }
+    return { label: 'Weak', color: colors.red[400], bg: colors.red.dim }
+  }
+  const scoreClass = getScoreClassification(realScore)
 
   // Loading state
   if (isLoading) {
@@ -207,7 +232,7 @@ export default function MobileTradeView({
           {/* Company Logo */}
           <div style={{ position: 'relative' }}>
             <StockLogo
-              symbol={symbolData.symbol}
+              symbol={symbol}
               size={54}
               borderRadius={14}
               style={{ boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)' }}
@@ -233,7 +258,7 @@ export default function MobileTradeView({
                 color: colors.text[100],
               }}
             >
-              {symbolData.symbol}
+              {symbol}
             </h1>
             <span
               style={{
@@ -241,7 +266,7 @@ export default function MobileTradeView({
                 color: colors.text[50],
               }}
             >
-              {symbolData.companyName}
+              {companyName}
             </span>
           </div>
         </div>
@@ -257,7 +282,7 @@ export default function MobileTradeView({
               color: colors.text[100],
             }}
           >
-            ${symbolData.price.toFixed(2)}
+            ${currentPrice > 0 ? currentPrice.toFixed(2) : '---'}
           </div>
           <div
             style={{
@@ -271,7 +296,7 @@ export default function MobileTradeView({
             }}
           >
             {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-            {isPositive ? '+' : ''}{symbolData.changePercent.toFixed(2)}%
+            {isPositive ? '+' : ''}{priceChangePercent.toFixed(2)}%
           </div>
         </div>
       </div>
@@ -378,7 +403,7 @@ export default function MobileTradeView({
           >
             {/* Left - Score Ring */}
             <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
-              <ScoreRing score={symbolData.score} size="md" />
+              <ScoreRing score={Math.round(realScore)} size="md" />
               <div>
                 <h3
                   style={{
@@ -399,11 +424,11 @@ export default function MobileTradeView({
                       padding: '4px 10px',
                       borderRadius: 6,
                       textTransform: 'uppercase',
-                      background: colors.emerald.dim,
-                      color: colors.emerald[400],
+                      background: direction === 'bullish' ? colors.emerald.dim : direction === 'bearish' ? colors.red.dim : 'rgba(251, 191, 36, 0.15)',
+                      color: direction === 'bullish' ? colors.emerald[400] : direction === 'bearish' ? colors.red[400] : colors.amber[400],
                     }}
                   >
-                    Bullish
+                    {direction === 'bullish' ? 'Bullish' : direction === 'bearish' ? 'Bearish' : 'Neutral'}
                   </span>
                 </h3>
                 <span
@@ -412,20 +437,20 @@ export default function MobileTradeView({
                     color: colors.text[50],
                   }}
                 >
-                  High conviction signal
+                  {recommendation !== 'HOLD' ? `${recommendation} Signal` : 'Wait for setup'}
                 </span>
               </div>
             </div>
 
-            {/* Right - Archetype Chip */}
+            {/* Right - Score Classification Chip */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: spacing[2],
                 padding: `${spacing[2]}px ${spacing[3]}px`,
-                background: colors.purple.dim,
-                border: `1px solid rgba(168, 85, 247, 0.2)`,
+                background: scoreClass.bg,
+                border: `1px solid ${scoreClass.color}30`,
                 borderRadius: radius.lg,
               }}
             >
@@ -446,10 +471,10 @@ export default function MobileTradeView({
                 style={{
                   fontSize: typography.fontSize.base,
                   fontWeight: typography.fontWeight.extrabold,
-                  color: colors.purple[300],
+                  color: scoreClass.color,
                 }}
               >
-                Unicorn
+                {scoreClass.label}
               </span>
             </div>
           </div>
@@ -529,10 +554,41 @@ export default function MobileTradeView({
                     margin: 0,
                   }}
                 >
-                  Strong momentum with <strong style={{ color: colors.text[100] }}>bullish divergence</strong> on RSI.
-                  Consider entry near <strong style={{ color: colors.text[100] }}>${(symbolData.price * 0.99).toFixed(2)}</strong> support.
+                  {realScore >= 70 ? (
+                    <>
+                      Strong momentum with <strong style={{ color: colors.text[100] }}>{direction}</strong> bias.
+                      Consider entry near <strong style={{ color: colors.text[100] }}>${(currentPrice * 0.99).toFixed(2)}</strong> support.
+                    </>
+                  ) : realScore >= 50 ? (
+                    <>
+                      Mixed signals on <strong style={{ color: colors.text[100] }}>{symbol}</strong>.
+                      Wait for clearer direction before entry.
+                    </>
+                  ) : (
+                    <>
+                      Weak setup on <strong style={{ color: colors.text[100] }}>{symbol}</strong>.
+                      Consider waiting or reducing position size.
+                    </>
+                  )}
                 </p>
               </div>
+
+              {/* Score Formula Transparency */}
+              {scoreBreakdown?.formula && (
+                <div
+                  style={{
+                    marginTop: spacing[2],
+                    padding: `${spacing[2]}px`,
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    borderRadius: radius.md,
+                    fontSize: typography.fontSize.xs,
+                    color: colors.text[30],
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  {scoreBreakdown.formula}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -596,6 +652,26 @@ export default function MobileTradeView({
           >
             <TrendingDown size={18} />
             Sell
+          </button>
+
+          {/* Voice Action Button */}
+          <button
+            onClick={() => setIsVoiceActive(!isVoiceActive)}
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: 14,
+              border: isVoiceActive ? 'none' : `1px solid ${colors.glass.border}`,
+              background: isVoiceActive ? gradients.unicorn : colors.glass.bg,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: `all ${animation.duration.fast}ms`,
+              boxShadow: isVoiceActive ? `0 0 20px ${colors.purple.glow}` : 'none',
+            }}
+          >
+            <Mic size={22} style={{ color: isVoiceActive ? '#fff' : colors.text[50] }} />
           </button>
 
           {/* Star Action */}

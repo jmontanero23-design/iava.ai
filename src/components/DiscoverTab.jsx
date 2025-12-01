@@ -5,7 +5,7 @@
  * Based on: iAVA-ULTIMATE-LEGENDARY-MOBILE.html (Discover Tab section)
  */
 
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Search,
   Mic,
@@ -17,7 +17,13 @@ import {
 import StockLogo from './ui/StockLogo'
 import { colors, gradients, animation, spacing, radius, typography } from '../styles/tokens'
 
-// Demo data for discovery
+// Check browser support for voice
+const SpeechRecognition = typeof window !== 'undefined' && (
+  window.SpeechRecognition || window.webkitSpeechRecognition
+)
+const hasSpeechSupport = !!SpeechRecognition
+
+// Demo data for discovery (will be replaced with real API data)
 const trendingStocks = [
   { symbol: 'NVDA', name: 'NVIDIA Corporation', price: 142.56, change: 3.24, score: 87, sector: 'Technology' },
   { symbol: 'TSLA', name: 'Tesla Inc', price: 234.12, change: 5.67, score: 72, sector: 'Automotive' },
@@ -42,6 +48,63 @@ export default function DiscoverTab({ onSelectSymbol }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')
   const [isListening, setIsListening] = useState(false)
+  const [voiceTranscript, setVoiceTranscript] = useState('')
+  const recognitionRef = useRef(null)
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if (!hasSpeechSupport) return
+
+    const recognition = new SpeechRecognition()
+    recognition.continuous = false
+    recognition.interimResults = true
+    recognition.lang = 'en-US'
+
+    recognition.onstart = () => {
+      setIsListening(true)
+    }
+
+    recognition.onend = () => {
+      setIsListening(false)
+    }
+
+    recognition.onresult = (event) => {
+      let transcript = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript
+      }
+      setVoiceTranscript(transcript)
+
+      // If final result, set as search query
+      if (event.results[event.resultIndex].isFinal) {
+        setSearchQuery(transcript.trim())
+
+        // Check if it's a symbol command like "load NVDA" or "search Apple"
+        const loadMatch = transcript.match(/(?:load|show|search|find)\s+(\w+)/i)
+        if (loadMatch) {
+          const symbol = loadMatch[1].toUpperCase()
+          // Check if it matches a known stock
+          const matchedStock = trendingStocks.find(s =>
+            s.symbol === symbol || s.name.toLowerCase().includes(symbol.toLowerCase())
+          )
+          if (matchedStock) {
+            onSelectSymbol?.(matchedStock.symbol)
+          }
+        }
+      }
+    }
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error)
+      setIsListening(false)
+    }
+
+    recognitionRef.current = recognition
+
+    return () => {
+      recognition.abort()
+    }
+  }, [onSelectSymbol])
 
   // Filter stocks based on active filter and search
   const filteredStocks = trendingStocks.filter((stock) => {
@@ -58,11 +121,24 @@ export default function DiscoverTab({ onSelectSymbol }) {
     return matchesSearch && matchesFilter
   })
 
-  // Handle voice search
-  const handleVoiceSearch = () => {
-    setIsListening(!isListening)
-    // Voice recognition would be implemented here
-  }
+  // Handle voice search toggle
+  const handleVoiceSearch = useCallback(() => {
+    if (!hasSpeechSupport) {
+      console.warn('Speech recognition not supported')
+      return
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop()
+    } else {
+      setVoiceTranscript('')
+      try {
+        recognitionRef.current?.start()
+      } catch (err) {
+        console.error('Voice start error:', err)
+      }
+    }
+  }, [isListening])
 
   return (
     <div
@@ -132,7 +208,10 @@ export default function DiscoverTab({ onSelectSymbol }) {
               border: 'none',
               cursor: 'pointer',
               transition: `all ${animation.duration.fast}ms`,
+              boxShadow: isListening ? `0 0 20px ${colors.purple.glow}` : 'none',
+              animation: isListening ? 'pulse 1.5s ease-in-out infinite' : 'none',
             }}
+            title={hasSpeechSupport ? 'Voice search' : 'Voice not supported'}
           >
             <Mic
               size={18}
@@ -140,6 +219,23 @@ export default function DiscoverTab({ onSelectSymbol }) {
             />
           </button>
         </div>
+
+        {/* Voice transcript feedback */}
+        {isListening && voiceTranscript && (
+          <div
+            style={{
+              marginTop: spacing[2],
+              padding: `${spacing[2]}px ${spacing[3]}px`,
+              background: colors.glass.bg,
+              border: `1px solid ${colors.purple[500]}30`,
+              borderRadius: radius.md,
+              fontSize: typography.fontSize.sm,
+              color: colors.text[70],
+            }}
+          >
+            <span style={{ color: colors.purple[400] }}>🎤</span> {voiceTranscript}
+          </div>
+        )}
       </div>
 
       {/* Filter Section - Sticky */}
@@ -266,9 +362,13 @@ export default function DiscoverTab({ onSelectSymbol }) {
         </p>
       </div>
 
-      {/* Custom scrollbar styles */}
+      {/* Custom scrollbar and animation styles */}
       <style>{`
         .filter-pills::-webkit-scrollbar { display: none; }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.9; }
+        }
       `}</style>
     </div>
   )
