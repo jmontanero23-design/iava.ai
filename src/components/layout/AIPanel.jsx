@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { ScoreRing } from '../ui/ScoreRing'
 import SignalFeed from '../SignalFeed'
+import LegendaryAIChat from '../LegendaryAIChat'
 import { colors, gradients, animation, spacing, radius, typography, shadows } from '../../styles/tokens'
 
 const tabs = [
@@ -539,7 +540,7 @@ export default function AIPanel({ symbol = 'NVDA', score = 87 }) {
           </div>
         )}
         {activeTab === 'chronos' && <ChronosTab />}
-        {activeTab === 'chat' && <ChatTab />}
+        {activeTab === 'chat' && <LegendaryAIChat symbol={symbol} />}
       </div>
     </div>
   )
