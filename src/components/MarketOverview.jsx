@@ -337,27 +337,46 @@ export default function MarketOverview({ onSelectSymbol }) {
   )
 }
 
-// Index Card Component
+// Index Card Component with LEGENDARY hover effects
 function IndexCard({ index, onClick }) {
+  const [isHovered, setIsHovered] = useState(false)
   const isPositive = index.change >= 0
 
   return (
     <button
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: spacing[4],
         padding: spacing[4],
         background: colors.depth1,
-        border: `1px solid ${colors.glass.border}`,
+        border: `1px solid ${isHovered ? 'rgba(139, 92, 246, 0.3)' : colors.glass.border}`,
         borderRadius: radius.xl,
         cursor: 'pointer',
         width: '100%',
         textAlign: 'left',
-        transition: `all ${animation.duration.fast}ms`,
+        transition: `all ${animation.duration.fast}ms ${animation.easing.spring}`,
+        transform: isHovered ? 'translateX(4px)' : 'none',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      {/* Unicorn left bar on hover */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 3,
+          background: gradients.unicorn,
+          transform: isHovered ? 'scaleY(1)' : 'scaleY(0)',
+          transition: `transform ${animation.duration.fast}ms ${animation.easing.spring}`,
+        }}
+      />
       {/* Symbol */}
       <div
         style={{
@@ -437,24 +456,29 @@ function IndexCard({ index, onClick }) {
   )
 }
 
-// Sector Card Component
+// Sector Card Component with LEGENDARY hover effects
 function SectorCard({ sector, onClick }) {
+  const [isHovered, setIsHovered] = useState(false)
   const isPositive = sector.change >= 0
 
   return (
     <button
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: spacing[4],
         background: colors.depth1,
-        border: `1px solid ${colors.glass.border}`,
+        border: `1px solid ${isHovered ? 'rgba(139, 92, 246, 0.3)' : colors.glass.border}`,
         borderRadius: radius.xl,
         cursor: 'pointer',
         textAlign: 'left',
-        transition: `all ${animation.duration.fast}ms`,
+        transition: `all ${animation.duration.fast}ms ${animation.easing.spring}`,
+        transform: isHovered ? 'translateY(-2px)' : 'none',
+        boxShadow: isHovered ? '0 8px 30px rgba(0, 0, 0, 0.3)' : 'none',
       }}
     >
       <div
