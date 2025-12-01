@@ -18,14 +18,13 @@ import OptionsGreeksCalculator from './OptionsGreeksCalculator.jsx'
 import Level2MarketDepth from './Level2MarketDepth.jsx'
 import VolumeProfile from './VolumeProfile.jsx'
 import PortfolioAnalytics from './PortfolioAnalytics.jsx'
-import VoiceAlertSettings, { VoiceAlertToggle } from './VoiceAlertSettings.jsx'
+import VoiceAlertSettings from './VoiceAlertSettings.jsx'
 import { useMarketData } from '../contexts/MarketDataContext.jsx'
-import { LogoMark } from './ui/Logo'
-import { colors, gradients, animation } from '../styles/tokens'
+import { colors, gradients, animation, spacing, radius, typography } from '../styles/tokens'
 import {
-  Target, MessageSquare, TrendingUp, Clock, Eye, LineChart,
-  AlertTriangle, Thermometer, Dice1, EyeIcon, Gauge, Dna, Calculator,
-  BarChart3, BarChartHorizontal, Briefcase, Volume2, Zap
+  Brain, MessageCircle, TrendingUp, Clock, Eye, Activity,
+  Shield, Dna, Gauge, BookOpen, Search, List, Layers, Users, Mic, GraduationCap,
+  Sparkles, ChevronLeft
 } from 'lucide-react'
 
 /**
@@ -61,192 +60,246 @@ export default function AIHub() {
     }
   }, [])
 
-  // Feature definitions with LEGENDARY styling
+  // Feature definitions matching the LEGENDARY mockup
   const features = [
-    { id: 'dashboard', name: 'Dashboard', Icon: Target, component: AIFeaturesDashboard, color: colors.cyan[400] },
-    { id: 'chat', name: 'AI Chat', Icon: MessageSquare, component: AIChat, color: colors.indigo[500] },
-    { id: 'sentiment', name: 'Sentiment', Icon: TrendingUp, component: MarketSentiment, color: colors.emerald[400] },
-    { id: 'forecast', name: 'AVA Forecast', Icon: Zap, component: ChronosForecast, color: colors.purple[500], isAVA: true },
-    { id: 'multi-tf', name: 'Multi-TF', Icon: Clock, component: () => <MultiTimeframePanel symbol={symbol} />, color: colors.cyan[400] },
-    { id: 'patterns', name: 'Patterns', Icon: Eye, component: PatternRecognition, color: colors.purple[400] },
-    { id: 'signals', name: 'Signal Score', Icon: LineChart, component: SignalQualityScorerPanel, color: colors.emerald[400] },
-    { id: 'risk', name: 'Risk Advisor', Icon: AlertTriangle, component: RiskAdvisorPanel, color: colors.red[400] },
-    { id: 'regime', name: 'Market Regime', Icon: Thermometer, component: MarketRegimeDetectorPanel, color: colors.amber[400] },
-    { id: 'anomaly', name: 'Anomaly', Icon: Dice1, component: AnomalyDetectorPanel, color: colors.red[400] },
-    { id: 'watchlist', name: 'Watchlist AI', Icon: EyeIcon, component: SmartWatchlistBuilderPanel, color: colors.cyan[400] },
-    { id: 'confidence', name: 'Confidence', Icon: Gauge, component: PredictiveConfidencePanel, color: colors.purple[500] },
-    { id: 'genetic', name: 'Genetic Opt', Icon: Dna, component: GeneticOptimizerPanel, color: colors.emerald[400] },
-    { id: 'options_greeks', name: 'Options', Icon: Calculator, component: OptionsGreeksCalculator, color: colors.indigo[400] },
-    { id: 'level2_depth', name: 'Level 2', Icon: BarChart3, component: Level2MarketDepth, color: colors.cyan[400] },
-    { id: 'volume_profile', name: 'Volume', Icon: BarChartHorizontal, component: VolumeProfile, color: colors.purple[400] },
-    { id: 'portfolio_analytics', name: 'Portfolio', Icon: Briefcase, component: PortfolioAnalytics, color: colors.amber[400] },
-    { id: 'voice_settings', name: 'Voice', Icon: Volume2, component: VoiceAlertSettings, color: colors.text[50] }
+    { id: 'ava-mind', name: 'AVA Mind', desc: 'Your AI twin that learns your trading style and evolves with you', Icon: Brain, component: AIFeaturesDashboard, colorKey: 'purple', wide: true, status: 'live' },
+    { id: 'chronos', name: 'Chronos', desc: 'AI price predictions', Icon: Sparkles, component: ChronosForecast, colorKey: 'cyan', status: 'live' },
+    { id: 'sentiment', name: 'Sentiment', desc: 'News & social analysis', Icon: MessageCircle, component: MarketSentiment, colorKey: 'emerald', status: 'live' },
+    { id: 'regime', name: 'Regime', desc: 'Market condition', Icon: Activity, component: MarketRegimeDetectorPanel, colorKey: 'indigo', status: 'live' },
+    { id: 'genetic', name: 'Genetic', desc: 'Strategy evolution', Icon: Dna, component: GeneticOptimizerPanel, colorKey: 'amber', status: 'live' },
+    { id: 'emotional', name: 'Emotional', desc: 'Psychology tracking', Icon: TrendingUp, component: AIChat, colorKey: 'red', status: 'live' },
+    { id: 'confidence', name: 'Confidence', desc: 'Signal probability', Icon: Gauge, component: PredictiveConfidencePanel, colorKey: 'purple', status: 'live' },
+    { id: 'patterns', name: 'Patterns', desc: 'Chart recognition', Icon: Eye, component: PatternRecognition, colorKey: 'cyan', status: 'live' },
+    { id: 'risk', name: 'Risk', desc: 'Position sizing', Icon: Shield, component: RiskAdvisorPanel, colorKey: 'emerald', status: 'live' },
+    { id: 'journal', name: 'Journal', desc: 'Trade analysis', Icon: BookOpen, component: TradeJournalAIPanel, colorKey: 'indigo', status: 'live' },
+    { id: 'nlp', name: 'NLP', desc: 'Natural search', Icon: Search, component: SmartWatchlistBuilderPanel, colorKey: 'amber', status: 'live' },
+    { id: 'watchlist', name: 'Watchlist', desc: 'AI-curated', Icon: List, component: SmartWatchlistBuilderPanel, colorKey: 'red', status: 'live' },
+    { id: 'multi-tf', name: 'Multi-TF', desc: 'Cross analysis', Icon: Layers, component: () => <MultiTimeframePanel symbol={symbol} />, colorKey: 'purple', status: 'live' },
+    { id: 'social', name: 'Social', desc: 'Trade together', Icon: Users, component: AIChat, colorKey: 'cyan', status: 'beta' },
+    { id: 'voice', name: 'Voice', desc: 'Hands-free trading', Icon: Mic, component: VoiceAlertSettings, colorKey: 'emerald', status: 'live' },
+    { id: 'learning', name: 'Learning', desc: 'Education path', Icon: GraduationCap, component: PersonalizedLearningPanel, colorKey: 'indigo', status: 'live' },
   ]
+
+  // Color mappings for feature icons
+  const colorMaps = {
+    purple: { bg: colors.purple.dim, color: colors.purple[400] },
+    cyan: { bg: colors.cyan.dim, color: colors.cyan[400] },
+    emerald: { bg: colors.emerald.dim, color: colors.emerald[400] },
+    indigo: { bg: colors.indigo.dim, color: colors.indigo[400] },
+    amber: { bg: colors.amber.dim, color: colors.amber[400] },
+    red: { bg: colors.red.dim, color: colors.red[400] },
+  }
 
   const ActiveComponent = features.find(f => f.id === selectedFeature)?.component
 
+  // If a feature is selected, show it full screen with back button
+  if (selectedFeature) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* Back header */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing[3],
+            padding: spacing[4],
+            borderBottom: `1px solid ${colors.glass.border}`,
+          }}
+        >
+          <button
+            onClick={() => setSelectedFeature(null)}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: radius.lg,
+              background: colors.depth1,
+              border: `1px solid ${colors.glass.border}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            <ChevronLeft size={20} style={{ color: colors.text[70] }} />
+          </button>
+          <div>
+            <h2 style={{ fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.bold, color: colors.text[100] }}>
+              {features.find(f => f.id === selectedFeature)?.name}
+            </h2>
+            <p style={{ fontSize: typography.fontSize.sm, color: colors.text[50] }}>
+              {features.find(f => f.id === selectedFeature)?.desc}
+            </p>
+          </div>
+        </div>
+        {/* Feature content */}
+        <div style={{ flex: 1, overflow: 'auto' }}>
+          {ActiveComponent && <ActiveComponent onFeatureSelect={setSelectedFeature} />}
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-4" style={{ padding: 16, paddingBottom: 32 }}>
-      {/* LEGENDARY Feature Selector Grid */}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Hub Header */}
       <div
         style={{
-          background: colors.glass.bg,
-          backdropFilter: 'blur(20px)',
-          border: `1px solid ${colors.glass.border}`,
-          borderRadius: 16,
-          padding: 16,
+          padding: `${spacing[4]}px ${spacing[5]}px`,
+          background: `linear-gradient(180deg, ${colors.purple.dim} 0%, transparent 100%)`,
         }}
       >
-        {/* Header with Unicorn gradient title */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <LogoMark size={28} />
-            <div>
-              <h2
-                style={{
-                  fontSize: 18,
-                  fontWeight: 800,
-                  background: gradients.unicorn,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                AI Command Center
-              </h2>
-              <p style={{ fontSize: 12, color: colors.text[50], marginTop: 2 }}>
-                {features.filter(f => f.id !== 'dashboard' && f.id !== 'voice_settings').length} AI-Powered Features
-              </p>
-            </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3], marginBottom: spacing[2] }}>
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              background: gradients.unicorn,
+              borderRadius: radius.xl,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: `0 0 30px ${colors.purple.glow}`,
+            }}
+          >
+            <Sparkles size={22} style={{ color: '#fff' }} />
           </div>
-          <div className="flex items-center gap-3">
-            <VoiceAlertToggle />
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 12px',
-                background: colors.emerald.dim,
-                borderRadius: 20,
-                border: `1px solid ${colors.emerald[400]}30`,
-              }}
-            >
-              <div
-                style={{
-                  width: 8,
-                  height: 8,
-                  background: colors.emerald[400],
-                  borderRadius: '50%',
-                  boxShadow: `0 0 8px ${colors.emerald.glow}`,
-                  animation: 'pulse 2s ease-in-out infinite',
-                }}
-              />
-              <span style={{ fontSize: 11, fontWeight: 600, color: colors.emerald[400] }}>
-                LIVE
-              </span>
-            </div>
-          </div>
+          <h1
+            style={{
+              fontSize: 30,
+              fontWeight: typography.fontWeight.black,
+              letterSpacing: '-0.02em',
+              color: colors.text[100],
+            }}
+          >
+            AI Hub
+          </h1>
         </div>
-
-        {/* LEGENDARY Feature Grid */}
-        <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-9 gap-2">
-          {features.map(feature => {
-            const IconComponent = feature.Icon
-            const isActive = selectedFeature === feature.id
-            const featureColor = feature.color || colors.text[50]
-
-            return (
-              <button
-                key={feature.id}
-                onClick={() => setSelectedFeature(feature.id)}
-                style={{
-                  padding: 12,
-                  borderRadius: 12,
-                  border: isActive
-                    ? `1px solid ${featureColor}50`
-                    : '1px solid transparent',
-                  background: isActive
-                    ? `${featureColor}15`
-                    : 'rgba(255, 255, 255, 0.03)',
-                  transition: `all ${animation.duration.normal}ms ${animation.easing.smooth}`,
-                  cursor: 'pointer',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)'
-                    e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.1)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'
-                    e.currentTarget.style.border = '1px solid transparent'
-                  }
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  {feature.isAVA ? (
-                    <div
-                      style={{
-                        width: 20,
-                        height: 20,
-                        marginBottom: 6,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <LogoMark
-                        size={20}
-                        style={{
-                          filter: isActive
-                            ? `drop-shadow(0 0 8px ${colors.purple.glow})`
-                            : 'none',
-                          opacity: isActive ? 1 : 0.6,
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <IconComponent
-                      style={{
-                        width: 20,
-                        height: 20,
-                        marginBottom: 6,
-                        color: isActive ? featureColor : colors.text[30],
-                        transition: `all ${animation.duration.fast}ms ${animation.easing.smooth}`,
-                        filter: isActive
-                          ? `drop-shadow(0 0 6px ${featureColor}60)`
-                          : 'none',
-                      }}
-                    />
-                  )}
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      color: isActive ? featureColor : colors.text[30],
-                      textAlign: 'center',
-                      width: '100%',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {feature.name}
-                  </span>
-                </div>
-              </button>
-            )
-          })}
-        </div>
+        <p style={{ fontSize: typography.fontSize.base, color: colors.text[50] }}>
+          {features.length} AI features at your fingertips
+        </p>
       </div>
 
-      {/* Active Feature Component */}
-      <div className="min-h-[600px]">
-        {ActiveComponent && <ActiveComponent onFeatureSelect={setSelectedFeature} />}
+      {/* LEGENDARY Feature Grid */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: 12,
+          padding: `12px ${spacing[4]}px 100px`,
+          overflowY: 'auto',
+          flex: 1,
+        }}
+      >
+        {features.map((feature) => (
+          <FeatureCard
+            key={feature.id}
+            feature={feature}
+            colorMap={colorMaps[feature.colorKey]}
+            onClick={() => setSelectedFeature(feature.id)}
+          />
+        ))}
       </div>
     </div>
+  )
+}
+
+// Feature Card with LEGENDARY hover effects
+function FeatureCard({ feature, colorMap, onClick }) {
+  const [isHovered, setIsHovered] = useState(false)
+  const IconComponent = feature.Icon
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        gridColumn: feature.wide ? 'span 2' : 'span 1',
+        background: colors.depth1,
+        border: `1px solid ${isHovered ? 'rgba(139, 92, 246, 0.3)' : colors.glass.border}`,
+        borderRadius: 16,
+        padding: 16,
+        cursor: 'pointer',
+        textAlign: 'left',
+        position: 'relative',
+        overflow: 'hidden',
+        transition: `all ${animation.duration.fast}ms ${animation.easing.spring}`,
+        transform: isHovered ? 'translateY(-4px)' : 'none',
+        boxShadow: isHovered ? '0 12px 40px rgba(0, 0, 0, 0.4)' : 'none',
+      }}
+    >
+      {/* Unicorn top bar on hover */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 3,
+          background: gradients.unicorn,
+          transform: isHovered ? 'scaleX(1)' : 'scaleX(0)',
+          transition: `transform ${animation.duration.fast}ms ${animation.easing.spring}`,
+        }}
+      />
+
+      {/* Status badge */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          fontSize: 8,
+          fontWeight: 800,
+          padding: '3px 7px',
+          borderRadius: 4,
+          textTransform: 'uppercase',
+          letterSpacing: '0.03em',
+          background: feature.status === 'live' ? colors.emerald.dim : colors.amber.dim,
+          color: feature.status === 'live' ? colors.emerald[400] : colors.amber[400],
+        }}
+      >
+        {feature.status}
+      </div>
+
+      {/* Icon */}
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          background: colorMap.bg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 12,
+        }}
+      >
+        <IconComponent size={22} style={{ color: colorMap.color }} />
+      </div>
+
+      {/* Title */}
+      <h3
+        style={{
+          fontSize: 14,
+          fontWeight: 700,
+          color: colors.text[100],
+          marginBottom: 4,
+        }}
+      >
+        {feature.name}
+      </h3>
+
+      {/* Description */}
+      <p
+        style={{
+          fontSize: 12,
+          color: colors.text[50],
+          lineHeight: 1.4,
+          margin: 0,
+        }}
+      >
+        {feature.desc}
+      </p>
+    </button>
   )
 }

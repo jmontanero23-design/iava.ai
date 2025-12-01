@@ -9,15 +9,10 @@ import { useState } from 'react'
 import {
   TrendingUp,
   TrendingDown,
-  ChevronRight,
   Plus,
-  Filter,
-  MoreHorizontal,
   Zap,
   Target,
-  Clock,
 } from 'lucide-react'
-import { ScoreRing } from './ui/ScoreRing'
 import { colors, gradients, animation, spacing, radius, typography } from '../styles/tokens'
 
 // Demo portfolio data
@@ -249,7 +244,7 @@ export default function LegendaryPortfolio({ onSelectSymbol }) {
       </div>
 
       {/* Positions Section */}
-      <div>
+      <div style={{ padding: `0 0 100px` }}>
         <div
           style={{
             display: 'flex',
@@ -260,34 +255,24 @@ export default function LegendaryPortfolio({ onSelectSymbol }) {
         >
           <h2
             style={{
-              fontSize: typography.fontSize.xl,
-              fontWeight: typography.fontWeight.bold,
+              fontSize: 20,
+              fontWeight: 800,
               color: colors.text[100],
             }}
           >
             Positions
           </h2>
-          <button
+          <a
+            href="#"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: spacing[1],
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 600,
+              color: colors.purple[400],
+              textDecoration: 'none',
             }}
           >
-            <Filter size={14} style={{ color: colors.text[50] }} />
-            <span
-              style={{
-                fontSize: typography.fontSize.sm,
-                fontWeight: '600',
-                color: colors.purple[400],
-              }}
-            >
-              Filter
-            </span>
-          </button>
+            View All
+          </a>
         </div>
 
         {/* Positions List */}
@@ -411,35 +396,70 @@ function QuickAction({ icon: Icon, label, color, gradient }) {
   )
 }
 
-// Position Card Component
+// Position Card Component with LEGENDARY hover effects
 function PositionCard({ position, onSelect }) {
+  const [isHovered, setIsHovered] = useState(false)
   const isPositive = position.pnl >= 0
 
   return (
     <button
       onClick={onSelect}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: spacing[3],
-        padding: spacing[4],
+        padding: 14,
         background: colors.depth1,
-        border: `1px solid ${colors.glass.border}`,
-        borderRadius: radius.xl,
+        border: `1px solid ${isHovered ? 'rgba(139, 92, 246, 0.3)' : colors.glass.border}`,
+        borderRadius: 14,
         cursor: 'pointer',
         width: '100%',
         textAlign: 'left',
-        transition: `all ${animation.duration.fast}ms`,
+        position: 'relative',
+        overflow: 'hidden',
+        transition: `all ${animation.duration.fast}ms ${animation.easing.spring}`,
+        transform: isHovered ? 'translateX(4px)' : 'none',
       }}
     >
-      {/* Score Ring */}
-      <ScoreRing score={position.score} size="sm" showLabel={false} />
+      {/* Unicorn left bar on hover */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 3,
+          background: gradients.unicorn,
+          transform: isHovered ? 'scaleY(1)' : 'scaleY(0)',
+          transition: `transform ${animation.duration.fast}ms ${animation.easing.spring}`,
+        }}
+      />
+
+      {/* Position Logo */}
+      <div
+        style={{
+          width: 46,
+          height: 46,
+          borderRadius: 11,
+          background: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: typography.fontSize.sm,
+          fontWeight: typography.fontWeight.bold,
+          color: colors.depth1,
+        }}
+      >
+        {position.symbol.slice(0, 2)}
+      </div>
 
       {/* Position Info */}
       <div style={{ flex: 1 }}>
         <div
           style={{
-            fontSize: typography.fontSize.lg,
+            fontSize: typography.fontSize.base,
             fontWeight: typography.fontWeight.bold,
             color: colors.text[100],
             marginBottom: 2,
@@ -453,7 +473,7 @@ function PositionCard({ position, onSelect }) {
             color: colors.text[50],
           }}
         >
-          {position.shares} shares @ ${position.avgCost.toFixed(2)}
+          {position.shares} shares
         </div>
       </div>
 
@@ -461,32 +481,25 @@ function PositionCard({ position, onSelect }) {
       <div style={{ textAlign: 'right' }}>
         <div
           style={{
-            fontSize: typography.fontSize.lg,
+            fontSize: typography.fontSize.base,
             fontWeight: typography.fontWeight.bold,
             color: colors.text[100],
             fontFamily: typography.fontFamily.mono,
             marginBottom: 2,
           }}
         >
-          ${position.value.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          ${position.value.toLocaleString('en-US', { minimumFractionDigits: 0 })}
         </div>
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: 4,
-            fontSize: typography.fontSize.sm,
+            fontSize: typography.fontSize.xs,
             fontWeight: '600',
             color: isPositive ? colors.emerald[400] : colors.red[400],
           }}
         >
-          {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-          {isPositive ? '+' : ''}{position.pnlPercent.toFixed(2)}%
+          {isPositive ? '+' : ''}${Math.abs(position.pnl).toFixed(0)} ({isPositive ? '+' : ''}{position.pnlPercent.toFixed(1)}%)
         </div>
       </div>
-
-      <ChevronRight size={16} style={{ color: colors.text[30] }} />
     </button>
   )
 }

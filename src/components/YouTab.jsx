@@ -9,28 +9,20 @@ import { useState } from 'react'
 import {
   User,
   Brain,
-  Shield,
-  Bell,
-  Palette,
-  HelpCircle,
   ChevronRight,
-  Zap,
-  Target,
-  TrendingUp,
-  Award,
-  Clock,
-  BarChart3,
-  Settings,
+  BookOpen,
   CreditCard,
-  LogOut,
+  Bell,
+  Settings,
+  Crosshair,
 } from 'lucide-react'
 import { LogoMark } from './ui/Logo'
 import { colors, gradients, animation, spacing, radius, typography } from '../styles/tokens'
 
-// Profile data
+// Profile data matching mockup
 const profileData = {
-  name: 'Trader',
-  archetype: 'Momentum Hunter',
+  name: 'jMoney',
+  archetype: 'Sniper Archetype',
   level: 'Elite',
   joinDate: 'Nov 2024',
   emotionalState: {
@@ -47,54 +39,46 @@ const profileData = {
   },
 }
 
-// Settings categories
+// Settings categories matching mockup
 const settingsCards = [
   {
-    id: 'emotional',
+    id: 'ava-mind',
     icon: Brain,
     iconColor: 'purple',
-    title: 'Emotional Intelligence',
-    description: 'Your trading psychology',
+    title: 'AVA Mind',
+    description: 'Your AI trading twin',
     expandedContent: 'emotional',
   },
   {
     id: 'journal',
-    icon: BarChart3,
-    iconColor: 'cyan',
+    icon: BookOpen,
+    iconColor: 'indigo',
     title: 'Trade Journal',
-    description: 'Review your performance',
+    description: 'AI-powered analysis',
     expandedContent: 'journal',
   },
   {
-    id: 'ava',
-    icon: Zap,
-    iconColor: 'indigo',
-    title: 'AVA Settings',
-    description: 'Configure your AI assistant',
-    expandedContent: 'ava',
+    id: 'broker',
+    icon: CreditCard,
+    iconColor: 'cyan',
+    title: 'Broker',
+    description: 'Alpaca • Connected',
+    expandedContent: null,
   },
   {
-    id: 'notifications',
+    id: 'alerts',
     icon: Bell,
-    iconColor: 'amber',
-    title: 'Notifications',
-    description: 'Alerts and updates',
-    expandedContent: null,
-  },
-  {
-    id: 'appearance',
-    icon: Palette,
     iconColor: 'emerald',
-    title: 'Appearance',
-    description: 'Theme and display',
+    title: 'Alerts',
+    description: '12 active alerts',
     expandedContent: null,
   },
   {
-    id: 'security',
-    icon: Shield,
-    iconColor: 'red',
-    title: 'Security',
-    description: 'Account protection',
+    id: 'settings',
+    icon: Settings,
+    iconColor: 'purple',
+    title: 'Settings',
+    description: 'Theme, preferences',
     expandedContent: null,
   },
 ]
@@ -171,10 +155,10 @@ export default function YouTab() {
         <div style={{ flex: 1 }}>
           <h1
             style={{
-              fontSize: typography.fontSize['3xl'],
-              fontWeight: typography.fontWeight.black,
+              fontSize: 28,
+              fontWeight: 900,
               color: colors.text[100],
-              letterSpacing: typography.letterSpacing.tight,
+              letterSpacing: '-0.02em',
               marginBottom: 4,
             }}
           >
@@ -184,15 +168,15 @@ export default function YouTab() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: spacing[2],
+              gap: 6,
               color: colors.purple[400],
             }}
           >
-            <Award size={16} />
+            <Crosshair size={16} />
             <span
               style={{
-                fontSize: typography.fontSize.base,
-                fontWeight: typography.fontWeight.bold,
+                fontSize: 14,
+                fontWeight: 700,
               }}
             >
               {profile.archetype}
@@ -201,42 +185,13 @@ export default function YouTab() {
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: spacing[2],
-        }}
-      >
-        <QuickStat
-          value={`${profile.stats.winRate}%`}
-          label="Win Rate"
-          color={colors.emerald[400]}
-        />
-        <QuickStat
-          value={profile.stats.totalTrades}
-          label="Trades"
-          color={colors.cyan[400]}
-        />
-        <QuickStat
-          value={`${profile.stats.avgReturn}%`}
-          label="Avg Return"
-          color={colors.purple[400]}
-        />
-        <QuickStat
-          value={profile.stats.bestStreak}
-          label="Best Streak"
-          color={colors.amber[400]}
-        />
-      </div>
-
       {/* Settings Cards */}
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: spacing[3],
+          gap: 10,
+          padding: `0 0 100px`,
         }}
       >
         {settingsCards.map((card) => (
@@ -248,31 +203,6 @@ export default function YouTab() {
             profile={profile}
           />
         ))}
-      </div>
-
-      {/* Bottom Actions */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: spacing[2],
-          marginTop: spacing[2],
-        }}
-      >
-        <ActionButton
-          icon={CreditCard}
-          label="Subscription"
-          sublabel="Elite Plan"
-        />
-        <ActionButton
-          icon={HelpCircle}
-          label="Help & Support"
-        />
-        <ActionButton
-          icon={LogOut}
-          label="Sign Out"
-          danger
-        />
       </div>
 
       {/* Version */}
@@ -317,52 +247,21 @@ export default function YouTab() {
   )
 }
 
-// Quick Stat Component
-function QuickStat({ value, label, color }) {
-  return (
-    <div
-      style={{
-        background: colors.depth1,
-        borderRadius: radius.lg,
-        padding: spacing[3],
-        textAlign: 'center',
-        border: `1px solid ${colors.glass.border}`,
-      }}
-    >
-      <div
-        style={{
-          fontSize: typography.fontSize.lg,
-          fontWeight: typography.fontWeight.bold,
-          color: color || colors.text[100],
-          marginBottom: 2,
-        }}
-      >
-        {value}
-      </div>
-      <div
-        style={{
-          fontSize: 10,
-          color: colors.text[50],
-        }}
-      >
-        {label}
-      </div>
-    </div>
-  )
-}
-
-// Settings Card Component
+// Settings Card Component with LEGENDARY hover effects
 function SettingsCard({ card, isExpanded, onToggle, profile }) {
+  const [isHovered, setIsHovered] = useState(false)
   const iconColor = iconColors[card.iconColor] || iconColors.purple
 
   return (
     <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         background: colors.depth1,
-        border: `1px solid ${isExpanded ? `${colors.purple[500]}30` : colors.glass.border}`,
-        borderRadius: radius.xl,
+        border: `1px solid ${isExpanded || isHovered ? 'rgba(139, 92, 246, 0.3)' : colors.glass.border}`,
+        borderRadius: 16,
         overflow: 'hidden',
-        transition: `all ${animation.duration.normal}ms ${animation.easing.spring}`,
+        transition: `all ${animation.duration.fast}ms ${animation.easing.spring}`,
       }}
     >
       {/* Header */}
@@ -626,51 +525,3 @@ function SettingToggle({ label, enabled }) {
   )
 }
 
-// Action Button Component
-function ActionButton({ icon: Icon, label, sublabel, danger }) {
-  return (
-    <button
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: spacing[3],
-        padding: spacing[4],
-        background: colors.depth1,
-        border: `1px solid ${colors.glass.border}`,
-        borderRadius: radius.lg,
-        cursor: 'pointer',
-        width: '100%',
-        textAlign: 'left',
-        transition: `all ${animation.duration.fast}ms`,
-      }}
-    >
-      <Icon
-        size={20}
-        style={{ color: danger ? colors.red[400] : colors.text[50] }}
-      />
-      <div style={{ flex: 1 }}>
-        <span
-          style={{
-            fontSize: typography.fontSize.base,
-            fontWeight: '600',
-            color: danger ? colors.red[400] : colors.text[90],
-          }}
-        >
-          {label}
-        </span>
-      </div>
-      {sublabel && (
-        <span
-          style={{
-            fontSize: typography.fontSize.sm,
-            color: colors.purple[400],
-            fontWeight: '600',
-          }}
-        >
-          {sublabel}
-        </span>
-      )}
-      <ChevronRight size={16} style={{ color: colors.text[30] }} />
-    </button>
-  )
-}

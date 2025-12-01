@@ -10,14 +10,10 @@ import {
   Search,
   Mic,
   TrendingUp,
-  TrendingDown,
   Zap,
   Star,
-  ChevronRight,
-  Filter,
   Sparkles,
 } from 'lucide-react'
-import { ScoreRing } from './ui/ScoreRing'
 import { colors, gradients, animation, spacing, radius, typography } from '../styles/tokens'
 
 // Demo data for discovery
@@ -72,297 +68,158 @@ export default function DiscoverTab({ onSelectSymbol }) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: spacing[4],
-        padding: spacing[4],
-        paddingBottom: spacing[8],
+        height: '100%',
       }}
     >
-      {/* Header */}
-      <div>
+      {/* Header with cyan gradient background */}
+      <div
+        style={{
+          padding: `${spacing[4]}px ${spacing[5]}px`,
+          background: `linear-gradient(180deg, rgba(34, 211, 238, 0.04) 0%, transparent 100%)`,
+        }}
+      >
         <h1
           style={{
-            fontSize: typography.fontSize['3xl'],
-            fontWeight: typography.fontWeight.bold,
+            fontSize: 30,
+            fontWeight: typography.fontWeight.black,
+            letterSpacing: '-0.02em',
             color: colors.text[100],
-            marginBottom: spacing[2],
+            marginBottom: spacing[3],
           }}
         >
           Discover
         </h1>
-        <p
-          style={{
-            fontSize: typography.fontSize.base,
-            color: colors.text[50],
-          }}
-        >
-          Find your next winning trade
-        </p>
-      </div>
 
-      {/* Search Bar */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: spacing[3],
-          padding: `${spacing[3]}px ${spacing[4]}px`,
-          background: colors.glass.bg,
-          backdropFilter: 'blur(20px)',
-          borderRadius: radius.xl,
-          border: `1px solid ${colors.glass.border}`,
-        }}
-      >
-        <Search size={20} style={{ color: colors.text[50] }} />
-        <input
-          type="text"
-          placeholder="Search symbols, companies..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+        {/* Search Bar with focus state */}
+        <div
           style={{
-            flex: 1,
-            background: 'transparent',
-            border: 'none',
-            outline: 'none',
-            fontSize: typography.fontSize.base,
-            color: colors.text[100],
-          }}
-        />
-        <button
-          onClick={handleVoiceSearch}
-          style={{
-            width: 40,
-            height: 40,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            background: isListening ? gradients.unicorn : colors.depth2,
-            borderRadius: radius.lg,
-            border: 'none',
-            cursor: 'pointer',
+            background: colors.depth1,
+            border: `1px solid ${colors.glass.border}`,
+            borderRadius: 14,
+            padding: '4px 4px 4px 16px',
             transition: `all ${animation.duration.fast}ms`,
           }}
         >
-          <Mic
-            size={18}
-            style={{ color: isListening ? '#fff' : colors.text[50] }}
-          />
-        </button>
-      </div>
-
-      {/* Filter Pills */}
-      <div
-        style={{
-          display: 'flex',
-          gap: spacing[2],
-          overflowX: 'auto',
-          paddingBottom: spacing[2],
-          margin: `0 -${spacing[4]}px`,
-          padding: `0 ${spacing[4]}px`,
-        }}
-      >
-        {filterOptions.map((filter) => {
-          const isActive = activeFilter === filter.id
-          return (
-            <button
-              key={filter.id}
-              onClick={() => setActiveFilter(filter.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: spacing[2],
-                padding: `${spacing[2]}px ${spacing[4]}px`,
-                background: isActive ? gradients.unicorn : colors.depth2,
-                border: isActive ? 'none' : `1px solid ${colors.glass.border}`,
-                borderRadius: radius.full,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: `all ${animation.duration.fast}ms`,
-              }}
-            >
-              {filter.icon && (
-                <filter.icon
-                  size={14}
-                  style={{ color: isActive ? '#fff' : colors.text[50] }}
-                />
-              )}
-              <span
-                style={{
-                  fontSize: typography.fontSize.sm,
-                  fontWeight: isActive ? '600' : '500',
-                  color: isActive ? '#fff' : colors.text[70],
-                }}
-              >
-                {filter.label}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Results count */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <span
-          style={{
-            fontSize: typography.fontSize.sm,
-            color: colors.text[50],
-          }}
-        >
-          {filteredStocks.length} results
-        </span>
-        <button
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: spacing[1],
-            padding: `${spacing[1]}px ${spacing[2]}px`,
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          <Filter size={14} style={{ color: colors.text[50] }} />
-          <span
+          <Search size={20} style={{ color: colors.text[50], flexShrink: 0 }} />
+          <input
+            type="text"
+            placeholder="Search symbols, companies..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             style={{
-              fontSize: typography.fontSize.sm,
-              color: colors.text[50],
+              flex: 1,
+              padding: spacing[3],
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              fontSize: typography.fontSize.lg,
+              color: colors.text[100],
+            }}
+          />
+          <button
+            onClick={handleVoiceSearch}
+            style={{
+              width: 42,
+              height: 42,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: isListening ? gradients.unicorn : colors.cyan.dim,
+              borderRadius: 10,
+              border: 'none',
+              cursor: 'pointer',
+              transition: `all ${animation.duration.fast}ms`,
             }}
           >
-            Sort
-          </span>
-        </button>
+            <Mic
+              size={18}
+              style={{ color: isListening ? '#fff' : colors.cyan[400] }}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Filter Section - Sticky */}
+      <div
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          background: colors.void,
+          padding: `${spacing[3]}px 0`,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            gap: spacing[2],
+            overflowX: 'auto',
+            padding: `0 ${spacing[5]}px`,
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
+          {filterOptions.map((filter) => {
+            const isActive = activeFilter === filter.id
+            return (
+              <button
+                key={filter.id}
+                onClick={() => setActiveFilter(filter.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '10px 14px',
+                  background: isActive ? gradients.unicorn : colors.depth1,
+                  border: isActive ? 'none' : `1px solid ${colors.glass.border}`,
+                  borderRadius: 12,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: `all ${animation.duration.fast}ms ${animation.easing.spring}`,
+                  boxShadow: isActive ? `0 0 20px ${colors.purple.glow}` : 'none',
+                }}
+              >
+                {filter.icon && (
+                  <filter.icon
+                    size={14}
+                    style={{ color: isActive ? '#fff' : colors.text[50] }}
+                  />
+                )}
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: isActive ? '#fff' : colors.text[50],
+                  }}
+                >
+                  {filter.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* Stock List */}
       <div
         style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: spacing[3],
+          flex: 1,
+          overflowY: 'auto',
+          padding: `${spacing[2]}px ${spacing[4]}px 100px`,
         }}
       >
         {filteredStocks.map((stock) => {
           const isPositive = stock.change >= 0
 
           return (
-            <button
+            <StockCard
               key={stock.symbol}
+              stock={stock}
+              isPositive={isPositive}
               onClick={() => onSelectSymbol?.(stock.symbol)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: spacing[4],
-                padding: spacing[4],
-                background: colors.glass.bg,
-                backdropFilter: 'blur(12px)',
-                border: `1px solid ${colors.glass.border}`,
-                borderRadius: radius.xl,
-                cursor: 'pointer',
-                width: '100%',
-                textAlign: 'left',
-                transition: `all ${animation.duration.fast}ms`,
-              }}
-            >
-              {/* Score Ring */}
-              <ScoreRing score={stock.score} size="sm" showLabel={false} />
-
-              {/* Stock Info */}
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing[2],
-                    marginBottom: 4,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: typography.fontSize.lg,
-                      fontWeight: typography.fontWeight.bold,
-                      color: colors.text[100],
-                    }}
-                  >
-                    {stock.symbol}
-                  </span>
-                  {stock.score >= 80 && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        padding: '2px 6px',
-                        background: `${colors.purple[500]}20`,
-                        borderRadius: radius.full,
-                      }}
-                    >
-                      <Zap size={10} style={{ color: colors.purple[400] }} />
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: '600',
-                          color: colors.purple[400],
-                        }}
-                      >
-                        HOT
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <span
-                  style={{
-                    fontSize: typography.fontSize.sm,
-                    color: colors.text[50],
-                  }}
-                >
-                  {stock.name}
-                </span>
-              </div>
-
-              {/* Price & Change */}
-              <div style={{ textAlign: 'right' }}>
-                <div
-                  style={{
-                    fontSize: typography.fontSize.lg,
-                    fontWeight: typography.fontWeight.semibold,
-                    color: colors.text[100],
-                    fontFamily: typography.fontFamily.mono,
-                  }}
-                >
-                  ${stock.price.toFixed(2)}
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-end',
-                    gap: 4,
-                  }}
-                >
-                  {isPositive ? (
-                    <TrendingUp size={14} style={{ color: colors.emerald[400] }} />
-                  ) : (
-                    <TrendingDown size={14} style={{ color: colors.red[400] }} />
-                  )}
-                  <span
-                    style={{
-                      fontSize: typography.fontSize.sm,
-                      fontWeight: '600',
-                      color: isPositive ? colors.emerald[400] : colors.red[400],
-                    }}
-                  >
-                    {isPositive ? '+' : ''}{stock.change.toFixed(2)}%
-                  </span>
-                </div>
-              </div>
-
-              <ChevronRight size={16} style={{ color: colors.text[30] }} />
-            </button>
+            />
           )
         })}
       </div>
@@ -370,11 +227,11 @@ export default function DiscoverTab({ onSelectSymbol }) {
       {/* AVA Suggestion Card */}
       <div
         style={{
+          margin: `0 ${spacing[4]}px ${spacing[4]}px`,
           background: `linear-gradient(135deg, ${colors.purple[500]}15 0%, ${colors.cyan[400]}15 100%)`,
           borderRadius: radius.xl,
           padding: spacing[4],
           border: `1px solid ${colors.purple[500]}30`,
-          marginTop: spacing[2],
         }}
       >
         <div
@@ -401,11 +258,128 @@ export default function DiscoverTab({ onSelectSymbol }) {
             fontSize: typography.fontSize.base,
             color: colors.text[90],
             lineHeight: 1.5,
+            margin: 0,
           }}
         >
           Based on your trading style, check out <strong>NVDA</strong> - showing strong momentum with an 87 Unicorn Score.
         </p>
       </div>
+
+      {/* Custom scrollbar styles */}
+      <style>{`
+        .filter-pills::-webkit-scrollbar { display: none; }
+      `}</style>
     </div>
+  )
+}
+
+// Stock Card component with LEGENDARY hover effects
+function StockCard({ stock, isPositive, onClick }) {
+  const [isHovered, setIsHovered] = useState(false)
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        width: '100%',
+        padding: 14,
+        marginBottom: 10,
+        background: colors.depth1,
+        border: `1px solid ${isHovered ? 'rgba(139, 92, 246, 0.3)' : colors.glass.border}`,
+        borderRadius: 16,
+        cursor: 'pointer',
+        textAlign: 'left',
+        position: 'relative',
+        overflow: 'hidden',
+        transition: `all ${animation.duration.fast}ms ${animation.easing.spring}`,
+        transform: isHovered ? 'translateX(4px)' : 'none',
+      }}
+    >
+      {/* Unicorn left bar on hover */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 3,
+          background: gradients.unicorn,
+          transform: isHovered ? 'scaleY(1)' : 'scaleY(0)',
+          transition: `transform ${animation.duration.fast}ms ${animation.easing.spring}`,
+        }}
+      />
+
+      {/* Stock Logo */}
+      <div
+        style={{
+          width: 48,
+          height: 48,
+          borderRadius: 12,
+          background: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: 12,
+          fontSize: typography.fontSize.sm,
+          fontWeight: typography.fontWeight.bold,
+          color: colors.depth1,
+        }}
+      >
+        {stock.symbol.slice(0, 2)}
+      </div>
+
+      {/* Stock Info */}
+      <div style={{ flex: 1 }}>
+        <div
+          style={{
+            fontSize: 17,
+            fontWeight: 800,
+            color: colors.text[100],
+            marginBottom: 2,
+          }}
+        >
+          {stock.symbol}
+        </div>
+        <div
+          style={{
+            fontSize: 12,
+            color: colors.text[50],
+          }}
+        >
+          {stock.name}
+        </div>
+      </div>
+
+      {/* Score Column */}
+      <div style={{ textAlign: 'right' }}>
+        <div
+          style={{
+            fontSize: 22,
+            fontWeight: 900,
+            background: gradients.unicorn,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            marginBottom: 2,
+          }}
+        >
+          {stock.score}
+        </div>
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            color: isPositive ? colors.emerald[400] : colors.red[400],
+          }}
+        >
+          {isPositive ? 'Bullish' : 'Bearish'}
+        </div>
+      </div>
+    </button>
   )
 }
