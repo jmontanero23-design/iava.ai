@@ -15,6 +15,7 @@ import Portfolio from './components/Portfolio.jsx'
 import AVAMindDashboard from './components/ava-mind/AVAMindDashboard.jsx'
 import SocialTradingRooms from './components/SocialTradingRooms.jsx'
 import NaturalLanguageScanner from './components/NaturalLanguageScanner.jsx'
+import DiscoverTab from './components/DiscoverTab.jsx'
 import WelcomeTour, { TourHelpButton } from './components/WelcomeTour.jsx'
 import AITradeCopilot from './components/AITradeCopilot.jsx'
 import MobileBottomNav from './components/MobileBottomNav.jsx'
@@ -266,6 +267,7 @@ function AppWithGestures({
       case 'ai-hub':
         return <AIHub />
       case 'discover':
+        return <DiscoverTab onSelectSymbol={handleSelectSymbol} />
       case 'scanner':
         return <NaturalLanguageScanner />
       case 'portfolio':

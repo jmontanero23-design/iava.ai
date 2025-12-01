@@ -153,13 +153,9 @@ export default function TopBar({
             </button>
           )}
 
-          {/* Logo */}
-          {isMobile ? (
+          {/* Logo - On desktop, logo is in IconRail, so just show on mobile */}
+          {isMobile && (
             <LogoMark size={32} />
-          ) : (
-            <div style={{ marginLeft: isMobile ? 0 : 220 }}>
-              <LogoFull size={32} />
-            </div>
           )}
         </div>
 
