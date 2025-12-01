@@ -1,44 +1,55 @@
 /**
- * LEGENDARY Watchlist Panel
+ * LEGENDARY WatchlistPanel
  *
- * Desktop watchlist with score rings (280px width)
- * Based on: iAVA-LEGENDARY-DESKTOP_1.html
+ * Desktop watchlist panel matching iAVA-LEGENDARY-DESKTOP_1.html exactly
+ * Features:
+ * - 280px width panel
+ * - Header with count badge and action buttons
+ * - Filter pills (All, Unicorns, Squeezes)
+ * - Watchlist items with mini ScoreRing
+ * - Active item highlighting
  */
 
 import { useState } from 'react'
-import { Search, Plus, TrendingUp, TrendingDown, Star, Filter } from 'lucide-react'
+import {
+  Search,
+  Plus,
+  Filter,
+  TrendingUp,
+  TrendingDown,
+  Star,
+} from 'lucide-react'
 import { ScoreRing } from '../ui/ScoreRing'
 import { colors, gradients, animation, spacing, radius, typography } from '../../styles/tokens'
 
 // Demo watchlist data
 const watchlistData = [
-  { symbol: 'NVDA', name: 'NVIDIA Corp', price: 142.56, change: 3.24, score: 87, trend: 'up' },
-  { symbol: 'AAPL', name: 'Apple Inc', price: 178.32, change: -0.89, score: 72, trend: 'down' },
-  { symbol: 'TSLA', name: 'Tesla Inc', price: 234.12, change: 5.67, score: 65, trend: 'up' },
-  { symbol: 'MSFT', name: 'Microsoft', price: 378.45, change: 1.23, score: 78, trend: 'up' },
-  { symbol: 'AMD', name: 'AMD Inc', price: 156.78, change: -2.34, score: 58, trend: 'down' },
-  { symbol: 'META', name: 'Meta', price: 512.34, change: 4.56, score: 81, trend: 'up' },
-  { symbol: 'GOOGL', name: 'Alphabet', price: 145.67, change: 0.45, score: 69, trend: 'up' },
-  { symbol: 'AMZN', name: 'Amazon', price: 185.23, change: -1.12, score: 74, trend: 'down' },
+  { symbol: 'NVDA', name: 'NVIDIA Corporation', price: 142.56, change: 3.24, changePercent: 2.32, score: 87 },
+  { symbol: 'AAPL', name: 'Apple Inc', price: 178.32, change: -0.89, changePercent: -0.50, score: 72 },
+  { symbol: 'TSLA', name: 'Tesla Inc', price: 234.12, change: 5.67, changePercent: 2.48, score: 65 },
+  { symbol: 'MSFT', name: 'Microsoft', price: 378.45, change: 1.23, changePercent: 0.33, score: 78 },
+  { symbol: 'AMD', name: 'AMD Inc', price: 156.78, change: -2.34, changePercent: -1.47, score: 58 },
+  { symbol: 'META', name: 'Meta Platforms', price: 512.34, change: 4.56, changePercent: 0.90, score: 81 },
+  { symbol: 'GOOGL', name: 'Alphabet Inc', price: 145.67, change: 0.45, changePercent: 0.31, score: 69 },
+  { symbol: 'AMZN', name: 'Amazon.com', price: 185.23, change: -1.12, changePercent: -0.60, score: 74 },
 ]
 
-const filterTabs = ['All', 'Bullish', 'Bearish', 'Favorites']
+const filterOptions = [
+  { id: 'all', label: 'All' },
+  { id: 'unicorns', label: 'Unicorns' },
+  { id: 'squeezes', label: 'Squeezes' },
+]
 
 export default function WatchlistPanel({ onSelectSymbol, currentSymbol }) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeFilter, setActiveFilter] = useState('All')
+  const [activeFilter, setActiveFilter] = useState('all')
   const [hoveredItem, setHoveredItem] = useState(null)
 
-  // Filter stocks
+  // Filter stocks based on active filter
   const filteredStocks = watchlistData.filter((stock) => {
-    const matchesSearch = stock.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         stock.name.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesFilter =
-      activeFilter === 'All' ||
-      (activeFilter === 'Bullish' && stock.trend === 'up') ||
-      (activeFilter === 'Bearish' && stock.trend === 'down') ||
-      (activeFilter === 'Favorites' && stock.score >= 75)
-    return matchesSearch && matchesFilter
+    if (activeFilter === 'all') return true
+    if (activeFilter === 'unicorns') return stock.score >= 75
+    if (activeFilter === 'squeezes') return stock.score < 60
+    return true
   })
 
   return (
@@ -47,109 +58,92 @@ export default function WatchlistPanel({ onSelectSymbol, currentSymbol }) {
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        padding: spacing[4],
+        overflow: 'hidden',
       }}
     >
       {/* Header */}
-      <div style={{ marginBottom: spacing[4] }}>
-        <h2
-          style={{
-            fontSize: typography.fontSize.lg,
-            fontWeight: typography.fontWeight.semibold,
-            color: colors.text[100],
-            marginBottom: spacing[3],
-          }}
-        >
-          Watchlist
-        </h2>
-
-        {/* Search bar */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: spacing[2],
-            padding: `${spacing[2]}px ${spacing[3]}px`,
-            background: colors.depth2,
-            borderRadius: radius.lg,
-            border: `1px solid ${colors.glass.border}`,
-          }}
-        >
-          <Search size={16} style={{ color: colors.text[50] }} />
-          <input
-            type="text"
-            placeholder="Search symbols..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              fontSize: typography.fontSize.sm,
-              color: colors.text[90],
-            }}
-          />
-          <button
-            style={{
-              width: 28,
-              height: 28,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: gradients.unicorn,
-              borderRadius: radius.md,
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <Plus size={14} style={{ color: '#fff' }} />
-          </button>
-        </div>
-      </div>
-
-      {/* Filter tabs */}
       <div
         style={{
           display: 'flex',
-          gap: spacing[1],
-          marginBottom: spacing[4],
-          overflowX: 'auto',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: spacing[4],
+          borderBottom: `1px solid ${colors.glass.border}`,
         }}
       >
-        {filterTabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveFilter(tab)}
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+          <h2
             style={{
-              padding: `${spacing[1]}px ${spacing[3]}px`,
-              fontSize: typography.fontSize.xs,
-              fontWeight: activeFilter === tab ? '600' : '500',
-              color: activeFilter === tab ? colors.text[100] : colors.text[50],
-              background: activeFilter === tab ? colors.depth3 : 'transparent',
-              border: `1px solid ${activeFilter === tab ? colors.glass.borderLight : 'transparent'}`,
-              borderRadius: radius.full,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              transition: `all ${animation.duration.fast}ms`,
+              fontSize: typography.fontSize.lg,
+              fontWeight: typography.fontWeight.extrabold,
+              color: colors.text[100],
             }}
           >
-            {tab}
-          </button>
-        ))}
+            Watchlist
+          </h2>
+          <span
+            style={{
+              fontSize: typography.fontSize.xs,
+              fontWeight: typography.fontWeight.bold,
+              padding: `${spacing[1]}px ${spacing[2]}px`,
+              background: colors.purple.dim,
+              color: colors.purple[400],
+              borderRadius: radius.sm,
+            }}
+          >
+            {watchlistData.length}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: spacing[1] }}>
+          <PanelButton icon={Filter} />
+          <PanelButton icon={Plus} />
+        </div>
       </div>
 
-      {/* Stock list */}
+      {/* Filter Pills */}
+      <div
+        style={{
+          display: 'flex',
+          gap: spacing[2],
+          padding: `${spacing[3]}px ${spacing[4]}px`,
+          borderBottom: `1px solid ${colors.glass.border}`,
+        }}
+      >
+        {filterOptions.map((filter) => {
+          const isActive = activeFilter === filter.id
+          return (
+            <button
+              key={filter.id}
+              onClick={() => setActiveFilter(filter.id)}
+              style={{
+                padding: `${spacing[2]}px ${spacing[3]}px`,
+                background: isActive ? gradients.unicorn : colors.depth1,
+                border: `1px solid ${isActive ? 'transparent' : colors.glass.border}`,
+                borderRadius: radius.md,
+                fontSize: typography.fontSize.sm,
+                fontWeight: typography.fontWeight.semibold,
+                color: isActive ? '#fff' : colors.text[50],
+                cursor: 'pointer',
+                transition: `all ${animation.duration.fast}ms ${animation.easing.spring}`,
+                boxShadow: isActive ? `0 0 20px ${colors.purple.glow}` : 'none',
+              }}
+            >
+              {filter.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Stock List */}
       <div
         style={{
           flex: 1,
           overflowY: 'auto',
-          margin: `0 -${spacing[4]}px`,
-          padding: `0 ${spacing[4]}px`,
+          padding: spacing[2],
         }}
       >
         {filteredStocks.map((stock) => {
-          const isSelected = currentSymbol === stock.symbol
+          const isActive = currentSymbol === stock.symbol
           const isHovered = hoveredItem === stock.symbol
           const isPositive = stock.change >= 0
 
@@ -160,72 +154,79 @@ export default function WatchlistPanel({ onSelectSymbol, currentSymbol }) {
               onMouseEnter={() => setHoveredItem(stock.symbol)}
               onMouseLeave={() => setHoveredItem(null)}
               style={{
-                width: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                gap: spacing[3],
+                width: '100%',
                 padding: spacing[3],
-                marginBottom: spacing[2],
-                background: isSelected
-                  ? `${colors.purple[500]}15`
+                marginBottom: spacing[1],
+                background: isActive
+                  ? colors.purple.dim
                   : isHovered
-                    ? colors.depth2
+                    ? colors.depth1
                     : 'transparent',
-                border: isSelected
-                  ? `1px solid ${colors.purple[500]}30`
+                border: isActive
+                  ? `1px solid ${colors.purple[500]}20`
                   : '1px solid transparent',
                 borderRadius: radius.lg,
                 cursor: 'pointer',
-                transition: `all ${animation.duration.fast}ms ${animation.easing.smooth}`,
+                transition: `all ${animation.duration.fast}ms ${animation.easing.spring}`,
+                textAlign: 'left',
               }}
             >
-              {/* Score Ring */}
-              <ScoreRing score={stock.score} size="sm" showLabel={false} />
-
-              {/* Stock info */}
-              <div style={{ flex: 1, textAlign: 'left' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing[2],
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: typography.fontSize.base,
-                      fontWeight: typography.fontWeight.semibold,
-                      color: colors.text[100],
-                    }}
-                  >
-                    {stock.symbol}
-                  </span>
-                  {stock.score >= 75 && (
-                    <Star
-                      size={12}
-                      fill={colors.amber[400]}
-                      style={{ color: colors.amber[400] }}
-                    />
-                  )}
-                </div>
-                <span
-                  style={{
-                    fontSize: typography.fontSize.xs,
-                    color: colors.text[50],
-                  }}
-                >
-                  {stock.name}
-                </span>
+              {/* Stock Logo Placeholder */}
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: radius.lg,
+                  background: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: spacing[3],
+                  overflow: 'hidden',
+                  fontSize: typography.fontSize.sm,
+                  fontWeight: typography.fontWeight.bold,
+                  color: colors.depth1,
+                }}
+              >
+                {stock.symbol.slice(0, 2)}
               </div>
 
-              {/* Price & change */}
-              <div style={{ textAlign: 'right' }}>
+              {/* Stock Info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
                     fontSize: typography.fontSize.base,
-                    fontWeight: typography.fontWeight.semibold,
+                    fontWeight: typography.fontWeight.extrabold,
                     color: colors.text[100],
-                    fontFamily: typography.fontFamily.mono,
+                    marginBottom: 2,
+                  }}
+                >
+                  {stock.symbol}
+                </div>
+                <div
+                  style={{
+                    fontSize: typography.fontSize.xs,
+                    color: colors.text[50],
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {stock.name}
+                </div>
+              </div>
+
+              {/* Price & Change */}
+              <div style={{ textAlign: 'right', marginRight: spacing[2] }}>
+                <div
+                  style={{
+                    fontSize: typography.fontSize.base,
+                    fontWeight: typography.fontWeight.bold,
+                    fontVariantNumeric: 'tabular-nums',
+                    color: colors.text[100],
+                    marginBottom: 2,
                   }}
                 >
                   ${stock.price.toFixed(2)}
@@ -237,7 +238,7 @@ export default function WatchlistPanel({ onSelectSymbol, currentSymbol }) {
                     justifyContent: 'flex-end',
                     gap: 4,
                     fontSize: typography.fontSize.xs,
-                    fontWeight: '500',
+                    fontWeight: typography.fontWeight.semibold,
                     color: isPositive ? colors.emerald[400] : colors.red[400],
                   }}
                 >
@@ -246,35 +247,64 @@ export default function WatchlistPanel({ onSelectSymbol, currentSymbol }) {
                   ) : (
                     <TrendingDown size={12} />
                   )}
-                  {isPositive ? '+' : ''}{stock.change.toFixed(2)}%
+                  {isPositive ? '+' : ''}{stock.changePercent.toFixed(2)}%
                 </div>
               </div>
+
+              {/* Mini Score Ring */}
+              <ScoreRing score={stock.score} size="sm" showLabel={false} />
             </button>
           )
         })}
       </div>
 
-      {/* Add to watchlist button */}
-      <button
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: spacing[2],
-          padding: spacing[3],
-          marginTop: spacing[3],
-          background: 'transparent',
-          border: `1px dashed ${colors.glass.borderLight}`,
-          borderRadius: radius.lg,
-          color: colors.text[50],
-          fontSize: typography.fontSize.sm,
-          cursor: 'pointer',
-          transition: `all ${animation.duration.fast}ms`,
-        }}
-      >
-        <Plus size={16} />
-        Add Symbol
-      </button>
+      {/* Custom scrollbar styles */}
+      <style>{`
+        div::-webkit-scrollbar {
+          width: 6px;
+        }
+        div::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        div::-webkit-scrollbar-thumb {
+          background: ${colors.depth3};
+          border-radius: 3px;
+        }
+        div::-webkit-scrollbar-thumb:hover {
+          background: ${colors.text[30]};
+        }
+      `}</style>
     </div>
+  )
+}
+
+// Panel header button component
+function PanelButton({ icon: Icon, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: 32,
+        height: 32,
+        borderRadius: radius.md,
+        border: `1px solid ${colors.glass.border}`,
+        background: 'transparent',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        transition: `all ${animation.duration.fast}ms`,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = colors.depth1
+        e.currentTarget.style.borderColor = colors.glass.borderLight
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.borderColor = colors.glass.border
+      }}
+    >
+      <Icon size={14} style={{ color: colors.text[50] }} />
+    </button>
   )
 }

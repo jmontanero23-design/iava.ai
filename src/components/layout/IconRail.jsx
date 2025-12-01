@@ -1,8 +1,13 @@
 /**
- * LEGENDARY Icon Rail
+ * LEGENDARY IconRail
  *
- * Vertical navigation for desktop (72px width)
- * Based on: iAVA-LEGENDARY-DESKTOP_1.html
+ * Left navigation rail matching iAVA-LEGENDARY-DESKTOP_1.html exactly
+ * Features:
+ * - 72px width with 48px icon buttons
+ * - Active state with unicorn gradient indicator bar
+ * - Dividers between nav sections
+ * - Tooltip on hover
+ * - Spacer pushing settings to bottom
  */
 
 import { useState } from 'react'
@@ -10,193 +15,184 @@ import {
   LineChart,
   Search,
   Brain,
-  Wallet,
-  Sparkles,
-  Settings,
-  Bell,
-  HelpCircle,
-  Users,
+  Briefcase,
+  Zap,
+  Heart,
   BookOpen,
+  TrendingUp,
+  Settings,
+  HelpCircle,
 } from 'lucide-react'
 import { LogoMark } from '../ui/Logo'
-import { colors, gradients, animation, spacing, radius, layout } from '../../styles/tokens'
+import { colors, gradients, animation, spacing, radius, typography, layout } from '../../styles/tokens'
 
+// Navigation items configuration
 const navItems = [
-  { id: 'chart', Icon: LineChart, label: 'Trade', color: colors.cyan[400] },
-  { id: 'discover', Icon: Search, label: 'Discover', color: colors.emerald[400] },
-  { id: 'ai-hub', Icon: Brain, label: 'AI Hub', color: colors.purple[500] },
-  { id: 'portfolio', Icon: Wallet, label: 'Portfolio', color: colors.amber[400] },
-  { id: 'ava-mind', Icon: Sparkles, label: 'AVA', color: colors.indigo[400], isAVA: true },
-]
-
-const bottomItems = [
-  { id: 'social', Icon: Users, label: 'Social' },
-  { id: 'learn', Icon: BookOpen, label: 'Learn' },
-  { id: 'notifications', Icon: Bell, label: 'Alerts' },
-  { id: 'settings', Icon: Settings, label: 'Settings' },
+  // Primary navigation
+  { id: 'chart', icon: LineChart, label: 'Trade', section: 'primary' },
+  { id: 'discover', icon: Search, label: 'Discover', section: 'primary' },
+  { id: 'ai-hub', icon: Brain, label: 'AI Hub', section: 'primary' },
+  { id: 'portfolio', icon: Briefcase, label: 'Portfolio', section: 'primary' },
+  // Divider
+  { id: 'divider-1', type: 'divider' },
+  // Secondary navigation
+  { id: 'chronos', icon: Zap, label: 'Chronos', section: 'secondary', color: colors.cyan[400] },
+  { id: 'ava-mind', icon: Heart, label: 'AVA Mind', section: 'secondary', color: colors.purple[400] },
+  { id: 'journal', icon: BookOpen, label: 'Journal', section: 'secondary' },
+  { id: 'sentiment', icon: TrendingUp, label: 'Sentiment', section: 'secondary' },
+  // Spacer
+  { id: 'spacer', type: 'spacer' },
+  // Bottom items
+  { id: 'help', icon: HelpCircle, label: 'Help', section: 'bottom' },
+  { id: 'settings', icon: Settings, label: 'Settings', section: 'bottom' },
 ]
 
 export default function IconRail({ activeTab, onTabChange }) {
   const [hoveredItem, setHoveredItem] = useState(null)
 
-  const NavButton = ({ item, isActive }) => {
-    const isHovered = hoveredItem === item.id
-    const color = item.color || colors.text[50]
-
-    return (
-      <button
-        onClick={() => onTabChange(item.id)}
-        onMouseEnter={() => setHoveredItem(item.id)}
-        onMouseLeave={() => setHoveredItem(null)}
-        style={{
-          width: '100%',
-          height: 56,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 4,
-          background: isActive
-            ? item.isAVA
-              ? gradients.unicorn
-              : `${color}15`
-            : 'transparent',
-          border: 'none',
-          borderRadius: radius.lg,
-          cursor: 'pointer',
-          position: 'relative',
-          transition: `all ${animation.duration.fast}ms ${animation.easing.smooth}`,
-          transform: isHovered && !isActive ? 'scale(1.05)' : 'scale(1)',
-        }}
-      >
-        {/* Active indicator bar */}
-        {isActive && (
-          <div
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: 3,
-              height: 24,
-              background: item.isAVA ? '#fff' : color,
-              borderRadius: '0 4px 4px 0',
-            }}
-          />
-        )}
-
-        <item.Icon
-          size={22}
-          style={{
-            color: isActive
-              ? item.isAVA
-                ? '#fff'
-                : color
-              : isHovered
-                ? color
-                : colors.text[50],
-            transition: `color ${animation.duration.fast}ms`,
-          }}
-        />
-
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: isActive ? '600' : '500',
-            color: isActive
-              ? item.isAVA
-                ? '#fff'
-                : color
-              : isHovered
-                ? colors.text[70]
-                : colors.text[30],
-            letterSpacing: '0.02em',
-            transition: `color ${animation.duration.fast}ms`,
-          }}
-        >
-          {item.label}
-        </span>
-
-        {/* Tooltip on hover */}
-        {isHovered && !isActive && (
-          <div
-            style={{
-              position: 'absolute',
-              left: '100%',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              marginLeft: 8,
-              padding: '6px 10px',
-              background: colors.depth2,
-              border: `1px solid ${colors.glass.border}`,
-              borderRadius: radius.md,
-              fontSize: 12,
-              fontWeight: '500',
-              color: colors.text[90],
-              whiteSpace: 'nowrap',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              zIndex: 100,
-            }}
-          >
-            {item.label}
-          </div>
-        )}
-      </button>
-    )
-  }
-
   return (
-    <div
+    <nav
       style={{
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
+        padding: `${spacing[4]}px 0`,
         height: '100%',
-        padding: `${spacing[3]}px ${spacing[2]}px`,
+        gap: spacing[1],
       }}
     >
       {/* Logo at top */}
       <div
         style={{
+          width: 48,
+          height: 48,
           display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           marginBottom: spacing[4],
-          paddingBottom: spacing[3],
-          borderBottom: `1px solid ${colors.glass.border}`,
         }}
       >
-        <LogoMark size={36} animate={false} />
+        <LogoMark size={32} animate />
       </div>
 
-      {/* Main navigation */}
-      <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: spacing[1] }}>
-        {navItems.map((item) => (
-          <NavButton
-            key={item.id}
-            item={item}
-            isActive={activeTab === item.id}
-          />
-        ))}
-      </nav>
+      {navItems.map((item) => {
+        // Render divider
+        if (item.type === 'divider') {
+          return (
+            <div
+              key={item.id}
+              style={{
+                width: 32,
+                height: 1,
+                background: colors.glass.border,
+                margin: `${spacing[2]}px 0`,
+              }}
+            />
+          )
+        }
 
-      {/* Divider */}
-      <div
-        style={{
-          height: 1,
-          background: colors.glass.border,
-          margin: `${spacing[3]}px 0`,
-        }}
-      />
+        // Render spacer
+        if (item.type === 'spacer') {
+          return <div key={item.id} style={{ flex: 1 }} />
+        }
 
-      {/* Bottom utilities */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[1] }}>
-        {bottomItems.map((item) => (
-          <NavButton
+        // Render nav item
+        const isActive = activeTab === item.id
+        const isHovered = hoveredItem === item.id
+        const IconComponent = item.icon
+
+        return (
+          <div
             key={item.id}
-            item={item}
-            isActive={activeTab === item.id}
-          />
-        ))}
-      </div>
-    </div>
+            style={{ position: 'relative' }}
+            onMouseEnter={() => setHoveredItem(item.id)}
+            onMouseLeave={() => setHoveredItem(null)}
+          >
+            <button
+              onClick={() => onTabChange(item.id)}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: radius.lg,
+                border: 'none',
+                background: isActive ? colors.purple.dim : isHovered ? colors.depth1 : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: `all ${animation.duration.fast}ms ${animation.easing.spring}`,
+                position: 'relative',
+              }}
+            >
+              {/* Active indicator bar */}
+              {isActive && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 3,
+                    height: 24,
+                    background: gradients.unicorn,
+                    borderRadius: `0 ${radius.xs}px ${radius.xs}px 0`,
+                  }}
+                />
+              )}
+
+              <IconComponent
+                size={22}
+                style={{
+                  color: isActive
+                    ? (item.color || colors.purple[400])
+                    : isHovered
+                      ? colors.text[70]
+                      : colors.text[30],
+                  transition: `color ${animation.duration.fast}ms`,
+                }}
+              />
+            </button>
+
+            {/* Tooltip */}
+            {isHovered && (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 60,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  padding: `${spacing[2]}px ${spacing[3]}px`,
+                  background: colors.depth2,
+                  border: `1px solid ${colors.glass.borderLight}`,
+                  borderRadius: radius.md,
+                  fontSize: typography.fontSize.sm,
+                  fontWeight: typography.fontWeight.semibold,
+                  color: colors.text[90],
+                  whiteSpace: 'nowrap',
+                  zIndex: 100,
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                  animation: `tooltipFadeIn ${animation.duration.fast}ms ${animation.easing.smooth}`,
+                }}
+              >
+                {item.label}
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      <style>{`
+        @keyframes tooltipFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-50%) translateX(-4px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+          }
+        }
+      `}</style>
+    </nav>
   )
 }
