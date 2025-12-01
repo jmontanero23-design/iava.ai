@@ -37,15 +37,23 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
     }))
   }, [badges])
 
-  // Primary navigation items with LEGENDARY colors
+  // Primary navigation items matching mockup: Trade, Discover, AI Hub, Portfolio, AVA
   const primaryNav = [
     {
       id: 'chart',
-      label: 'Chart',
+      label: 'Trade',
       Icon: LineChart,
       color: colors.cyan[400],
       dimColor: colors.cyan.dim,
       glowColor: colors.cyan.glow,
+    },
+    {
+      id: 'discover',
+      label: 'Discover',
+      Icon: Search,
+      color: colors.emerald[400],
+      dimColor: colors.emerald.dim,
+      glowColor: colors.emerald.glow,
     },
     {
       id: 'ai-hub',
@@ -55,15 +63,6 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
       dimColor: colors.purple.dim,
       glowColor: colors.purple.glow,
       badge: notifications.ai > 0 ? notifications.ai : null
-    },
-    {
-      id: 'scanner',
-      label: 'Scanner',
-      Icon: Search,
-      color: colors.emerald[400],
-      dimColor: colors.emerald.dim,
-      glowColor: colors.emerald.glow,
-      badge: notifications.scanner > 0 ? notifications.scanner : null
     },
     {
       id: 'portfolio',
@@ -78,9 +77,9 @@ export default function MobileBottomNav({ activeTab, onTabChange, badges = {} })
       id: 'ava-mind',
       label: 'AVA',
       Icon: LogoMark,
-      color: colors.purple[500],
-      dimColor: colors.purple.dim,
-      glowColor: colors.purple.glow,
+      color: colors.indigo[400],
+      dimColor: colors.indigo.dim,
+      glowColor: colors.indigo.glow,
       isLogo: true // Flag to render the logo with unicorn gradient
     }
   ]

@@ -23,9 +23,9 @@ import { colors, gradients, animation, spacing, radius, layout } from '../../sty
 
 const navItems = [
   { id: 'chart', Icon: LineChart, label: 'Trade', color: colors.cyan[400] },
-  { id: 'discover', Icon: Search, label: 'Discover', color: colors.purple[400] },
+  { id: 'discover', Icon: Search, label: 'Discover', color: colors.emerald[400] },
   { id: 'ai-hub', Icon: Brain, label: 'AI Hub', color: colors.purple[500] },
-  { id: 'portfolio', Icon: Wallet, label: 'Portfolio', color: colors.emerald[400] },
+  { id: 'portfolio', Icon: Wallet, label: 'Portfolio', color: colors.amber[400] },
   { id: 'ava-mind', Icon: Sparkles, label: 'AVA', color: colors.indigo[400], isAVA: true },
 ]
 
