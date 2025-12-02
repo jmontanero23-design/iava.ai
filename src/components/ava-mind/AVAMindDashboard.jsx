@@ -119,6 +119,11 @@ export default function AVAMindDashboard({
   const [activeTab, setActiveTab] = useState('overview')
   const [voiceActive, setVoiceActive] = useState(false)
 
+  // Chat state for AVA Mind conversation
+  const [chatMessages, setChatMessages] = useState([])
+  const [chatInput, setChatInput] = useState('')
+  const [chatLoading, setChatLoading] = useState(false)
+
   // Archetype & Personality state
   const [archetype, setArchetype] = useState(null)
   const [showArchetypeReveal, setShowArchetypeReveal] = useState(false)
@@ -220,6 +225,109 @@ export default function AVAMindDashboard({
     setSuggestions(prev => prev.filter(s => s.id !== insight.id))
   }
 
+  // Build chat context from real AVA Mind data
+  const buildChatContext = useCallback(() => {
+    // Format patterns for API
+    const formattedPatterns = patterns ? Object.entries(patterns).flatMap(([dimension, items]) =>
+      Object.entries(items || {}).map(([value, data]) => ({
+        dimension,
+        value,
+        winRate: data.wins / (data.wins + data.losses) * 100,
+        count: data.wins + data.losses
+      }))
+    ).filter(p => p.count >= 2).slice(0, 10) : []
+
+    return {
+      archetype: archetype?.primary?.archetype || null,
+      emotionalState: detectEmotionalState(personality, learningStats),
+      trustLevel,
+      patterns: formattedPatterns,
+      learning: {
+        totalTrades: learningStats?.totalTrades || 0,
+        winRate: learningStats?.winRate || 0,
+        profitFactor: learningStats?.profitFactor || 0,
+        currentStreak: learningStats?.streakCurrent || 0,
+        bestStreak: learningStats?.streakBest || 0,
+        worstStreak: learningStats?.streakWorst || 0,
+        averageWin: learningStats?.avgWin || 0,
+        averageLoss: learningStats?.avgLoss || 0,
+        bestDimensions: {
+          symbol: learningStats?.bestSymbol,
+          dayOfWeek: learningStats?.bestDayOfWeek,
+          hourOfDay: learningStats?.bestHourOfDay
+        }
+      }
+    }
+  }, [archetype, personality, learningStats, patterns, trustLevel])
+
+  // Send message to AVA Mind AI
+  const sendChatMessage = useCallback(async () => {
+    if (!chatInput.trim() || chatLoading) return
+
+    const userMessage = chatInput.trim()
+    setChatInput('')
+    setChatLoading(true)
+
+    // Add user message immediately
+    setChatMessages(prev => [...prev, { role: 'user', content: userMessage }])
+
+    try {
+      const context = buildChatContext()
+
+      // Build conversation history for context
+      const messages = [...chatMessages, { role: 'user', content: userMessage }].slice(-10)
+
+      const response = await fetch('/api/ai/ava-mind', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, context })
+      })
+
+      if (!response.ok) throw new Error('Failed to get response')
+
+      // Handle streaming response
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let fullResponse = ''
+
+      // Add empty assistant message that we'll update
+      setChatMessages(prev => [...prev, { role: 'assistant', content: '' }])
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        // Parse SSE format: lines starting with "0:" contain text
+        const lines = chunk.split('\n')
+        for (const line of lines) {
+          if (line.startsWith('0:')) {
+            try {
+              const text = JSON.parse(line.slice(2))
+              fullResponse += text
+              // Update the last message
+              setChatMessages(prev => {
+                const updated = [...prev]
+                updated[updated.length - 1] = { role: 'assistant', content: fullResponse }
+                return updated
+              })
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[AVA Mind Chat] Error:', error)
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "I'm having trouble connecting right now. Let me try again in a moment."
+      }])
+    } finally {
+      setChatLoading(false)
+    }
+  }, [chatInput, chatLoading, chatMessages, buildChatContext])
+
   // Calculate confidence from learning stats
   const confidence = learningStats?.winRate || 0
 
@@ -288,7 +396,7 @@ export default function AVAMindDashboard({
 
           {/* Tab navigation */}
           <nav className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1">
-            {['overview', 'patterns', 'insights', 'coach', 'safety'].map(tab => (
+            {['overview', 'patterns', 'insights', 'chat', 'coach', 'safety'].map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -296,11 +404,12 @@ export default function AVAMindDashboard({
                   activeTab === tab
                     ? tab === 'safety' ? 'bg-rose-500/20 text-rose-400'
                     : tab === 'coach' ? 'bg-amber-500/20 text-amber-400'
+                    : tab === 'chat' ? 'bg-cyan-500/20 text-cyan-400'
                     : 'bg-purple-500/20 text-purple-400'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                {tab === 'coach' ? '🎓 Coach' : tab === 'safety' ? '🛡️ Safety' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {tab === 'coach' ? '🎓 Coach' : tab === 'safety' ? '🛡️ Safety' : tab === 'chat' ? '💬 Chat' : tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
           </nav>
@@ -641,6 +750,131 @@ export default function AVAMindDashboard({
                     </div>
                   </label>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Chat Tab - Talk to AVA Mind */}
+        {activeTab === 'chat' && (
+          <div className="flex flex-col h-full">
+            {/* Chat header with context info */}
+            <div className="px-6 py-4 border-b border-slate-800/50 bg-slate-900/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 flex items-center justify-center">
+                    <span className="text-xl">🧠</span>
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold">Chat with AVA Mind</h3>
+                    <p className="text-xs text-slate-400">
+                      {archetype?.primary?.archetype?.name
+                        ? `Your ${archetype.primary.archetype.name} coach`
+                        : 'Your personal trading AI'}
+                    </p>
+                  </div>
+                </div>
+                {learningStats?.totalTrades > 0 && (
+                  <div className="text-xs text-slate-500">
+                    Based on {learningStats.totalTrades} trades
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Messages area */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {chatMessages.length === 0 && (
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20 flex items-center justify-center">
+                    <span className="text-4xl">💬</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Start a Conversation</h3>
+                  <p className="text-slate-400 text-sm max-w-md mx-auto">
+                    Ask me about your trading patterns, psychology, or how to improve.
+                    I have access to your real trading data and can provide personalized insights.
+                  </p>
+                  <div className="mt-6 flex flex-wrap justify-center gap-2">
+                    {[
+                      "How am I trading lately?",
+                      "What are my strengths?",
+                      "How can I improve?",
+                      "Why do I lose on certain days?"
+                    ].map(prompt => (
+                      <button
+                        key={prompt}
+                        onClick={() => {
+                          setChatInput(prompt)
+                          setTimeout(() => sendChatMessage(), 100)
+                        }}
+                        className="px-3 py-2 text-sm bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 rounded-lg border border-slate-700/50 transition-colors"
+                      >
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {chatMessages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] px-4 py-3 rounded-2xl ${
+                      msg.role === 'user'
+                        ? 'bg-purple-500/20 border border-purple-500/30 text-white'
+                        : 'bg-slate-800/50 border border-slate-700/50 text-slate-200'
+                    }`}
+                  >
+                    {msg.role === 'assistant' && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm">🧠</span>
+                        <span className="text-xs text-cyan-400 font-medium">AVA Mind</span>
+                      </div>
+                    )}
+                    <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
+                  </div>
+                </div>
+              ))}
+
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-slate-800/50 border border-slate-700/50 px-4 py-3 rounded-2xl">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">🧠</span>
+                      <span className="text-xs text-cyan-400">Thinking...</span>
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Input area */}
+            <div className="p-4 border-t border-slate-800/50 bg-slate-900/30">
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendChatMessage()}
+                  placeholder="Ask about your trading patterns, psychology, or improvement..."
+                  className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30"
+                  disabled={chatLoading}
+                />
+                <button
+                  onClick={sendChatMessage}
+                  disabled={chatLoading || !chatInput.trim()}
+                  className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Send
+                </button>
               </div>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import AIFeaturesDashboard from './AIFeaturesDashboard.jsx'
+import AVAMindDashboard from './ava-mind/AVAMindDashboard.jsx'
 import AIChat from './AIChat.jsx'
 import MarketSentiment from './MarketSentiment.jsx'
 import ChronosForecast from './ChronosForecast.jsx'
@@ -63,7 +64,7 @@ export default function AIHub() {
   // Feature definitions matching the LEGENDARY mockup
   const features = [
     { id: 'chat', name: 'Chat with AVA', desc: 'Ask anything about trading, get AI analysis', Icon: MessageCircle, component: AIChat, colorKey: 'cyan', wide: true, status: 'live' },
-    { id: 'ava-mind', name: 'AVA Mind', desc: 'Your AI twin that learns your trading style and evolves with you', Icon: Brain, component: AIFeaturesDashboard, colorKey: 'purple', wide: true, status: 'live' },
+    { id: 'ava-mind', name: 'AVA Mind', desc: 'Your AI twin that learns your trading style and evolves with you', Icon: Brain, component: AVAMindDashboard, colorKey: 'purple', wide: true, status: 'live' },
     { id: 'chronos', name: 'Chronos', desc: 'AI price predictions', Icon: Sparkles, component: ChronosForecast, colorKey: 'cyan', status: 'live' },
     { id: 'sentiment', name: 'Sentiment', desc: 'News & social analysis', Icon: MessageCircle, component: MarketSentiment, colorKey: 'emerald', status: 'live' },
     { id: 'regime', name: 'Regime', desc: 'Market condition', Icon: Activity, component: MarketRegimeDetectorPanel, colorKey: 'indigo', status: 'live' },
