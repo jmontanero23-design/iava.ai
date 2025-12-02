@@ -318,8 +318,8 @@ export const ScoreRingMini = memo(function ScoreRingMini({
  * - Score <= 44: BEARISH (SHORT opportunity)
  */
 export const ProgressiveScoreRing = memo(function ProgressiveScoreRing({
-  score = 0,
-  maxPossible = 100,     // 50 = technical only, 100 = complete
+  score: rawScore = 0,
+  maxPossible: rawMaxPossible = 100,     // 50 = technical only, 100 = complete
   isComplete = false,
   loading = false,
   direction = 'neutral', // 'bullish' | 'bearish' | 'neutral'
@@ -331,6 +331,10 @@ export const ProgressiveScoreRing = memo(function ProgressiveScoreRing({
   className = '',
   style = {},
 }) {
+  // Ensure score is always a valid number (fixes NaN issue)
+  const score = typeof rawScore === 'number' && !isNaN(rawScore) ? rawScore : 0
+  const maxPossible = typeof rawMaxPossible === 'number' && !isNaN(rawMaxPossible) && rawMaxPossible > 0 ? rawMaxPossible : 100
+
   const [displayScore, setDisplayScore] = useState(animated ? 0 : score)
   const gradientId = useMemo(() => getUniqueId(), [])
 

@@ -110,12 +110,12 @@ export const colors = {
     20: '#475569',
   },
 
-  // GLASS
+  // GLASS - Darker for sharper, more premium look
   glass: {
-    bg: 'rgba(10, 15, 26, 0.88)',
-    bgHeavy: 'rgba(10, 15, 26, 0.95)',
-    border: 'rgba(255, 255, 255, 0.05)',
-    borderLight: 'rgba(255, 255, 255, 0.08)',
+    bg: 'rgba(3, 7, 18, 0.95)',           // Much darker, higher opacity
+    bgHeavy: 'rgba(0, 0, 0, 0.98)',       // Nearly opaque black
+    border: 'rgba(255, 255, 255, 0.04)',  // Subtle border
+    borderLight: 'rgba(255, 255, 255, 0.06)',
   },
 }
 

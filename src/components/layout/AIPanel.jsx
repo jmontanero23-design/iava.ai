@@ -31,7 +31,7 @@ import {
 import { ScoreRing } from '../ui/ScoreRing'
 import { LogoMark } from '../ui/Logo'
 import SignalFeed from '../SignalFeed'
-import LegendaryAIChat from '../LegendaryAIChat'
+import AIChat from '../AIChat'  // Real AI-connected chat (not LegendaryAIChat demo)
 import { useMarketData } from '../../contexts/MarketDataContext'
 import { colors, gradients, animation, spacing, radius, typography, shadows } from '../../styles/tokens'
 
@@ -797,7 +797,7 @@ export default function AIPanel({ symbol: propSymbol = 'NVDA', score: propScore 
         )}
         {activeTab === 'insights' && <InsightsTab />}
         {activeTab === 'chronos' && <ChronosTab />}
-        {activeTab === 'chat' && <LegendaryAIChat symbol={symbol} />}
+        {activeTab === 'chat' && <AIChat />}
       </div>
 
       {/* Custom scrollbar styles */}
