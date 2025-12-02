@@ -194,10 +194,12 @@ export default function HexGrid({
 
   const positions = calculateHexPositions(traits.length, hexSize, gap)
 
-  // Calculate viewBox dimensions
+  // Calculate viewBox dimensions (guard against empty positions)
   const padding = 60
-  const maxX = Math.max(...positions.map(p => Math.abs(p.x))) + hexSize + padding
-  const maxY = Math.max(...positions.map(p => Math.abs(p.y))) + hexSize + padding
+  const xValues = positions.map(p => Math.abs(p.x))
+  const yValues = positions.map(p => Math.abs(p.y))
+  const maxX = (xValues.length > 0 ? Math.max(...xValues) : 0) + hexSize + padding
+  const maxY = (yValues.length > 0 ? Math.max(...yValues) : 0) + hexSize + padding
 
   const handleSelect = (traitId) => {
     setSelectedTrait(selectedTrait === traitId ? null : traitId)

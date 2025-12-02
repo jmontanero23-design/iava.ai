@@ -53,7 +53,9 @@ export default function WatchlistPanel({
   const [hoveredItem, setHoveredItem] = useState(null)
 
   // Use provided watchlist or fall back to demo data
-  const watchlistData = watchlist && watchlist.length > 0 ? watchlist : defaultWatchlistData
+  // Also fall back if watchlist data is incomplete (no prices loaded yet)
+  const hasValidData = watchlist && watchlist.length > 0 && watchlist.some(s => s.price > 0)
+  const watchlistData = hasValidData ? watchlist : defaultWatchlistData
 
   // Filter stocks based on active filter (uses unified Unicorn Score)
   const filteredStocks = watchlistData.filter((stock) => {
@@ -273,7 +275,7 @@ export default function WatchlistPanel({
                   ) : (
                     <TrendingDown size={12} />
                   )}
-                  {isPositive ? '+' : ''}{changePercent.toFixed(2)}%
+                  {isPositive ? '+' : ''}{isNaN(changePercent) ? '0.00' : changePercent.toFixed(2)}%
                 </div>
               </div>
 

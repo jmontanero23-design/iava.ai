@@ -171,10 +171,11 @@ export function useWatchlistData(refreshInterval = 60000) {
             change: data?.change ?? 0,
             changePercent: data?.changePercent ?? 0,
             // Progressive Unicorn Score fields (unified score system):
-            unicornScore: data?.unicornScore ?? 50,
-            scoreMaxPossible: data?.scoreMaxPossible ?? 50,
+            // Use || instead of ?? so score 0 falls back to 50 (0 looks like "no data")
+            unicornScore: data?.unicornScore || 50,
+            scoreMaxPossible: data?.scoreMaxPossible || 50,
             scoreComplete: data?.scoreComplete ?? false,
-            direction: data?.direction ?? 'neutral',
+            direction: data?.direction || 'neutral',
             bars: data?.bars ?? []
           }
         })

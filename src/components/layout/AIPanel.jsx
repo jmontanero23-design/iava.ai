@@ -31,7 +31,7 @@ import {
 import { ScoreRing } from '../ui/ScoreRing'
 import { LogoMark } from '../ui/Logo'
 import SignalFeed from '../SignalFeed'
-import AIChat from '../AIChat'  // Real AI-connected chat (not LegendaryAIChat demo)
+// AVAMindChatTab is defined inline below - psychology-focused personal coaching chat
 import { useMarketData } from '../../contexts/MarketDataContext'
 import { colors, gradients, animation, spacing, radius, typography, shadows } from '../../styles/tokens'
 
@@ -562,8 +562,131 @@ function ChronosTab() {
   )
 }
 
-function ChatTab() {
+/**
+ * AVA Mind Chat Tab - Psychology-focused personal coaching chat
+ * Uses real user data from localStorage (patterns, archetypes, learning stats)
+ */
+function AVAMindChatTab() {
+  const [messages, setMessages] = useState([])
   const [inputValue, setInputValue] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  // Suggested prompts for new users
+  const suggestedPrompts = [
+    "How am I trading lately?",
+    "What are my strengths?",
+    "How can I improve?",
+  ]
+
+  // Build context from localStorage (real user data)
+  const buildContext = () => {
+    try {
+      const learningStats = JSON.parse(localStorage.getItem('ava-mind-learning') || '{}')
+      const patterns = JSON.parse(localStorage.getItem('ava-mind-patterns') || '{}')
+      const archetype = JSON.parse(localStorage.getItem('ava-mind-archetype') || '{}')
+      const trustLevel = parseInt(localStorage.getItem('ava-mind-trust-level') || '1', 10)
+
+      // Format patterns
+      const formattedPatterns = Object.entries(patterns).flatMap(([dimension, items]) =>
+        Object.entries(items || {}).map(([value, data]) => ({
+          dimension,
+          value,
+          winRate: data.wins / (data.wins + data.losses) * 100,
+          count: data.wins + data.losses
+        }))
+      ).filter(p => p.count >= 2).slice(0, 10)
+
+      return {
+        archetype: archetype?.primary?.archetype || null,
+        emotionalState: { state: 'neutral', intensity: 0.5 },
+        trustLevel,
+        patterns: formattedPatterns,
+        learning: {
+          totalTrades: learningStats?.totalTrades || 0,
+          winRate: learningStats?.winRate || 0,
+          profitFactor: learningStats?.profitFactor || 0,
+          currentStreak: learningStats?.streakCurrent || 0,
+          bestStreak: learningStats?.streakBest || 0,
+          worstStreak: learningStats?.streakWorst || 0,
+          averageWin: learningStats?.avgWin || 0,
+          averageLoss: learningStats?.avgLoss || 0,
+        }
+      }
+    } catch (e) {
+      return {}
+    }
+  }
+
+  // Send message to AVA Mind API
+  const sendMessage = async () => {
+    if (!inputValue.trim() || loading) return
+
+    const userMessage = inputValue.trim()
+    setInputValue('')
+    setLoading(true)
+
+    // Add user message
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }])
+
+    try {
+      const context = buildContext()
+      const conversationHistory = [...messages, { role: 'user', content: userMessage }].slice(-10)
+
+      const response = await fetch('/api/ai/ava-mind', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: conversationHistory, context })
+      })
+
+      if (!response.ok) throw new Error('Failed to get response')
+
+      // Handle streaming response
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let fullResponse = ''
+
+      // Add empty assistant message
+      setMessages(prev => [...prev, { role: 'assistant', content: '' }])
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n')
+        for (const line of lines) {
+          if (line.startsWith('0:')) {
+            try {
+              const text = JSON.parse(line.slice(2))
+              fullResponse += text
+              setMessages(prev => {
+                const updated = [...prev]
+                updated[updated.length - 1] = { role: 'assistant', content: fullResponse }
+                return updated
+              })
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[AVA Mind Chat] Error:', error)
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "I'm having trouble connecting. Please try again in a moment."
+      }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
+    }
+  }
 
   return (
     <div
@@ -576,37 +699,103 @@ function ChatTab() {
     >
       {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', marginBottom: spacing[3] }}>
-        {chatMessages.map((msg, idx) => (
-          <div
-            key={idx}
-            style={{
-              display: 'flex',
-              justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-              marginBottom: spacing[3],
-            }}
-          >
-            <div
-              style={{
-                maxWidth: '85%',
-                padding: spacing[3],
-                borderRadius: radius.xl,
-                background: msg.role === 'user' ? gradients.unicorn : colors.depth2,
-                border: msg.role === 'ava' ? `1px solid ${colors.glass.border}` : 'none',
-              }}
-            >
-              <p
-                style={{
-                  fontSize: typography.fontSize.sm,
-                  color: colors.text[100],
-                  lineHeight: 1.5,
-                  margin: 0,
-                }}
-              >
-                {msg.text}
-              </p>
+        {messages.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: spacing[6] }}>
+            <Brain size={40} style={{ color: colors.purple[400], margin: '0 auto 12px', opacity: 0.6 }} />
+            <p style={{ fontSize: typography.fontSize.sm, color: colors.text[50], marginBottom: spacing[4] }}>
+              Ask about your trading patterns and psychology
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[2] }}>
+              {suggestedPrompts.map((prompt, i) => (
+                <button
+                  key={i}
+                  onClick={() => { setInputValue(prompt); setTimeout(sendMessage, 50) }}
+                  style={{
+                    padding: `${spacing[2]}px ${spacing[3]}px`,
+                    background: colors.depth2,
+                    border: `1px solid ${colors.glass.border}`,
+                    borderRadius: radius.lg,
+                    color: colors.text[70],
+                    fontSize: typography.fontSize.xs,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  {prompt}
+                </button>
+              ))}
             </div>
           </div>
-        ))}
+        ) : (
+          messages.map((msg, idx) => (
+            <div
+              key={idx}
+              style={{
+                display: 'flex',
+                justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                marginBottom: spacing[3],
+              }}
+            >
+              <div
+                style={{
+                  maxWidth: '85%',
+                  padding: spacing[3],
+                  borderRadius: radius.xl,
+                  background: msg.role === 'user' ? colors.purple.dim : colors.depth2,
+                  border: `1px solid ${msg.role === 'user' ? colors.purple[500] + '40' : colors.glass.border}`,
+                }}
+              >
+                {msg.role === 'assistant' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <Brain size={12} style={{ color: colors.purple[400] }} />
+                    <span style={{ fontSize: 10, color: colors.purple[400], fontWeight: 600 }}>AVA Mind</span>
+                  </div>
+                )}
+                <p
+                  style={{
+                    fontSize: typography.fontSize.sm,
+                    color: colors.text[100],
+                    lineHeight: 1.5,
+                    margin: 0,
+                    whiteSpace: 'pre-wrap',
+                  }}
+                >
+                  {msg.content}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
+
+        {loading && (
+          <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: spacing[3] }}>
+            <div style={{
+              padding: spacing[3],
+              borderRadius: radius.xl,
+              background: colors.depth2,
+              border: `1px solid ${colors.glass.border}`,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Brain size={12} style={{ color: colors.purple[400] }} />
+                <span style={{ fontSize: 10, color: colors.purple[400] }}>Thinking...</span>
+                <div style={{ display: 'flex', gap: 3 }}>
+                  {[0, 1, 2].map(i => (
+                    <div
+                      key={i}
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: colors.purple[400],
+                        animation: `bounce 1s infinite ${i * 150}ms`,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Input */}
@@ -623,9 +812,11 @@ function ChatTab() {
       >
         <input
           type="text"
-          placeholder="Ask AVA anything..."
+          placeholder="Ask about your trading..."
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={loading}
           style={{
             flex: 1,
             background: 'transparent',
@@ -636,21 +827,32 @@ function ChatTab() {
           }}
         />
         <button
+          onClick={sendMessage}
+          disabled={loading || !inputValue.trim()}
           style={{
             width: 36,
             height: 36,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: gradients.unicorn,
+            background: loading || !inputValue.trim() ? colors.depth3 : gradients.unicorn,
             borderRadius: radius.lg,
             border: 'none',
-            cursor: 'pointer',
+            cursor: loading || !inputValue.trim() ? 'not-allowed' : 'pointer',
+            opacity: loading || !inputValue.trim() ? 0.5 : 1,
           }}
         >
           <Zap size={16} style={{ color: '#fff' }} />
         </button>
       </div>
+
+      {/* Animation keyframes */}
+      <style>{`
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+      `}</style>
     </div>
   )
 }
@@ -797,7 +999,7 @@ export default function AIPanel({ symbol: propSymbol = 'NVDA', score: propScore 
         )}
         {activeTab === 'insights' && <InsightsTab />}
         {activeTab === 'chronos' && <ChronosTab />}
-        {activeTab === 'chat' && <AIChat />}
+        {activeTab === 'chat' && <AVAMindChatTab />}
       </div>
 
       {/* Custom scrollbar styles */}
