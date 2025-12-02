@@ -160,8 +160,11 @@ export default async function handler(req) {
     // Build personalized system prompt
     const systemPrompt = buildAVAMindSystemPrompt(context)
 
-    // Use a conversational model for warm, personal responses
-    const model = 'gpt-4o-mini'  // Fast and good for conversational AI
+    // Use GPT-5 Mini for balanced conversational coaching
+    // - gpt-5: Complex analysis tasks
+    // - gpt-5-mini: Medium tasks, coaching, personalized responses
+    // - gpt-5-nano: Fast simple tasks
+    const model = 'gpt-5-mini'
 
     // Stream the response
     const result = await streamText({
