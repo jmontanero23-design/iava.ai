@@ -109,13 +109,15 @@ export default function MarketSentiment() {
       const symbol = marketData.symbol || 'SPY'
 
       // ELITE: Fetch REAL news headlines from API
+      let newsArticles = []  // Store full article objects (with URLs)
       let headlines = []
       let newsSource = 'fallback'
       try {
         const newsResponse = await fetch(`/api/news?symbol=${symbol}&limit=10`)
         if (newsResponse.ok) {
           const newsData = await newsResponse.json()
-          headlines = newsData.news?.map(n => n.headline) || []
+          newsArticles = newsData.news || []  // Keep full objects with URLs
+          headlines = newsArticles.map(n => n.headline)
           newsSource = newsData.source || 'unknown'
 
           // CRITICAL: Warn if using sample data
@@ -142,6 +144,8 @@ export default function MarketSentiment() {
           `Analysts update price targets for ${symbol}`,
           `Trading volume surges for ${symbol}`
         ]
+        // Sample data has no URLs
+        newsArticles = headlines.map(h => ({ headline: h, url: null }))
       }
 
       // PhD++ ENHANCEMENT: Use multi-model sentiment analysis for higher accuracy
@@ -190,6 +194,15 @@ export default function MarketSentiment() {
 
       const analyzedNews = await Promise.all(sentimentPromises)
 
+      // Merge URLs from original articles back into analyzed results
+      const analyzedNewsWithUrls = analyzedNews.map((item, idx) => ({
+        ...item,
+        url: newsArticles[idx]?.url || null,
+        author: newsArticles[idx]?.author || null,
+        source: newsArticles[idx]?.source || null,
+        created_at: newsArticles[idx]?.created_at || null,
+      }))
+
       // PhD++ DIAGNOSTIC: Check if we're using fallback data (no real models)
       const fallbackCount = analyzedNews.filter(item => item.fallback || item.error).length
       if (fallbackCount > 0) {
@@ -205,7 +218,7 @@ export default function MarketSentiment() {
       } else {
       }
 
-      setNewsItems(analyzedNews)
+      setNewsItems(analyzedNewsWithUrls)
 
       // PhD+++ Calculate overall sentiment from news using WEIGHTED AVERAGE
       // Important news (crash, FOMC, VIX) has MORE weight than generic articles
@@ -214,7 +227,7 @@ export default function MarketSentiment() {
       let weightedSentimentSum = 0
       let weightedConfidenceSum = 0
 
-      analyzedNews.forEach(item => {
+      analyzedNewsWithUrls.forEach(item => {
         // Calculate keyword-based importance weight
         const keywordWeight = getHeadlineWeight(item.headline)
 
@@ -451,11 +464,23 @@ export default function MarketSentiment() {
                      item.sentiment === 'negative' ? '❌' : '➖'}
                   </div>
 
-                  {/* Headline */}
+                  {/* Headline - clickable if URL available */}
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm text-slate-300 leading-snug">
-                      {item.headline}
-                    </div>
+                    {item.url ? (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-cyan-300 hover:text-cyan-200 hover:underline cursor-pointer leading-snug block transition-colors"
+                      >
+                        {item.headline}
+                        <span className="text-xs text-slate-500 ml-1">↗</span>
+                      </a>
+                    ) : (
+                      <div className="text-sm text-slate-300 leading-snug">
+                        {item.headline}
+                      </div>
+                    )}
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                       {/* Sentiment Label */}
                       <span className={`text-xs font-semibold ${
@@ -470,6 +495,13 @@ export default function MarketSentiment() {
                       <span className="text-xs text-slate-400">
                         {Math.round((item.confidence || 0.5) * 100)}% confident
                       </span>
+
+                      {/* Source/Author if available */}
+                      {(item.source || item.author) && (
+                        <span className="text-xs text-slate-500">
+                          {item.source || item.author}
+                        </span>
+                      )}
 
                       {/* Option 4: Importance Weight Badge */}
                       {item.weight && item.weight > 1.2 && (

@@ -221,12 +221,12 @@ export default function OrdersPanel({ symbol: currentSymbol, lastPrice, saty }) 
 
     window.addEventListener('iava-close-position', handleClosePosition)
     window.addEventListener('iava-set-stop', handleSetStop)
-    window.addEventListener('iava-take-profit', handleTakeProfit)
+    window.addEventListener('iava-take-profits', handleTakeProfit)  // Fixed: matches dispatch event name
 
     return () => {
       window.removeEventListener('iava-close-position', handleClosePosition)
       window.removeEventListener('iava-set-stop', handleSetStop)
-      window.removeEventListener('iava-take-profit', handleTakeProfit)
+      window.removeEventListener('iava-take-profits', handleTakeProfit)  // Fixed: matches dispatch event name
     }
   }, [])
 

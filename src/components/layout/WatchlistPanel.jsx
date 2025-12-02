@@ -20,26 +20,27 @@ import {
   TrendingDown,
   Star,
 } from 'lucide-react'
-import { ScoreRing } from '../ui/ScoreRing'
+import { ProgressiveScoreRing } from '../ui/ScoreRing'
 import StockLogo from '../ui/StockLogo'
 import { colors, gradients, animation, spacing, radius, typography } from '../../styles/tokens'
 
 // Default demo watchlist data (used when no external data provided)
+// Uses unified Unicorn Score (progressive system with bidirectional interpretation)
 const defaultWatchlistData = [
-  { symbol: 'NVDA', name: 'NVIDIA Corporation', price: 142.56, change: 3.24, changePercent: 2.32, score: 87 },
-  { symbol: 'AAPL', name: 'Apple Inc', price: 178.32, change: -0.89, changePercent: -0.50, score: 72 },
-  { symbol: 'TSLA', name: 'Tesla Inc', price: 234.12, change: 5.67, changePercent: 2.48, score: 65 },
-  { symbol: 'MSFT', name: 'Microsoft', price: 378.45, change: 1.23, changePercent: 0.33, score: 78 },
-  { symbol: 'AMD', name: 'AMD Inc', price: 156.78, change: -2.34, changePercent: -1.47, score: 58 },
-  { symbol: 'META', name: 'Meta Platforms', price: 512.34, change: 4.56, changePercent: 0.90, score: 81 },
-  { symbol: 'GOOGL', name: 'Alphabet Inc', price: 145.67, change: 0.45, changePercent: 0.31, score: 69 },
-  { symbol: 'AMZN', name: 'Amazon.com', price: 185.23, change: -1.12, changePercent: -0.60, score: 74 },
+  { symbol: 'NVDA', name: 'NVIDIA Corporation', price: 142.56, change: 3.24, changePercent: 2.32, unicornScore: 87, scoreMaxPossible: 100, scoreComplete: true, direction: 'bullish' },
+  { symbol: 'AAPL', name: 'Apple Inc', price: 178.32, change: -0.89, changePercent: -0.50, unicornScore: 72, scoreMaxPossible: 100, scoreComplete: true, direction: 'bullish' },
+  { symbol: 'TSLA', name: 'Tesla Inc', price: 234.12, change: 5.67, changePercent: 2.48, unicornScore: 65, scoreMaxPossible: 100, scoreComplete: true, direction: 'bullish' },
+  { symbol: 'MSFT', name: 'Microsoft', price: 378.45, change: 1.23, changePercent: 0.33, unicornScore: 78, scoreMaxPossible: 100, scoreComplete: true, direction: 'bullish' },
+  { symbol: 'AMD', name: 'AMD Inc', price: 156.78, change: -2.34, changePercent: -1.47, unicornScore: 52, scoreMaxPossible: 100, scoreComplete: true, direction: 'neutral' },
+  { symbol: 'META', name: 'Meta Platforms', price: 512.34, change: 4.56, changePercent: 0.90, unicornScore: 81, scoreMaxPossible: 100, scoreComplete: true, direction: 'bullish' },
+  { symbol: 'GOOGL', name: 'Alphabet Inc', price: 145.67, change: 0.45, changePercent: 0.31, unicornScore: 69, scoreMaxPossible: 100, scoreComplete: true, direction: 'bullish' },
+  { symbol: 'AMZN', name: 'Amazon.com', price: 185.23, change: -1.12, changePercent: -0.60, unicornScore: 35, scoreMaxPossible: 100, scoreComplete: true, direction: 'bearish' },
 ]
 
 const filterOptions = [
   { id: 'all', label: 'All' },
-  { id: 'unicorns', label: 'Unicorns' },
-  { id: 'squeezes', label: 'Squeezes' },
+  { id: 'unicorns', label: 'Longs' },    // High score (≥75) = strong LONG setups
+  { id: 'squeezes', label: 'Shorts' },   // Low score (≤44) = SHORT opportunities
 ]
 
 export default function WatchlistPanel({
@@ -54,11 +55,12 @@ export default function WatchlistPanel({
   // Use provided watchlist or fall back to demo data
   const watchlistData = watchlist && watchlist.length > 0 ? watchlist : defaultWatchlistData
 
-  // Filter stocks based on active filter
+  // Filter stocks based on active filter (uses unified Unicorn Score)
   const filteredStocks = watchlistData.filter((stock) => {
+    const score = stock.unicornScore ?? 50
     if (activeFilter === 'all') return true
-    if (activeFilter === 'unicorns') return (stock.score ?? 0) >= 75
-    if (activeFilter === 'squeezes') return (stock.score ?? 0) < 60
+    if (activeFilter === 'unicorns') return score >= 75  // High score = strong LONG setups
+    if (activeFilter === 'squeezes') return score <= 44  // Low score = SHORT opportunities
     return true
   })
 
@@ -158,7 +160,11 @@ export default function WatchlistPanel({
           const isPositive = (stock.change ?? 0) >= 0
           const price = stock.price ?? 0
           const changePercent = stock.changePercent ?? 0
-          const score = stock.score ?? 0
+          // Progressive Unicorn Score fields
+          const unicornScore = stock.unicornScore ?? 50
+          const scoreMaxPossible = stock.scoreMaxPossible ?? 50
+          const scoreComplete = stock.scoreComplete ?? false
+          const direction = stock.direction ?? 'neutral'
 
           return (
             <button
@@ -271,8 +277,16 @@ export default function WatchlistPanel({
                 </div>
               </div>
 
-              {/* Mini Score Ring */}
-              <ScoreRing score={score} size="sm" showLabel={false} />
+              {/* Progressive Unicorn Score Ring */}
+              <ProgressiveScoreRing
+                score={unicornScore}
+                maxPossible={scoreMaxPossible}
+                isComplete={scoreComplete}
+                direction={direction}
+                size="sm"
+                showDirection={false}
+                animated={false}
+              />
             </button>
           )
         })}

@@ -32,7 +32,7 @@ import {
  * All 12+ AI features in one consolidated view
  */
 export default function AIHub() {
-  const [selectedFeature, setSelectedFeature] = useState('dashboard')
+  const [selectedFeature, setSelectedFeature] = useState(null)  // null shows feature grid
   const { marketData } = useMarketData()
   const symbol = marketData?.symbol || 'SPY'
 
@@ -62,6 +62,7 @@ export default function AIHub() {
 
   // Feature definitions matching the LEGENDARY mockup
   const features = [
+    { id: 'chat', name: 'Chat with AVA', desc: 'Ask anything about trading, get AI analysis', Icon: MessageCircle, component: AIChat, colorKey: 'cyan', wide: true, status: 'live' },
     { id: 'ava-mind', name: 'AVA Mind', desc: 'Your AI twin that learns your trading style and evolves with you', Icon: Brain, component: AIFeaturesDashboard, colorKey: 'purple', wide: true, status: 'live' },
     { id: 'chronos', name: 'Chronos', desc: 'AI price predictions', Icon: Sparkles, component: ChronosForecast, colorKey: 'cyan', status: 'live' },
     { id: 'sentiment', name: 'Sentiment', desc: 'News & social analysis', Icon: MessageCircle, component: MarketSentiment, colorKey: 'emerald', status: 'live' },

@@ -102,63 +102,114 @@ export const VoicePresets = {
   }
 }
 
-// Queue system for multiple voice messages
+// Queue system for multiple voice messages - prevents overlapping speech
 class VoiceQueue {
   constructor() {
     this.queue = []
     this.isPlaying = false
+    this.currentAudio = null
   }
 
   async add(text, options = {}) {
-    this.queue.push({ text, options })
-    if (!this.isPlaying) {
-      this.processQueue()
-    }
+    return new Promise((resolve) => {
+      this.queue.push({ text, options, resolve })
+      if (!this.isPlaying) {
+        this.processQueue()
+      }
+    })
   }
 
   async processQueue() {
     if (this.queue.length === 0) {
       this.isPlaying = false
+      this.currentAudio = null
       return
     }
 
     this.isPlaying = true
-    const { text, options } = this.queue.shift()
+    const { text, options, resolve } = this.queue.shift()
 
-    await speakText(text, {
-      ...options,
-      onEnd: () => {
-        this.processQueue() // Process next in queue
-        if (options.onEnd) options.onEnd()
-      }
-    })
+    try {
+      this.currentAudio = await speakText(text, {
+        ...options,
+        onEnd: () => {
+          this.currentAudio = null
+          if (options.onEnd) options.onEnd()
+          resolve()
+          this.processQueue() // Process next in queue
+        },
+        onError: (err) => {
+          this.currentAudio = null
+          if (options.onError) options.onError(err)
+          resolve()
+          this.processQueue() // Continue even on error
+        }
+      })
+    } catch (err) {
+      console.warn('[VoiceQueue] Error playing:', err)
+      resolve()
+      this.processQueue()
+    }
   }
 
   clear() {
     this.queue = []
     this.isPlaying = false
+
+    // Stop currently playing audio
+    if (this.currentAudio) {
+      if (this.currentAudio.pause) {
+        this.currentAudio.pause()
+        this.currentAudio.currentTime = 0
+      }
+      this.currentAudio = null
+    }
+
+    // Also stop browser TTS if active
     window.speechSynthesis?.cancel()
+  }
+
+  // Check if currently speaking
+  get isSpeaking() {
+    return this.isPlaying
+  }
+
+  // Get queue length
+  get length() {
+    return this.queue.length
   }
 }
 
 // Create singleton instance
 export const voiceQueue = new VoiceQueue()
 
-// Helper to speak important alerts
+// Helper to speak important alerts - uses queue to prevent overlap
 export async function speakAlert(message, priority = 'normal') {
   const preset = priority === 'high' ?
     { ...VoicePresets.ALERT, playbackRate: 1.3 } :
     VoicePresets.ALERT
 
-  return speakText(message, preset)
+  // High priority alerts skip the queue and play immediately
+  if (priority === 'high') {
+    voiceQueue.clear() // Stop current speech
+    return speakText(message, preset)
+  }
+
+  // Normal alerts go through the queue
+  return voiceQueue.add(message, preset)
 }
 
-// Helper for AI analysis readouts
+// Helper for AI analysis readouts - uses queue to prevent overlap
 export async function speakAnalysis(analysis) {
-  return speakText(analysis, VoicePresets.ANALYSIS)
+  return voiceQueue.add(analysis, VoicePresets.ANALYSIS)
 }
 
-// Helper for copilot guidance
+// Helper for copilot guidance - uses queue to prevent overlap
 export async function speakGuidance(guidance) {
-  return speakText(guidance, VoicePresets.COPILOT)
+  return voiceQueue.add(guidance, VoicePresets.COPILOT)
+}
+
+// Stop all speech immediately
+export function stopSpeech() {
+  voiceQueue.clear()
 }

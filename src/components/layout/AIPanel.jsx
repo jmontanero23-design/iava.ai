@@ -9,7 +9,7 @@
  * - Insight cards with colored icons and action buttons
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Zap,
   TrendingUp,
@@ -32,6 +32,7 @@ import { ScoreRing } from '../ui/ScoreRing'
 import { LogoMark } from '../ui/Logo'
 import SignalFeed from '../SignalFeed'
 import LegendaryAIChat from '../LegendaryAIChat'
+import { useMarketData } from '../../contexts/MarketDataContext'
 import { colors, gradients, animation, spacing, radius, typography, shadows } from '../../styles/tokens'
 
 const tabs = [
@@ -76,13 +77,25 @@ const chronosPredictions = [
   { timeframe: '1W', direction: 'down', target: 148.00, confidence: 58, change: '+3.2%' },
 ]
 
-function ScoreTab({ symbol = 'NVDA', score = 87 }) {
-  // Score breakdown - matching HTML mockup 3-column grid
+function ScoreTab({ symbol = 'NVDA', score = 87, components = {}, recommendation = {} }) {
+  // Score breakdown - use real components from API if available
   const breakdown = [
-    { label: 'Technicals', value: 92, color: '#60a5fa' }, // blue
-    { label: 'Sentiment', value: 85, color: colors.purple[500] },
-    { label: 'Forecast', value: 78, color: colors.cyan[400] },
+    { label: 'Technicals', value: Math.round(components.technical ?? 50), color: '#60a5fa' }, // blue
+    { label: 'Sentiment', value: Math.round(components.sentiment ?? 50), color: colors.purple[500] },
+    { label: 'Forecast', value: Math.round(components.forecast ?? 50), color: colors.cyan[400] },
   ]
+
+  // Determine direction from recommendation or score
+  const direction = recommendation.action?.includes('BUY') ? 'bullish'
+    : recommendation.action?.includes('SELL') ? 'bearish'
+    : score >= 60 ? 'bullish' : score <= 40 ? 'bearish' : 'neutral'
+
+  const directionConfig = {
+    bullish: { label: 'Bullish', color: colors.emerald[400], bg: colors.emerald.dim, Icon: ArrowUp },
+    bearish: { label: 'Bearish', color: colors.red[400], bg: colors.red.dim, Icon: ArrowDown },
+    neutral: { label: 'Neutral', color: colors.text[50], bg: colors.glass.bg, Icon: TrendingUp },
+  }
+  const dir = directionConfig[direction]
 
   return (
     <div style={{ padding: spacing[4] }}>
@@ -126,28 +139,28 @@ function ScoreTab({ symbol = 'NVDA', score = 87 }) {
 
           {/* Direction badge and confidence */}
           <div style={{ textAlign: 'right' }}>
-            {/* Direction badge */}
+            {/* Direction badge - dynamic based on score/recommendation */}
             <div
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
                 padding: `${spacing[2]}px ${spacing[3]}px`,
-                background: colors.emerald.dim,
+                background: dir.bg,
                 borderRadius: radius.md,
                 marginBottom: spacing[2],
               }}
             >
-              <ArrowUp size={14} style={{ color: colors.emerald[400] }} />
+              <dir.Icon size={14} style={{ color: dir.color }} />
               <span
                 style={{
                   fontSize: typography.fontSize.sm,
                   fontWeight: typography.fontWeight.extrabold,
-                  color: colors.emerald[400],
+                  color: dir.color,
                   textTransform: 'uppercase',
                 }}
               >
-                Bullish
+                {dir.label}
               </span>
             </div>
 
@@ -642,9 +655,21 @@ function ChatTab() {
   )
 }
 
-export default function AIPanel({ symbol = 'NVDA', score = 87 }) {
+export default function AIPanel({ symbol: propSymbol = 'NVDA', score: propScore = null }) {
   const [activeTab, setActiveTab] = useState('score')
   const [hoveredTab, setHoveredTab] = useState(null)
+
+  // Get real market data from context
+  const { marketData } = useMarketData()
+
+  // Use context data if available, otherwise fall back to props
+  const symbol = marketData?.symbol || propSymbol
+
+  // Extract score from unicornScore object (API returns ultraUnicornScore)
+  const unicornData = marketData?.unicornScore
+  const score = unicornData?.ultraUnicornScore ?? propScore ?? 50
+  const scoreComponents = unicornData?.components ?? {}
+  const recommendation = unicornData?.recommendation ?? {}
 
   return (
     <div
@@ -762,7 +787,14 @@ export default function AIPanel({ symbol = 'NVDA', score = 87 }) {
         }}
         className="ai-content"
       >
-        {activeTab === 'score' && <ScoreTab symbol={symbol} score={score} />}
+        {activeTab === 'score' && (
+          <ScoreTab
+            symbol={symbol}
+            score={score}
+            components={scoreComponents}
+            recommendation={recommendation}
+          />
+        )}
         {activeTab === 'insights' && <InsightsTab />}
         {activeTab === 'chronos' && <ChronosTab />}
         {activeTab === 'chat' && <LegendaryAIChat symbol={symbol} />}

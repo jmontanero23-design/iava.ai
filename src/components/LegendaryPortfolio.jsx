@@ -3,90 +3,75 @@
  *
  * Portfolio overview with hero section and positions list
  * Based on: iAVA-ULTIMATE-LEGENDARY-MOBILE.html (Portfolio Tab section)
+ *
+ * Uses PositionsContext for real Alpaca data
  */
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   TrendingUp,
   TrendingDown,
   Plus,
   Zap,
   Target,
+  RefreshCw,
+  Loader2,
 } from 'lucide-react'
 import StockLogo from './ui/StockLogo'
+import { usePositions } from '../contexts/PositionsContext'
 import { colors, gradients, animation, spacing, radius, typography } from '../styles/tokens'
 
-// Demo portfolio data
-const portfolioData = {
-  totalValue: 127432.56,
-  dayChange: 2847.23,
-  dayChangePercent: 2.28,
-  totalReturn: 32847.23,
-  totalReturnPercent: 34.7,
-  winRate: 73,
-  avgHoldTime: '4.2 days',
-  positions: [
-    {
-      symbol: 'NVDA',
-      name: 'NVIDIA Corporation',
-      shares: 25,
-      avgCost: 118.42,
-      currentPrice: 142.56,
-      value: 3564.00,
-      pnl: 603.50,
-      pnlPercent: 20.38,
-      score: 87,
-    },
-    {
-      symbol: 'AAPL',
-      name: 'Apple Inc',
-      shares: 50,
-      avgCost: 165.20,
-      currentPrice: 178.32,
-      value: 8916.00,
-      pnl: 656.00,
-      pnlPercent: 7.94,
-      score: 72,
-    },
-    {
-      symbol: 'TSLA',
-      name: 'Tesla Inc',
-      shares: 15,
-      avgCost: 198.50,
-      currentPrice: 234.12,
-      value: 3511.80,
-      pnl: 534.30,
-      pnlPercent: 17.94,
-      score: 65,
-    },
-    {
-      symbol: 'AMD',
-      name: 'Advanced Micro Devices',
-      shares: 30,
-      avgCost: 142.30,
-      currentPrice: 156.78,
-      value: 4703.40,
-      pnl: 434.40,
-      pnlPercent: 10.17,
-      score: 78,
-    },
-    {
-      symbol: 'MSFT',
-      name: 'Microsoft Corporation',
-      shares: 20,
-      avgCost: 352.10,
-      currentPrice: 378.45,
-      value: 7569.00,
-      pnl: 527.00,
-      pnlPercent: 7.48,
-      score: 76,
-    },
-  ],
+// Company name lookup for common symbols
+const COMPANY_NAMES = {
+  SPY: 'SPDR S&P 500 ETF',
+  QQQ: 'Invesco QQQ Trust',
+  AAPL: 'Apple Inc',
+  TSLA: 'Tesla Inc',
+  NVDA: 'NVIDIA Corporation',
+  AMD: 'Advanced Micro Devices',
+  MSFT: 'Microsoft Corporation',
+  GOOGL: 'Alphabet Inc',
+  AMZN: 'Amazon.com Inc',
+  META: 'Meta Platforms',
+  NFLX: 'Netflix Inc',
 }
 
 export default function LegendaryPortfolio({ onSelectSymbol }) {
   const [activeFilter, setActiveFilter] = useState('all')
-  const data = portfolioData
+  const { positions, portfolioStats, accountInfo, isLoading, refresh } = usePositions()
+
+  // Transform Alpaca positions to our display format
+  const data = useMemo(() => {
+    const transformedPositions = positions.map(p => ({
+      symbol: p.symbol,
+      name: COMPANY_NAMES[p.symbol] || p.symbol,
+      shares: parseFloat(p.qty || 0),
+      avgCost: parseFloat(p.avg_entry_price || 0),
+      currentPrice: parseFloat(p.current_price || 0),
+      value: parseFloat(p.market_value || 0),
+      pnl: parseFloat(p.unrealized_pl || 0),
+      pnlPercent: parseFloat(p.unrealized_plpc || 0) * 100,
+      score: 50 + Math.floor(Math.random() * 40), // Will be replaced with real scores
+    }))
+
+    // Calculate total return percent from equity and positions
+    const totalReturnPct = portfolioStats.equity > 0
+      ? ((portfolioStats.totalPnL / portfolioStats.equity) * 100)
+      : 0
+
+    return {
+      totalValue: portfolioStats.equity || portfolioStats.totalValue,
+      dayChange: portfolioStats.totalPnL,
+      dayChangePercent: portfolioStats.totalPnLPercent,
+      totalReturn: portfolioStats.totalPnL,
+      totalReturnPercent: totalReturnPct,
+      equity: portfolioStats.equity,
+      buyingPower: portfolioStats.buyingPower,
+      winRate: 73, // TODO: Calculate from trade history
+      avgHoldTime: '4.2 days', // TODO: Calculate from trade history
+      positions: transformedPositions,
+    }
+  }, [positions, portfolioStats])
 
   const isPositive = data.dayChange >= 0
 
@@ -263,17 +248,31 @@ export default function LegendaryPortfolio({ onSelectSymbol }) {
           >
             Positions
           </h2>
-          <a
-            href="#"
+          <button
+            onClick={() => refresh()}
+            disabled={isLoading}
             style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: spacing[2],
+              padding: `${spacing[2]}px ${spacing[3]}px`,
               fontSize: 13,
               fontWeight: 600,
               color: colors.purple[400],
-              textDecoration: 'none',
+              background: colors.purple.dim,
+              border: 'none',
+              borderRadius: radius.md,
+              cursor: isLoading ? 'wait' : 'pointer',
+              opacity: isLoading ? 0.7 : 1,
             }}
           >
-            View All
-          </a>
+            {isLoading ? (
+              <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
+            ) : (
+              <RefreshCw size={14} />
+            )}
+            Refresh
+          </button>
         </div>
 
         {/* Positions List */}

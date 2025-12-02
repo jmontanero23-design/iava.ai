@@ -23,39 +23,41 @@ import {
 } from 'lucide-react'
 import { colors, gradients, animation, spacing, radius, typography } from '../styles/tokens'
 
-// Suggested prompts
+// Suggested prompts - AI can do full market analysis, not just scores
 const suggestedPrompts = [
-  { text: 'What\'s the outlook for NVDA?', icon: TrendingUp },
-  { text: 'Analyze my portfolio risk', icon: AlertTriangle },
-  { text: 'Find bullish setups today', icon: Lightbulb },
-  { text: 'Explain the squeeze indicator', icon: Sparkles },
+  { text: "Show me the best LONG setups", icon: TrendingUp },
+  { text: "Find good SHORT opportunities", icon: AlertTriangle },
+  { text: "What is the outlook for NVDA?", icon: Sparkles },
+  { text: "Analyze current market conditions", icon: Lightbulb },
 ]
 
-// Demo conversation
+// Demo conversation - showcases Progressive Unicorn Score with bidirectional interpretation
 const demoMessages = [
   {
     id: 1,
     role: 'user',
-    content: 'What\'s the current market sentiment for tech stocks?',
+    content: 'Show me the best setups right now - both longs and shorts',
     timestamp: '10:32 AM',
   },
   {
     id: 2,
     role: 'assistant',
-    content: `Based on my analysis, tech stocks are showing **strong bullish momentum** today:
+    content: `Here's my analysis with **Unicorn Score breakdowns**:
 
-**Key Observations:**
-- QQQ is up 0.82% with above-average volume
-- Semiconductor sector leading (NVDA +2.34%, AMD +1.56%)
-- RSI on QQQ at 62, room for further upside
-- VIX down 2.15% indicating low fear
+**LONG Opportunities (High Scores):**
+- **NVDA: 87** (Tech: 45/50, Sentiment: 22/25, Forecast: 20/25) → STRONG BULLISH
+- **AMD: 72** (Tech: 38/50, Sentiment: 18/25, Forecast: 16/25) → BULLISH
 
-**Unicorn Scores:**
-- NVDA: 87 (Strong Buy)
-- AMD: 78 (Buy)
-- AAPL: 68 (Hold)
+**SHORT Opportunities (Low Scores):**
+- **XYZ: 28** (Tech: 12/50, Sentiment: 8/25, Forecast: 8/25) → BEARISH
+- **ABC: 35** (Tech: 15/50, Sentiment: 10/25, Forecast: 10/25) → BEARISH
 
-I recommend focusing on momentum plays in semis while maintaining stops below key support levels.`,
+**Score Interpretation:**
+- 60+ = LONG opportunities (all components bullish)
+- 45-59 = NEUTRAL (wait for clarity)
+- Below 44 = SHORT opportunities (all components bearish)
+
+Scores are 50% technicals + 25% sentiment + 25% Chronos AI forecast.`,
     timestamp: '10:32 AM',
   },
 ]
@@ -94,11 +96,16 @@ export default function LegendaryAIChat({ symbol }) {
         role: 'assistant',
         content: `I've analyzed your question about "${input.slice(0, 30)}..."
 
-Based on my real-time market analysis and the Unicorn Score algorithm, here's what I found:
+Based on the **Unicorn Score** analysis (50% Technical + 25% Sentiment + 25% Forecast):
 
-**Summary:** The current market conditions suggest a cautiously optimistic outlook. Technical indicators are showing strength while sentiment remains positive.
+**Summary:** Looking at the breakdown:
+- Technical signals show moderate strength
+- Sentiment analysis is positive
+- Chronos AI forecast suggests continuation
 
-Would you like me to elaborate on any specific aspect?`,
+Remember: Scores 60+ suggest LONG opportunities, scores below 44 indicate SHORT setups.
+
+Would you like me to drill into any specific component?`,
         timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
       }
       setMessages((prev) => [...prev, aiMessage])

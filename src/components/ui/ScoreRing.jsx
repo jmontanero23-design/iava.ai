@@ -15,7 +15,7 @@
  */
 
 import { memo, useMemo, useEffect, useState } from 'react'
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Zap, Sparkles, Loader2 } from 'lucide-react'
 import { componentSizes, gradients, colors, animation } from '../../styles/tokens'
 
 // Unique ID generator for gradient references
@@ -301,6 +301,412 @@ export const ScoreRingMini = memo(function ScoreRingMini({
         >
           {score}
         </span>
+      </div>
+    </div>
+  )
+})
+
+/**
+ * ProgressiveScoreRing - Score that builds up as data arrives
+ *
+ * Shows instant technical score (50% capacity) first,
+ * then full Unicorn Score when API returns.
+ *
+ * BIDIRECTIONAL INTERPRETATION:
+ * - Score >= 60: BULLISH (LONG opportunity)
+ * - Score 45-59: NEUTRAL (Wait for clarity)
+ * - Score <= 44: BEARISH (SHORT opportunity)
+ */
+export const ProgressiveScoreRing = memo(function ProgressiveScoreRing({
+  score = 0,
+  maxPossible = 100,     // 50 = technical only, 100 = complete
+  isComplete = false,
+  loading = false,
+  direction = 'neutral', // 'bullish' | 'bearish' | 'neutral'
+  breakdown = {},        // { technical, sentiment, forecast }
+  size = 'md',
+  showBreakdown = false,
+  showDirection = true,
+  animated = true,
+  className = '',
+  style = {},
+}) {
+  const [displayScore, setDisplayScore] = useState(animated ? 0 : score)
+  const gradientId = useMemo(() => getUniqueId(), [])
+
+  // Get size config
+  const sizeConfig = componentSizes.scoreRing[size] || componentSizes.scoreRing.md
+  const { ring, stroke, fontSize } = sizeConfig
+
+  // Calculate circle properties
+  const radius = (ring - stroke) / 2
+  const circumference = 2 * Math.PI * radius
+
+  // Score fills based on current score out of maxPossible
+  // Technical only (maxPossible=50) shows 50% max ring fill
+  // Complete (maxPossible=100) shows full ring
+  const normalizedScore = maxPossible > 0 ? (score / maxPossible) * 100 : 0
+  const offset = circumference - (normalizedScore / 100) * circumference
+
+  // Animate score on change
+  useEffect(() => {
+    if (!animated) {
+      setDisplayScore(score)
+      return
+    }
+
+    const duration = 800
+    const steps = 40
+    const startValue = displayScore
+    const diff = score - startValue
+    let frame = 0
+
+    const animate = () => {
+      frame++
+      const progress = frame / steps
+      const eased = 1 - Math.pow(1 - progress, 3) // Ease out cubic
+      const current = Math.round(startValue + diff * eased)
+      setDisplayScore(current)
+
+      if (frame < steps) {
+        requestAnimationFrame(animate)
+      }
+    }
+
+    requestAnimationFrame(animate)
+  }, [score, animated])
+
+  // Direction info with colors
+  const getDirectionInfo = () => {
+    switch (direction) {
+      case 'bullish':
+        return {
+          Icon: TrendingUp,
+          color: colors.emerald[400],
+          label: 'LONG',
+          glowColor: 'rgba(52, 211, 153, 0.4)',
+        }
+      case 'bearish':
+        return {
+          Icon: TrendingDown,
+          color: colors.red[400],
+          label: 'SHORT',
+          glowColor: 'rgba(248, 113, 113, 0.4)',
+        }
+      default:
+        return {
+          Icon: Minus,
+          color: colors.text[50],
+          label: 'WAIT',
+          glowColor: 'rgba(168, 85, 247, 0.3)',
+        }
+    }
+  }
+
+  const directionInfo = getDirectionInfo()
+
+  // Score glow based on direction and completeness
+  const getScoreGlow = () => {
+    if (!isComplete) return '0 0 8px rgba(168, 85, 247, 0.2)'
+    if (direction === 'bullish') return `0 0 20px ${directionInfo.glowColor}`
+    if (direction === 'bearish') return `0 0 20px ${directionInfo.glowColor}`
+    return '0 0 15px rgba(168, 85, 247, 0.4)'
+  }
+
+  // Status icon - Zap when loading, Sparkles when complete
+  const StatusIcon = isComplete ? Sparkles : Zap
+  const statusIconColor = isComplete ? colors.purple[400] : colors.indigo[400]
+
+  return (
+    <div
+      className={`progressive-score-ring ${className}`}
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        ...style,
+      }}
+    >
+      {/* Main Ring Container */}
+      <div
+        style={{
+          width: ring,
+          height: ring,
+          position: 'relative',
+        }}
+      >
+        <svg
+          width={ring}
+          height={ring}
+          style={{ transform: 'rotate(-90deg)' }}
+        >
+          <defs>
+            {/* Unicorn gradient for complete score */}
+            <linearGradient id={`${gradientId}-full`} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#6366f1" />
+              <stop offset="50%" stopColor="#a855f7" />
+              <stop offset="100%" stopColor="#22d3ee" />
+            </linearGradient>
+
+            {/* Subdued gradient for loading/incomplete */}
+            <linearGradient id={`${gradientId}-partial`} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#6366f1" stopOpacity="0.7" />
+              <stop offset="100%" stopColor="#a855f7" stopOpacity="0.7" />
+            </linearGradient>
+          </defs>
+
+          {/* Background ring */}
+          <circle
+            cx={ring / 2}
+            cy={ring / 2}
+            r={radius}
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.06)"
+            strokeWidth={stroke}
+          />
+
+          {/* "Potential" ring - shows what's possible with full data */}
+          {!isComplete && (
+            <circle
+              cx={ring / 2}
+              cy={ring / 2}
+              r={radius}
+              fill="none"
+              stroke="rgba(168, 85, 247, 0.15)"
+              strokeWidth={stroke}
+              strokeDasharray={`${circumference * 0.5} ${circumference}`}
+              style={{ opacity: 0.5 }}
+            />
+          )}
+
+          {/* Score ring - animated fill */}
+          <circle
+            cx={ring / 2}
+            cy={ring / 2}
+            r={radius}
+            fill="none"
+            stroke={`url(#${gradientId}-${isComplete ? 'full' : 'partial'})`}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            style={{
+              transition: animated
+                ? `stroke-dashoffset 0.8s ${animation.easing.smooth}`
+                : 'none',
+              filter: `drop-shadow(${getScoreGlow()})`,
+            }}
+          />
+        </svg>
+
+        {/* Score value + status icon */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+          }}
+        >
+          {/* Loading indicator */}
+          {loading && !isComplete && (
+            <Loader2
+              size={12}
+              style={{
+                color: colors.purple[400],
+                animation: 'spin 1s linear infinite',
+                position: 'absolute',
+                top: size === 'sm' ? 4 : 8,
+              }}
+            />
+          )}
+
+          {/* Score number */}
+          <span
+            style={{
+              fontSize,
+              fontWeight: 900,
+              background: isComplete ? gradients.unicorn : `linear-gradient(135deg, ${colors.indigo[400]}, ${colors.purple[400]})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              lineHeight: 1,
+            }}
+          >
+            {displayScore}
+          </span>
+
+          {/* Status icon below score */}
+          {size !== 'sm' && (
+            <StatusIcon
+              size={12}
+              style={{
+                color: statusIconColor,
+                marginTop: 2,
+                opacity: 0.8,
+              }}
+            />
+          )}
+        </div>
+
+        {/* Direction badge */}
+        {showDirection && isComplete && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: -4,
+              right: -4,
+              width: size === 'sm' ? 18 : 24,
+              height: size === 'sm' ? 18 : 24,
+              borderRadius: '50%',
+              background: colors.void,
+              border: `2px solid ${directionInfo.color}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: `0 0 8px ${directionInfo.glowColor}`,
+            }}
+          >
+            <directionInfo.Icon
+              size={size === 'sm' ? 10 : 12}
+              style={{ color: directionInfo.color }}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Direction label */}
+      {showDirection && isComplete && size !== 'sm' && (
+        <div
+          style={{
+            marginTop: 6,
+            fontSize: 10,
+            fontWeight: 700,
+            color: directionInfo.color,
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+          }}
+        >
+          {directionInfo.label}
+        </div>
+      )}
+
+      {/* Breakdown bars (expanded view) */}
+      {showBreakdown && breakdown && (
+        <div
+          style={{
+            marginTop: 12,
+            width: '100%',
+            minWidth: 160,
+            padding: 12,
+            background: colors.glass.bg,
+            backdropFilter: 'blur(20px)',
+            border: `1px solid ${colors.glass.border}`,
+            borderRadius: 12,
+          }}
+        >
+          <div style={{ fontSize: 10, fontWeight: 600, color: colors.text[50], marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Score Breakdown
+          </div>
+
+          {/* Technical */}
+          <ProgressiveBreakdownBar
+            icon={Zap}
+            label="Technical"
+            value={breakdown.technical}
+            max={50}
+            color={colors.indigo[500]}
+            loaded={breakdown.technical !== null}
+          />
+
+          {/* Sentiment */}
+          <ProgressiveBreakdownBar
+            icon={null}
+            label="Sentiment"
+            value={breakdown.sentiment}
+            max={25}
+            color={colors.purple[500]}
+            loaded={breakdown.sentiment !== null}
+          />
+
+          {/* Forecast */}
+          <ProgressiveBreakdownBar
+            icon={null}
+            label="Forecast"
+            value={breakdown.forecast}
+            max={25}
+            color={colors.cyan[400]}
+            loaded={breakdown.forecast !== null}
+          />
+        </div>
+      )}
+    </div>
+  )
+})
+
+/**
+ * Progressive Breakdown Bar - Shows loading state for each component
+ */
+const ProgressiveBreakdownBar = memo(function ProgressiveBreakdownBar({
+  icon: Icon,
+  label,
+  value,
+  max,
+  color,
+  loaded = false,
+}) {
+  const percentage = loaded && value !== null ? (value / max) * 100 : 0
+
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 3,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {Icon && <Icon size={10} style={{ color: colors.text[50] }} />}
+          <span style={{ fontSize: 11, color: colors.text[50] }}>{label}</span>
+        </div>
+        <span style={{ fontSize: 11, fontWeight: 600, color: loaded ? colors.text[70] : colors.text[30] }}>
+          {loaded ? `${value}/${max}` : '—'}
+        </span>
+      </div>
+      <div
+        style={{
+          height: 4,
+          background: 'rgba(255, 255, 255, 0.06)',
+          borderRadius: 2,
+          overflow: 'hidden',
+        }}
+      >
+        {loaded ? (
+          <div
+            style={{
+              height: '100%',
+              width: `${percentage}%`,
+              background: color,
+              borderRadius: 2,
+              transition: `width ${animation.duration.slow}ms ${animation.easing.smooth}`,
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              height: '100%',
+              width: '30%',
+              background: `linear-gradient(90deg, transparent, ${color}40, transparent)`,
+              borderRadius: 2,
+              animation: 'shimmer 1.5s infinite',
+            }}
+          />
+        )}
       </div>
     </div>
   )

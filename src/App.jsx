@@ -9,6 +9,8 @@ import { useState, useEffect } from 'react'
 import ToastHub from './components/ToastHub.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
 import { MarketDataProvider, useMarketData } from './contexts/MarketDataContext.jsx'
+import { PositionsProvider } from './contexts/PositionsContext.jsx'
+import { useWatchlistData } from './hooks/useWatchlistData.js'
 import MobileGestures from './components/MobileGestures.jsx'
 import AIHub from './components/AIHub.jsx'
 import Portfolio from './components/Portfolio.jsx'
@@ -229,29 +231,31 @@ export default function App() {
 
   return (
     <MarketDataProvider>
-      <AppWithGestures
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        selectedFeature={selectedFeature}
-        setSelectedFeature={setSelectedFeature}
-        showTour={showTour}
-        setShowTour={setShowTour}
-        showCopilot={showCopilot}
-        setShowCopilot={setShowCopilot}
-        showAVAMind={showAVAMind}
-        setShowAVAMind={setShowAVAMind}
-        showSocialRooms={showSocialRooms}
-        setShowSocialRooms={setShowSocialRooms}
-        showNotifications={showNotifications}
-        setShowNotifications={setShowNotifications}
-        showQuickActions={showQuickActions}
-        setShowQuickActions={setShowQuickActions}
-        showSymbolSearch={showSymbolSearch}
-        setShowSymbolSearch={setShowSymbolSearch}
-        showAlerts={showAlerts}
-        setShowAlerts={setShowAlerts}
-        handleFeatureSelect={handleFeatureSelect}
-      />
+      <PositionsProvider>
+        <AppWithGestures
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          selectedFeature={selectedFeature}
+          setSelectedFeature={setSelectedFeature}
+          showTour={showTour}
+          setShowTour={setShowTour}
+          showCopilot={showCopilot}
+          setShowCopilot={setShowCopilot}
+          showAVAMind={showAVAMind}
+          setShowAVAMind={setShowAVAMind}
+          showSocialRooms={showSocialRooms}
+          setShowSocialRooms={setShowSocialRooms}
+          showNotifications={showNotifications}
+          setShowNotifications={setShowNotifications}
+          showQuickActions={showQuickActions}
+          setShowQuickActions={setShowQuickActions}
+          showSymbolSearch={showSymbolSearch}
+          setShowSymbolSearch={setShowSymbolSearch}
+          showAlerts={showAlerts}
+          setShowAlerts={setShowAlerts}
+          handleFeatureSelect={handleFeatureSelect}
+        />
+      </PositionsProvider>
     </MarketDataProvider>
   )
 }
@@ -282,6 +286,9 @@ function AppWithGestures({
 }) {
   const { marketData } = useMarketData()
   const symbol = marketData?.symbol || 'SPY'
+
+  // Load watchlist with real-time data
+  const { watchlistData, addSymbol: addToWatchlist } = useWatchlistData()
 
   // Handle symbol selection from watchlist
   const handleSelectSymbol = (newSymbol) => {
@@ -375,13 +382,12 @@ function AppWithGestures({
           <WatchlistPanel
             currentSymbol={symbol}
             onSelectSymbol={handleSelectSymbol}
+            watchlist={watchlistData}
+            onAddSymbol={addToWatchlist}
           />
         }
         aiPanel={
-          <AIPanel
-            symbol={symbol}
-            score={87}
-          />
+          <AIPanel symbol={symbol} />
         }
         bottomNav={
           <MobileBottomNav
