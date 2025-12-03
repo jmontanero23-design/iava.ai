@@ -35,7 +35,9 @@ export const ScoreRing = memo(function ScoreRing({
   className = '',
   style = {},
 }) {
-  const [displayScore, setDisplayScore] = useState(animated ? 0 : score)
+  // Always round score to integer for display
+  const roundedScore = Math.round(score)
+  const [displayScore, setDisplayScore] = useState(animated ? 0 : roundedScore)
   const gradientId = useMemo(() => getUniqueId(), [])
 
   // Get size config
@@ -50,29 +52,29 @@ export const ScoreRing = memo(function ScoreRing({
   // Animate score on mount
   useEffect(() => {
     if (!animated) {
-      setDisplayScore(score)
+      setDisplayScore(roundedScore)
       return
     }
 
     // Animate from 0 to score
     const duration = 1000
     const steps = 60
-    const increment = score / steps
+    const increment = roundedScore / steps
     let current = 0
     let frame = 0
 
     const animate = () => {
       frame++
-      current = Math.min(score, Math.round(increment * frame))
+      current = Math.min(roundedScore, Math.round(increment * frame))
       setDisplayScore(current)
 
-      if (frame < steps && current < score) {
+      if (frame < steps && current < roundedScore) {
         requestAnimationFrame(animate)
       }
     }
 
     requestAnimationFrame(animate)
-  }, [score, animated])
+  }, [roundedScore, animated])
 
   // Get direction icon and color
   const getDirectionInfo = () => {
@@ -331,8 +333,8 @@ export const ProgressiveScoreRing = memo(function ProgressiveScoreRing({
   className = '',
   style = {},
 }) {
-  // Ensure score is always a valid number (fixes NaN issue)
-  const score = typeof rawScore === 'number' && !isNaN(rawScore) ? rawScore : 0
+  // Ensure score is always a valid number (fixes NaN issue) and round it
+  const score = typeof rawScore === 'number' && !isNaN(rawScore) ? Math.round(rawScore) : 0
   const maxPossible = typeof rawMaxPossible === 'number' && !isNaN(rawMaxPossible) && rawMaxPossible > 0 ? rawMaxPossible : 100
 
   const [displayScore, setDisplayScore] = useState(animated ? 0 : score)

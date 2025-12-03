@@ -511,14 +511,16 @@ function ChronosTab({ marketData = {} }) {
       setChronosError(null)
 
       try {
+        // API expects 'prices' array of close prices, not 'bars'
+        const prices = bars.slice(-30).map(b => b.c)
+
         const response = await fetch('/api/forecast', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             symbol,
-            bars: bars.slice(-30).map(b => ({
-              c: b.c, h: b.h, l: b.l, o: b.o, v: b.v
-            }))
+            prices,
+            horizon: 24
           })
         })
 
