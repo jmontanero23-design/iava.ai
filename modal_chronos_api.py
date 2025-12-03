@@ -36,30 +36,48 @@ image = (
 _MODEL_CACHE = {}
 
 def get_chronos_pipeline(model_size: str = "base"):
-    """Load and cache Chronos pipeline - CPU mode (no device_map to avoid meta tensors)"""
+    """Load and cache Chronos pipeline - CPU mode, bypassing accelerate entirely"""
     import os
     import torch
-    from chronos import ChronosPipeline
 
-    # CRITICAL: Disable CUDA BEFORE importing/loading anything
-    # This makes accelerate skip device mapping entirely
+    # CRITICAL: Completely disable CUDA and accelerate device mapping
     os.environ["CUDA_VISIBLE_DEVICES"] = ""
+    os.environ["ACCELERATE_TORCH_DEVICE"] = "cpu"
+    os.environ["ACCELERATE_USE_CPU"] = "true"
+
+    # Import AFTER setting env vars
+    from chronos import ChronosPipeline
 
     model_name = f"amazon/chronos-t5-{model_size}"
 
     if model_name not in _MODEL_CACHE:
-        print(f"[Chronos] Loading {model_name} (CPU mode, no device_map)...")
-        print(f"[Chronos] CUDA available: {torch.cuda.is_available()}")
+        print(f"[Chronos] Loading {model_name} (CPU only, no accelerate)...")
 
-        # NO device_map - let it load to CPU naturally without accelerate interference
-        # Using dtype instead of torch_dtype (deprecated)
-        pipeline = ChronosPipeline.from_pretrained(
-            model_name,
-            dtype=torch.float32,
-        )
+        try:
+            # APPROACH 1: Try with explicit torch_dtype and no device_map
+            pipeline = ChronosPipeline.from_pretrained(
+                model_name,
+                torch_dtype=torch.float32,
+            )
+            # Force to CPU after loading
+            pipeline.model = pipeline.model.to("cpu")
+            pipeline.device = torch.device("cpu")
+        except Exception as e1:
+            print(f"[Chronos] Approach 1 failed: {e1}")
+            try:
+                # APPROACH 2: Load with bfloat16 (smaller, may work better)
+                pipeline = ChronosPipeline.from_pretrained(
+                    model_name,
+                    torch_dtype=torch.bfloat16,
+                )
+                pipeline.model = pipeline.model.to("cpu")
+                pipeline.device = torch.device("cpu")
+            except Exception as e2:
+                print(f"[Chronos] Approach 2 failed: {e2}")
+                raise e2
 
         _MODEL_CACHE[model_name] = pipeline
-        print(f"[Chronos] ✅ {model_name} cached!")
+        print(f"[Chronos] ✅ {model_name} loaded and cached on CPU!")
 
     return _MODEL_CACHE[model_name]
 
