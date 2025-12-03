@@ -73,6 +73,9 @@ export default function WatchlistPanel({
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
+        background: colors.glass.bg,
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
       }}
     >
       {/* Header */}

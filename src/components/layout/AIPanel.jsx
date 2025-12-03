@@ -77,13 +77,18 @@ const chronosPredictions = [
   { timeframe: '1W', direction: 'down', target: 148.00, confidence: 58, change: '+3.2%' },
 ]
 
-function ScoreTab({ symbol = 'NVDA', score = 87, components = {}, recommendation = {} }) {
+function ScoreTab({ symbol = 'NVDA', score = 87, components = {}, recommendation = {}, marketData = {} }) {
   // Score breakdown - use real components from API if available
   const breakdown = [
     { label: 'Technicals', value: Math.round(components.technical ?? 50), color: '#60a5fa' }, // blue
     { label: 'Sentiment', value: Math.round(components.sentiment ?? 50), color: colors.purple[500] },
     { label: 'Forecast', value: Math.round(components.forecast ?? 50), color: colors.cyan[400] },
   ]
+
+  // Extract REAL support/resistance from SATY levels
+  const satyLevels = marketData?.overlays?.saty?.levels
+  const support = satyLevels?.t0236?.dn || satyLevels?.t1000?.dn
+  const resistance = satyLevels?.t0236?.up || satyLevels?.t1000?.up
 
   // Determine direction from recommendation or score
   const direction = recommendation.action?.includes('BUY') ? 'bullish'
@@ -246,11 +251,11 @@ function ScoreTab({ symbol = 'NVDA', score = 87, components = {}, recommendation
             style={{
               fontSize: typography.fontSize.lg,
               fontWeight: typography.fontWeight.bold,
-              color: colors.text[100],
+              color: support ? colors.emerald[400] : colors.text[100],
               fontFamily: typography.fontFamily.mono,
             }}
           >
-            $138.50
+            {support ? `$${support.toFixed(2)}` : '--'}
           </div>
         </div>
         <div
@@ -274,11 +279,11 @@ function ScoreTab({ symbol = 'NVDA', score = 87, components = {}, recommendation
             style={{
               fontSize: typography.fontSize.lg,
               fontWeight: typography.fontWeight.bold,
-              color: colors.text[100],
+              color: resistance ? colors.red[400] : colors.text[100],
               fontFamily: typography.fontFamily.mono,
             }}
           >
-            $145.20
+            {resistance ? `$${resistance.toFixed(2)}` : '--'}
           </div>
         </div>
       </div>
@@ -286,19 +291,101 @@ function ScoreTab({ symbol = 'NVDA', score = 87, components = {}, recommendation
   )
 }
 
-function InsightsTab() {
+function InsightsTab({ marketData = {} }) {
   // Color mappings for insight types
   const colorMap = {
     purple: { bg: colors.purple.dim, color: colors.purple[400] },
     cyan: { bg: colors.cyan.dim, color: colors.cyan[400] },
     emerald: { bg: colors.emerald.dim, color: colors.emerald[400] },
     amber: { bg: colors.amber.dim, color: colors.amber[400] },
+    red: { bg: colors.red.dim, color: colors.red[400] },
   }
+
+  // Generate REAL insights from signal state
+  const generateRealInsights = () => {
+    const realInsights = []
+    const signal = marketData?.signalState
+    const score = marketData?.unicornScore?.ultraUnicornScore
+    const satyLevels = marketData?.overlays?.saty?.levels
+
+    // 1. Signal quality insight
+    if (score >= 70) {
+      realInsights.push({
+        type: 'emerald',
+        icon: Zap,
+        title: 'Strong Signal Detected',
+        subtitle: 'High confidence setup',
+        content: `Unicorn Score at <strong>${score}</strong> - Strong alignment across technical, sentiment, and forecast indicators.`,
+        actionLabel: 'View Details',
+      })
+    } else if (score <= 35) {
+      realInsights.push({
+        type: 'red',
+        icon: AlertTriangle,
+        title: 'Bearish Warning',
+        subtitle: 'Low score alert',
+        content: `Unicorn Score at <strong>${score}</strong> - Potential SHORT opportunity. Check support levels before entry.`,
+        actionLabel: 'View Levels',
+      })
+    }
+
+    // 2. Regime insight from Ichimoku
+    if (signal?.ichiRegime) {
+      const regimeColor = signal.ichiRegime === 'bullish' ? 'emerald' : signal.ichiRegime === 'bearish' ? 'red' : 'amber'
+      realInsights.push({
+        type: regimeColor,
+        icon: TrendingUp,
+        title: `${signal.ichiRegime.charAt(0).toUpperCase() + signal.ichiRegime.slice(1)} Market Regime`,
+        subtitle: 'Ichimoku analysis',
+        content: `Market structure is <strong>${signal.ichiRegime}</strong>. ${signal.ichiRegime === 'bullish' ? 'Price above cloud, trend confirmation.' : signal.ichiRegime === 'bearish' ? 'Price below cloud, downtrend confirmation.' : 'Consolidation phase, wait for breakout.'}`,
+        actionLabel: 'View Chart',
+      })
+    }
+
+    // 3. Squeeze insight
+    if (signal?.sq?.fired) {
+      realInsights.push({
+        type: 'purple',
+        icon: Activity,
+        title: 'TTM Squeeze Fired!',
+        subtitle: 'Momentum released',
+        content: `Squeeze momentum has released. ${signal.sq.histogram > 0 ? '<strong>Bullish</strong> momentum building.' : '<strong>Bearish</strong> momentum building.'} Watch for continuation.`,
+        actionLabel: 'Analyze Momentum',
+      })
+    } else if (signal?.sq?.squeezed) {
+      realInsights.push({
+        type: 'cyan',
+        icon: Target,
+        title: 'Squeeze Building',
+        subtitle: 'Volatility compression',
+        content: `Price consolidating in <strong>TTM Squeeze</strong>. Expect breakout soon. Position size accordingly.`,
+        actionLabel: 'Set Alert',
+      })
+    }
+
+    // 4. SATY levels insight
+    if (satyLevels?.t1000) {
+      const range = ((satyLevels.t1000.up - satyLevels.t1000.dn) / marketData?.currentPrice * 100).toFixed(1)
+      realInsights.push({
+        type: 'cyan',
+        icon: Target,
+        title: 'SATY Range Analysis',
+        subtitle: 'ATR-based levels',
+        content: `Current trading range: <strong>${range}%</strong>. Support at <strong>$${satyLevels.t1000.dn?.toFixed(2)}</strong>, Resistance at <strong>$${satyLevels.t1000.up?.toFixed(2)}</strong>.`,
+        actionLabel: 'View Levels',
+      })
+    }
+
+    // Return real insights or fallback to demo
+    return realInsights.length > 0 ? realInsights : insights
+  }
+
+  const displayInsights = generateRealInsights()
 
   return (
     <div style={{ padding: spacing[4] }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[3] }}>
-        {insights.map((insight, idx) => {
+        {displayInsights.map((insight, idx) => {
           const Icon = insight.icon
           const colorStyle = colorMap[insight.type] || colorMap.purple
 
@@ -408,7 +495,76 @@ function InsightsTab() {
   )
 }
 
-function ChronosTab() {
+function ChronosTab({ marketData = {} }) {
+  const [chronosData, setChronosData] = useState(null)
+  const [chronosLoading, setChronosLoading] = useState(false)
+  const [chronosError, setChronosError] = useState(null)
+
+  // Fetch real Chronos predictions when symbol/bars change
+  useEffect(() => {
+    const fetchChronos = async () => {
+      const bars = marketData?.bars
+      const symbol = marketData?.symbol
+      if (!symbol || !bars || bars.length < 10) return
+
+      setChronosLoading(true)
+      setChronosError(null)
+
+      try {
+        const response = await fetch('/api/forecast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            symbol,
+            bars: bars.slice(-30).map(b => ({
+              c: b.c, h: b.h, l: b.l, o: b.o, v: b.v
+            }))
+          })
+        })
+
+        if (!response.ok) throw new Error('Forecast failed')
+
+        const data = await response.json()
+        setChronosData(data)
+      } catch (err) {
+        console.error('[Chronos] Fetch error:', err)
+        setChronosError(err.message)
+      } finally {
+        setChronosLoading(false)
+      }
+    }
+
+    fetchChronos()
+  }, [marketData?.symbol, marketData?.bars?.length])
+
+  // Build predictions from real data or use demo fallback
+  const currentPrice = marketData?.currentPrice || 140
+  const predictions = chronosData?.predictions
+    ? [
+        {
+          timeframe: '1H',
+          direction: chronosData.direction === 'bullish' ? 'up' : 'down',
+          target: chronosData.predictions[0] || currentPrice,
+          confidence: chronosData.confidence || 65,
+          change: `${chronosData.direction === 'bullish' ? '+' : ''}${(((chronosData.predictions[0] || currentPrice) - currentPrice) / currentPrice * 100).toFixed(1)}%`
+        },
+        {
+          timeframe: '4H',
+          direction: chronosData.direction === 'bullish' ? 'up' : 'down',
+          target: chronosData.predictions[Math.min(3, chronosData.predictions.length - 1)] || currentPrice,
+          confidence: Math.max(50, (chronosData.confidence || 65) - 5),
+          change: `${chronosData.direction === 'bullish' ? '+' : ''}${(((chronosData.predictions[Math.min(3, chronosData.predictions.length - 1)] || currentPrice) - currentPrice) / currentPrice * 100).toFixed(1)}%`
+        },
+        {
+          timeframe: '1D',
+          direction: chronosData.direction === 'bullish' ? 'up' : 'down',
+          target: chronosData.predictions[Math.min(7, chronosData.predictions.length - 1)] || currentPrice,
+          confidence: Math.max(45, (chronosData.confidence || 65) - 10),
+          change: `${chronosData.direction === 'bullish' ? '+' : ''}${(((chronosData.predictions[Math.min(7, chronosData.predictions.length - 1)] || currentPrice) - currentPrice) / currentPrice * 100).toFixed(1)}%`
+        },
+      ]
+    : chronosPredictions
+
   return (
     <div style={{ padding: spacing[4] }}>
       {/* Chronos header section */}
@@ -483,7 +639,13 @@ function ChronosTab() {
           overflow: 'hidden',
         }}
       >
-        {chronosPredictions.map((pred, idx) => (
+        {chronosLoading ? (
+          <div style={{ padding: spacing[4], textAlign: 'center' }}>
+            <div style={{ color: colors.cyan[400], fontSize: typography.fontSize.sm }}>
+              Loading predictions...
+            </div>
+          </div>
+        ) : predictions.map((pred, idx) => (
           <div
             key={pred.timeframe}
             style={{
@@ -491,7 +653,7 @@ function ChronosTab() {
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: `${spacing[3]}px ${spacing[4]}px`,
-              borderBottom: idx < chronosPredictions.length - 1 ? `1px solid ${colors.glass.border}` : 'none',
+              borderBottom: idx < predictions.length - 1 ? `1px solid ${colors.glass.border}` : 'none',
             }}
           >
             {/* Timeframe */}
@@ -995,10 +1157,11 @@ export default function AIPanel({ symbol: propSymbol = 'NVDA', score: propScore 
             score={score}
             components={scoreComponents}
             recommendation={recommendation}
+            marketData={marketData}
           />
         )}
-        {activeTab === 'insights' && <InsightsTab />}
-        {activeTab === 'chronos' && <ChronosTab />}
+        {activeTab === 'insights' && <InsightsTab marketData={marketData} />}
+        {activeTab === 'chronos' && <ChronosTab marketData={marketData} />}
         {activeTab === 'chat' && <AVAMindChatTab />}
       </div>
 
