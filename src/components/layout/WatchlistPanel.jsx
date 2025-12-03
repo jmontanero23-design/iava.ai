@@ -66,6 +66,11 @@ export default function WatchlistPanel({
     return true
   })
 
+  // Debug: Log when using demo vs real data
+  if (!hasValidData && watchlist) {
+    console.log('[WatchlistPanel] Using demo data. Watchlist:', watchlist?.length, 'items, hasPrice:', watchlist?.some(s => s.price > 0))
+  }
+
   return (
     <div
       style={{
@@ -73,7 +78,7 @@ export default function WatchlistPanel({
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
-        background: colors.glass.bg,
+        background: colors.glass.bgHeavy,  // DARK like sidebar
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
       }}

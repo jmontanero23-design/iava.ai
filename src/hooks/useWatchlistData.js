@@ -155,6 +155,7 @@ export function useWatchlistData(refreshInterval = 60000) {
     setIsLoading(true)
 
     const symbols = loadWatchlistSymbols()
+    console.log('[useWatchlistData] Fetching data for:', symbols)
     const results = []
 
     // Fetch data in parallel (batched to avoid rate limits)
@@ -183,6 +184,7 @@ export function useWatchlistData(refreshInterval = 60000) {
       results.push(...batchResults)
     }
 
+    console.log('[useWatchlistData] Fetched results:', results.length, 'stocks, prices:', results.map(r => `${r.symbol}:$${r.price}`).join(', '))
     setWatchlistData(results)
     setLastUpdated(new Date())
     setIsLoading(false)

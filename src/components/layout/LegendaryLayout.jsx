@@ -234,7 +234,7 @@ export default function LegendaryLayout({
             top: layout.desktop.topBar,
             bottom: 0,
             width: layout.desktop.watchlistPanel,
-            background: colors.glass.bg,
+            background: colors.glass.bgHeavy,  // DARK like sidebar
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             borderRight: `1px solid ${colors.glass.border}`,
