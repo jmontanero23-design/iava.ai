@@ -44,22 +44,30 @@ const COMPANY_NAMES = {
 function calculateQuickTechnicalScore(bars) {
   if (!bars || bars.length < 5) return { score: 50, direction: 'neutral' }
 
-  // Get recent price action
+  // Get recent price action - handle both API formats (close vs c)
+  const getClose = (bar) => bar.close ?? bar.c ?? 0
+  const getVolume = (bar) => bar.volume ?? bar.v ?? 0
+
   const current = bars[bars.length - 1]
   const prev1 = bars[bars.length - 2]
   const prev5 = bars[bars.length - Math.min(5, bars.length)]
 
+  const currentClose = getClose(current)
+  const prev1Close = getClose(prev1)
+  const prev5Close = getClose(prev5)
+
   // Day change component (+/- 20 points)
-  const dayChange = ((current.c - prev1.c) / prev1.c) * 100
+  const dayChange = prev1Close > 0 ? ((currentClose - prev1Close) / prev1Close) * 100 : 0
   const dayScore = Math.min(20, Math.max(-20, dayChange * 4))
 
   // 5-day trend component (+/- 20 points)
-  const weekChange = ((current.c - prev5.c) / prev5.c) * 100
+  const weekChange = prev5Close > 0 ? ((currentClose - prev5Close) / prev5Close) * 100 : 0
   const weekScore = Math.min(20, Math.max(-20, weekChange * 2))
 
   // Volume surge bonus (0-10 points)
-  const avgVolume = bars.slice(-5).reduce((sum, b) => sum + b.v, 0) / 5
-  const volumeSurge = current.v > avgVolume * 1.5 ? 10 : current.v > avgVolume ? 5 : 0
+  const avgVolume = bars.slice(-5).reduce((sum, b) => sum + getVolume(b), 0) / 5
+  const currentVolume = getVolume(current)
+  const volumeSurge = currentVolume > avgVolume * 1.5 ? 10 : currentVolume > avgVolume ? 5 : 0
 
   // Base score of 50, adjusted by factors
   const score = Math.round(50 + dayScore + weekScore + volumeSurge)
@@ -89,9 +97,11 @@ async function fetchSymbolData(symbol) {
     if (bars.length >= 2) {
       const current = bars[bars.length - 1]
       const previous = bars[bars.length - 2]
-      const price = current.c
-      const change = price - previous.c
-      const changePercent = (change / previous.c) * 100
+      // API returns 'close' not 'c' - handle both formats
+      const price = current.close ?? current.c
+      const prevClose = previous.close ?? previous.c
+      const change = price - prevClose
+      const changePercent = (change / prevClose) * 100
 
       // Get quick technical score (instant)
       const { score, direction } = calculateQuickTechnicalScore(bars)
@@ -108,8 +118,10 @@ async function fetchSymbolData(symbol) {
         bars                        // Keep bars for potential full score calculation
       }
     } else if (bars.length === 1) {
+      // Handle both API formats (close vs c)
+      const price = bars[0].close ?? bars[0].c ?? 0
       return {
-        price: bars[0].c,
+        price,
         change: 0,
         changePercent: 0,
         unicornScore: 50,
