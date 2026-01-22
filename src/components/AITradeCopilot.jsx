@@ -28,6 +28,7 @@ import {
   speakPositionAlert
 } from '../services/voiceAlertService.js'
 import { getPersonalizedSuggestion, generateLearningContext } from '../services/aiLearningLoop.js'
+import TradeConfirmModal from './TradeConfirmModal.jsx'
 
 export default function AITradeCopilot({ onClose }) {
   const { marketData } = useMarketData()
@@ -41,6 +42,10 @@ export default function AITradeCopilot({ onClose }) {
   const [validatedSymbols, setValidatedSymbols] = useState(new Set()) // Cache of validated symbols
   const [lastConfluence, setLastConfluence] = useState(null) // Track confluence changes
   const [chronosForecast, setChronosForecast] = useState(null) // Cached Chronos forecast
+
+  // 🔥 ONE-CLICK EXECUTION: Trade modal state
+  const [showTradeModal, setShowTradeModal] = useState(false)
+  const [pendingTrade, setPendingTrade] = useState(null)
 
   // PhD++ ALERT COOLDOWN: Use ref instead of state for synchronous checks
   const alertCooldownsRef = useRef({})
