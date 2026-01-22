@@ -178,6 +178,16 @@ class AVAMindService {
     this.updateLearning()
     this.detectPatterns()
 
+    // Check for diamond-hands achievement (30+ day winning hold)
+    if (updatedTrade.holdDuration && updatedTrade.outcome === 'WIN' && typeof window !== 'undefined') {
+      const daysHeld = updatedTrade.holdDuration / 1440 // Convert minutes to days
+      if (daysHeld >= 30) {
+        window.dispatchEvent(new CustomEvent('iava.achievement', {
+          detail: { achievementId: 'diamond-hands' }
+        }))
+      }
+    }
+
     return updatedTrade
   }
 
@@ -230,6 +240,13 @@ class AVAMindService {
       streakCurrent: this.calculateCurrentStreak(),
       streakBest: this.calculateBestStreak(),
       lastUpdated: Date.now()
+    }
+
+    // Check for streak-master achievement (5 wins in a row)
+    if (this.learning.streakCurrent >= 5 && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('iava.achievement', {
+        detail: { achievementId: 'streak-master' }
+      }))
     }
 
     localStorage.setItem(STORAGE_KEYS.LEARNING, JSON.stringify(this.learning))
