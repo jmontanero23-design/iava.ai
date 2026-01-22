@@ -9,13 +9,15 @@
 - **Fix:** Added symbol change detection to skip warnings when user switches symbols
 - **Impact:** Cleaner console, better debugging experience
 
-#### 2. **Achievement System Triggers (6/27 connected)**
+#### 2. **Achievement System Triggers (11/27 connected - 41%)**
 - **Files Modified:**
-  - `src/services/orderExecution.js` - first-trade achievement
-  - `src/components/UnicornScorePanel.jsx` - unicorn-hunter achievement (score ≥90)
-  - `src/components/TradeJournalAIPanel.jsx` - journal-keeper achievement
-  - `src/components/Portfolio.jsx` - diversified achievement (10+ symbols)
-  - `src/services/avaMindService.js` - streak-master (5 wins in row) + diamond-hands (30+ day hold)
+  - `src/services/orderExecution.js` - first-trade, night-owl, early-bird
+  - `src/components/UnicornScorePanel.jsx` - unicorn-hunter (score ≥90)
+  - `src/components/TradeJournalAIPanel.jsx` - journal-keeper
+  - `src/components/Portfolio.jsx` - diversified (10+ symbols)
+  - `src/services/avaMindService.js` - streak-master (5 wins), diamond-hands (30+ days)
+  - `src/App.jsx` - chart-scholar (100 charts), copy-cat (5 copy trades)
+  - `src/components/SocialTradingRooms.jsx` - social-butterfly (3 rooms)
 - **Impact:** Gamification system now functional, users earn achievements for milestones
 
 #### 3. **Copy Trading Integration**
@@ -23,6 +25,12 @@
 - **Issue:** Social Trading Rooms "Copy" button dispatched events but nothing listened
 - **Fix:** Added event handler to load symbol, switch to chart, and open trade panel
 - **Impact:** Full copy trading user flow now works end-to-end
+
+#### 4. **Portfolio Stats Calculation**
+- **File:** `src/components/LegendaryPortfolio.jsx`
+- **Issue:** Hardcoded winRate (73%) and avgHoldTime ('4.2 days')
+- **Fix:** Calculate real values from AVA Mind trade history
+- **Impact:** Portfolio displays actual trading performance metrics
 
 ### 📊 FEATURES VERIFIED AS COMPLETE
 
@@ -81,6 +89,9 @@ From WORLD_CLASS_MASTER_PLAN.md priorities:
 3. `dc893af` - Integrate copy trading from Social Trading Rooms
 4. `856f3c2` - Add implementation progress report
 5. `f5f4e55` - Add streak-master and diamond-hands achievement triggers
+6. `4d656b1` - Update progress report with latest achievements
+7. `33adc22` - Calculate real win rate and avg hold time from trade history
+8. `08538a9` - Add 5 more achievement triggers (11/27 total)
 
 ### 📈 PRODUCTION STATUS
 
