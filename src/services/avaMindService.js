@@ -58,11 +58,15 @@ class AVAMindService {
     this.personality = null
     this.learning = null
     this.patterns = null
+    this.isLoadingFromDB = false
+    this.dbSyncQueue = [] // Queue trades for DB sync
+    this.dbSyncTimer = null
     this.loadFromStorage()
+    this.loadFromDatabase() // 🔥 NEW: Load from database
   }
 
   /**
-   * Load all data from localStorage
+   * Load all data from localStorage (fallback/cache)
    */
   loadFromStorage() {
     try {
@@ -82,6 +86,104 @@ class AVAMindService {
       this.trades = []
       this.learning = this.initializeLearning()
       this.patterns = {}
+    }
+  }
+
+  /**
+   * 🔥 NEW: Load from database (hybrid approach)
+   * Keeps recent 100 trades in memory, rest in DB
+   */
+  async loadFromDatabase() {
+    if (this.isLoadingFromDB) return
+    this.isLoadingFromDB = true
+
+    try {
+      // Load recent trades and learning stats from DB
+      const [tradesRes, learningRes] = await Promise.all([
+        fetch('/api/ava-mind/trades?limit=100'),
+        fetch('/api/ava-mind/learning')
+      ])
+
+      if (tradesRes.ok) {
+        const { trades } = await tradesRes.json()
+        if (trades && trades.length > 0) {
+          // Convert DB format to service format
+          this.trades = trades.map(t => ({
+            id: t.id,
+            symbol: t.symbol,
+            action: t.side?.toUpperCase() || 'BUY',
+            entryPrice: parseFloat(t.entry_price) || 0,
+            exitPrice: t.exit_price ? parseFloat(t.exit_price) : null,
+            quantity: parseFloat(t.quantity) || 0,
+            outcome: t.outcome || 'OPEN',
+            pnl: t.pnl ? parseFloat(t.pnl) : 0,
+            pnlPercent: t.pnl_percent ? parseFloat(t.pnl_percent) : 0,
+            timeframe: t.timeframe || '5Min',
+            setupType: t.setup_type || 'unknown',
+            indicators: t.indicators || {},
+            marketCondition: t.market_condition || 'unknown',
+            entryTime: new Date(t.entry_time).getTime(),
+            exitTime: t.exit_time ? new Date(t.exit_time).getTime() : null,
+            holdDuration: t.hold_duration_minutes || null,
+            dayOfWeek: t.day_of_week || null,
+            hourOfDay: t.hour_of_day || null,
+            stopLoss: t.stop_loss ? parseFloat(t.stop_loss) : null,
+            takeProfit: t.take_profit ? parseFloat(t.take_profit) : null
+          }))
+          console.log('[AVAMind] Loaded', this.trades.length, 'trades from database')
+        }
+      }
+
+      if (learningRes.ok) {
+        const { learning, patterns } = await learningRes.json()
+        if (learning) {
+          this.learning = {
+            totalTrades: learning.total_trades || 0,
+            wins: learning.winning_trades || 0,
+            losses: learning.losing_trades || 0,
+            winRate: parseFloat(learning.win_rate) || 0,
+            avgWin: parseFloat(learning.average_win) || 0,
+            avgLoss: parseFloat(learning.average_loss) || 0,
+            profitFactor: parseFloat(learning.profit_factor) || 0,
+            bestSymbol: learning.best_symbol || null,
+            bestDay: learning.best_day_of_week || null,
+            bestHour: learning.best_hour_of_day || null,
+            currentStreak: learning.current_streak || 0,
+            bestStreak: learning.best_streak || 0,
+            worstStreak: learning.worst_streak || 0,
+            archetype: learning.archetype || null,
+            emotionalState: learning.emotional_state || 'Neutral',
+            lastUpdated: learning.last_updated
+          }
+          console.log('[AVAMind] Loaded learning stats from database')
+        }
+
+        if (patterns && patterns.length > 0) {
+          // Convert patterns array to object format
+          this.patterns = patterns.reduce((acc, p) => {
+            const key = `${p.pattern_type}_${p.dimension}`
+            acc[key] = {
+              type: p.pattern_type,
+              dimension: p.dimension,
+              winRate: parseFloat(p.win_rate) || 0,
+              tradeCount: p.trade_count || 0,
+              strength: p.sample_size_adequate ? 'strong' : 'weak'
+            }
+            return acc
+          }, {})
+          console.log('[AVAMind] Loaded', patterns.length, 'patterns from database')
+        }
+      }
+
+      // Sync to localStorage as cache
+      this.saveToStorage()
+
+    } catch (error) {
+      console.error('[AVAMind] Error loading from database:', error)
+      // Fallback to localStorage data already loaded
+      console.log('[AVAMind] Falling back to localStorage data')
+    } finally {
+      this.isLoadingFromDB = false
     }
   }
 
@@ -146,6 +248,9 @@ class AVAMindService {
     this.saveToStorage()
     this.updateLearning()
     this.detectPatterns()
+
+    // 🔥 NEW: Sync to database (queued to avoid rate limiting)
+    this.queueDatabaseSync(tradeRecord)
 
     // Check for risk-manager achievement (10 consecutive trades with stop loss)
     if (trade.stopLoss && typeof window !== 'undefined') {
@@ -644,6 +749,80 @@ class AVAMindService {
       localStorage.setItem(STORAGE_KEYS.TRADES, JSON.stringify(this.trades))
     } catch (error) {
       console.error('[AVAMind] Error saving to storage:', error)
+    }
+  }
+
+  /**
+   * 🔥 NEW: Queue trade for database sync (debounced)
+   * Batches multiple trades into single API call
+   */
+  queueDatabaseSync(trade) {
+    this.dbSyncQueue.push(trade)
+
+    // Clear existing timer
+    if (this.dbSyncTimer) {
+      clearTimeout(this.dbSyncTimer)
+    }
+
+    // Debounce: sync after 3 seconds of inactivity OR queue reaches 10 trades
+    if (this.dbSyncQueue.length >= 10) {
+      this.syncToDatabase()
+    } else {
+      this.dbSyncTimer = setTimeout(() => this.syncToDatabase(), 3000)
+    }
+  }
+
+  /**
+   * 🔥 NEW: Sync queued trades to database
+   */
+  async syncToDatabase() {
+    if (this.dbSyncQueue.length === 0) return
+
+    const tradesToSync = [...this.dbSyncQueue]
+    this.dbSyncQueue = []
+
+    try {
+      // Convert to database format
+      const dbTrades = tradesToSync.map(t => ({
+        symbol: t.symbol,
+        side: t.action?.toLowerCase(),
+        quantity: t.quantity,
+        entry_price: t.entryPrice,
+        exit_price: t.exitPrice,
+        outcome: t.outcome,
+        pnl: t.pnl,
+        pnl_percent: t.pnlPercent,
+        entry_time: new Date(t.entryTime).toISOString(),
+        exit_time: t.exitTime ? new Date(t.exitTime).toISOString() : null,
+        hold_duration_minutes: t.holdDuration,
+        day_of_week: t.dayOfWeek,
+        hour_of_day: t.hourOfDay,
+        timeframe: t.timeframe,
+        setup_type: t.setupType,
+        market_condition: t.marketCondition,
+        indicators: t.indicators,
+        stop_loss: t.stopLoss,
+        take_profit: t.takeProfit
+      }))
+
+      // Batch create trades
+      for (const trade of dbTrades) {
+        const res = await fetch('/api/ava-mind/trades', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(trade)
+        })
+
+        if (!res.ok) {
+          console.error('[AVAMind] Failed to sync trade:', await res.text())
+        }
+      }
+
+      console.log('[AVAMind] Synced', tradesToSync.length, 'trades to database')
+    } catch (error) {
+      console.error('[AVAMind] Database sync error:', error)
+      // Re-queue failed trades
+      this.dbSyncQueue.unshift(...tradesToSync)
     }
   }
 
