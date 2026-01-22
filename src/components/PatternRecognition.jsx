@@ -118,6 +118,24 @@ export default function PatternRecognition() {
 
       setLastAnalysis(new Date())
 
+      // 🔥 LIVE CHART INTEGRATION: Dispatch pattern detection event for chart overlays
+      if (patterns.length > 0 && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('iava.patternsDetected', {
+          detail: {
+            symbol: marketData.symbol,
+            timestamp: Date.now(),
+            patterns: patterns.map(p => ({
+              pattern: p.pattern,
+              type: p.type,
+              confidence: p.confidence,
+              action: p.action,
+              description: p.description,
+              elite: p.elite || false
+            }))
+          }
+        }))
+      }
+
       // Track pattern detection for pattern-master achievement
       if (patterns.length > 0 && typeof window !== 'undefined') {
         try {
