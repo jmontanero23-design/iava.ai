@@ -62,6 +62,18 @@ These features were listed as "half-built" but are actually fully functional:
   - ✅ Suggestion accuracy tracking
 - **Impact:** CRITICAL - Transforms AVA Mind from prototype to production-grade flagship feature
 
+#### 6. **Loading States & UX Improvements** ✅
+- **Files Modified:**
+  - `src/components/WatchlistPanel.jsx` - Added skeleton loaders while loading symbols
+  - `src/components/GlobalLoader.jsx` - NEW global progress bar for long operations
+  - `src/App.jsx` - Integrated GlobalLoader into app
+- **Features:**
+  - ✅ Watchlist shows skeleton loaders (no blank screens)
+  - ✅ Global progress bar with message banner
+  - ✅ Event-based system (`iava.loading.show/progress/hide`)
+  - ✅ Ready for scanner, backtest, and other long operations
+- **Impact:** MEDIUM - Better UX, no more blank screens during loading
+
 ### 🎯 QUICK WINS REMAINING
 
 Features that are 90% done and need minor connections:
@@ -129,6 +141,9 @@ From WORLD_CLASS_MASTER_PLAN.md priorities:
 13. `ed0e6df` - Integrate intelligent voice alerts into AI Trade Copilot
 14. `8f19cdd` - Update progress: Voice alerts integrated, 80% achievements complete
 15. `382d58a` - Add AVA Mind database backend infrastructure (FLAGSHIP FEATURE)
+16. `e400162` - Add AVA Mind suggestions API and update progress docs
+17. `94be6f2` - Add loading state to WatchlistPanel with skeleton loaders
+18. `65c8e69` - Add global loading indicator with progress bar for long operations
 
 ### 📈 PRODUCTION STATUS
 
