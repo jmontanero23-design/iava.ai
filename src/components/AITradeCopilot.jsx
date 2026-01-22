@@ -1263,6 +1263,21 @@ export default function AITradeCopilot({ onClose }) {
 
             dismissAlert(alert.id)
 
+            // Track AI recommendation followed for ai-whisperer achievement
+            try {
+              const aiRecs = JSON.parse(localStorage.getItem('iava_ai_recs_followed') || '[]')
+              aiRecs.push({ type: 'close-position', symbol: alert.symbol, timestamp: Date.now() })
+              localStorage.setItem('iava_ai_recs_followed', JSON.stringify(aiRecs))
+
+              if (aiRecs.length >= 10) {
+                window.dispatchEvent(new CustomEvent('iava.achievement', {
+                  detail: { achievementId: 'ai-whisperer' }
+                }))
+              }
+            } catch (e) {
+              console.error('[Copilot] Error tracking AI rec:', e)
+            }
+
             window.dispatchEvent(new CustomEvent('iava.toast', {
               detail: {
                 text: `Closing ${alert.symbol} ${pos.side} position...`,
@@ -1305,6 +1320,18 @@ export default function AITradeCopilot({ onClose }) {
           }))
 
           dismissAlert(alert.id)
+
+          // Track AI recommendation for ai-whisperer
+          try {
+            const aiRecs = JSON.parse(localStorage.getItem('iava_ai_recs_followed') || '[]')
+            aiRecs.push({ type: 'set-stop', symbol: alert.symbol, timestamp: Date.now() })
+            localStorage.setItem('iava_ai_recs_followed', JSON.stringify(aiRecs))
+            if (aiRecs.length >= 10) {
+              window.dispatchEvent(new CustomEvent('iava.achievement', {
+                detail: { achievementId: 'ai-whisperer' }
+              }))
+            }
+          } catch (e) {}
 
           window.dispatchEvent(new CustomEvent('iava.toast', {
             detail: {
