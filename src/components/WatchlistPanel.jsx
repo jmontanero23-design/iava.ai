@@ -6,8 +6,10 @@ export default function WatchlistPanel({ onLoadSymbol }) {
   const [active, setActive] = useState('')
   const [symbols, setSymbols] = useState([])
   const [name, setName] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
 
   function refresh() {
+    setIsLoading(true)
     import('../utils/watchlists.js').then(mod => {
       const all = mod.getAll()
       setLists(all)
@@ -18,7 +20,10 @@ export default function WatchlistPanel({ onLoadSymbol }) {
       if (selected && all[selected]) setSymbols(all[selected].symbols || [])
       else if (names.length) setSymbols(all[names[0]].symbols || [])
       else setSymbols([])
-    }).catch(()=>{})
+      setIsLoading(false)
+    }).catch(()=>{
+      setIsLoading(false)
+    })
   }
 
   useEffect(() => { refresh() }, [])
@@ -121,7 +126,13 @@ export default function WatchlistPanel({ onLoadSymbol }) {
 
       {/* Premium Symbols Grid */}
       <div className="p-4 pt-0">
-        {symbols.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-2 animate-pulse">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="h-10 bg-slate-800/30 rounded-lg"></div>
+            ))}
+          </div>
+        ) : symbols.length === 0 ? (
           <div className="text-center py-8">
             <div className="text-4xl mb-2">📋</div>
             <div className="text-sm text-slate-400 italic">No symbols in this list</div>
