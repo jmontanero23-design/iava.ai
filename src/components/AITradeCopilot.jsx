@@ -27,6 +27,7 @@ import {
   speakForecastAlert,
   speakPositionAlert
 } from '../services/voiceAlertService.js'
+import { getPersonalizedSuggestion, generateLearningContext } from '../services/aiLearningLoop.js'
 
 export default function AITradeCopilot({ onClose }) {
   const { marketData } = useMarketData()
@@ -862,6 +863,82 @@ export default function AITradeCopilot({ onClose }) {
     }
   }
 
+  // 🔥 LEARNING LOOP: Generate personalized suggestions based on trade history
+  const generatePersonalizedAlerts = async () => {
+    if (!marketData.symbol || marketData.isLoading || !marketData.signalState) return
+
+    try {
+      const symbol = marketData.symbol
+      const currentTime = Date.now()
+
+      // Get personalized suggestion from learning loop
+      const personalizedSuggestion = await getPersonalizedSuggestion(
+        symbol,
+        marketData,
+        marketData.signalState
+      )
+
+      if (!personalizedSuggestion) return
+
+      // Generate alert based on personalized action
+      const learningKey = `learning-${symbol}-${personalizedSuggestion.action.type}`
+
+      // Only show high-confidence personalized alerts (avoids noise)
+      if (Math.abs(personalizedSuggestion.confidence) < 50) return
+
+      // Check cooldown (10 min for learning alerts)
+      if (isOnCooldown(learningKey, 600000)) return
+      markAlertFired(learningKey)
+
+      // Determine alert styling based on action type
+      let alertType = 'info'
+      let alertPriority = 'medium'
+      if (personalizedSuggestion.action.type === 'EXECUTE') {
+        alertType = 'success'
+        alertPriority = 'high'
+      } else if (personalizedSuggestion.action.type === 'AVOID' || personalizedSuggestion.action.type === 'PAUSE') {
+        alertType = 'warning'
+        alertPriority = 'high'
+      }
+
+      // Build message with warnings and encouragements
+      let message = `Confidence: ${Math.round(personalizedSuggestion.confidence)}/100`
+      if (personalizedSuggestion.warnings.length > 0) {
+        message += ` ⚠️ ${personalizedSuggestion.warnings[0]}`
+      } else if (personalizedSuggestion.encouragements.length > 0) {
+        message += ` ✅ ${personalizedSuggestion.encouragements[0]}`
+      }
+
+      setAlerts(prev => {
+        // Triple protection against duplicates
+        if (prev.some(a => a.id === learningKey)) return prev
+        if (wasAlertEverAdded(learningKey)) return prev
+        markAlertAdded(learningKey)
+
+        return [{
+          id: learningKey,
+          type: alertType,
+          priority: alertPriority,
+          symbol,
+          title: `🧠 Personalized: ${personalizedSuggestion.action.type}`,
+          message,
+          action: personalizedSuggestion.action.reason,
+          timestamp: currentTime,
+          isPersonalized: true,
+          learningData: {
+            setup: personalizedSuggestion.setup,
+            confidence: personalizedSuggestion.confidence,
+            warnings: personalizedSuggestion.warnings,
+            encouragements: personalizedSuggestion.encouragements
+          }
+        }, ...prev].slice(0, 10)
+      })
+
+    } catch (error) {
+      console.error('[Copilot] Personalized alert generation error:', error)
+    }
+  }
+
   // PhD++ OPPORTUNITY SCANNER with RISK VALIDATION
   const scanForOpportunities = async () => {
     // PhD++ CRITICAL: Don't scan with stale/loading data
@@ -1095,6 +1172,19 @@ export default function AITradeCopilot({ onClose }) {
     const scanInterval = setInterval(scanForOpportunities, 30000) // Every 30 seconds
 
     return () => clearInterval(scanInterval)
+  }, [marketData])
+
+  // 🔥 LEARNING LOOP: Run personalized alerts every 60 seconds
+  useEffect(() => {
+    // Initial delay to let data settle
+    const initialTimeout = setTimeout(generatePersonalizedAlerts, 5000)
+
+    const learningInterval = setInterval(generatePersonalizedAlerts, 60000) // Every 60 seconds
+
+    return () => {
+      clearTimeout(initialTimeout)
+      clearInterval(learningInterval)
+    }
   }, [marketData])
 
   // PhD++ CHRONOS FORECAST INTEGRATION: Listen for AI predictions

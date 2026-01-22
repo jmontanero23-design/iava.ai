@@ -16,6 +16,7 @@ import { useMarketData } from '../contexts/MarketDataContext.jsx'
 import { detectSymbols, detectTimeframe, buildEnhancedContext, formatEnhancedContext } from '../utils/aiEnhancements.js'
 import { TrustModeToggle, useTrustMode } from './TrustModeManager.jsx'
 import { analyzePatterns, PATTERN_TYPES, SEVERITY } from '../services/tradingPatternDetector.js'
+import { buildLearningPrompt } from '../services/aiLearningLoop.js'
 import {
   Bot, Brain, Clipboard, Trash2, Mic, MicOff, Paperclip, Send,
   Volume2, VolumeX, Image, FileText, DollarSign, Zap, CheckCircle,
@@ -1162,7 +1163,12 @@ Return ONLY a JSON array of 4 short questions (max 60 chars each), no explanatio
       }
 
       // Generate PhD-level system prompt
-      const systemPrompt = generateTradingSystemPrompt()
+      const baseSystemPrompt = generateTradingSystemPrompt()
+
+      // 🔥 LEARNING LOOP: Inject personalized learning context from trade history
+      // This makes AI learn from user's actual outcomes and personalize recommendations
+      const currentSymbol = marketData.symbol || 'SPY'
+      const personalizedSystemPrompt = buildLearningPrompt(baseSystemPrompt, currentSymbol, 'analyze')
 
       // Format context for AI
       const contextText = formatContextForAI(enrichedContext)
@@ -1259,7 +1265,7 @@ If you're uncertain about any metric, say "I don't have that data" rather than g
       fullMarketContext += `\n\n${verificationFooter}`
 
       const aiMessages = [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: personalizedSystemPrompt },
         { role: 'system', content: fullMarketContext },
         ...chatHistory.map(m => ({ role: m.role, content: m.content })),
         { role: 'user', content: userContent }
