@@ -36,7 +36,18 @@ export default function Portfolio() {
         throw new Error(`HTTP error! status: ${res.status}`)
       }
       const data = await res.json()
-      setPositions(data.positions || [])
+      const positionsData = data.positions || []
+      setPositions(positionsData)
+
+      // Check for diversified achievement (10+ unique symbols)
+      if (positionsData.length >= 10) {
+        const uniqueSymbols = new Set(positionsData.map(p => p.symbol))
+        if (uniqueSymbols.size >= 10) {
+          window.dispatchEvent(new CustomEvent('iava.achievement', {
+            detail: { achievementId: 'diversified' }
+          }))
+        }
+      }
     } catch (error) {
       console.error('Error fetching positions:', error)
       setPositions([]) // Reset to empty array on error

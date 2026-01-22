@@ -98,6 +98,14 @@ export default function TradeJournalAIPanel() {
       window.dispatchEvent(new CustomEvent('iava.toast', {
         detail: { text: 'Trade recorded successfully', type: 'success' }
       }))
+
+      // Trigger journal-keeper achievement on first journal entry
+      const allTrades = tradeJournalDB.getAllTrades()
+      if (allTrades.length === 1) {
+        window.dispatchEvent(new CustomEvent('iava.achievement', {
+          detail: { achievementId: 'journal-keeper' }
+        }))
+      }
     } catch (error) {
       console.error('Error adding trade:', error)
       alert('Failed to add trade: ' + error.message)
