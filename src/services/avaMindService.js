@@ -131,7 +131,9 @@ class AVAMindService {
       exitTime: trade.exitTime || null,
       holdDuration: trade.exitTime ? (trade.exitTime - trade.entryTime) / 60000 : null,
       dayOfWeek: new Date(trade.entryTime || Date.now()).toLocaleDateString('en-US', { weekday: 'long' }),
-      hourOfDay: new Date(trade.entryTime || Date.now()).getHours()
+      hourOfDay: new Date(trade.entryTime || Date.now()).getHours(),
+      stopLoss: trade.stopLoss || null, // Track stop loss for risk management
+      takeProfit: trade.takeProfit || null
     }
 
     this.trades.unshift(tradeRecord)
@@ -144,6 +146,16 @@ class AVAMindService {
     this.saveToStorage()
     this.updateLearning()
     this.detectPatterns()
+
+    // Check for risk-manager achievement (10 consecutive trades with stop loss)
+    if (trade.stopLoss && typeof window !== 'undefined') {
+      const recent10 = this.trades.slice(0, 10)
+      if (recent10.length >= 10 && recent10.every(t => t.stopLoss)) {
+        window.dispatchEvent(new CustomEvent('iava.achievement', {
+          detail: { achievementId: 'risk-manager' }
+        }))
+      }
+    }
 
     return tradeRecord
   }
@@ -247,6 +259,22 @@ class AVAMindService {
       window.dispatchEvent(new CustomEvent('iava.achievement', {
         detail: { achievementId: 'streak-master' }
       }))
+    }
+
+    // Check for profitable-week achievement (positive weekly P&L)
+    if (typeof window !== 'undefined') {
+      const now = Date.now()
+      const oneWeekAgo = now - (7 * 24 * 60 * 60 * 1000)
+      const weekTrades = closedTrades.filter(t => t.exitTime >= oneWeekAgo)
+
+      if (weekTrades.length >= 3) { // Need at least 3 trades in the week
+        const weekPnL = weekTrades.reduce((sum, t) => sum + t.pnl, 0)
+        if (weekPnL > 0) {
+          window.dispatchEvent(new CustomEvent('iava.achievement', {
+            detail: { achievementId: 'profitable-week' }
+          }))
+        }
+      }
     }
 
     localStorage.setItem(STORAGE_KEYS.LEARNING, JSON.stringify(this.learning))
