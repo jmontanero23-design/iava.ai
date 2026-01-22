@@ -118,6 +118,31 @@ export default function PatternRecognition() {
 
       setLastAnalysis(new Date())
 
+      // Track pattern detection for pattern-master achievement
+      if (patterns.length > 0 && typeof window !== 'undefined') {
+        try {
+          const detectedPatternTypes = JSON.parse(localStorage.getItem('iava_detected_patterns') || '[]')
+
+          patterns.forEach(p => {
+            const patternType = p.pattern
+            if (patternType && !detectedPatternTypes.includes(patternType)) {
+              detectedPatternTypes.push(patternType)
+            }
+          })
+
+          localStorage.setItem('iava_detected_patterns', JSON.stringify(detectedPatternTypes))
+
+          // Check for pattern-master achievement (5 different patterns)
+          if (detectedPatternTypes.length >= 5) {
+            window.dispatchEvent(new CustomEvent('iava.achievement', {
+              detail: { achievementId: 'pattern-master' }
+            }))
+          }
+        } catch (e) {
+          console.error('[PatternRecognition] Error tracking patterns:', e)
+        }
+      }
+
     } catch (error) {
       console.error('[Pattern Recognition] Error:', error)
       setDetectedPatterns([{

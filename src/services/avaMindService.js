@@ -200,6 +200,19 @@ class AVAMindService {
       }
     }
 
+    // Check for volatility-surfer achievement (profit during high volatility)
+    // Proxy: Winning trade with >5% gain in <60 minutes (quick, volatile move)
+    if (updatedTrade.outcome === 'WIN' && typeof window !== 'undefined') {
+      const pnlPercent = Math.abs(updatedTrade.pnlPercent || 0)
+      const holdMinutes = updatedTrade.holdDuration || 0
+
+      if (pnlPercent >= 5 && holdMinutes <= 60 && holdMinutes > 0) {
+        window.dispatchEvent(new CustomEvent('iava.achievement', {
+          detail: { achievementId: 'volatility-surfer' }
+        }))
+      }
+    }
+
     return updatedTrade
   }
 
