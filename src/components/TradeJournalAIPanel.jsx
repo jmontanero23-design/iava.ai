@@ -19,6 +19,7 @@ export default function TradeJournalAIPanel() {
   const [aiReviewing, setAiReviewing] = useState(false)
   const [filterStrategy, setFilterStrategy] = useState('all')
   const [filterOutcome, setFilterOutcome] = useState('all')
+  const [isImporting, setIsImporting] = useState(false)
 
   const [newTrade, setNewTrade] = useState({
     symbol: '',
@@ -198,6 +199,87 @@ export default function TradeJournalAIPanel() {
     }
   }
 
+  // 🔥 NEW: Auto-import closed trades from Alpaca
+  const handleAutoImport = async () => {
+    setIsImporting(true)
+
+    try {
+      // Fetch closed orders from Alpaca
+      const response = await fetch('/api/alpaca/orders?status=closed&nested=true')
+      if (!response.ok) throw new Error('Failed to fetch Alpaca orders')
+
+      const orders = await response.json()
+      if (!Array.isArray(orders) || orders.length === 0) {
+        window.dispatchEvent(new CustomEvent('iava.toast', {
+          detail: { text: 'No closed trades found to import', type: 'info' }
+        }))
+        return
+      }
+
+      // Get existing trades to avoid duplicates
+      const existingTrades = tradeJournalDB.getAllTrades()
+      const existingSymbols = new Set(existingTrades.map(t => `${t.symbol}_${t.entryDate}`))
+
+      // Convert Alpaca orders to trade journal format
+      const importedTrades = []
+      for (const order of orders) {
+        // Only import filled orders
+        if (order.status !== 'filled') continue
+
+        const entryDate = new Date(order.created_at).getTime()
+        const exitDate = new Date(order.filled_at || order.updated_at).getTime()
+        const uniqueKey = `${order.symbol}_${entryDate}`
+
+        // Skip duplicates
+        if (existingSymbols.has(uniqueKey)) continue
+
+        // Calculate P&L (simplified - in reality would need entry/exit prices from legs)
+        const filled_avg_price = parseFloat(order.filled_avg_price) || 0
+        const quantity = parseFloat(order.filled_qty) || 0
+
+        if (filled_avg_price === 0 || quantity === 0) continue
+
+        const tradeData = {
+          symbol: order.symbol,
+          direction: order.side === 'buy' ? 'long' : 'short',
+          entryPrice: filled_avg_price,
+          exitPrice: filled_avg_price, // Simplified - would need actual exit
+          shares: quantity,
+          entryDate,
+          exitDate,
+          strategy: 'Alpaca Auto-Import',
+          setup: order.order_type || 'market',
+          notes: `Imported from Alpaca. Order ID: ${order.id}`,
+          stopLoss: order.stop_loss ? parseFloat(order.stop_loss.stop_price) : null,
+          commission: 0,
+          emotionalState: 'neutral',
+          disciplineScore: 5,
+          marketCondition: 'neutral'
+        }
+
+        tradeJournalDB.addTrade(tradeData)
+        importedTrades.push(tradeData)
+      }
+
+      refreshData()
+
+      window.dispatchEvent(new CustomEvent('iava.toast', {
+        detail: {
+          text: `Successfully imported ${importedTrades.length} trades from Alpaca`,
+          type: 'success'
+        }
+      }))
+
+    } catch (error) {
+      console.error('[TradeJournal] Auto-import error:', error)
+      window.dispatchEvent(new CustomEvent('iava.toast', {
+        detail: { text: 'Failed to import trades: ' + error.message, type: 'error' }
+      }))
+    } finally {
+      setIsImporting(false)
+    }
+  }
+
   // Generate psychology insights based on trade + sentiment
   const generatePsychologyInsights = (trade, sentiment) => {
     const insights = []
@@ -351,6 +433,23 @@ export default function TradeJournalAIPanel() {
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all disabled:opacity-50"
                 >
                   📥 Export
+                </button>
+
+                <button
+                  onClick={handleAutoImport}
+                  disabled={isImporting}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-700 hover:bg-emerald-600 text-white transition-all disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {isImporting ? (
+                    <>
+                      <span className="animate-spin">⏳</span>
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      🔄 Import from Alpaca
+                    </>
+                  )}
                 </button>
               </div>
             </div>
