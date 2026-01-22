@@ -34,6 +34,11 @@ import MobileQuickActions, { QuickActionsFAB } from './components/MobileQuickAct
 import AlertsCenter from './components/AlertsCenter.jsx'
 import SymbolSearchModal from './components/SymbolSearchModal.jsx'
 import ScoreBreakdown from './components/ScoreBreakdown.jsx'
+import AIChat from './components/AIChat.jsx'
+import MarketSentiment from './components/MarketSentiment.jsx'
+import PatternRecognition from './components/PatternRecognition.jsx'
+import TradeJournalAIPanel from './components/TradeJournalAIPanel.jsx'
+import MultiTimeframePanel from './components/MultiTimeframePanel.jsx'
 
 // LEGENDARY Layout Components
 import LegendaryLayout from './components/layout/LegendaryLayout.jsx'
@@ -398,6 +403,18 @@ function AppWithGestures({
         )
       case 'you':
         return <YouTab />
+      case 'ai-chat':
+        return <AIChat />
+      case 'market-sentiment':
+        return <MarketSentiment />
+      case 'pattern-recognition':
+        return <PatternRecognition />
+      case 'trade-journal':
+        return <TradeJournalAIPanel />
+      case 'multi-timeframe':
+        return <MultiTimeframePanel />
+      case 'settings':
+        return <YouTab /> // Settings routes to YouTab for now
       default:
         return <AppChart />
     }

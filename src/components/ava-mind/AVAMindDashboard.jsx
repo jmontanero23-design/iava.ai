@@ -133,6 +133,21 @@ export default function AVAMindDashboard({
 
   const { marketData } = useMarketData()
 
+  // Load data from service
+  const loadServiceData = useCallback(() => {
+    setLearningStats(getLearning())
+    setPatterns(getPatterns())
+
+    if (marketData?.symbol) {
+      const initialSuggestions = generateSuggestions({
+        symbol: marketData.symbol,
+        timeframe: marketData.timeframe,
+        marketCondition: marketData.signalState
+      })
+      setSuggestions(initialSuggestions)
+    }
+  }, [marketData])
+
   // Load data on mount
   useEffect(() => {
     // Load personality
@@ -150,20 +165,20 @@ export default function AVAMindDashboard({
       console.error('Error loading AVA Mind data:', e)
     }
 
-    // Load service data
-    setLearningStats(getLearning())
-    setPatterns(getPatterns())
+    // Load initial service data
+    loadServiceData()
 
-    // Generate initial suggestions
-    if (marketData?.symbol) {
-      const initialSuggestions = generateSuggestions({
-        symbol: marketData.symbol,
-        timeframe: marketData.timeframe,
-        marketCondition: marketData.signalState
-      })
-      setSuggestions(initialSuggestions)
+    // Listen for database loaded event to refresh data
+    const handleDataLoaded = (event) => {
+      console.log('[AVAMind Dashboard] Database loaded, refreshing data:', event.detail)
+      loadServiceData()
     }
-  }, [])
+    window.addEventListener('ava.mind.dataLoaded', handleDataLoaded)
+
+    return () => {
+      window.removeEventListener('ava.mind.dataLoaded', handleDataLoaded)
+    }
+  }, [loadServiceData])
 
   // Listen for external tab navigation (e.g., from Coach button in navbar)
   useEffect(() => {

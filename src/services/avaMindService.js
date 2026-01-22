@@ -59,10 +59,11 @@ class AVAMindService {
     this.learning = null
     this.patterns = null
     this.isLoadingFromDB = false
+    this.dbLoaded = false // Track if DB has finished loading
     this.dbSyncQueue = [] // Queue trades for DB sync
     this.dbSyncTimer = null
     this.loadFromStorage()
-    this.loadFromDatabase() // 🔥 NEW: Load from database
+    this.loadFromDatabase() // 🔥 NEW: Load from database (async)
   }
 
   /**
@@ -184,6 +185,17 @@ class AVAMindService {
       console.log('[AVAMind] Falling back to localStorage data')
     } finally {
       this.isLoadingFromDB = false
+      this.dbLoaded = true
+
+      // Dispatch event to notify components that data is ready
+      window.dispatchEvent(new CustomEvent('ava.mind.dataLoaded', {
+        detail: {
+          tradesCount: this.trades.length,
+          hasLearning: !!this.learning,
+          patternsCount: Object.keys(this.patterns || {}).length
+        }
+      }))
+      console.log('[AVAMind] Database loading complete, data ready')
     }
   }
 
@@ -717,6 +729,14 @@ class AVAMindService {
    * Get learning summary for display
    */
   getLearning() {
+    // If database is still loading, return loading indicator
+    if (!this.dbLoaded) {
+      return {
+        ...this.initializeLearning(),
+        isLoading: true,
+        message: 'Loading from database...'
+      }
+    }
     return this.learning
   }
 
