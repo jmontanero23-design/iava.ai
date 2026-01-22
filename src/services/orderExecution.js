@@ -306,6 +306,14 @@ class OrderExecutionService {
             ttl: 5000
           }
         }))
+
+        // Check for first trade achievement
+        const tradeHistory = JSON.parse(localStorage.getItem('iava_trade_history') || '[]')
+        if (tradeHistory.length === 0) {
+          window.dispatchEvent(new CustomEvent('iava.achievement', {
+            detail: { achievementId: 'first-trade' }
+          }))
+        }
       }
 
       // Update orders list

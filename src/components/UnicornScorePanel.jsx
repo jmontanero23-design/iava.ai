@@ -88,6 +88,18 @@ export default function UnicornScorePanel({ state, symbol = 'SPY' }) {
   const quality = getScoreQuality(score)
   const qualityColor = getScoreColor(score)
 
+  // Trigger unicorn-hunter achievement for scores >= 90
+  if (score >= 90 && window.dispatchEvent) {
+    const achievementKey = `unicorn_${symbol}_${score}`
+    const triggered = sessionStorage.getItem(achievementKey)
+    if (!triggered) {
+      sessionStorage.setItem(achievementKey, 'true')
+      window.dispatchEvent(new CustomEvent('iava.achievement', {
+        detail: { achievementId: 'unicorn-hunter' }
+      }))
+    }
+  }
+
   // PhD++ FIX: Determine regime color based on rawScore direction
   const regimeColor = rawScore >= 70 ? 'text-green-400' :
                       rawScore <= -70 ? 'text-red-400' :

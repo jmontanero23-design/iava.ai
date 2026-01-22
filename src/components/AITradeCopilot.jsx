@@ -153,7 +153,10 @@ export default function AITradeCopilot({ onClose }) {
     const currentPrice = marketData.currentPrice
     const lastPrice = lastKnownPriceRef.current[symbol]
 
-    if (lastPrice && currentPrice) {
+    // Check if symbol changed (expected price discontinuity, don't warn)
+    const symbolChanged = prevSymbolRef.current && prevSymbolRef.current !== symbol
+
+    if (lastPrice && currentPrice && !symbolChanged) {
       const pctChange = Math.abs((currentPrice - lastPrice) / lastPrice) * 100
 
       // If price jumped by more than 50%, clear alerts for this symbol
