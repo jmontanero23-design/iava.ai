@@ -219,7 +219,7 @@ export async function getPersonalizedSuggestion(symbol, marketData, indicators) 
       suggestion.reasoning = 'Moderate confidence. Size down if unsure.'
     } else {
       suggestion.action = 'AVOID'
-      suggestion.reasoning = 'Doesn't match your winning patterns. Consider waiting.'
+      suggestion.reasoning = 'Does not match your winning patterns. Consider waiting.'
     }
 
     return suggestion
