@@ -20,6 +20,7 @@ import {
 import StockLogo from './ui/StockLogo'
 import { usePositions } from '../contexts/PositionsContext'
 import { colors, gradients, animation, spacing, radius, typography } from '../styles/tokens'
+import avaMindService from '../services/avaMindService.js'
 
 // Company name lookup for common symbols
 const COMPANY_NAMES = {
@@ -59,6 +60,30 @@ export default function LegendaryPortfolio({ onSelectSymbol }) {
       ? ((portfolioStats.totalPnL / portfolioStats.equity) * 100)
       : 0
 
+    // Get real stats from AVA Mind trade history
+    const learning = avaMindService.getLearning()
+    const trades = avaMindService.getRecentTrades(100)
+
+    // Calculate average hold time from closed trades
+    const closedTrades = trades.filter(t => t.holdDuration != null)
+    const avgHoldTimeMinutes = closedTrades.length > 0
+      ? closedTrades.reduce((sum, t) => sum + t.holdDuration, 0) / closedTrades.length
+      : 0
+
+    // Format hold time nicely
+    let avgHoldTimeStr = '---'
+    if (avgHoldTimeMinutes > 0) {
+      const days = Math.floor(avgHoldTimeMinutes / 1440)
+      const hours = Math.floor((avgHoldTimeMinutes % 1440) / 60)
+      if (days > 0) {
+        avgHoldTimeStr = `${days}d ${hours}h`
+      } else if (hours > 0) {
+        avgHoldTimeStr = `${hours}h`
+      } else {
+        avgHoldTimeStr = `${Math.floor(avgHoldTimeMinutes)}m`
+      }
+    }
+
     return {
       totalValue: portfolioStats.equity || portfolioStats.totalValue,
       dayChange: portfolioStats.totalPnL,
@@ -67,8 +92,8 @@ export default function LegendaryPortfolio({ onSelectSymbol }) {
       totalReturnPercent: totalReturnPct,
       equity: portfolioStats.equity,
       buyingPower: portfolioStats.buyingPower,
-      winRate: 73, // TODO: Calculate from trade history
-      avgHoldTime: '4.2 days', // TODO: Calculate from trade history
+      winRate: learning?.winRate || 0, // Real win rate from AVA Mind
+      avgHoldTime: avgHoldTimeStr, // Real average hold time from trade history
       positions: transformedPositions,
     }
   }, [positions, portfolioStats])
