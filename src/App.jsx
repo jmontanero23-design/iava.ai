@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react'
 import ToastHub from './components/ToastHub.jsx'
+import GlobalLoader from './components/GlobalLoader.jsx'
 import BuildInfoFooter from './components/BuildInfoFooter.jsx'
 import { MarketDataProvider, useMarketData } from './contexts/MarketDataContext.jsx'
 import { PositionsProvider } from './contexts/PositionsContext.jsx'
@@ -484,6 +485,9 @@ function AppWithGestures({
 
       {/* Toast Notifications */}
       <ToastHub />
+
+      {/* Global Loading Indicator */}
+      <GlobalLoader />
 
       {/* AI Trade Copilot */}
       {showCopilot && activeTab === 'chart' && (
