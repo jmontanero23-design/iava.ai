@@ -22,6 +22,11 @@ import { fetchBars } from '../services/yahooFinance.js'
 import { computeStates } from '../utils/indicators.js'
 import { speakAlert, speakGuidance, voiceQueue } from '../utils/voiceSynthesis.js'
 import chronosBridge from '../services/chronosCopilotBridge.js'
+import {
+  initVoiceAlerts,
+  speakForecastAlert,
+  speakPositionAlert
+} from '../services/voiceAlertService.js'
 
 export default function AITradeCopilot({ onClose }) {
   const { marketData } = useMarketData()
@@ -108,6 +113,16 @@ export default function AITradeCopilot({ onClose }) {
   // FIX: Also detect symbol changes - when symbol changes, price is stale until new data loads
   const symbolChanged = prevSymbolRef.current !== null && prevSymbolRef.current !== marketData.symbol
   const isDataLoading = marketData.isLoading || !marketData.symbol || symbolChanged
+
+  // Initialize voice alert service on mount
+  useEffect(() => {
+    try {
+      initVoiceAlerts()
+      console.log('[Copilot] Voice alert service initialized')
+    } catch (e) {
+      console.error('[Copilot] Error initializing voice alerts:', e)
+    }
+  }, [])
 
   // PhD++ FIX: Clear stale alerts when chart symbol changes (prevents wrong data alerts)
   useEffect(() => {
@@ -722,14 +737,32 @@ export default function AITradeCopilot({ onClose }) {
           return true
         })
 
-        // Speak high priority alerts using voice synthesis
+        // Speak high priority alerts using intelligent voice alert service
         uniqueNew.forEach(alert => {
-          if (alert.priority === 'high') {
-            const voiceMessage = `${alert.title}. ${alert.symbol}. ${alert.action}`
-            speakAlert(voiceMessage, 'high')
-          } else if (alert.priority === 'medium') {
-            const voiceMessage = `${alert.symbol} alert: ${alert.message}`
-            speakAlert(voiceMessage, 'normal')
+          if (alert.priority === 'high' || alert.priority === 'medium') {
+            // Determine alert type for voice service
+            let alertType = 'riskWarning'
+            let details = { message: alert.message || alert.action }
+
+            // Map alert types for more appropriate voice messages
+            if (alert.title?.toLowerCase().includes('stop')) {
+              alertType = 'stopHit'
+              details = { price: alert.details?.currentPrice || 0 }
+            } else if (alert.title?.toLowerCase().includes('target') || alert.title?.toLowerCase().includes('profit')) {
+              alertType = 'targetHit'
+              details = { price: alert.details?.currentPrice || 0 }
+            } else if (alert.title?.toLowerCase().includes('move') || alert.title?.toLowerCase().includes('adverse')) {
+              alertType = 'largeMove'
+              details = {
+                direction: alert.details?.priceChange < 0 ? 'down' : 'up',
+                percent: Math.abs(alert.details?.priceChange || 0)
+              }
+            }
+
+            // Use intelligent voice alert with cooldown and quiet hours
+            speakPositionAlert(alert.symbol, alertType, details).catch(err => {
+              console.warn('[Copilot] Voice alert failed:', err)
+            })
           }
         })
 
@@ -1099,13 +1132,16 @@ export default function AITradeCopilot({ onClose }) {
         actions: alert.actions
       }, ...prev].slice(0, 10))
 
-      // Voice announcement for high confidence
-      if (alert.confidence >= 80) {
-        const voiceMsg = `AVA predicts ${alert.symbol} will ${
-          alert.direction === 'bullish' ? 'rise' : alert.direction === 'bearish' ? 'fall' : 'stay flat'
-        }. Confidence ${alert.confidence} percent.`
-        speakAlert(voiceMsg)
-      }
+      // Intelligent voice announcement with quiet hours and cooldown
+      speakForecastAlert(alert.symbol, {
+        direction: alert.direction,
+        confidence: alert.confidence,
+        percentChange: Math.abs(((alert.targetPrice - alert.currentPrice) / alert.currentPrice) * 100),
+        targetPrice: alert.targetPrice,
+        horizon: 24 // 24 hour forecast
+      }).catch(err => {
+        console.warn('[Copilot] Forecast voice alert failed:', err)
+      })
     }
 
     window.addEventListener('ava.chronosAlert', handleChronosAlert)
