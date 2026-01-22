@@ -314,6 +314,30 @@ class OrderExecutionService {
             detail: { achievementId: 'first-trade' }
           }))
         }
+
+        // Check for time-based achievements
+        const now = new Date()
+        const hour = now.getHours()
+        const minute = now.getMinutes()
+        const timeInMinutes = hour * 60 + minute
+
+        // EST market hours: 9:30am = 9.5*60 = 570, 4:00pm = 16*60 = 960
+        const marketOpen = 9 * 60 + 30 // 9:30am
+        const marketClose = 16 * 60 // 4:00pm
+
+        // Night owl - extended hours trading (before 9:30am or after 4pm)
+        if (timeInMinutes < marketOpen || timeInMinutes >= marketClose) {
+          window.dispatchEvent(new CustomEvent('iava.achievement', {
+            detail: { achievementId: 'night-owl' }
+          }))
+        }
+
+        // Early bird - first hour of market (9:30-10:30am)
+        if (timeInMinutes >= marketOpen && timeInMinutes < (marketOpen + 60)) {
+          window.dispatchEvent(new CustomEvent('iava.achievement', {
+            detail: { achievementId: 'early-bird' }
+          }))
+        }
       }
 
       // Update orders list

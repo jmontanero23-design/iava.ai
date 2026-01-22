@@ -226,6 +226,24 @@ export default function SocialTradingRooms({ onClose }) {
     setActiveRoom(roomId)
     setMessages([])
     setSharedTrades([])
+
+    // Track room joins for social-butterfly achievement
+    try {
+      const joinedRooms = JSON.parse(localStorage.getItem('iava_joined_rooms') || '[]')
+      if (!joinedRooms.includes(roomId)) {
+        joinedRooms.push(roomId)
+        localStorage.setItem('iava_joined_rooms', JSON.stringify(joinedRooms))
+
+        // Check for social-butterfly achievement (3 rooms)
+        if (joinedRooms.length >= 3) {
+          window.dispatchEvent(new CustomEvent('iava.achievement', {
+            detail: { achievementId: 'social-butterfly' }
+          }))
+        }
+      }
+    } catch (e) {
+      console.error('[SocialRooms] Error tracking room joins:', e)
+    }
   }
 
   const copyTrade = (trade) => {

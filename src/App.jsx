@@ -87,6 +87,24 @@ export default function App() {
         // Switch to chart tab so symbol can load
         setActiveTab('chart')
 
+        // Track unique charts viewed for chart-scholar achievement
+        try {
+          const viewedCharts = JSON.parse(localStorage.getItem('iava_viewed_charts') || '[]')
+          if (!viewedCharts.includes(symbol)) {
+            viewedCharts.push(symbol)
+            localStorage.setItem('iava_viewed_charts', JSON.stringify(viewedCharts))
+
+            // Check for chart-scholar achievement (100 charts)
+            if (viewedCharts.length >= 100) {
+              window.dispatchEvent(new CustomEvent('iava.achievement', {
+                detail: { achievementId: 'chart-scholar' }
+              }))
+            }
+          }
+        } catch (e) {
+          console.error('[App] Error tracking chart views:', e)
+        }
+
         // Give chart time to mount, then dispatch event again with forwarded flag
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('iava.loadSymbol', {
@@ -106,6 +124,24 @@ export default function App() {
       const { action, symbol, source } = event.detail || {}
 
       if (symbol && action) {
+        // Track copy trades for copy-cat achievement
+        if (source === 'social_room') {
+          try {
+            const copyTrades = JSON.parse(localStorage.getItem('iava_copy_trades') || '[]')
+            copyTrades.push({ symbol, action, timestamp: Date.now() })
+            localStorage.setItem('iava_copy_trades', JSON.stringify(copyTrades))
+
+            // Check for copy-cat achievement (5 copy trades)
+            if (copyTrades.length >= 5) {
+              window.dispatchEvent(new CustomEvent('iava.achievement', {
+                detail: { achievementId: 'copy-cat' }
+              }))
+            }
+          } catch (e) {
+            console.error('[App] Error tracking copy trades:', e)
+          }
+        }
+
         // Switch to chart tab and load the symbol
         setActiveTab('chart')
 
