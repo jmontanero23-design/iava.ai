@@ -22,6 +22,7 @@ export default function UnicornScorePanel({ state, symbol = 'SPY' }) {
   const [personalizedSignal, setPersonalizedSignal] = useState(null)
   const [showPersonalized, setShowPersonalized] = useState(true)
   const [isPulsing, setIsPulsing] = useState(false)
+  const [detectedPatterns, setDetectedPatterns] = useState([])
   const prevScoreRef = useRef(null)
 
   // Detect score changes and trigger pulse animation
@@ -61,6 +62,23 @@ export default function UnicornScorePanel({ state, symbol = 'SPY' }) {
       }
     }
   }, [state?.score, symbol])
+
+  // 🔥 PATTERN RECOGNITION INTEGRATION: Listen for detected patterns
+  useEffect(() => {
+    const handlePatternsDetected = (event) => {
+      const { symbol: patternSymbol, patterns } = event.detail || {}
+
+      // Only show patterns for current symbol
+      if (patternSymbol === symbol && patterns && patterns.length > 0) {
+        // Filter to high-confidence patterns (60%+)
+        const highConfidence = patterns.filter(p => p.confidence >= 60)
+        setDetectedPatterns(highConfidence.slice(0, 3)) // Show top 3
+      }
+    }
+
+    window.addEventListener('iava.patternsDetected', handlePatternsDetected)
+    return () => window.removeEventListener('iava.patternsDetected', handlePatternsDetected)
+  }, [symbol])
 
   // Helper to get classification from score
   function getClassification(score) {
@@ -327,6 +345,54 @@ export default function UnicornScorePanel({ state, symbol = 'SPY' }) {
             }`}>
               {personalizedSignal.action.type}: {personalizedSignal.action.reason}
             </div>
+          </div>
+        </>
+      )}
+
+      {/* 🔥 PATTERN RECOGNITION INTEGRATION: Show detected patterns */}
+      {detectedPatterns.length > 0 && (
+        <>
+          <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
+          <div className="space-y-2">
+            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2">
+              <span>📊</span>
+              <span>Chart Patterns</span>
+              <span className="text-cyan-400">• Live</span>
+            </div>
+            {detectedPatterns.map((pattern, idx) => (
+              <div
+                key={idx}
+                className={`p-2 rounded-lg border ${
+                  pattern.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30' :
+                  pattern.type === 'danger' ? 'bg-red-500/10 border-red-500/30' :
+                  'bg-slate-800/50 border-slate-700/50'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <span className={`text-xs font-semibold ${
+                    pattern.type === 'success' ? 'text-emerald-300' :
+                    pattern.type === 'danger' ? 'text-red-300' :
+                    'text-slate-300'
+                  }`}>
+                    {pattern.pattern}
+                    {pattern.elite && <span className="ml-1 text-purple-400">✨</span>}
+                  </span>
+                  <span className="text-xs text-slate-400">{pattern.confidence}%</span>
+                </div>
+                <div className="text-xs text-slate-400 line-clamp-2">
+                  {pattern.description}
+                </div>
+                {pattern.action && (
+                  <div className={`text-xs mt-1 font-medium ${
+                    pattern.type === 'success' ? 'text-emerald-400' :
+                    pattern.type === 'danger' ? 'text-red-400' :
+                    'text-cyan-400'
+                  }`}>
+                    → {pattern.action}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </>
       )}
