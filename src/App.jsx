@@ -100,6 +100,35 @@ export default function App() {
     return () => window.removeEventListener('iava.loadSymbol', handleLoadSymbol)
   }, [])
 
+  // Listen for quick trade events from Social Trading Rooms
+  useEffect(() => {
+    const handleQuickTrade = (event) => {
+      const { action, symbol, source } = event.detail || {}
+
+      if (symbol && action) {
+        // Switch to chart tab and load the symbol
+        setActiveTab('chart')
+
+        // Load the symbol on the chart
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('iava.loadSymbol', {
+            detail: { symbol, _forwarded: true }
+          }))
+        }, 100)
+
+        // Open the trade panel with pre-filled action
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('iava.openTradePanel', {
+            detail: { symbol, action }
+          }))
+        }, 300)
+      }
+    }
+
+    window.addEventListener('iava.quickTrade', handleQuickTrade)
+    return () => window.removeEventListener('iava.quickTrade', handleQuickTrade)
+  }, [])
+
   // Listen for tab navigation events (from voice commands, etc.)
   useEffect(() => {
     const handleSetActiveTab = (event) => {
